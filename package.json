@@ -1,0 +1,33 @@
+{
+  "name": "wingman-app",
+  "version": "0.1.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start",
+    "ios": "expo run:ios",
+    "android": "expo run:android",
+    "build:ios": "eas build -p ios --profile preview",
+    "submit:ios": "eas submit -p ios --latest"
+  },
+  "dependencies": {
+    "expo": "~53.0.0",
+    "expo-asset": "~11.1.5",
+    "expo-status-bar": "~2.2.3",
+    "expo-notifications": "~0.31.2",
+    "expo-haptics": "~14.1.4",
+    "expo-device": "~7.1.4",
+    "expo-linear-gradient": "~14.1.5",
+    "expo-secure-store": "~14.2.3",
+    "@react-navigation/native": "^7.0.14",
+    "@react-navigation/native-stack": "^7.2.0",
+    "@react-navigation/bottom-tabs": "^7.2.0",
+    "react-native-screens": "~4.10.0",
+    "react-native-safe-area-context": "~5.4.0",
+    "react": "18.3.1",
+    "react-native": "0.79.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0"
+  },
+  "private": true
+}

@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "Wingman",
+    "slug": "wingman-app",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "wingman",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0A0E1C",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "backgroundColor": "#0A0E1C",
+      "resizeMode": "contain",
+      "image": "./assets/splash.png"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "club.welcometothefight.wingman",
+      "buildNumber": "1",
+      "infoPlist": {
+        "UIBackgroundModes": ["remote-notification"],
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "color": "#22D3A6"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "4a6e7311-c1fa-4c7a-a5a8-0fc8a041ac41"
+      }
+    }
+  }
+}

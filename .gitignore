@@ -1,0 +1,1 @@
+node_modules/\n.expo/\ndist/\nbuild/\n*.orig.*\n.DS_Store\n*.jks\n*.p8\n*.p12\n*.key\n*.mobileprovision\n*.orig.*\nweb-build/

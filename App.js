@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { View, ActivityIndicator, Text } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer, DarkTheme, createNavigationContainerRef } from "@react-navigation/native";
@@ -9,6 +9,7 @@ import * as Notifications from "expo-notifications";
 import { C } from "./src/theme";
 import { setupNotificationHandler, registerForPush } from "./src/notify";
 import { AuthProvider, useAuth } from "./src/auth";
+import * as SecureStore from "expo-secure-store";
 import ErrorBoundary from "./src/ErrorBoundary";
 import HomeScreen from "./src/screens/HomeScreen";
 import ConciergeScreen from "./src/screens/ConciergeScreen";
@@ -64,6 +65,18 @@ function Tabs() {
 
 function Root() {
   const { token, ready } = useAuth();
+  const [onboarded, setOnboarded] = useState(null); // null = loading
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const val = await SecureStore.getItemAsync("wingman_onboarded");
+        setOnboarded(!!val);
+      } catch {
+        setOnboarded(false);
+      }
+    })();
+  }, []);
 
   // Set up notification handler inside useEffect (required for iOS 26 / New Arch)
   useEffect(() => {
@@ -88,7 +101,7 @@ function Root() {
     return () => { resp.remove(); recv.remove(); };
   }, []);
 
-  if (!ready) {
+  if (!ready || onboarded === null) {
     return (
       <View style={{ flex: 1, backgroundColor: C.bg, alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator color={C.teal} />
@@ -118,7 +131,7 @@ function Root() {
           </>
         ) : (
           <>
-            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+            {!onboarded && <Stack.Screen name="Onboarding" component={OnboardingScreen} />}
             <Stack.Screen name="SignIn" component={SignInScreen} />
           </>
         )}

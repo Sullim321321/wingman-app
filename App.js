@@ -27,6 +27,7 @@ import SignalScreen from "./src/screens/SignalScreen";
 import OnboardingScreen from "./src/screens/OnboardingScreen";
 import SignInScreen from "./src/screens/SignInScreen";
 import AddTripScreen from "./src/screens/AddTripScreen";
+import TripDetailScreen from "./src/screens/TripDetailScreen";
 
 export const navRef = createNavigationContainerRef();
 const Stack = createNativeStackNavigator();
@@ -113,6 +114,7 @@ function Root() {
             <Stack.Screen name="Connections" component={ConnectionsScreen} />
             <Stack.Screen name="Signal" component={SignalScreen} />
             <Stack.Screen name="AddTrip" component={AddTripScreen} />
+            <Stack.Screen name="TripDetail" component={TripDetailScreen} />
           </>
         ) : (
           <>

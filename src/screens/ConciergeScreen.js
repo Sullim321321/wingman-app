@@ -11,13 +11,23 @@ const QUICK = [
   "Dinner recommendations?",
 ];
 
-export default function ConciergeScreen() {
+export default function ConciergeScreen({ route }) {
+  const prefill = route?.params?.prefill || null;
   const [messages, setMessages] = useState([
     { role: "assistant", content: "Hi — I'm your Wingman. I can answer questions about your trips, check disruption risk, and help you plan. What do you need?" }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const listRef = useRef(null);
+  const prefillSent = useRef(false);
+
+  // Auto-send prefill message from TripDetailScreen
+  useEffect(() => {
+    if (prefill && !prefillSent.current) {
+      prefillSent.current = true;
+      setTimeout(() => send(prefill), 400);
+    }
+  }, [prefill]);
 
   useEffect(() => {
     if (messages.length > 1) {

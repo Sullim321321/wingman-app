@@ -87,7 +87,8 @@ function TripCard({ trip, onDelete, navigation }) {
   const depDate = formatDate(firstFlight?.departs_at);
 
   return (
-    <LinearGradient colors={["#1D2A52", "#141D38"]} style={s.tripCard}>
+    <Pressable onPress={() => navigation.navigate("TripDetail", { trip })} style={{ marginBottom: 12 }}>
+    <LinearGradient colors={["#1D2A52", "#141D38"]} style={[s.tripCard, { marginBottom: 0 }]}>
       <View style={g.rowBetween}>
         <View style={{ flex: 1 }}>
           <Text style={s.dest}>{trip.title}</Text>
@@ -122,7 +123,9 @@ function TripCard({ trip, onDelete, navigation }) {
       {legs.length === 0 && (
         <Text style={{ color: C.mut, fontSize: 13, marginTop: 8 }}>No legs added yet</Text>
       )}
+      <Text style={s.tapHint}>Tap for details →</Text>
     </LinearGradient>
+    </Pressable>
   );
 }
 
@@ -233,4 +236,5 @@ const s = StyleSheet.create({
   mt: { color: C.ink, fontSize: 13, fontWeight: "600" },
   ms: { color: C.mut, fontSize: 12 },
   hint: { color: C.mut, fontSize: 12, textAlign: "center", marginTop: 10 },
+  tapHint: { color: C.mut, fontSize: 11, textAlign: "right", marginTop: 10, opacity: 0.6 },
 });

@@ -1,8 +1,17 @@
 import React, { useState } from "react";
-import { SafeAreaView, ScrollView, View, Text, TextInput, Pressable, StyleSheet, Alert, ActivityIndicator } from "react-native";
+import {
+  SafeAreaView, ScrollView, View, Text, TextInput, Pressable,
+  StyleSheet, Alert, ActivityIndicator, TouchableOpacity,
+} from "react-native";
 import { C } from "../theme";
-import { BackBar, g } from "../components";
+import { BackBar, g, tap } from "../components";
 import { createTrip } from "../api";
+
+const MODES = [
+  { id: "solo", label: "Solo", icon: "🧳", desc: "Efficiency mode" },
+  { id: "client", label: "Client", icon: "💼", desc: "Prestige & optics" },
+  { id: "partner", label: "Partner", icon: "❤️", desc: "Leisure & romance" },
+];
 
 function Field({ label, value, onChangeText, placeholder, keyboardType }) {
   return (
@@ -23,6 +32,7 @@ function Field({ label, value, onChangeText, placeholder, keyboardType }) {
 
 export default function AddTripScreen({ navigation }) {
   const [title, setTitle] = useState("");
+  const [mode, setMode] = useState("solo");
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [flightNum, setFlightNum] = useState("");
@@ -50,7 +60,7 @@ export default function AddTripScreen({ navigation }) {
           confirmation: confirmation.trim() || null,
         });
       }
-      await createTrip({ title: title.trim(), legs });
+      await createTrip({ title: title.trim(), legs, mode });
       navigation.goBack();
     } catch (e) {
       Alert.alert("Error", e.message);
@@ -64,20 +74,44 @@ export default function AddTripScreen({ navigation }) {
       <ScrollView contentContainerStyle={g.scroll} keyboardShouldPersistTaps="handled">
         <BackBar nav={navigation} label="Add Trip" />
 
+        {/* Trip Mode */}
+        <Text style={g.sectionT}>TRIP MODE</Text>
+        <View style={s.modeRow}>
+          {MODES.map(m => (
+            <TouchableOpacity
+              key={m.id}
+              style={[s.modeBtn, mode === m.id && s.modeBtnOn]}
+              onPress={() => { tap(); setMode(m.id); }}
+              activeOpacity={0.8}
+            >
+              <Text style={s.modeIcon}>{m.icon}</Text>
+              <Text style={[s.modeLabel, mode === m.id && s.modeLabelOn]}>{m.label}</Text>
+              <Text style={s.modeDesc}>{m.desc}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <Text style={s.modeHint}>
+          {mode === "solo" && "Wingman optimizes for speed and efficiency."}
+          {mode === "client" && "Wingman prioritizes prestige venues, private dining, and car service."}
+          {mode === "partner" && "Wingman suggests romantic boutique hotels, chef's table dinners, and no 6am flights."}
+        </Text>
+
+        {/* Trip Name */}
+        <Text style={g.sectionT}>TRIP NAME</Text>
         <View style={g.group}>
-          <View style={s.field}>
-            <Text style={s.label}>Trip Name *</Text>
+          <View style={[s.field, { borderBottomWidth: 0 }]}>
             <TextInput
               style={s.input}
               value={title}
               onChangeText={setTitle}
-              placeholder="e.g. Aspen Trip, NYC Weekend"
+              placeholder="e.g. Tokyo Client Trip, Paris Weekend"
               placeholderTextColor={C.mut}
               autoCapitalize="words"
             />
           </View>
         </View>
 
+        {/* Flight */}
         <Text style={g.sectionT}>FLIGHT (OPTIONAL)</Text>
         <View style={g.group}>
           <Field label="From (airport code)" value={origin} onChangeText={setOrigin} placeholder="JFK" />
@@ -118,9 +152,27 @@ export default function AddTripScreen({ navigation }) {
 
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
+
+  // Mode selector
+  modeRow: { flexDirection: "row", gap: 10, paddingHorizontal: 20, marginBottom: 10 },
+  modeBtn: {
+    flex: 1, alignItems: "center", backgroundColor: C.card,
+    borderRadius: 14, paddingVertical: 14, paddingHorizontal: 8,
+    borderWidth: 1.5, borderColor: "transparent",
+  },
+  modeBtnOn: { borderColor: C.teal, backgroundColor: "#0D2A22" },
+  modeIcon: { fontSize: 22, marginBottom: 4 },
+  modeLabel: { color: C.mut, fontSize: 13, fontWeight: "700" },
+  modeLabelOn: { color: C.teal },
+  modeDesc: { color: C.mut, fontSize: 10, marginTop: 2, textAlign: "center" },
+  modeHint: { color: C.mut, fontSize: 12, paddingHorizontal: 20, marginBottom: 16, lineHeight: 17 },
+
+  // Fields
   field: { paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: C.line },
   label: { color: C.mut, fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 },
   input: { color: C.ink, fontSize: 16, fontWeight: "500" },
+
+  // Save button
   saveBtn: { backgroundColor: C.accent, borderRadius: 14, padding: 16, alignItems: "center", marginTop: 20 },
   saveBtnT: { color: "#fff", fontSize: 16, fontWeight: "700" },
 });

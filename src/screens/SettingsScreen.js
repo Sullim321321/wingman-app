@@ -47,6 +47,13 @@ export default function SettingsScreen({ navigation }) {
           <SetRow ic="📡" t="All channels & privacy" sub="Email, Calendar, WhatsApp, Messages" right={<Chip color={C.accent}>Manage ›</Chip>} onPress={() => navigation.navigate("Connections")} />
         </View>
 
+        <Text style={g.sectionT}>TASTE PROFILE</Text>
+        <View style={g.group}>
+          <View style={{ borderBottomWidth: 0 }}>
+            <SetRow ic="✨" t="Editorial sources & preferences" sub="Sources, hotel soft-specs, seat prefs, dietary" right={<Chip color={C.accent}>Edit ›</Chip>} onPress={() => navigation.navigate("TasteSetup", { fromSettings: true })} />
+          </View>
+        </View>
+
         <Text style={g.sectionT}>ACCOUNT</Text>
         <Text style={s.acct}>Signed in as {email || "—"}</Text>
         <Btn title="Sign out" kind="ghost" onPress={signOut} />

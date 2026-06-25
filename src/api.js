@@ -45,3 +45,19 @@ export const registerPushToken = (pushToken) =>
   req("/push-token", { method: "POST", body: JSON.stringify({ pushToken }) });
 
 export const getMe = () => req("/me");
+
+// Gmail
+export const getGmailConnectUrl = () => req("/auth/gmail/connect");
+export const triggerGmailScan = () =>
+  req("/auth/gmail/scan", { method: "POST" });
+
+// Trips
+export const getTrips = () => req("/trips");
+export const createTrip = (data) =>
+  req("/trips", { method: "POST", body: JSON.stringify(data) });
+export const deleteTrip = (id) =>
+  req("/trips/" + id, { method: "DELETE" });
+
+// Concierge
+export const sendConciergeMessage = (message, history = []) =>
+  req("/concierge", { method: "POST", body: JSON.stringify({ message, history }) });

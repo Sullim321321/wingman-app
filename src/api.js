@@ -58,6 +58,10 @@ export const createTrip = (data) =>
 export const deleteTrip = (id) =>
   req("/trips/" + id, { method: "DELETE" });
 
+// Activity feed
+export const getActivity = (limit = 50) =>
+  req("/activity?limit=" + limit);
+
 // Flight status (FlightAware AeroAPI)
 export const getFlightStatus = (ident) =>
   req("/flight-status?ident=" + encodeURIComponent(ident));

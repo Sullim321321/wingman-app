@@ -54,6 +54,13 @@ export default function SettingsScreen({ navigation }) {
           </View>
         </View>
 
+        <Text style={g.sectionT}>LOYALTY PROGRAMS</Text>
+        <View style={g.group}>
+          <View style={{ borderBottomWidth: 0 }}>
+            <SetRow ic="🏆" t="Frequent flyer & hotel programs" sub="Marriott, Hilton, United, Delta, Hyatt & more" right={<Chip color={C.teal}>Manage ›</Chip>} onPress={() => navigation.navigate("Loyalty")} />
+          </View>
+        </View>
+
         <Text style={g.sectionT}>SUBSCRIPTION</Text>
         <View style={g.group}>
           <View style={{ borderBottomWidth: 0 }}>

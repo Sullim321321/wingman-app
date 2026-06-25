@@ -31,6 +31,7 @@ import AddTripScreen from "./src/screens/AddTripScreen";
 import TripDetailScreen from "./src/screens/TripDetailScreen";
 import TasteSetupScreen from "./src/screens/TasteSetupScreen";
 import SubscriptionScreen from "./src/screens/SubscriptionScreen";
+import LoyaltyScreen from "./src/screens/LoyaltyScreen";
 
 export const navRef = createNavigationContainerRef();
 const Stack = createNativeStackNavigator();
@@ -132,6 +133,7 @@ function Root() {
             <Stack.Screen name="TripDetail" component={TripDetailScreen} />
             <Stack.Screen name="TasteSetup" component={TasteSetupScreen} />
             <Stack.Screen name="Subscription" component={SubscriptionScreen} />
+            <Stack.Screen name="Loyalty" component={LoyaltyScreen} />
             <Stack.Screen name="Main" component={Tabs} />
           </>
         ) : (

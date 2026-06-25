@@ -54,6 +54,13 @@ export default function SettingsScreen({ navigation }) {
           </View>
         </View>
 
+        <Text style={g.sectionT}>SUBSCRIPTION</Text>
+        <View style={g.group}>
+          <View style={{ borderBottomWidth: 0 }}>
+            <SetRow ic="⚡" t="Wingman Pro / Elite" sub="Manage your subscription and billing" right={<Chip color="#818CF8">Manage ›</Chip>} onPress={() => navigation.navigate("Subscription")} />
+          </View>
+        </View>
+
         <Text style={g.sectionT}>ACCOUNT</Text>
         <Text style={s.acct}>Signed in as {email || "—"}</Text>
         <Btn title="Sign out" kind="ghost" onPress={signOut} />

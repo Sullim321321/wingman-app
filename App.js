@@ -30,6 +30,7 @@ import SignInScreen from "./src/screens/SignInScreen";
 import AddTripScreen from "./src/screens/AddTripScreen";
 import TripDetailScreen from "./src/screens/TripDetailScreen";
 import TasteSetupScreen from "./src/screens/TasteSetupScreen";
+import SubscriptionScreen from "./src/screens/SubscriptionScreen";
 
 export const navRef = createNavigationContainerRef();
 const Stack = createNativeStackNavigator();
@@ -130,6 +131,7 @@ function Root() {
             <Stack.Screen name="AddTrip" component={AddTripScreen} />
             <Stack.Screen name="TripDetail" component={TripDetailScreen} />
             <Stack.Screen name="TasteSetup" component={TasteSetupScreen} />
+            <Stack.Screen name="Subscription" component={SubscriptionScreen} />
             <Stack.Screen name="Main" component={Tabs} />
           </>
         ) : (

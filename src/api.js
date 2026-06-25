@@ -74,3 +74,22 @@ export const refreshTrip = (id) =>
 // Concierge
 export const sendConciergeMessage = (message, history = []) =>
   req("/concierge", { method: "POST", body: JSON.stringify({ message, history }) });
+
+// Apple Wallet
+export const getWalletPass = (legId) => req("/wallet/pass/" + legId);
+
+// Uber
+export const getUberEstimate = (airport, mode) =>
+  req("/uber/estimate?airport=" + encodeURIComponent(airport) + "&mode=" + encodeURIComponent(mode));
+export const confirmUberRide = (data) =>
+  req("/uber/confirm", { method: "POST", body: JSON.stringify(data) });
+
+// Subscription
+export const getSubscriptionPlans = () => req("/subscription/plans");
+export const createSubscriptionIntent = (plan) =>
+  req("/subscription/create-intent", { method: "POST", body: JSON.stringify({ plan }) });
+export const activateSubscription = (plan, paymentMethodId) =>
+  req("/subscription/activate", { method: "POST", body: JSON.stringify({ plan, payment_method_id: paymentMethodId }) });
+
+// Export token getter for SubscriptionScreen
+export const getToken = () => Promise.resolve(_token);

@@ -22,15 +22,17 @@ function timeAgo(iso) {
 }
 
 const TYPE_META = {
-  disruption: { ic: "⚠️", color: C.coral },
-  delay:      { ic: "⏱",  color: C.amber },
-  recovery:   { ic: "✅", color: C.teal },
-  departed:   { ic: "🛫", color: C.accent },
-  landed:     { ic: "🛬", color: "#818CF8" },
-  status:     { ic: "ℹ️", color: C.mut },
-  import:     { ic: "📥", color: C.teal },
-  trip:       { ic: "🧭", color: C.accent },
-  weather:    { ic: "🌨️", color: C.accent },
+  disruption:  { ic: "⚠️", color: C.coral },
+  delay:       { ic: "⏱",  color: C.amber },
+  recovery:    { ic: "✅", color: C.teal },
+  departed:    { ic: "🛫", color: C.accent },
+  landed:      { ic: "🛬", color: "#818CF8" },
+  status:      { ic: "ℹ️", color: C.mut },
+  import:      { ic: "📥", color: C.teal },
+  trip:        { ic: "🧭", color: C.accent },
+  weather:     { ic: "🌨️", color: C.accent },
+  seat_alert:  { ic: "🪑", color: C.teal },
+  hotel_email: { ic: "✉️", color: "#818CF8" },
 };
 
 function EventItem({ event, isLast }) {

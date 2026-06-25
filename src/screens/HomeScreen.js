@@ -1,10 +1,10 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet, ActivityIndicator, RefreshControl, Alert } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { C } from "../theme";
 import { Btn, g } from "../components";
-import { getTrips, deleteTrip } from "../api";
+import { getTrips, deleteTrip, getFlightStatus } from "../api";
 import { scheduleDisruption } from "../notify";
 
 function formatDate(iso) {
@@ -13,6 +13,69 @@ function formatDate(iso) {
     const d = new Date(iso);
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   } catch { return null; }
+}
+
+function formatTime(iso) {
+  if (!iso) return null;
+  try {
+    const d = new Date(iso);
+    return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  } catch { return null; }
+}
+
+function StatusBadge({ status }) {
+  if (!status) return null;
+  const map = {
+    "On Time":   { bg: "rgba(34,211,166,0.14)", border: "rgba(34,211,166,0.3)", text: C.teal },
+    "Delayed":   { bg: "rgba(251,191,36,0.14)",  border: "rgba(251,191,36,0.3)",  text: "#FBBf24" },
+    "Cancelled": { bg: "rgba(239,68,68,0.14)",   border: "rgba(239,68,68,0.3)",   text: "#EF4444" },
+    "Landed":    { bg: "rgba(99,102,241,0.14)",  border: "rgba(99,102,241,0.3)",  text: "#818CF8" },
+    "Scheduled": { bg: "rgba(148,163,184,0.14)", border: "rgba(148,163,184,0.3)", text: C.mut },
+    "In Air":    { bg: "rgba(91,140,255,0.14)",  border: "rgba(91,140,255,0.3)",  text: C.accent },
+    "Booked":    { bg: "rgba(148,163,184,0.14)", border: "rgba(148,163,184,0.3)", text: C.mut },
+  };
+  const style = map[status] || map["Scheduled"];
+  return (
+    <View style={{ backgroundColor: style.bg, borderColor: style.border, borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 }}>
+      <Text style={{ color: style.text, fontSize: 11, fontWeight: "700" }}>{status}</Text>
+    </View>
+  );
+}
+
+function FlightLeg({ leg }) {
+  const [status, setStatus] = useState(leg.status || null);
+  const [fetching, setFetching] = useState(false);
+
+  useEffect(() => {
+    if (!leg.flight_number) return;
+    const ident = (leg.carrier || "") + (leg.flight_number || "");
+    if (!ident.trim()) return;
+    setFetching(true);
+    getFlightStatus(ident)
+      .then(d => { if (d && d.status) setStatus(d.status); })
+      .catch(() => {})
+      .finally(() => setFetching(false));
+  }, [leg.flight_number, leg.carrier]);
+
+  const title = (leg.origin || "?") + " → " + (leg.destination || "?");
+  const sub = [
+    leg.carrier && leg.flight_number ? (leg.carrier + " " + leg.flight_number) : null,
+    formatTime(leg.departs_at),
+  ].filter(Boolean).join(" · ");
+
+  return (
+    <View style={s.leg}>
+      <Text style={s.legIc}>🛫</Text>
+      <View style={{ flex: 1 }}>
+        <Text style={s.legT}>{title}</Text>
+        {sub ? <Text style={s.legS}>{sub}</Text> : null}
+      </View>
+      {fetching
+        ? <ActivityIndicator size="small" color={C.teal} />
+        : <StatusBadge status={status || "Scheduled"} />
+      }
+    </View>
+  );
 }
 
 function TripCard({ trip, onDelete, navigation }) {
@@ -39,11 +102,12 @@ function TripCard({ trip, onDelete, navigation }) {
         </View>
       </View>
       {legs.map((leg, i) => {
-        const ic = leg.type === "flight" ? "🛫" : leg.type === "hotel" ? "🏨" : "🚗";
-        const title = leg.type === "flight"
-          ? (leg.origin || "?") + " → " + (leg.destination || "?")
-          : leg.carrier || leg.destination || "Booking";
-        const sub = [leg.carrier, leg.flight_number, formatDate(leg.departs_at)].filter(Boolean).join(" · ");
+        if (leg.type === "flight") {
+          return <FlightLeg key={i} leg={leg} />;
+        }
+        const ic = leg.type === "hotel" ? "🏨" : "🚗";
+        const title = leg.carrier || leg.destination || "Booking";
+        const sub = formatDate(leg.departs_at || leg.check_in);
         return (
           <View key={i} style={s.leg}>
             <Text style={s.legIc}>{ic}</Text>
@@ -51,6 +115,7 @@ function TripCard({ trip, onDelete, navigation }) {
               <Text style={s.legT}>{title}</Text>
               {sub ? <Text style={s.legS}>{sub}</Text> : null}
             </View>
+            <StatusBadge status="Booked" />
           </View>
         );
       })}
@@ -154,8 +219,8 @@ const s = StyleSheet.create({
   when: { color: C.mut, fontSize: 13, marginTop: 2 },
   pillLive: { backgroundColor: "rgba(34,211,166,0.14)", borderColor: "rgba(34,211,166,0.3)", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
   pillLiveT: { color: C.teal, fontSize: 11, fontWeight: "700" },
-  leg: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginTop: 10 },
-  legIc: { fontSize: 16, marginTop: 1 },
+  leg: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 10 },
+  legIc: { fontSize: 16 },
   legT: { color: C.ink, fontSize: 14, fontWeight: "600" },
   legS: { color: C.mut, fontSize: 12, marginTop: 1 },
   emptyCard: { alignItems: "center", padding: 40, backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, marginBottom: 12 },

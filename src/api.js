@@ -58,6 +58,12 @@ export const createTrip = (data) =>
 export const deleteTrip = (id) =>
   req("/trips/" + id, { method: "DELETE" });
 
+// Flight status (FlightAware AeroAPI)
+export const getFlightStatus = (ident) =>
+  req("/flight-status?ident=" + encodeURIComponent(ident));
+export const refreshTrip = (id) =>
+  req("/trips/" + id + "/refresh", { method: "POST" });
+
 // Concierge
 export const sendConciergeMessage = (message, history = []) =>
   req("/concierge", { method: "POST", body: JSON.stringify({ message, history }) });

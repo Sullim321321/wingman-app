@@ -78,14 +78,9 @@ export const sendConciergeMessage = (message, history = []) =>
 // Apple Wallet
 export const getWalletPass = (legId) => req("/wallet/pass/" + legId);
 
-// Uber OAuth
-export const getUberConnectUrl = () => req("/auth/uber/connect");
-export const getUberStatus = () => req("/auth/uber/status");
-export const disconnectUber = () => req("/auth/uber/disconnect", { method: "DELETE" });
-export const getUberEstimate = (airport, mode) =>
-  req("/uber/estimate?airport=" + encodeURIComponent(airport) + "&mode=" + encodeURIComponent(mode));
-export const confirmUberRide = (data) =>
-  req("/uber/confirm", { method: "POST", body: JSON.stringify(data) });
+// Uber deep link — no OAuth needed, opens Uber app pre-filled with airport pickup
+export const getUberDeepLink = (airport) =>
+  req("/uber/deeplink?airport=" + encodeURIComponent(airport));
 
 // Subscription
 export const getSubscriptionPlans = () => req("/subscription/plans");

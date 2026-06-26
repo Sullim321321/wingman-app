@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet, Alert, ActivityIndicator, Linking } from "react-native";
+import { SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet, Alert, ActivityIndicator } from "react-native";
 import { C } from "../theme";
 import { BackBar, g } from "../components";
-import { getMe, getGmailConnectUrl, triggerGmailScan, getUberConnectUrl, getUberStatus, disconnectUber } from "../api";
+import { getMe, getGmailConnectUrl, triggerGmailScan } from "../api";
 
 function Feat({ ic, t, color }) {
   return (
@@ -15,20 +15,15 @@ function Feat({ ic, t, color }) {
 
 export default function ConnectionsScreen({ navigation }) {
   const [gmailConnected, setGmailConnected] = useState(false);
-  const [uberConnected, setUberConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
-  const [connectingUber, setConnectingUber] = useState(false);
   const [scanning, setScanning] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      getMe().catch(() => ({})),
-      getUberStatus().catch(() => ({ connected: false })),
-    ]).then(([me, uberStatus]) => {
-      setGmailConnected(me.gmail_connected || false);
-      setUberConnected(uberStatus.connected || false);
-    }).finally(() => setLoading(false));
+    getMe()
+      .then(data => setGmailConnected(data.gmail_connected || false))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const connectGmail = async () => {
@@ -52,51 +47,6 @@ export default function ConnectionsScreen({ navigation }) {
     } finally {
       setConnecting(false);
     }
-  };
-
-  const connectUber = async () => {
-    setConnectingUber(true);
-    try {
-      const data = await getUberConnectUrl();
-      if (data.url) {
-        await Linking.openURL(data.url);
-        setTimeout(async () => {
-          try {
-            const status = await getUberStatus();
-            setUberConnected(status.connected || false);
-            if (status.connected) {
-              Alert.alert("Uber connected!", "Wingman will auto-dispatch a ride when you land. Your payment method and account are used — Wingman never charges you directly.");
-            }
-          } catch {}
-        }, 4000);
-      }
-    } catch (e) {
-      Alert.alert("Error", e.message);
-    } finally {
-      setConnectingUber(false);
-    }
-  };
-
-  const disconnectUberAccount = async () => {
-    Alert.alert(
-      "Disconnect Uber?",
-      "Wingman will no longer auto-dispatch rides on landing.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Disconnect",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await disconnectUber();
-              setUberConnected(false);
-            } catch (e) {
-              Alert.alert("Error", e.message);
-            }
-          },
-        },
-      ]
-    );
   };
 
   const rescan = async () => {
@@ -146,29 +96,16 @@ export default function ConnectionsScreen({ navigation }) {
             )}
           </View>
 
-          {/* Uber */}
+          {/* Uber — deep link, no account connection needed */}
           <View style={s.row}>
             <View style={[s.iconBox, { backgroundColor: "rgba(0,0,0,0.3)" }]}>
               <Text style={{ fontSize: 18 }}>🚗</Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={s.rowT}>Uber</Text>
-              <Text style={s.rowS}>{loading ? "Checking..." : uberConnected ? "Connected — auto-dispatch on landing" : "Connect to auto-dispatch a ride when you land"}</Text>
+              <Text style={s.rowS}>Auto-opens Uber with airport pickup when you land — no account connection needed</Text>
             </View>
-            {loading ? (
-              <ActivityIndicator color={C.teal} size="small" />
-            ) : uberConnected ? (
-              <View style={{ flexDirection: "row", gap: 8 }}>
-                <Pressable style={s.rescanBtn} onPress={disconnectUberAccount}>
-                  <Text style={s.rescanT}>Disconnect</Text>
-                </Pressable>
-                <View style={s.connectedBadge}><Text style={s.connectedT}>✓ On</Text></View>
-              </View>
-            ) : (
-              <Pressable style={s.connectBtn} onPress={connectUber} disabled={connectingUber}>
-                {connectingUber ? <ActivityIndicator color="#fff" size="small" /> : <Text style={s.connectBtnT}>Connect</Text>}
-              </Pressable>
-            )}
+            <View style={s.connectedBadge}><Text style={s.connectedT}>✓ On</Text></View>
           </View>
 
           {/* Calendar — coming soon */}
@@ -212,7 +149,7 @@ export default function ConnectionsScreen({ navigation }) {
         <View style={[g.group, { paddingVertical: 12 }]}>
           <Feat ic="✈️" t="Booking & flight confirmations" />
           <Feat ic="📆" t="Dates, times & destinations" />
-          <Feat ic="🚗" t="Your Uber account — for auto-dispatch on landing" />
+          <Feat ic="🚗" t="Opens Uber on landing — no account linking required" />
           <Feat ic="⦸" color="#FF6B5E" t="Nothing personal or off-topic — ever." />
         </View>
         <Text style={s.note}>Revoke any connection in one tap. Your data is never sold.</Text>

@@ -6,6 +6,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { StatusBar } from "expo-status-bar";
 import * as Notifications from "expo-notifications";
+import * as Linking from "expo-linking";
 import { C } from "./src/theme";
 import { setupNotificationHandler, registerForPush } from "./src/notify";
 import { AuthProvider, useAuth } from "./src/auth";
@@ -94,13 +95,36 @@ function Root() {
   }, [token]);
 
   useEffect(() => {
+    // Handle notification tap — if payload has a deepLink (e.g. Uber on landing),
+    // open it directly; otherwise navigate to the route specified in the payload.
     const resp = Notifications.addNotificationResponseReceivedListener((r) => {
-      const route = r.notification.request.content.data?.route || "Alert";
-      if (navRef.isReady()) navRef.navigate(route);
+      const data = r.notification.request.content.data || {};
+
+      if (data.deepLink) {
+        // Deep link notification (e.g. Uber pickup on landing)
+        Linking.canOpenURL(data.deepLink)
+          .then((supported) => {
+            const url = supported ? data.deepLink : (data.fallbackUrl || data.deepLink);
+            return Linking.openURL(url);
+          })
+          .catch(() => {
+            // If Uber app not installed, fall back to web URL
+            if (data.fallbackUrl) {
+              Linking.openURL(data.fallbackUrl).catch(() => {});
+            }
+          });
+      } else {
+        // Standard in-app navigation notification
+        const route = data.route || "Alert";
+        if (navRef.isReady()) navRef.navigate(route);
+      }
     });
+
+    // Handle foreground notifications — navigate to Alert screen
     const recv = Notifications.addNotificationReceivedListener(() => {
       setTimeout(() => { if (navRef.isReady()) navRef.navigate("Alert"); }, 600);
     });
+
     return () => { resp.remove(); recv.remove(); };
   }, []);
 

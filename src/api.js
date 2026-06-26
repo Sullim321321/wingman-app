@@ -91,3 +91,11 @@ export const activateSubscription = (plan, paymentMethodId) =>
 
 // Export token getter for SubscriptionScreen
 export const getToken = () => Promise.resolve(_token);
+
+// Duffel flight search + booking
+export const searchFlights = (body) =>
+  req("/flights/search", { method: "POST", body: JSON.stringify(body) });
+export const getFlightOffer = (offerId) => req("/flights/offer/" + offerId);
+export const bookFlight = (body) =>
+  req("/flights/book", { method: "POST", body: JSON.stringify(body) });
+export const getFlightOrders = () => req("/flights/orders");

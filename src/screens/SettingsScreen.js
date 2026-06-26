@@ -47,6 +47,13 @@ export default function SettingsScreen({ navigation }) {
           <SetRow ic="📡" t="All channels & privacy" sub="Email, Calendar, WhatsApp, Messages" right={<Chip color={C.accent}>Manage ›</Chip>} onPress={() => navigation.navigate("Connections")} />
         </View>
 
+        <Text style={g.sectionT}>BOOK FLIGHTS</Text>
+        <View style={g.group}>
+          <View style={{ borderBottomWidth: 0 }}>
+            <SetRow ic="✈️" iconColor={C.accent} t="Search & book flights" sub="Powered by Duffel — 300+ airlines" right={<Chip color={C.accent}>Search ›</Chip>} onPress={() => navigation.navigate("FlightSearch")} />
+          </View>
+        </View>
+
         <Text style={g.sectionT}>TASTE PROFILE</Text>
         <View style={g.group}>
           <SetRow ic="✨" t="Editorial sources & preferences" sub="Sources, hotel soft-specs, seat prefs, dietary" right={<Chip color={C.accent}>Edit ›</Chip>} onPress={() => navigation.navigate("TasteSetup", { fromSettings: true })} />

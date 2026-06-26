@@ -34,6 +34,9 @@ import TasteSetupScreen from "./src/screens/TasteSetupScreen";
 import SubscriptionScreen from "./src/screens/SubscriptionScreen";
 import LoyaltyScreen from "./src/screens/LoyaltyScreen";
 import HomeAddressScreen from "./src/screens/HomeAddressScreen";
+import FlightSearchScreen from "./src/screens/FlightSearchScreen";
+import FlightBookScreen from "./src/screens/FlightBookScreen";
+import FlightConfirmScreen from "./src/screens/FlightConfirmScreen";
 
 export const navRef = createNavigationContainerRef();
 const Stack = createNativeStackNavigator();
@@ -159,6 +162,9 @@ function Root() {
             <Stack.Screen name="Subscription" component={SubscriptionScreen} />
             <Stack.Screen name="Loyalty" component={LoyaltyScreen} />
             <Stack.Screen name="HomeAddress" component={HomeAddressScreen} />
+            <Stack.Screen name="FlightSearch" component={FlightSearchScreen} />
+            <Stack.Screen name="FlightBook" component={FlightBookScreen} />
+            <Stack.Screen name="FlightConfirm" component={FlightConfirmScreen} options={{ gestureEnabled: false }} />
             <Stack.Screen name="Main" component={Tabs} />
           </>
         ) : (

@@ -78,7 +78,10 @@ export const sendConciergeMessage = (message, history = []) =>
 // Apple Wallet
 export const getWalletPass = (legId) => req("/wallet/pass/" + legId);
 
-// Uber
+// Uber OAuth
+export const getUberConnectUrl = () => req("/auth/uber/connect");
+export const getUberStatus = () => req("/auth/uber/status");
+export const disconnectUber = () => req("/auth/uber/disconnect", { method: "DELETE" });
 export const getUberEstimate = (airport, mode) =>
   req("/uber/estimate?airport=" + encodeURIComponent(airport) + "&mode=" + encodeURIComponent(mode));
 export const confirmUberRide = (data) =>

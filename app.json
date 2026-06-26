@@ -8,6 +8,7 @@
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0A0E1C",
     "icon": "./assets/icon.png",
+    "newArchEnabled": false,
     "splash": {
       "backgroundColor": "#0A0E1C",
       "resizeMode": "contain",
@@ -29,6 +30,13 @@
         "expo-notifications",
         {
           "color": "#22D3A6"
+        }
+      ],
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.club.welcometothefight.wingman",
+          "enableGooglePay": false
         }
       ]
     ],

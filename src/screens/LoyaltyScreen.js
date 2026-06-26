@@ -8,7 +8,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { C } from "../theme";
 import { BackBar, Btn, g } from "../components";
 import { getProfile } from "../api";
-
+import * as SecureStore from "expo-secure-store";
 const API_BASE = require("../config").API_BASE;
 
 // ---------------------------------------------------------------------------
@@ -263,14 +263,7 @@ export default function LoyaltyScreen({ navigation }) {
 
   // Get auth token
   useEffect(() => {
-    import("../api").then(api => {
-      // Access the internal token via getMe call
-      api.getMe().then(() => {}).catch(() => {});
-    });
-    // Read token from SecureStore
-    import("expo-secure-store").then(SS => {
-      SS.getItemAsync("wingman_token").then(t => setToken(t));
-    });
+    SecureStore.getItemAsync("wingman_token").then(t => setToken(t));
   }, []);
 
   const fetchAccounts = useCallback(async () => {

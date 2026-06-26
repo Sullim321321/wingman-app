@@ -49,8 +49,9 @@ export default function SettingsScreen({ navigation }) {
 
         <Text style={g.sectionT}>TASTE PROFILE</Text>
         <View style={g.group}>
+          <SetRow ic="✨" t="Editorial sources & preferences" sub="Sources, hotel soft-specs, seat prefs, dietary" right={<Chip color={C.accent}>Edit ›</Chip>} onPress={() => navigation.navigate("TasteSetup", { fromSettings: true })} />
           <View style={{ borderBottomWidth: 0 }}>
-            <SetRow ic="✨" t="Editorial sources & preferences" sub="Sources, hotel soft-specs, seat prefs, dietary" right={<Chip color={C.accent}>Edit ›</Chip>} onPress={() => navigation.navigate("TasteSetup", { fromSettings: true })} />
+            <SetRow ic="🏠" t="Home address" sub="Pre-filled as Uber dropoff when you land" right={<Chip color={C.teal}>Set ›</Chip>} onPress={() => navigation.navigate("HomeAddress")} />
           </View>
         </View>
 

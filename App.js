@@ -33,6 +33,7 @@ import TripDetailScreen from "./src/screens/TripDetailScreen";
 import TasteSetupScreen from "./src/screens/TasteSetupScreen";
 import SubscriptionScreen from "./src/screens/SubscriptionScreen";
 import LoyaltyScreen from "./src/screens/LoyaltyScreen";
+import HomeAddressScreen from "./src/screens/HomeAddressScreen";
 
 export const navRef = createNavigationContainerRef();
 const Stack = createNativeStackNavigator();
@@ -104,14 +105,13 @@ function Root() {
         // Deep link notification (e.g. Uber pickup on landing)
         Linking.canOpenURL(data.deepLink)
           .then((supported) => {
-            const url = supported ? data.deepLink : (data.fallbackUrl || data.deepLink);
+            const url = supported ? data.deepLink : (data.webFallback || data.fallbackUrl || data.deepLink);
             return Linking.openURL(url);
           })
           .catch(() => {
             // If Uber app not installed, fall back to web URL
-            if (data.fallbackUrl) {
-              Linking.openURL(data.fallbackUrl).catch(() => {});
-            }
+            const fallback = data.webFallback || data.fallbackUrl;
+            if (fallback) Linking.openURL(fallback).catch(() => {});
           });
       } else {
         // Standard in-app navigation notification
@@ -158,6 +158,7 @@ function Root() {
             <Stack.Screen name="TasteSetup" component={TasteSetupScreen} />
             <Stack.Screen name="Subscription" component={SubscriptionScreen} />
             <Stack.Screen name="Loyalty" component={LoyaltyScreen} />
+            <Stack.Screen name="HomeAddress" component={HomeAddressScreen} />
             <Stack.Screen name="Main" component={Tabs} />
           </>
         ) : (

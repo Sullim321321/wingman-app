@@ -6,11 +6,11 @@
     "orientation": "portrait",
     "scheme": "wingman",
     "userInterfaceStyle": "dark",
-    "backgroundColor": "#0A0E1C",
+    "backgroundColor": "#030408",
     "icon": "./assets/icon.png",
     "newArchEnabled": false,
     "splash": {
-      "backgroundColor": "#0A0E1C",
+      "backgroundColor": "#030408",
       "resizeMode": "contain",
       "image": "./assets/splash.png"
     },

@@ -12,7 +12,7 @@ export default function SettingsScreen({ navigation }) {
   const [drops, setDrops] = useState(true);
   const [quiet, setQuiet] = useState(false);
   const sw = (v, set) => (
-    <Switch value={v} onValueChange={set} trackColor={{ true: C.teal, false: "#2A3354" }} thumbColor="#fff" ios_backgroundColor="#2A3354" />
+    <Switch value={v} onValueChange={set} trackColor={{ true: C.teal, false: "#1A2035" }} thumbColor="#fff" ios_backgroundColor="#1A2035" />
   );
 
   return (
@@ -86,6 +86,6 @@ export default function SettingsScreen({ navigation }) {
 
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
-  cap: { color: C.mut, fontSize: 12, marginTop: 10, lineHeight: 17 },
-  acct: { color: C.mut, fontSize: 13, marginBottom: 12 },
+  cap: { color: C.mut, fontSize: 13, marginTop: 12, lineHeight: 20 },
+  acct: { color: C.mut, fontSize: 14, marginBottom: 14, letterSpacing: 0.1 },
 });

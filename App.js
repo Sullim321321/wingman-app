@@ -57,10 +57,19 @@ function Tabs() {
         tabBarActiveTintColor: C.accent,
         tabBarInactiveTintColor: C.mut,
         sceneContainerStyle: { backgroundColor: C.bg },
-        tabBarStyle: { backgroundColor: "#0A0E1C", borderTopColor: C.line, height: 84, paddingTop: 6 },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
+        tabBarStyle: {
+          backgroundColor: "#030408",
+          borderTopColor: "rgba(255,255,255,0.06)",
+          borderTopWidth: 0.5,
+          height: 88,
+          paddingTop: 8,
+          paddingBottom: 4,
+        },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "600", letterSpacing: 0.3, marginTop: 2 },
         tabBarIcon: ({ focused }) => (
-          <Text style={{ fontSize: 18, opacity: focused ? 1 : 0.55 }}>{TAB_ICON[route.name]}</Text>
+          <View style={focused ? { backgroundColor: C.accent + "18", borderRadius: 12, width: 36, height: 28, alignItems: "center", justifyContent: "center" } : {}}>
+            <Text style={{ fontSize: 17, opacity: focused ? 1 : 0.4 }}>{TAB_ICON[route.name]}</Text>
+          </View>
         ),
       })}
     >

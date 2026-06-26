@@ -26,18 +26,18 @@ function formatTime(iso) {
 function StatusBadge({ status }) {
   if (!status) return null;
   const map = {
-    "On Time":   { bg: "rgba(34,211,166,0.14)", border: "rgba(34,211,166,0.3)", text: C.teal },
-    "Delayed":   { bg: "rgba(251,191,36,0.14)",  border: "rgba(251,191,36,0.3)",  text: "#FBBf24" },
-    "Cancelled": { bg: "rgba(239,68,68,0.14)",   border: "rgba(239,68,68,0.3)",   text: "#EF4444" },
-    "Landed":    { bg: "rgba(99,102,241,0.14)",  border: "rgba(99,102,241,0.3)",  text: "#818CF8" },
-    "Scheduled": { bg: "rgba(148,163,184,0.14)", border: "rgba(148,163,184,0.3)", text: C.mut },
-    "In Air":    { bg: "rgba(91,140,255,0.14)",  border: "rgba(91,140,255,0.3)",  text: C.accent },
-    "Booked":    { bg: "rgba(148,163,184,0.14)", border: "rgba(148,163,184,0.3)", text: C.mut },
+    "On Time":   { bg: "rgba(20,201,153,0.12)", border: "rgba(20,201,153,0.25)", text: C.teal },
+    "Delayed":   { bg: "rgba(255,176,46,0.12)",  border: "rgba(255,176,46,0.25)",  text: C.amber },
+    "Cancelled": { bg: "rgba(255,77,109,0.12)",  border: "rgba(255,77,109,0.25)",  text: C.coral },
+    "Landed":    { bg: "rgba(99,102,241,0.12)",  border: "rgba(99,102,241,0.25)",  text: "#818CF8" },
+    "Scheduled": { bg: "rgba(134,144,166,0.10)", border: "rgba(134,144,166,0.2)",  text: C.mut },
+    "In Air":    { bg: "rgba(74,114,255,0.12)",  border: "rgba(74,114,255,0.25)",  text: C.accent },
+    "Booked":    { bg: "rgba(134,144,166,0.10)", border: "rgba(134,144,166,0.2)",  text: C.mut },
   };
-  const style = map[status] || map["Scheduled"];
+  const st = map[status] || map["Scheduled"];
   return (
-    <View style={{ backgroundColor: style.bg, borderColor: style.border, borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 }}>
-      <Text style={{ color: style.text, fontSize: 11, fontWeight: "700" }}>{status}</Text>
+    <View style={{ backgroundColor: st.bg, borderColor: st.border, borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}>
+      <Text style={{ color: st.text, fontSize: 11, fontWeight: "700", letterSpacing: 0.3 }}>{status}</Text>
     </View>
   );
 }
@@ -87,8 +87,8 @@ function TripCard({ trip, onDelete, navigation }) {
   const depDate = formatDate(firstFlight?.departs_at);
 
   return (
-    <Pressable onPress={() => navigation.navigate("TripDetail", { trip })} style={{ marginBottom: 12 }}>
-    <LinearGradient colors={["#1D2A52", "#141D38"]} style={[s.tripCard, { marginBottom: 0 }]}>
+    <Pressable onPress={() => navigation.navigate("TripDetail", { trip })} style={{ marginBottom: 14 }}>
+    <LinearGradient colors={["#111827", "#0D1120"]} style={[s.tripCard, { marginBottom: 0 }]}>
       <View style={g.rowBetween}>
         <View style={{ flex: 1 }}>
           <Text style={s.dest}>{trip.title}</Text>
@@ -173,7 +173,11 @@ export default function HomeScreen({ navigation }) {
             <LinearGradient colors={[C.accent, C.teal]} style={s.mark}><Text style={{ fontSize: 14 }}>✈</Text></LinearGradient>
             <Text style={s.logo}>Wingman</Text>
           </View>
-          <Pressable style={s.avatar} onPress={() => navigation.navigate("Settings")}><Text style={{ color: "#fff", fontWeight: "700" }}>M</Text></Pressable>
+          <Pressable style={s.avatar} onPress={() => navigation.navigate("Settings")}>
+            <LinearGradient colors={[C.accent + "80", C.teal + "80"]} style={s.avatarGrad}>
+              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>M</Text>
+            </LinearGradient>
+          </Pressable>
         </View>
 
         {loading ? (
@@ -195,11 +199,16 @@ export default function HomeScreen({ navigation }) {
 
         <Text style={g.sectionT}>LIVE MONITORING</Text>
         <Pressable style={s.monitor} onPress={() => navigation.navigate("Track")}>
-          <View style={s.radarMini}><View style={s.radarMiniSweep} /></View>
+          <View style={s.radarMini}>
+            <View style={s.radarMiniRing} />
+            <View style={s.radarMiniSweep} />
+            <View style={s.radarMiniDot} />
+          </View>
           <View style={{ flex: 1 }}>
             <Text style={s.mt}>Watching {trips.length} trip{trips.length !== 1 ? "s" : ""}</Text>
             <Text style={s.ms}>Tap for track record →</Text>
           </View>
+          <Text style={{ color: C.mut, fontSize: 18, opacity: 0.5 }}>›</Text>
         </Pressable>
 
         <Text style={g.sectionT}>WHEN TRAVEL BREAKS</Text>
@@ -212,29 +221,32 @@ export default function HomeScreen({ navigation }) {
 
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
-  appH: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 14 },
-  logoRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  mark: { width: 28, height: 28, borderRadius: 8, alignItems: "center", justifyContent: "center" },
-  logo: { color: C.ink, fontSize: 19, fontWeight: "700" },
-  avatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: "#3A4A7A", alignItems: "center", justifyContent: "center" },
-  tripCard: { borderRadius: 20, padding: 16, borderWidth: 1, borderColor: C.line, marginBottom: 12 },
-  dest: { color: C.ink, fontSize: 20, fontWeight: "700" },
-  when: { color: C.mut, fontSize: 13, marginTop: 2 },
-  pillLive: { backgroundColor: "rgba(34,211,166,0.14)", borderColor: "rgba(34,211,166,0.3)", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
-  pillLiveT: { color: C.teal, fontSize: 11, fontWeight: "700" },
-  leg: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 10 },
+  appH: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
+  logoRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  mark: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  logo: { color: C.ink, fontSize: 20, fontWeight: "700", letterSpacing: -0.5 },
+  avatar: { width: 34, height: 34, borderRadius: 17, overflow: "hidden" },
+  avatarGrad: { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center" },
+  tripCard: { borderRadius: 22, padding: 18, borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", marginBottom: 0 },
+  dest: { color: C.ink, fontSize: 21, fontWeight: "700", letterSpacing: -0.5 },
+  when: { color: C.mut, fontSize: 13, marginTop: 3 },
+  pillLive: { backgroundColor: "rgba(20,201,153,0.10)", borderColor: "rgba(20,201,153,0.22)", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  pillLiveT: { color: C.teal, fontSize: 11, fontWeight: "700", letterSpacing: 0.3 },
+  leg: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.05)" },
   legIc: { fontSize: 16 },
-  legT: { color: C.ink, fontSize: 14, fontWeight: "600" },
-  legS: { color: C.mut, fontSize: 12, marginTop: 1 },
-  emptyCard: { alignItems: "center", padding: 40, backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, marginBottom: 12 },
-  emptyIc: { fontSize: 40, marginBottom: 12 },
-  emptyT: { color: C.ink, fontSize: 18, fontWeight: "700", marginBottom: 6 },
-  emptyS: { color: C.mut, fontSize: 13, textAlign: "center", lineHeight: 19 },
-  monitor: { flexDirection: "row", gap: 10, alignItems: "center", backgroundColor: C.card, borderColor: C.line, borderWidth: 1, borderRadius: 14, padding: 12 },
-  radarMini: { width: 34, height: 34, borderRadius: 17, borderWidth: 2, borderColor: "rgba(91,140,255,0.25)", overflow: "hidden" },
-  radarMiniSweep: { position: "absolute", top: -2, left: 14, width: 2, height: 19, backgroundColor: C.accent },
-  mt: { color: C.ink, fontSize: 13, fontWeight: "600" },
-  ms: { color: C.mut, fontSize: 12 },
-  hint: { color: C.mut, fontSize: 12, textAlign: "center", marginTop: 10 },
-  tapHint: { color: C.mut, fontSize: 11, textAlign: "right", marginTop: 10, opacity: 0.6 },
+  legT: { color: C.ink, fontSize: 14, fontWeight: "600", letterSpacing: 0.1 },
+  legS: { color: C.mut, fontSize: 12, marginTop: 2 },
+  emptyCard: { alignItems: "center", padding: 44, backgroundColor: C.card, borderRadius: 24, borderWidth: 1, borderColor: C.line, marginBottom: 14 },
+  emptyIc: { fontSize: 44, marginBottom: 14 },
+  emptyT: { color: C.ink, fontSize: 19, fontWeight: "700", marginBottom: 8, letterSpacing: -0.3 },
+  emptyS: { color: C.mut, fontSize: 14, textAlign: "center", lineHeight: 21 },
+  monitor: { flexDirection: "row", gap: 14, alignItems: "center", backgroundColor: C.card, borderColor: C.line, borderWidth: 1, borderRadius: 18, padding: 16 },
+  radarMini: { width: 38, height: 38, borderRadius: 19, borderWidth: 1.5, borderColor: "rgba(74,114,255,0.2)", overflow: "hidden", alignItems: "center", justifyContent: "center" },
+  radarMiniRing: { position: "absolute", width: 22, height: 22, borderRadius: 11, borderWidth: 1, borderColor: "rgba(74,114,255,0.15)" },
+  radarMiniSweep: { position: "absolute", top: 0, left: 18, width: 1.5, height: 19, backgroundColor: C.accent, opacity: 0.8 },
+  radarMiniDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: C.teal, position: "absolute", top: 10, left: 22 },
+  mt: { color: C.ink, fontSize: 14, fontWeight: "600", letterSpacing: 0.1 },
+  ms: { color: C.mut, fontSize: 13, marginTop: 2 },
+  hint: { color: C.mut, fontSize: 12, textAlign: "center", marginTop: 12, lineHeight: 18 },
+  tapHint: { color: C.mut, fontSize: 11, textAlign: "right", marginTop: 12, opacity: 0.5 },
 });

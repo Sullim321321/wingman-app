@@ -8,7 +8,7 @@ import { C } from "../theme";
 import { g } from "../components";
 import { API_BASE, getToken } from "../api";
 
-const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || "pk_live_placeholder";
+const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || "pk_test_spS4gry030G8chAWaFBaCn7u00qYefZpqB";
 const APPLE_MERCHANT_ID = "merchant.app.wingmantravel";
 
 const PLAN_COLORS = {

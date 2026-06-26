@@ -22,7 +22,10 @@
         "UIBackgroundModes": [
           "remote-notification"
         ],
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "Wingman uses your camera to scan payment card details for subscriptions.",
+        "NSMicrophoneUsageDescription": "Wingman does not use the microphone.",
+        "NSPhotoLibraryUsageDescription": "Wingman does not access your photo library."
       }
     },
     "plugins": [

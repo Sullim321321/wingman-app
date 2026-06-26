@@ -17,7 +17,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "club.welcometothefight.wingman",
-      "buildNumber": "35",
+      "buildNumber": "36",
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification"

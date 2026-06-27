@@ -61,6 +61,7 @@ import DataSourcesScreen from "./src/screens/DataSourcesScreen";
 import AutonomySettingsScreen from "./src/screens/AutonomySettingsScreen";
 import InsightsScreen from "./src/screens/InsightsScreen";
 import ProfileSetupScreen from "./src/screens/ProfileSetupScreen";
+import WingmanWrappedScreen from "./src/screens/WingmanWrappedScreen";
 
 export const navRef = createNavigationContainerRef();
 const Stack = createNativeStackNavigator();
@@ -194,7 +195,8 @@ function Root() {
       if (data.tripId)      params.tripId      = data.tripId;
       if (data.legId)       params.legId       = data.legId;
       if (data.flightIdent) params.flightIdent = data.flightIdent;
-      if (route === "Alert" || route === "TripDetail") {
+      if (data.prefill) params.prefill = data.prefill;
+      if (["Alert", "TripDetail", "Concierge"].includes(route)) {
         navRef.navigate(route, Object.keys(params).length ? params : undefined);
       } else {
         navRef.navigate(route);
@@ -264,6 +266,7 @@ function Root() {
             <Stack.Screen name="DataSources"  component={DataSourcesScreen} />
             <Stack.Screen name="Autonomy"     component={AutonomySettingsScreen} />
             <Stack.Screen name="InsightsFull" component={InsightsScreen} />
+            <Stack.Screen name="Wrapped"      component={WingmanWrappedScreen} />
             <Stack.Screen name="Main"         component={Tabs} />
           </>
         ) : (

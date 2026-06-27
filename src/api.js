@@ -186,8 +186,8 @@ export const logOutcome = ({ tripId, predictedDelay, actualDelay, rescueAccepted
     }),
   });
 
-// ROI dashboard — total value saved
-export const getInsightsROI = () => req("/insights/roi");
+// ROI dashboard — total value saved, accepts period filter: '30d' | '90d' | 'all'
+export const getInsightsROI = (period = "all") => req("/insights/roi?period=" + encodeURIComponent(period));
 
 // Locale / currency preferences
 export const updateLocale = ({ locale, currency }) =>
@@ -227,3 +227,21 @@ export const recordTripOutcome = (tripId, body) =>
     method: "POST",
     body: JSON.stringify(body),
   });
+
+// ─── CONCIERGE THREAD PERSISTENCE ────────────────────────────────────────────
+export const getConciergeThread = (tripId = null) =>
+  req("/concierge/thread" + (tripId ? "?trip_id=" + tripId : ""));
+
+export const saveConciergeThread = (messages, tripId = null) =>
+  req("/concierge/thread", {
+    method: "POST",
+    body: JSON.stringify({ messages, trip_id: tripId }),
+  });
+
+// ─── TRIP SHARING ─────────────────────────────────────────────────────────────
+export const shareTripLink = (tripId) =>
+  req("/trips/" + tripId + "/share", { method: "POST" });
+
+// ─── WINGMAN WRAPPED ──────────────────────────────────────────────────────────
+export const getWrapped = (year = new Date().getFullYear()) =>
+  req("/insights/wrapped?year=" + year);

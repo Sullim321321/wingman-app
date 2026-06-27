@@ -1,16 +1,18 @@
-// ConciergeScreen — AI Travel Concierge
+// ConciergeScreen — AI Travel Concierge with persistent thread memory
 // Warm espresso palette + champagne gold + DM Sans
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   SafeAreaView, View, Text, TextInput, Pressable, FlatList,
-  StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
+  StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { C, T } from "../theme";
 import { SerifText } from "../components";
-import { sendConciergeMessage, getTrips } from "../api";
+import { sendConciergeMessage, getTrips, getConciergeThread, saveConciergeThread } from "../api";
+
+const WELCOME = "Good day — I'm your Wingman. I can answer questions about your trips, check disruption risk, and help you plan. What do you need?";
 
 function buildTripContext(trips) {
   if (!trips || trips.length === 0) return null;
@@ -50,17 +52,10 @@ function buildQuickChips(trips) {
   const chips = [];
   if (next?.origin && next?.destination) {
     chips.push(`Weather risk for ${next.origin} → ${next.destination}?`);
-    if (next.carrier && next.flight_number) {
-      chips.push(`Is ${next.carrier}${next.flight_number} on time?`);
-    }
+    if (next.carrier && next.flight_number) chips.push(`Is ${next.carrier}${next.flight_number} on time?`);
   }
   if (trips.length > 0) chips.push("What's my next trip?");
-  const fallbacks = [
-    "Any disruption risks?",
-    "Dinner recommendations?",
-    "Best airport lounge here?",
-    "What should I know before I fly?",
-  ];
+  const fallbacks = ["Any disruption risks?", "Dinner recommendations?", "Best airport lounge here?", "What should I know before I fly?"];
   for (const f of fallbacks) {
     if (chips.length >= 4) break;
     if (!chips.includes(f)) chips.push(f);
@@ -69,35 +64,72 @@ function buildQuickChips(trips) {
 }
 
 export default function ConciergeScreen({ route }) {
-  const prefill = route?.params?.prefill || null;
+  const prefill    = route?.params?.prefill || null;
+  const routeTripId = route?.params?.tripId ? Number(route.params.tripId) : null;
+
   const [trips, setTrips]           = useState([]);
   const [tripsLoaded, setTripsLoaded] = useState(false);
-  const [messages, setMessages]     = useState([
-    { role: "assistant", content: "Good day — I'm your Wingman. I can answer questions about your trips, check disruption risk, and help you plan. What do you need?" }
-  ]);
+  const [activeTripId, setActiveTripId] = useState(routeTripId); // null = general thread
+  const [messages, setMessages]     = useState([{ role: "assistant", content: WELCOME }]);
   const [input, setInput]   = useState("");
   const [loading, setLoading] = useState(false);
+  const [threadLoading, setThreadLoading] = useState(false);
   const listRef     = useRef(null);
   const prefillSent = useRef(false);
+  const saveTimer   = useRef(null);
 
+  // Load trips on focus
   useFocusEffect(useCallback(() => {
     getTrips()
       .then(data => { setTrips(data.trips || []); setTripsLoaded(true); })
       .catch(() => setTripsLoaded(true));
   }, []));
 
+  // Load thread when activeTripId changes or trips load
+  useEffect(() => {
+    if (!tripsLoaded) return;
+    loadThread(activeTripId);
+  }, [activeTripId, tripsLoaded]);
+
+  // Auto-send prefill after thread loads
   useEffect(() => {
     if (prefill && !prefillSent.current && tripsLoaded) {
       prefillSent.current = true;
-      setTimeout(() => send(prefill), 400);
+      setTimeout(() => send(prefill), 600);
     }
   }, [prefill, tripsLoaded]);
 
+  // Scroll to bottom on new messages
   useEffect(() => {
     if (messages.length > 1) {
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
     }
   }, [messages]);
+
+  async function loadThread(tripId) {
+    setThreadLoading(true);
+    try {
+      const data = await getConciergeThread(tripId);
+      const saved = data.messages || [];
+      if (saved.length > 0) {
+        setMessages([{ role: "assistant", content: WELCOME }, ...saved]);
+      } else {
+        setMessages([{ role: "assistant", content: WELCOME }]);
+      }
+    } catch {
+      setMessages([{ role: "assistant", content: WELCOME }]);
+    } finally {
+      setThreadLoading(false);
+    }
+  }
+
+  function scheduleSave(msgs, tripId) {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      const toSave = msgs.filter(m => m.role !== "assistant" || msgs.indexOf(m) > 0);
+      saveConciergeThread(toSave, tripId).catch(() => {});
+    }, 1500);
+  }
 
   const send = async (text) => {
     const msg = (text || input).trim();
@@ -111,11 +143,11 @@ export default function ConciergeScreen({ route }) {
       const history = newMessages.slice(1).map(m => ({ role: m.role, content: m.content }));
       const tripContext = buildTripContext(trips);
       const isFirstUserMsg = newMessages.filter(m => m.role === "user").length === 1;
-      const enrichedMsg = (isFirstUserMsg && tripContext)
-        ? `[User's trips:\n${tripContext}]\n\n${msg}`
-        : msg;
+      const enrichedMsg = (isFirstUserMsg && tripContext) ? `[User's trips:\n${tripContext}]\n\n${msg}` : msg;
       const data = await sendConciergeMessage(enrichedMsg, history.slice(0, -1));
-      setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+      const updated = [...newMessages, { role: "assistant", content: data.reply }];
+      setMessages(updated);
+      scheduleSave(updated.slice(1), activeTripId); // don't save the welcome message
     } catch {
       setMessages(prev => [...prev, { role: "assistant", content: "Sorry, I couldn't connect right now. Try again in a moment." }]);
     } finally {
@@ -124,6 +156,7 @@ export default function ConciergeScreen({ route }) {
   };
 
   const quickChips = buildQuickChips(trips);
+  const upcomingTrips = trips.filter(t => t.status === "upcoming" || t.status === "active").slice(0, 5);
 
   const renderItem = ({ item }) => {
     const isUser = item.role === "user";
@@ -147,39 +180,66 @@ export default function ConciergeScreen({ route }) {
         <View style={s.headerMark}>
           <SerifText bold style={{ color: C.gold, fontSize: 16 }}>W</SerifText>
         </View>
-        <View>
-          <Text style={s.headerT}>INSIGHTS</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={s.headerT}>CONCIERGE</Text>
           {trips.length > 0 && (
             <Text style={s.headerSub}>Watching {trips.length} trip{trips.length !== 1 ? "s" : ""}</Text>
           )}
         </View>
       </View>
 
+      {/* Thread selector — General + per-trip threads */}
+      {upcomingTrips.length > 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.threadRow}>
+          <Pressable
+            style={[s.threadChip, activeTripId === null && s.threadChipActive]}
+            onPress={() => setActiveTripId(null)}
+          >
+            <Text style={[s.threadChipT, activeTripId === null && s.threadChipTActive]}>General</Text>
+          </Pressable>
+          {upcomingTrips.map(t => (
+            <Pressable
+              key={t.id}
+              style={[s.threadChip, activeTripId === t.id && s.threadChipActive]}
+              onPress={() => setActiveTripId(t.id)}
+            >
+              <Text style={[s.threadChipT, activeTripId === t.id && s.threadChipTActive]} numberOfLines={1}>{t.title}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      )}
+
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={0}
       >
-        <FlatList
-          ref={listRef}
-          data={messages}
-          renderItem={renderItem}
-          keyExtractor={(_, i) => String(i)}
-          contentContainerStyle={s.list}
-          showsVerticalScrollIndicator={false}
-          ListFooterComponent={loading ? (
-            <View style={[s.bubble, s.aiBubble]}>
-              <View style={s.aiLabel}>
-                <View style={s.aiDot} />
-                <Text style={s.aiLabelT}>WINGMAN</Text>
+        {threadLoading ? (
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+            <ActivityIndicator color={C.gold} />
+          </View>
+        ) : (
+          <FlatList
+            ref={listRef}
+            data={messages}
+            renderItem={renderItem}
+            keyExtractor={(_, i) => String(i)}
+            contentContainerStyle={s.list}
+            showsVerticalScrollIndicator={false}
+            ListFooterComponent={loading ? (
+              <View style={[s.bubble, s.aiBubble]}>
+                <View style={s.aiLabel}>
+                  <View style={s.aiDot} />
+                  <Text style={s.aiLabelT}>WINGMAN</Text>
+                </View>
+                <ActivityIndicator color={C.gold} size="small" style={{ marginTop: 4 }} />
               </View>
-              <ActivityIndicator color={C.gold} size="small" style={{ marginTop: 4 }} />
-            </View>
-          ) : null}
-        />
+            ) : null}
+          />
+        )}
 
         {/* Quick chips — shown until first user message */}
-        {messages.length <= 1 && (
+        {messages.length <= 1 && !threadLoading && (
           <View style={s.quickRow}>
             {quickChips.map(q => (
               <Pressable key={q} style={s.quickChip} onPress={() => send(q)}>
@@ -219,10 +279,16 @@ export default function ConciergeScreen({ route }) {
 
 const s = StyleSheet.create({
   app:    { flex: 1, backgroundColor: C.bg },
-  header: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 14 },
+  header: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 10 },
   headerMark: { width: 32, height: 32, borderRadius: 8, borderWidth: 1, borderColor: C.gold + "50", alignItems: "center", justifyContent: "center" },
   headerT:    { color: C.ink, fontSize: 11, fontFamily: T.sansB, letterSpacing: T.trackWide },
   headerSub:  { color: C.gold, fontSize: 10, fontFamily: T.sansM, letterSpacing: 0.5, marginTop: 2 },
+
+  threadRow: { paddingHorizontal: 16, paddingBottom: 10, gap: 8, flexDirection: "row" },
+  threadChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 16, borderWidth: 1, borderColor: C.line, backgroundColor: C.card },
+  threadChipActive: { borderColor: C.gold, backgroundColor: C.gold + "18" },
+  threadChipT: { color: C.mut, fontSize: 12, fontFamily: T.sansM },
+  threadChipTActive: { color: C.gold },
 
   list: { paddingHorizontal: 16, paddingBottom: 8, paddingTop: 4 },
 

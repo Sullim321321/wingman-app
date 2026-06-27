@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
-  ActivityIndicator, Alert, RefreshControl,
+  ActivityIndicator, Alert, RefreshControl, Share,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { C } from "../theme";
 import { Btn, BackBar, g } from "../components";
-import { getFlightStatus, getPrediction, refreshTrip, getTripRisk, recordTripOutcome } from "../api";
+import { getFlightStatus, getPrediction, refreshTrip, getTripRisk, recordTripOutcome, shareTripLink } from "../api";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -364,6 +364,18 @@ export default function TripDetailScreen({ route, navigation }) {
     navigation.navigate("Concierge", { prefill: context });
   };
 
+  const handleShareTrip = async () => {
+    try {
+      const data = await shareTripLink(trip.id);
+      await Share.share({
+        message: `Check out my trip "${trip.title}" — ${data.share_url}`,
+        url: data.share_url,
+      });
+    } catch (e) {
+      Alert.alert("Share", "Could not generate share link. Try again.");
+    }
+  };
+
   const openAlert = (leg) => {
     navigation.navigate("Alert", {
       flight: leg,
@@ -510,13 +522,11 @@ export default function TripDetailScreen({ route, navigation }) {
           <Text style={{ color: C.mut, fontSize: 18 }}>›</Text>
         </Pressable>
 
-        {/* Refresh button */}
-        <Btn
-          title="↻  Refresh flight statuses"
-          kind="ghost"
-          onPress={onRefresh}
-          style={{ marginTop: 8 }}
-        />
+        {/* Share + Refresh */}
+        <View style={{ flexDirection: "row", gap: 10, marginTop: 8 }}>
+          <Btn title="↗  Share trip" kind="ghost" onPress={handleShareTrip} style={{ flex: 1 }} />
+          <Btn title="↻  Refresh" kind="ghost" onPress={onRefresh} style={{ flex: 1 }} />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

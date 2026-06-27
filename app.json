@@ -17,7 +17,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "club.welcometothefight.wingman",
-      "buildNumber": "40",
+      "buildNumber": "41",
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification"
@@ -25,11 +25,20 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Wingman uses your camera to scan payment card details for subscriptions.",
         "NSMicrophoneUsageDescription": "Wingman does not use the microphone.",
-        "NSPhotoLibraryUsageDescription": "Wingman does not access your photo library."
+        "NSPhotoLibraryUsageDescription": "Wingman does not access your photo library.",
+        "NSCalendarsUsageDescription": "Wingman reads your calendar to detect travel events and pre-fill trip dates.",
+        "NSLocationWhenInUseUsageDescription": "Wingman uses your location to estimate drive time to the airport and predict if you'll make your flight."
       }
     },
     "plugins": [
       "./plugins/withFmtFix",
+      "expo-calendar",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Wingman uses your location to estimate drive time to the airport."
+        }
+      ],
       [
         "expo-notifications",
         {

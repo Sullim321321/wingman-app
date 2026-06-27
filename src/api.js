@@ -67,13 +67,13 @@ export const getActivity = (limit = 50) =>
 
 // Flight status (FlightAware AeroAPI)
 export const getFlightStatus = (ident) =>
-  req("/flight-status?ident=" + encodeURIComponent(ident));
+  req("/flight-status/" + encodeURIComponent(ident));
 export const refreshTrip = (id) =>
   req("/trips/" + id + "/refresh", { method: "POST" });
 
 // Concierge
-export const sendConciergeMessage = (message, history = []) =>
-  req("/concierge", { method: "POST", body: JSON.stringify({ message, history }) });
+export const sendConciergeMessage = (message, history = [], tripContext = []) =>
+  req("/concierge", { method: "POST", body: JSON.stringify({ message, history, tripContext }) });
 
 // Apple Wallet
 export const getWalletPass = (legId) => req("/wallet/pass/" + legId);
@@ -91,6 +91,30 @@ export const activateSubscription = (plan, paymentMethodId) =>
 
 // Export token getter for SubscriptionScreen
 export const getToken = () => Promise.resolve(_token);
+
+// Ground Intelligence (drive time, TSA wait, gate walk, connection math)
+export const getGroundIntel = ({ airport, departureTime, fromGate, toGate, lat, lon, delayMinutes }) => {
+  const params = new URLSearchParams({ airport, departure_time: departureTime });
+  if (fromGate) params.set('from_gate', fromGate);
+  if (toGate) params.set('to_gate', toGate);
+  if (lat) params.set('lat', lat);
+  if (lon) params.set('lon', lon);
+  if (delayMinutes) params.set('delay_minutes', delayMinutes);
+  return req('/ground-intel?' + params.toString());
+};
+
+export const getTsaWait = (airport) => {
+  const now = new Date();
+  return req(`/tsa-wait?airport=${encodeURIComponent(airport)}&hour=${now.getHours()}&dow=${now.getDay()}`);
+};
+
+// Award search (cash vs points rescue options)
+export const searchAwards = ({ origin, destination, date, cabin = 'economy' }) =>
+  req(`/awards/search?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&date=${encodeURIComponent(date)}&cabin=${encodeURIComponent(cabin)}`);
+
+// Gmail scan with pasted email body
+export const scanEmailBody = (emailBody, source = 'manual') =>
+  req('/auth/gmail/scan', { method: 'POST', body: JSON.stringify({ emailBody, source }) });
 
 // Duffel flight search + booking
 export const searchFlights = (body) =>

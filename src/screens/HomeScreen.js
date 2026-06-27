@@ -7,7 +7,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { C } from "../theme";
 import { Btn, g } from "../components";
-import { getTrips, deleteTrip, getFlightStatus, getPrediction } from "../api";
+import { getTrips, deleteTrip, getFlightStatus, getPrediction, getGroundIntel } from "../api";
 import { scheduleDisruption } from "../notify";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -96,6 +96,7 @@ function RiskBadge({ risk }) {
 function NextUpCard({ flight, navigation }) {
   const [risk, setRisk] = useState(null);
   const [riskLoading, setRiskLoading] = useState(false);
+  const [groundIntel, setGroundIntel] = useState(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -116,6 +117,21 @@ function NextUpCard({ flight, navigation }) {
       .catch(() => {})
       .finally(() => setRiskLoading(false));
   }, [flight?.origin, flight?.destination]);
+
+  useEffect(() => {
+    if (!flight?.origin || !flight?.departs_at) return;
+    // Only fetch ground intel if flight is within 6 hours
+    const hoursUntil = (new Date(flight.departs_at).getTime() - Date.now()) / 3600000;
+    if (hoursUntil > 6 || hoursUntil < 0) return;
+    getGroundIntel({
+      airport: flight.origin,
+      departureTime: flight.departs_at,
+      fromGate: flight.from_gate || null,
+      toGate: flight.gate || null,
+    })
+      .then(intel => setGroundIntel(intel))
+      .catch(() => {});
+  }, [flight?.origin, flight?.departs_at]);
 
   if (!flight) return null;
 
@@ -156,6 +172,39 @@ function NextUpCard({ flight, navigation }) {
           {flight.departs_at ? <Text style={s.nextMeta}>· {formatTime(flight.departs_at)}</Text> : null}
           {flight.tripTitle ? <Text style={s.nextMeta}>· {flight.tripTitle}</Text> : null}
         </View>
+
+        {/* Ground Intelligence timeline — shown within 6 hours of departure */}
+        {groundIntel && groundIntel.timeline && groundIntel.timeline.length > 0 && (
+          <View style={s.groundIntelWrap}>
+            <Text style={s.groundIntelLabel}>GROUND TIMELINE</Text>
+            {groundIntel.timeline.map((step, i) => (
+              <View key={i} style={s.groundIntelRow}>
+                <Text style={s.groundIntelIc}>{step.icon || '→'}</Text>
+                <Text style={s.groundIntelStep}>{step.label}</Text>
+                <Text style={[s.groundIntelTime, step.minutes > 30 ? { color: C.amber } : {}]}>
+                  {step.minutes > 0 ? `${step.minutes}m` : 'Now'}
+                </Text>
+              </View>
+            ))}
+            {groundIntel.bufferMinutes != null && (
+              <View style={[s.groundIntelVerdict, {
+                backgroundColor: groundIntel.atRisk
+                  ? 'rgba(255,77,109,0.08)'
+                  : 'rgba(20,201,153,0.08)',
+                borderColor: groundIntel.atRisk
+                  ? 'rgba(255,77,109,0.2)'
+                  : 'rgba(20,201,153,0.2)',
+              }]}>
+                <Text style={{ color: groundIntel.atRisk ? C.coral : C.teal, fontSize: 12, fontWeight: '700' }}>
+                  {groundIntel.verdict === 'will_miss' ? '⚠️  At risk of missing flight'
+                    : groundIntel.verdict === 'tight' ? `⏱  Tight — ${groundIntel.bufferMinutes}m buffer`
+                    : groundIntel.verdict === 'on_track' ? `✓  On track — ${groundIntel.bufferMinutes}m to spare`
+                    : `✓  Plenty of time — ${groundIntel.bufferMinutes}m buffer`}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
 
         {/* Risk strip */}
         <LinearGradient colors={riskGradient} style={s.nextRiskStrip}>
@@ -460,4 +509,13 @@ const s = StyleSheet.create({
   mt: { color: C.ink, fontSize: 14, fontWeight: "600", letterSpacing: 0.1 },
   ms: { color: C.mut, fontSize: 13, marginTop: 2 },
   hint: { color: C.mut, fontSize: 12, textAlign: "center", marginTop: 12, lineHeight: 18 },
+
+  // Ground Intelligence
+  groundIntelWrap: { marginTop: 16, paddingTop: 14, borderTopWidth: 0.5, borderTopColor: "rgba(255,255,255,0.06)" },
+  groundIntelLabel: { color: C.mut, fontSize: 10, fontWeight: "700", letterSpacing: 1.5, marginBottom: 10 },
+  groundIntelRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
+  groundIntelIc: { fontSize: 14, width: 22 },
+  groundIntelStep: { flex: 1, color: C.ink, fontSize: 13, fontWeight: "500" },
+  groundIntelTime: { color: C.mut, fontSize: 13, fontWeight: "700" },
+  groundIntelVerdict: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8, marginTop: 4 },
 });

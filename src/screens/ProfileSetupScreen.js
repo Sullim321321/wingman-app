@@ -4,7 +4,7 @@ import {
   Pressable, StyleSheet, Platform, KeyboardAvoidingView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { C, T, T } from "../theme";
+import { C, T } from "../theme";
 import { Btn } from "../components";
 import { updateProfile, updateLocale } from "../api";
 import * as SecureStore from "expo-secure-store";
@@ -79,7 +79,9 @@ export default function ProfileSetupScreen({ navigation }) {
     } catch (e) {
       setErr("Couldn't save your profile. Try again.");
       setBusy(false);
+      return;
     }
+    setBusy(false);
   };
 
   return (

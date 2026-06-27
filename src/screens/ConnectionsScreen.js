@@ -7,7 +7,7 @@ import {
   Alert, ActivityIndicator, TextInput, Linking,
 } from "react-native";
 import * as Calendar from "expo-calendar";
-import { C, T, T } from "../theme";
+import { C, T } from "../theme";
 import { BackBar, Btn, SerifText, g } from "../components";
 import { getMe, getGmailConnectUrl, triggerGmailScan, scanEmailBody } from "../api";
 

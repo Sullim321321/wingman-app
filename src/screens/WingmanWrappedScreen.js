@@ -7,7 +7,7 @@ import {
   ActivityIndicator, Share, ScrollView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { C, T, T } from "../theme";
+import { C, T } from "../theme";
 import { BackBar } from "../components";
 import { getWrapped } from "../api";
 

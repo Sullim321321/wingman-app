@@ -10,7 +10,7 @@ import {
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
-import { C, T, T } from "../theme";
+import { C, T } from "../theme";
 import { Btn, tap, SerifText, g } from "../components";
 import { getTrips, deleteTrip, getFlightStatus, getPrediction, getGroundIntel, getMe, getLoyaltyAccounts, getTripBriefing } from "../api";
 import { scheduleDisruption } from "../notify";

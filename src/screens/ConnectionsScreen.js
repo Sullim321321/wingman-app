@@ -258,7 +258,7 @@ export default function ConnectionsScreen({ navigation }) {
           <ConnRow
             iconKey="imessage"
             title="iMessage"
-            sub='"We\'re delayed" texts — coming soon'
+            sub={`"We're delayed" texts — coming soon`}
             right={<View style={s.soonBadge}><Text style={s.soonT}>SOON</Text></View>}
             disabled
             last

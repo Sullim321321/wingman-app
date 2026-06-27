@@ -175,7 +175,7 @@ const s = StyleSheet.create({
     marginBottom: 20,
   },
   heroIc: { fontSize: 40, marginBottom: 10 },
-  heroT: { color: C.ink, fontSize: 18, fontWeight: "700", textAlign: "center", marginBottom: 8 },
+  heroT: { color: C.ink, fontSize: 18, fontFamily: T.sansB, textAlign: "center", marginBottom: 8 },
   heroSub: { color: C.mut, fontSize: 13, textAlign: "center", lineHeight: 19 },
   inputCard: {
     backgroundColor: C.card,
@@ -185,7 +185,7 @@ const s = StyleSheet.create({
     padding: 16,
     marginBottom: 4,
   },
-  inputLabel: { color: C.mut, fontSize: 11, fontWeight: "700", letterSpacing: 0.8, marginBottom: 8 },
+  inputLabel: { color: C.mut, fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.8, marginBottom: 8 },
   input: {
     color: C.ink,
     fontSize: 15,
@@ -216,7 +216,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  stepT: { color: C.ink, fontSize: 14, fontWeight: "600", marginBottom: 2 },
+  stepT: { color: C.ink, fontSize: 14, fontFamily: T.sansM, marginBottom: 2 },
   stepSub: { color: C.mut, fontSize: 12, lineHeight: 16 },
   saveBtn: {
     backgroundColor: C.teal,
@@ -225,7 +225,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
-  saveBtnT: { color: "#000", fontSize: 15, fontWeight: "700" },
+  saveBtnT: { color: "#000", fontSize: 15, fontFamily: T.sansB },
   clearBtn: { alignItems: "center", paddingVertical: 12, marginBottom: 16 },
   clearBtnT: { color: C.mut, fontSize: 14 },
 });

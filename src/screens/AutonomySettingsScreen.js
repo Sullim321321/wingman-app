@@ -234,7 +234,7 @@ const s = StyleSheet.create({
   modeRadioOn: { borderColor: C.gold },
   modeRadioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: C.gold },
   modeIcon: { fontSize: 14, color: C.gold },
-  modeTitle: { color: C.ink, fontSize: 15, fontWeight: "700" },
+  modeTitle: { color: C.ink, fontSize: 15, fontFamily: T.sansB },
   modeDesc: { color: C.mut, fontSize: 12, lineHeight: 18, marginTop: 3 },
 
   thresholdLabel: { color: C.mut, fontSize: 13 },
@@ -242,20 +242,20 @@ const s = StyleSheet.create({
   sliderEdge: { color: C.mut, fontSize: 11 },
   thresholdBtn: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 20, borderWidth: 1, borderColor: C.line, backgroundColor: C.card },
   thresholdBtnActive: { borderColor: C.gold, backgroundColor: "rgba(201,169,110,0.1)" },
-  thresholdBtnT: { color: C.mut, fontSize: 13, fontWeight: "600" },
+  thresholdBtnT: { color: C.mut, fontSize: 13, fontFamily: T.sansM },
   thresholdBtnTActive: { color: C.gold },
   thresholdNote: { color: C.mut, fontSize: 12, lineHeight: 18, marginTop: 8 },
 
   prefRow: { flexDirection: "row", alignItems: "flex-start", gap: 14, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.line },
-  prefTitle: { color: C.ink, fontSize: 14, fontWeight: "700" },
+  prefTitle: { color: C.ink, fontSize: 14, fontFamily: T.sansB },
   prefDesc: { color: C.mut, fontSize: 12, lineHeight: 18, marginTop: 2 },
 
   cabinChip: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 20, borderWidth: 1, borderColor: C.line, backgroundColor: C.card },
   cabinChipOn: { borderColor: C.gold, backgroundColor: "rgba(201,169,110,0.1)" },
-  cabinChipT: { color: C.mut, fontSize: 13, fontWeight: "600" },
+  cabinChipT: { color: C.mut, fontSize: 13, fontFamily: T.sansM },
   cabinChipTOn: { color: C.gold },
 
   switchRow: { flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 14 },
-  switchTitle: { color: C.ink, fontSize: 15, fontWeight: "700" },
+  switchTitle: { color: C.ink, fontSize: 15, fontFamily: T.sansB },
   switchSub: { color: C.mut, fontSize: 12, lineHeight: 18, marginTop: 3 },
 });

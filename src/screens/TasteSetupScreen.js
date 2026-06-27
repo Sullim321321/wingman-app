@@ -3,7 +3,7 @@ import {
   SafeAreaView, ScrollView, View, Text, TouchableOpacity,
   StyleSheet, Animated, Dimensions,
 } from "react-native";
-import { C } from "../theme";
+import { C, T } from "../theme";
 import { Btn, tap } from "../components";
 import { updateProfile } from "../api";
 
@@ -358,8 +358,8 @@ const s = StyleSheet.create({
   stepWrap: { flex: 1 },
   stepContent: { paddingHorizontal: 20, paddingBottom: 24 },
   stepHeader: { marginBottom: 24, paddingTop: 8 },
-  stepCount: { color: C.teal, fontSize: 12, fontWeight: "700", letterSpacing: 1, marginBottom: 6 },
-  stepTitle: { color: C.ink, fontSize: 22, fontWeight: "700", marginBottom: 8 },
+  stepCount: { color: C.teal, fontSize: 12, fontFamily: T.sansB, letterSpacing: 1, marginBottom: 6 },
+  stepTitle: { color: C.ink, fontSize: 22, fontFamily: T.sansB, marginBottom: 8 },
   stepSub: { color: C.mut, fontSize: 14, lineHeight: 20 },
 
   // Row toggle (for sources)
@@ -375,7 +375,7 @@ const s = StyleSheet.create({
   },
   rowOn: { borderColor: C.teal, backgroundColor: "#0D2A22" },
   rowIcon: { fontSize: 20, marginRight: 12 },
-  rowLabel: { color: C.ink, fontSize: 15, fontWeight: "600" },
+  rowLabel: { color: C.ink, fontSize: 15, fontFamily: T.sansM },
   rowLabelOn: { color: C.teal },
   rowDesc: { color: C.mut, fontSize: 12, marginTop: 2 },
   check: {
@@ -384,7 +384,7 @@ const s = StyleSheet.create({
     alignItems: "center", justifyContent: "center",
   },
   checkOn: { backgroundColor: C.teal, borderColor: C.teal },
-  checkMark: { color: "#000", fontSize: 12, fontWeight: "700" },
+  checkMark: { color: "#000", fontSize: 12, fontFamily: T.sansB },
 
   // Chip grid (for hotel/seat/food prefs)
   chipGrid: {
@@ -406,12 +406,12 @@ const s = StyleSheet.create({
   },
   chipOn: { borderColor: C.teal, backgroundColor: "#0D2A22" },
   chipIcon: { fontSize: 14 },
-  chipLabel: { color: C.mut, fontSize: 13, fontWeight: "600" },
+  chipLabel: { color: C.mut, fontSize: 13, fontFamily: T.sansM },
   chipLabelOn: { color: C.teal },
 
   // Cabin block (seat prefs)
   cabinBlock: { marginBottom: 20 },
-  cabinLabel: { color: C.mut, fontSize: 11, fontWeight: "700", letterSpacing: 1, marginBottom: 10 },
+  cabinLabel: { color: C.mut, fontSize: 11, fontFamily: T.sansB, letterSpacing: 1, marginBottom: 10 },
 
   // Food skip note
   skipNote: { marginTop: 16, alignItems: "center" },

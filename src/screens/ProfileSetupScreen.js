@@ -4,7 +4,7 @@ import {
   Pressable, StyleSheet, Platform, KeyboardAvoidingView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { C, T } from "../theme";
+import { C, T, T } from "../theme";
 import { Btn } from "../components";
 import { updateProfile, updateLocale } from "../api";
 import * as SecureStore from "expo-secure-store";
@@ -257,9 +257,9 @@ const s = StyleSheet.create({
   dotDone:   { backgroundColor: C.gold + "60" },
   step:   { flex: 1 },
   mark:   { width: 56, height: 56, borderRadius: 16, alignItems: "center", justifyContent: "center", marginBottom: 20 },
-  h:      { color: C.ink, fontSize: 26, fontWeight: "700", marginBottom: 8, lineHeight: 32 },
+  h:      { color: C.ink, fontSize: 26, fontFamily: T.sansB, marginBottom: 8, lineHeight: 32 },
   sub:    { color: C.mut, fontSize: 14, lineHeight: 20, marginBottom: 28 },
-  sectionLabel: { color: C.mut, fontSize: 11, fontWeight: "700", letterSpacing: 0.8, marginBottom: 12, textTransform: "uppercase" },
+  sectionLabel: { color: C.mut, fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.8, marginBottom: 12, textTransform: "uppercase" },
   input:  {
     backgroundColor: C.card,
     borderWidth: 1, borderColor: C.line,
@@ -277,10 +277,10 @@ const s = StyleSheet.create({
   },
   optionActive: { borderColor: C.gold, backgroundColor: C.gold + "12" },
   optionInner:  { flex: 1 },
-  optionLabel:  { color: C.ink, fontSize: 15, fontWeight: "600" },
+  optionLabel:  { color: C.ink, fontSize: 15, fontFamily: T.sansM },
   optionLabelActive: { color: C.gold },
   optionSub:    { color: C.mut, fontSize: 12, marginTop: 2 },
-  check:        { color: C.gold, fontSize: 18, fontWeight: "700" },
+  check:        { color: C.gold, fontSize: 18, fontFamily: T.sansB },
   chips:        { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   chip:         {
     flexDirection: "row", alignItems: "center", gap: 6,

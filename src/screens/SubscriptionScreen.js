@@ -185,7 +185,7 @@ function SubscriptionContent({ navigation }) {
       </View>
       <ScrollView contentContainerStyle={[g.scroll, { paddingTop: 8 }]}>
         <View style={s.heroCard}>
-          <Text style={s.heroIc}>✈️</Text>
+          <Text style={s.heroIc}>✦</Text>
           <Text style={s.heroT}>Your personal travel chief of staff</Text>
           <Text style={s.heroSub}>
             Wingman monitors your flights, dispatches your rides, emails your hotels, and briefs your AI concierge — all before you land.
@@ -238,30 +238,30 @@ export default function SubscriptionScreen({ navigation }) {
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
   head: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingTop: 8, paddingBottom: 8 },
-  headT: { color: C.ink, fontSize: 18, fontWeight: "700", flex: 1 },
+  headT: { color: C.ink, fontSize: 18, fontFamily: T.sansB, flex: 1 },
   backBtn: { paddingVertical: 4, paddingRight: 8 },
-  backBtnT: { color: C.teal, fontSize: 14, fontWeight: "600" },
+  backBtnT: { color: C.teal, fontSize: 14, fontFamily: T.sansM },
   heroCard: { backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, padding: 24, alignItems: "center", marginBottom: 16 },
   heroIc: { fontSize: 40, marginBottom: 10 },
-  heroT: { color: C.ink, fontSize: 18, fontWeight: "700", textAlign: "center", marginBottom: 8 },
+  heroT: { color: C.ink, fontSize: 18, fontFamily: T.sansB, textAlign: "center", marginBottom: 8 },
   heroSub: { color: C.mut, fontSize: 13, textAlign: "center", lineHeight: 19 },
   activeCard: { backgroundColor: C.teal + "15", borderRadius: 14, borderWidth: 1, borderColor: C.teal + "40", padding: 16, marginBottom: 16 },
-  activeT: { color: C.ink, fontSize: 15, fontWeight: "700", marginBottom: 4 },
+  activeT: { color: C.ink, fontSize: 15, fontFamily: T.sansB, marginBottom: 4 },
   activeSub: { color: C.mut, fontSize: 13 },
   planCard: { backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line, padding: 20, marginBottom: 14 },
   planHeader: { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 16 },
   planIconWrap: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-  planName: { color: C.ink, fontSize: 16, fontWeight: "700" },
+  planName: { color: C.ink, fontSize: 16, fontFamily: T.sansB },
   planPrice: { color: C.ink, fontSize: 22, fontWeight: "800", marginTop: 2 },
   planInterval: { color: C.mut, fontSize: 14, fontWeight: "400" },
   activeBadge: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1 },
-  activeBadgeT: { fontSize: 12, fontWeight: "700" },
+  activeBadgeT: { fontSize: 12, fontFamily: T.sansB },
   featureList: { gap: 8, marginBottom: 16 },
   featureRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  featureCheck: { fontSize: 14, fontWeight: "700", width: 16 },
+  featureCheck: { fontSize: 14, fontFamily: T.sansB, width: 16 },
   featureText: { color: C.mut, fontSize: 13, flex: 1 },
   subscribeBtn: { borderRadius: 14, paddingVertical: 14, alignItems: "center" },
-  subscribeBtnT: { color: "#fff", fontSize: 15, fontWeight: "700" },
+  subscribeBtnT: { color: "#fff", fontSize: 15, fontFamily: T.sansB },
   footer: { paddingHorizontal: 4, paddingBottom: 32 },
   footerT: { color: C.mut, fontSize: 12, textAlign: "center", lineHeight: 17 },
 });

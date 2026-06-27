@@ -278,7 +278,7 @@ const s = StyleSheet.create({
   backBtn: { width: 36, height: 36, justifyContent: "center" },
   backBtnT: { color: C.gold, fontSize: 28, lineHeight: 32 },
   headerCenter: { flex: 1, alignItems: "center" },
-  headerTitle: { color: C.text, fontSize: 17, fontWeight: "700" },
+  headerTitle: { color: C.text, fontSize: 17, fontFamily: T.sansB },
   headerSub: { color: C.mut, fontSize: 13, marginTop: 2 },
 
   // Destination banner
@@ -287,7 +287,7 @@ const s = StyleSheet.create({
 
   // Recommendation card
   recommendCard: { margin: 16, marginBottom: 8, backgroundColor: "rgba(201,169,110,0.08)", borderRadius: 12, padding: 16, borderWidth: 1, borderColor: "rgba(201,169,110,0.3)" },
-  recommendLabel: { color: C.gold, fontSize: 11, fontWeight: "700", letterSpacing: 1, marginBottom: 8 },
+  recommendLabel: { color: C.gold, fontSize: 11, fontFamily: T.sansB, letterSpacing: 1, marginBottom: 8 },
   recommendText: { color: C.text, fontSize: 14, lineHeight: 21 },
 
   // Generic note
@@ -295,27 +295,27 @@ const s = StyleSheet.create({
   genericNoteT: { color: C.mut, fontSize: 13, lineHeight: 19 },
 
   // Section label
-  sectionLabel: { color: C.mut, fontSize: 11, fontWeight: "700", letterSpacing: 1.5, marginHorizontal: 20, marginTop: 16, marginBottom: 8 },
+  sectionLabel: { color: C.mut, fontSize: 11, fontFamily: T.sansB, letterSpacing: 1.5, marginHorizontal: 20, marginTop: 16, marginBottom: 8 },
 
   // Option card
   optionCard: { marginHorizontal: 16, marginBottom: 12, backgroundColor: C.card, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: C.border },
   optionHeader: { flexDirection: "row", alignItems: "center", marginBottom: 10, gap: 8 },
   typeTag: { flexDirection: "row", alignItems: "center", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, gap: 4 },
   typeIcon: { fontSize: 14 },
-  typeLabel: { fontSize: 11, fontWeight: "700", letterSpacing: 0.5 },
+  typeLabel: { fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.5 },
   bestBadge: { backgroundColor: "rgba(201,169,110,0.2)", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 },
   bestBadgeT: { color: C.gold, fontSize: 10, fontWeight: "800", letterSpacing: 1 },
   complexityBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 },
-  complexityT: { fontSize: 10, fontWeight: "700", letterSpacing: 0.5 },
+  complexityT: { fontSize: 10, fontFamily: T.sansB, letterSpacing: 0.5 },
 
-  optionName: { color: C.text, fontSize: 16, fontWeight: "700", marginBottom: 4 },
+  optionName: { color: C.text, fontSize: 16, fontFamily: T.sansB, marginBottom: 4 },
   optionDesc: { color: C.mut, fontSize: 13, lineHeight: 19, marginBottom: 12 },
 
   // Stats row
   statsRow: { flexDirection: "row", alignItems: "center", backgroundColor: C.card2, borderRadius: 10, padding: 12, marginBottom: 12 },
   stat: { flex: 1, alignItems: "center" },
-  statLabel: { color: C.mut, fontSize: 10, fontWeight: "700", letterSpacing: 0.8, marginBottom: 3 },
-  statValue: { color: C.text, fontSize: 14, fontWeight: "700" },
+  statLabel: { color: C.mut, fontSize: 10, fontFamily: T.sansB, letterSpacing: 0.8, marginBottom: 3 },
+  statValue: { color: C.text, fontSize: 14, fontFamily: T.sansB },
   statDivider: { width: 1, height: 28, backgroundColor: C.border },
 
   // Tip
@@ -326,11 +326,11 @@ const s = StyleSheet.create({
   // Action buttons
   optionActions: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
   directionsBtn: { backgroundColor: C.card2, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: C.border },
-  directionsBtnT: { color: C.gold, fontSize: 13, fontWeight: "600" },
+  directionsBtnT: { color: C.gold, fontSize: 13, fontFamily: T.sansM },
   ticketBtn: { backgroundColor: "rgba(78,205,196,0.1)", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: "rgba(78,205,196,0.3)" },
-  ticketBtnT: { color: C.teal, fontSize: 13, fontWeight: "600" },
+  ticketBtnT: { color: C.teal, fontSize: 13, fontFamily: T.sansM },
   mapBtn: { backgroundColor: C.card2, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: C.border },
-  mapBtnT: { color: C.text, fontSize: 13, fontWeight: "600" },
+  mapBtnT: { color: C.text, fontSize: 13, fontFamily: T.sansM },
 
   // Steps
   stepsContainer: { marginTop: 12 },
@@ -342,10 +342,10 @@ const s = StyleSheet.create({
 
   // Concierge CTA
   conciergeCta: { margin: 16, backgroundColor: "rgba(201,169,110,0.1)", borderRadius: 14, padding: 18, alignItems: "center", borderWidth: 1, borderColor: "rgba(201,169,110,0.3)" },
-  conciergeCtaT: { color: C.gold, fontSize: 15, fontWeight: "700" },
+  conciergeCtaT: { color: C.gold, fontSize: 15, fontFamily: T.sansB },
 
   // Misc
   mut: { color: C.mut, fontSize: 14 },
   retryBtn: { marginTop: 16, backgroundColor: C.card, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 },
-  retryBtnT: { color: C.gold, fontSize: 15, fontWeight: "600" },
+  retryBtnT: { color: C.gold, fontSize: 15, fontFamily: T.sansM },
 });

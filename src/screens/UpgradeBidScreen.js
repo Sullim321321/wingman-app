@@ -3,7 +3,7 @@ import {
   SafeAreaView, ScrollView, View, Text, StyleSheet,
   ActivityIndicator, Pressable, Alert,
 } from "react-native";
-import { C } from "../theme";
+import { C, T } from "../theme";
 import { Btn, BackBar, g } from "../components";
 import { API_BASE, getToken } from "../api";
 
@@ -206,11 +206,11 @@ export default function UpgradeBidScreen({ navigation, route }) {
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
   flightHeader: { flexDirection: "row", alignItems: "center", backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 16, marginBottom: 12 },
-  flightRoute: { color: C.ink, fontSize: 18, fontWeight: "700" },
+  flightRoute: { color: C.ink, fontSize: 18, fontFamily: T.sansB },
   flightNum: { color: C.mut, fontSize: 13, marginTop: 2 },
   cabinPill: { flexDirection: "row", alignItems: "center", backgroundColor: C.card2, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6 },
-  cabinFrom: { color: C.mut, fontSize: 12, fontWeight: "600" },
-  cabinTo: { color: C.gold, fontSize: 12, fontWeight: "700" },
+  cabinFrom: { color: C.mut, fontSize: 12, fontFamily: T.sansM },
+  cabinTo: { color: C.gold, fontSize: 12, fontFamily: T.sansB },
   probCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 16, marginBottom: 12 },
   probRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
   probLabel: { color: C.mut, fontSize: 13 },
@@ -219,7 +219,7 @@ const s = StyleSheet.create({
   probFill: { height: "100%", borderRadius: 99 },
   probDeadline: { color: C.mut, fontSize: 12 },
   balanceCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 16, marginBottom: 12 },
-  balanceLabel: { color: C.mut, fontSize: 11, fontWeight: "700", letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 4 },
+  balanceLabel: { color: C.mut, fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 4 },
   balancePoints: { color: C.ink, fontSize: 24, fontWeight: "800" },
   balanceCash: { color: C.mut, fontSize: 12, marginTop: 2 },
   bidGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 10 },
@@ -230,7 +230,7 @@ const s = StyleSheet.create({
   bidPtsLabel: { color: C.mut, fontSize: 10, marginTop: 1 },
   bidNote: { color: C.mut, fontSize: 12, textAlign: "center", marginBottom: 12 },
   actionCard: { backgroundColor: "rgba(201,169,110,0.06)", borderWidth: 1, borderColor: "rgba(201,169,110,0.25)", borderRadius: 18, padding: 18, marginBottom: 24 },
-  actionTitle: { color: C.ink, fontSize: 15, fontWeight: "700", marginBottom: 6 },
+  actionTitle: { color: C.ink, fontSize: 15, fontFamily: T.sansB, marginBottom: 6 },
   actionSub: { color: C.mut, fontSize: 13, lineHeight: 19 },
   successCard: { backgroundColor: C.card, borderWidth: 1, borderColor: "rgba(201,169,110,0.3)", borderRadius: 18, padding: 24, alignItems: "center", marginTop: 20 },
   successTitle: { color: C.gold, fontSize: 22, fontWeight: "800", marginBottom: 4 },

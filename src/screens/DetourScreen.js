@@ -1,7 +1,7 @@
 import React from "react";
 import { SafeAreaView, ScrollView, View, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { C } from "../theme";
+import { C, T } from "../theme";
 import { Btn, Leg, Chip, BackBar, success, g } from "../components";
 
 const PLAN_STEPS = [
@@ -50,7 +50,7 @@ export default function DetourScreen({ navigation }) {
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
   hero: { borderRadius: 20, padding: 18, borderWidth: 1, borderColor: "rgba(34,211,166,0.35)" },
-  heroH: { color: C.ink, fontSize: 19, fontWeight: "700", marginTop: 8, marginBottom: 6 },
+  heroH: { color: C.ink, fontSize: 19, fontFamily: T.sansB, marginTop: 8, marginBottom: 6 },
   heroP: { color: "#CDEFE6", fontSize: 13, lineHeight: 19 },
   sticky: { marginTop: 16, borderTopWidth: 1, borderTopColor: C.line, paddingTop: 14 },
   sum: { color: C.mut, fontSize: 12, textAlign: "center", marginBottom: 8 },

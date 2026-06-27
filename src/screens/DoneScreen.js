@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { SafeAreaView, ScrollView, View, Text, Animated, StyleSheet } from "react-native";
-import { C } from "../theme";
+import { C, T } from "../theme";
 import { Btn, NtRow, g } from "../components";
 
 export default function DoneScreen({ navigation, route }) {
@@ -91,7 +91,7 @@ const s = StyleSheet.create({
     borderWidth: 2, borderColor: C.teal,
     alignItems: "center", justifyContent: "center", marginBottom: 16,
   },
-  doneH: { color: C.ink, fontSize: 22, fontWeight: "700", textAlign: "center", paddingHorizontal: 16 },
+  doneH: { color: C.ink, fontSize: 22, fontFamily: T.sansB, textAlign: "center", paddingHorizontal: 16 },
   doneP: { color: C.mut, fontSize: 14, textAlign: "center", marginVertical: 12, lineHeight: 20, paddingHorizontal: 10 },
   newtrip: {
     alignSelf: "stretch", backgroundColor: C.card,

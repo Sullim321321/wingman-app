@@ -440,7 +440,7 @@ const s = StyleSheet.create({
   tabRow: { flexDirection: "row", gap: 8, marginBottom: 20 },
   tabBtn: { flex: 1, paddingVertical: 10, borderRadius: 12, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, alignItems: "center" },
   tabBtnOn: { borderColor: C.gold, backgroundColor: "rgba(201,169,110,0.08)" },
-  tabT: { color: C.mut, fontSize: 12, fontWeight: "600", letterSpacing: 0.3 },
+  tabT: { color: C.mut, fontSize: 12, fontFamily: T.sansM, letterSpacing: 0.3 },
   tabTOn: { color: C.gold },
 
   // AI card
@@ -453,7 +453,7 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: C.line, marginBottom: 16,
   },
   aiBtn: { backgroundColor: C.gold, borderRadius: 14, padding: 16, alignItems: "center" },
-  aiBtnT: { color: C.bg, fontSize: 15, fontWeight: "700", letterSpacing: 0.5 },
+  aiBtnT: { color: C.bg, fontSize: 15, fontFamily: T.sansB, letterSpacing: 0.5 },
 
   // Examples
   exRow: {
@@ -468,7 +468,7 @@ const s = StyleSheet.create({
     backgroundColor: "rgba(201,169,110,0.12)", borderRadius: 12,
     padding: 12, marginBottom: 16, borderWidth: 1, borderColor: "rgba(201,169,110,0.25)",
   },
-  draftedT: { color: C.gold, fontSize: 13, fontWeight: "600" },
+  draftedT: { color: C.gold, fontSize: 13, fontFamily: T.sansM },
 
   // Mode selector
   modeRow: { flexDirection: "row", gap: 10, marginBottom: 10 },
@@ -479,30 +479,30 @@ const s = StyleSheet.create({
   },
   modeBtnOn: { borderColor: C.gold, backgroundColor: "rgba(201,169,110,0.06)" },
   modeIcon: { fontSize: 18, marginBottom: 4, color: C.mut },
-  modeLabel: { color: C.mut, fontSize: 13, fontWeight: "700" },
+  modeLabel: { color: C.mut, fontSize: 13, fontFamily: T.sansB },
   modeLabelOn: { color: C.gold },
   modeDesc: { color: C.mut, fontSize: 10, marginTop: 2, textAlign: "center" },
 
   // Fields
   field: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.line },
-  label: { color: C.mut, fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.5 },
+  label: { color: C.mut, fontSize: 11, fontFamily: T.sansB, textTransform: "uppercase", letterSpacing: 0.5 },
   input: { color: C.ink, fontSize: 16, fontWeight: "500" },
   pasteInput: { minHeight: 120, marginTop: 8, lineHeight: 22 },
 
   // Lookup badge
   lookedBadge: { backgroundColor: "rgba(201,169,110,0.12)", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: "rgba(201,169,110,0.25)" },
-  lookedT: { color: C.gold, fontSize: 11, fontWeight: "700" },
+  lookedT: { color: C.gold, fontSize: 11, fontFamily: T.sansB },
 
   // Parse button inside paste tab
   parseBtn: { margin: 12, backgroundColor: C.gold, borderRadius: 14, padding: 14, alignItems: "center" },
-  parseBtnT: { color: C.bg, fontSize: 15, fontWeight: "700" },
+  parseBtnT: { color: C.bg, fontSize: 15, fontFamily: T.sansB },
 
   // Email import card
   importCard: { marginTop: 24, borderRadius: 20, borderWidth: 1, borderColor: C.line, overflow: "hidden" },
   importInner: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16, backgroundColor: C.card },
   importIc: { fontSize: 22, color: C.gold },
-  importT: { color: C.ink, fontSize: 14, fontWeight: "700", marginBottom: 2 },
+  importT: { color: C.ink, fontSize: 14, fontFamily: T.sansB, marginBottom: 2 },
   importS: { color: C.mut, fontSize: 12, lineHeight: 17 },
   importBtn: { backgroundColor: "rgba(201,169,110,0.12)", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: "rgba(201,169,110,0.25)" },
-  importBtnT: { color: C.gold, fontSize: 13, fontWeight: "700" },
+  importBtnT: { color: C.gold, fontSize: 13, fontFamily: T.sansB },
 });

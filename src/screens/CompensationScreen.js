@@ -3,7 +3,7 @@ import {
   SafeAreaView, ScrollView, View, Text, StyleSheet,
   ActivityIndicator, Pressable, Alert,
 } from "react-native";
-import { C } from "../theme";
+import { C, T } from "../theme";
 import { Btn, BackBar, g } from "../components";
 import { API_BASE, getToken } from "../api";
 
@@ -235,7 +235,7 @@ export default function CompensationScreen({ navigation, route }) {
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
   eligCard: { backgroundColor: C.card, borderWidth: 1, borderRadius: 18, padding: 18, marginBottom: 12 },
-  eligStatus: { fontSize: 15, fontWeight: "700", marginBottom: 6 },
+  eligStatus: { fontSize: 15, fontFamily: T.sansB, marginBottom: 6 },
   eligAmount: { color: C.ink, fontSize: 28, fontWeight: "800", marginBottom: 4 },
   eligReason: { color: C.mut, fontSize: 13, lineHeight: 19 },
   regCard: { backgroundColor: C.card, borderWidth: 1, borderRadius: 18, padding: 16, marginBottom: 12 },
@@ -243,17 +243,17 @@ const s = StyleSheet.create({
   regDesc: { color: C.mut, fontSize: 13, lineHeight: 18, marginBottom: 4 },
   regRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   regDist: { color: C.mut, fontSize: 12, flex: 1 },
-  regAmount: { fontSize: 13, fontWeight: "700" },
+  regAmount: { fontSize: 13, fontFamily: T.sansB },
   flightCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 16, marginBottom: 12 },
   flightRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: C.line },
   flightLabel: { color: C.mut, fontSize: 13 },
-  flightValue: { color: C.ink, fontSize: 13, fontWeight: "600" },
+  flightValue: { color: C.ink, fontSize: 13, fontFamily: T.sansM },
   templateCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 16, marginBottom: 12 },
-  templateLabel: { color: C.mut, fontSize: 11, fontWeight: "600", letterSpacing: 0.3, marginBottom: 3 },
+  templateLabel: { color: C.mut, fontSize: 11, fontFamily: T.sansM, letterSpacing: 0.3, marginBottom: 3 },
   templateDivider: { height: 1, backgroundColor: C.line, marginVertical: 10 },
   templateBody: { color: C.ink, fontSize: 13, lineHeight: 20 },
   actionCard: { backgroundColor: "rgba(201,169,110,0.06)", borderWidth: 1, borderColor: "rgba(201,169,110,0.25)", borderRadius: 18, padding: 18, marginBottom: 24 },
-  actionTitle: { color: C.ink, fontSize: 15, fontWeight: "700", marginBottom: 6 },
+  actionTitle: { color: C.ink, fontSize: 15, fontFamily: T.sansB, marginBottom: 6 },
   actionSub: { color: C.mut, fontSize: 13, lineHeight: 19 },
   successCard: { backgroundColor: C.card, borderWidth: 1, borderColor: "rgba(34,211,166,0.3)", borderRadius: 18, padding: 24, alignItems: "center", marginTop: 20 },
   successTitle: { color: C.teal, fontSize: 22, fontWeight: "800", marginBottom: 4 },

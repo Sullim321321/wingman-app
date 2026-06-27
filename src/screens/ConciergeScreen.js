@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
+import { BlurView } from "expo-blur";
 import { C, T } from "../theme";
 import { SerifText } from "../components";
 import { sendConciergeMessage, getTrips, getConciergeThread, saveConciergeThread } from "../api";

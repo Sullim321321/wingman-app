@@ -1,6 +1,6 @@
 import React from "react";
 import { SafeAreaView, ScrollView, View, Text, StyleSheet } from "react-native";
-import { C } from "../theme";
+import { C, T } from "../theme";
 import { Btn, Leg, BackBar, g } from "../components";
 
 export default function PlanScreen({ navigation }) {
@@ -37,7 +37,7 @@ const s = StyleSheet.create({
   me: { alignSelf: "flex-end", maxWidth: "85%", backgroundColor: C.gold, borderRadius: 16, borderBottomRightRadius: 5, padding: 12, marginBottom: 10 },
   meT: { color: "#fff", fontSize: 13.5, lineHeight: 19 },
   bot: { alignSelf: "flex-start", maxWidth: "90%", backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, borderBottomLeftRadius: 5, padding: 12, marginBottom: 14 },
-  botH: { color: C.teal, fontSize: 10, fontWeight: "700", marginBottom: 4 },
+  botH: { color: C.teal, fontSize: 10, fontFamily: T.sansB, marginBottom: 4 },
   botT: { color: C.ink, fontSize: 13.5, lineHeight: 19 },
   draft: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 14 },
   draftT: { fontSize: 11, color: C.mut, letterSpacing: 1, marginBottom: 2 },

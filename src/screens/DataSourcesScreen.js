@@ -3,7 +3,7 @@ import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
   Switch, Alert, ActivityIndicator, Linking,
 } from "react-native";
-import { C } from "../theme";
+import { C, T } from "../theme";
 import { BackBar, g, tap } from "../components";
 import { getMe, getGmailConnectUrl, triggerGmailScan, syncCalendar } from "../api";
 
@@ -223,20 +223,20 @@ const s = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.line },
   rowIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: "rgba(201,169,110,0.08)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(201,169,110,0.2)" },
   rowIconT: { fontSize: 18, color: C.gold },
-  rowTitle: { color: C.ink, fontSize: 15, fontWeight: "700" },
+  rowTitle: { color: C.ink, fontSize: 15, fontFamily: T.sansB },
   rowSub: { color: C.mut, fontSize: 12, lineHeight: 17, marginTop: 2 },
 
   badge: { backgroundColor: "rgba(201,169,110,0.12)", borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: "rgba(201,169,110,0.25)" },
-  badgeT: { color: C.gold, fontSize: 10, fontWeight: "700" },
+  badgeT: { color: C.gold, fontSize: 10, fontFamily: T.sansB },
 
   scanRow: { flexDirection: "row", alignItems: "center", paddingVertical: 14 },
-  scanT: { color: C.ink, fontSize: 15, fontWeight: "700" },
+  scanT: { color: C.ink, fontSize: 15, fontFamily: T.sansB },
   scanSub: { color: C.mut, fontSize: 12, marginTop: 2 },
   scanBtn: { backgroundColor: C.gold, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 10 },
-  scanBtnT: { color: C.bg, fontSize: 14, fontWeight: "700" },
+  scanBtnT: { color: C.bg, fontSize: 14, fontFamily: T.sansB },
 
   howRow: { flexDirection: "row", gap: 14, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.line },
   howIcon: { fontSize: 18, color: C.gold, marginTop: 2 },
-  howTitle: { color: C.ink, fontSize: 14, fontWeight: "700", marginBottom: 3 },
+  howTitle: { color: C.ink, fontSize: 14, fontFamily: T.sansB, marginBottom: 3 },
   howBody: { color: C.mut, fontSize: 13, lineHeight: 19 },
 });

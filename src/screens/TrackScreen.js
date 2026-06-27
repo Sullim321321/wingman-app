@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { SafeAreaView, ScrollView, View, Text, Animated, Easing, StyleSheet } from "react-native";
-import { C } from "../theme";
+import { C, T } from "../theme";
 import { BackBar, useCountUp, g } from "../components";
 
 const BANDS = [

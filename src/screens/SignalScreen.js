@@ -3,7 +3,7 @@ import {
   SafeAreaView, ScrollView, View, Text, StyleSheet,
   ActivityIndicator, Pressable,
 } from "react-native";
-import { C } from "../theme";
+import { C, T } from "../theme";
 import { Btn, BackBar, Chip, g } from "../components";
 import { API_BASE, getToken } from "../api";
 
@@ -103,7 +103,7 @@ export default function SignalScreen({ navigation }) {
 
         {!loading && !error && signals.length === 0 && imports.length === 0 && (
           <View style={s.emptyCard}>
-            <Text style={{ color: C.ink, fontSize: 15, fontWeight: "700", marginBottom: 6 }}>
+            <Text style={{ color: C.ink, fontSize: 15, fontFamily: T.sansB, marginBottom: 6 }}>
               No signals yet
             </Text>
             <Text style={{ color: C.mut, fontSize: 13, textAlign: "center", lineHeight: 19 }}>
@@ -230,12 +230,12 @@ const s = StyleSheet.create({
   },
   signalHeader: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 8 },
   signalIcon: { fontSize: 16, marginTop: 1 },
-  signalSource: { color: C.teal, fontSize: 11, fontWeight: "700", letterSpacing: 0.5 },
+  signalSource: { color: C.teal, fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.5 },
   signalTrip: { color: C.mut, fontSize: 11, marginTop: 1 },
   signalTime: { color: C.mut, fontSize: 11 },
-  signalTitle: { color: C.ink, fontSize: 14, fontWeight: "600", marginBottom: 4 },
+  signalTitle: { color: C.ink, fontSize: 14, fontFamily: T.sansM, marginBottom: 4 },
   signalBody: { color: C.mut, fontSize: 13, lineHeight: 18, marginBottom: 6 },
-  signalCta: { color: C.gold, fontSize: 12, fontWeight: "700" },
+  signalCta: { color: C.gold, fontSize: 12, fontFamily: T.sansB },
   importCard: {
     backgroundColor: C.card, borderWidth: 1, borderColor: C.line,
     borderRadius: 14, padding: 12, marginBottom: 8,
@@ -246,7 +246,7 @@ const s = StyleSheet.create({
     backgroundColor: "#0E1530", borderWidth: 1, borderColor: C.line,
     alignItems: "center", justifyContent: "center",
   },
-  importTitle: { color: C.ink, fontSize: 14, fontWeight: "600" },
+  importTitle: { color: C.ink, fontSize: 14, fontFamily: T.sansM },
   importSub: { color: C.mut, fontSize: 12, marginTop: 1 },
   sticky: { marginTop: 18, borderTopWidth: 1, borderTopColor: C.line, paddingTop: 14 },
   sum: { color: C.mut, fontSize: 12, textAlign: "center", marginBottom: 8, lineHeight: 17 },

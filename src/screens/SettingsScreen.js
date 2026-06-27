@@ -230,7 +230,7 @@ const s = StyleSheet.create({
   localeLabel: {
     color: C.mut,
     fontSize: 11,
-    fontWeight: "700",
+    fontFamily: T.sansB,
     letterSpacing: 0.8,
     marginBottom: 10,
     textTransform: "uppercase",

@@ -1,6 +1,6 @@
 import React from "react";
 import { SafeAreaView, StyleSheet } from "react-native";
-import { C } from "../theme";
+import { C, T } from "../theme";
 import { ExecStepper } from "../components";
 
 export default function ExecScreen({ navigation, route }) {

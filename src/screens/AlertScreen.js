@@ -4,7 +4,7 @@ import {
   Pressable, ActivityIndicator,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { C } from "../theme";
+import { C, T } from "../theme";
 import { Btn, BackBar, useCountUp, success, g } from "../components";
 import {
   getPrediction, getTrips,
@@ -95,13 +95,13 @@ function RescueRow({ opt, selected, onSelect, rank }) {
         <View style={{ flex: 1 }}>
           {/* Carrier + cabin */}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 }}>
-            <Text style={{ color: accentColor, fontSize: 14, fontWeight: "700" }}>
+            <Text style={{ color: accentColor, fontSize: 14, fontFamily: T.sansB }}>
               {isPoints ? "✦ " : "✈ "}{opt.carrier || "Alternative"}
             </Text>
-            <Text style={{ color: C.charcoal, fontSize: 13, fontWeight: "600" }}>{opt.flight}</Text>
+            <Text style={{ color: C.charcoal, fontSize: 13, fontFamily: T.sansM }}>{opt.flight}</Text>
             {opt.cabin && (
               <View style={[s.cabinBadge, { borderColor: accentBorder, backgroundColor: accentBg }]}>
-                <Text style={{ color: accentColor, fontSize: 9, fontWeight: "700", letterSpacing: 0.5 }}>
+                <Text style={{ color: accentColor, fontSize: 9, fontFamily: T.sansB, letterSpacing: 0.5 }}>
                   {opt.cabin.toUpperCase()}
                 </Text>
               </View>
@@ -473,18 +473,18 @@ const s = StyleSheet.create({
 
   // Hero
   heroCard: { borderRadius: 22, padding: 20, borderWidth: 1, borderColor: "rgba(255,77,109,0.2)" },
-  heroH: { color: C.ink, fontSize: 20, fontWeight: "700", marginTop: 10, marginBottom: 4, letterSpacing: -0.3 },
-  heroRoute: { color: C.coral, fontSize: 13, fontWeight: "700", marginBottom: 8, letterSpacing: 0.3 },
+  heroH: { color: C.ink, fontSize: 20, fontFamily: T.sansB, marginTop: 10, marginBottom: 4, letterSpacing: -0.3 },
+  heroRoute: { color: C.coral, fontSize: 13, fontFamily: T.sansB, marginBottom: 8, letterSpacing: 0.3 },
   heroP: { color: "rgba(243,245,247,0.7)", fontSize: 14, lineHeight: 21 },
   riskBar: { height: 8, borderRadius: 99, backgroundColor: "rgba(255,77,109,0.15)", marginTop: 16, overflow: "hidden" },
   riskFill: { height: "100%", borderRadius: 99, backgroundColor: C.coral },
   riskLbl: { color: C.mut, fontSize: 12, marginTop: 8 },
-  whyLink: { color: C.gold, fontSize: 14, fontWeight: "600", textAlign: "center", marginVertical: 16 },
+  whyLink: { color: C.gold, fontSize: 14, fontFamily: T.sansM, textAlign: "center", marginVertical: 16 },
   downstreamBanner: {
     marginTop: 14, backgroundColor: "rgba(255,140,0,0.1)", borderRadius: 10,
     borderWidth: 1, borderColor: "rgba(255,140,0,0.25)", paddingHorizontal: 12, paddingVertical: 8,
   },
-  downstreamText: { color: "#FF8C00", fontSize: 13, fontWeight: "700" },
+  downstreamText: { color: "#FF8C00", fontSize: 13, fontFamily: T.sansB },
 
   // Risk badge
   riskBadge: { borderRadius: 8, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3 },
@@ -492,7 +492,7 @@ const s = StyleSheet.create({
 
   // Rescue rows
   rescueNote: { color: C.mut, fontSize: 13, lineHeight: 19, marginBottom: 12 },
-  groupLabel: { color: C.mut, fontSize: 10, fontWeight: "700", letterSpacing: 1.5, marginBottom: 8, marginTop: 4 },
+  groupLabel: { color: C.mut, fontSize: 10, fontFamily: T.sansB, letterSpacing: 1.5, marginBottom: 8, marginTop: 4 },
   pointsNote: { color: C.mut, fontSize: 12, lineHeight: 18, marginBottom: 10 },
   loadingRow: { flexDirection: "row", alignItems: "center", padding: 16, backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, marginBottom: 10 },
   errorText: { color: C.mut, fontSize: 13, textAlign: "center", marginBottom: 10 },
@@ -505,7 +505,7 @@ const s = StyleSheet.create({
     alignSelf: "flex-start", borderRadius: 6, borderWidth: 1,
     paddingHorizontal: 7, paddingVertical: 3, marginBottom: 8,
   },
-  rescueLabel: { color: C.ink, fontSize: 13, fontWeight: "600", marginBottom: 2 },
+  rescueLabel: { color: C.ink, fontSize: 13, fontFamily: T.sansM, marginBottom: 2 },
   rescueMeta: { color: C.mut, fontSize: 12, marginTop: 1 },
   rescuePrice: { fontSize: 16, fontWeight: "800", letterSpacing: -0.3 },
   cabinBadge: { borderRadius: 6, borderWidth: 1, paddingHorizontal: 6, paddingVertical: 2 },
@@ -518,9 +518,9 @@ const s = StyleSheet.create({
     borderColor: "rgba(201,169,110,0.2)", padding: 12, marginBottom: 12,
   },
   selectedSummaryLabel: { color: C.gold, fontSize: 9, fontWeight: "800", letterSpacing: 1.2, marginBottom: 2 },
-  selectedSummaryText: { color: C.ink, fontSize: 14, fontWeight: "700" },
+  selectedSummaryText: { color: C.ink, fontSize: 14, fontFamily: T.sansB },
   selectedSummaryProtect: { color: "#64C88C", fontSize: 12, marginTop: 4 },
   sum: { color: C.mut, fontSize: 13, textAlign: "center", marginBottom: 12, lineHeight: 19 },
   declineBtn: { marginTop: 10, paddingVertical: 12, alignItems: "center" },
-  declineText: { color: C.mut, fontSize: 13, fontWeight: "600" },
+  declineText: { color: C.mut, fontSize: 13, fontFamily: T.sansM },
 });

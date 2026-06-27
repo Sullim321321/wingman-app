@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Btn, g, success } from "../components";
-import { C } from "../theme";
+import { C, T } from "../theme";
 
 export default function FlightConfirmScreen({ navigation, route }) {
   const { booking } = route.params;
@@ -56,7 +56,7 @@ const s = StyleSheet.create({
   card: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 16, marginBottom: 12 },
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.line },
   label: { color: C.mut, fontSize: 13 },
-  value: { color: C.ink, fontSize: 14, fontWeight: "700" },
+  value: { color: C.ink, fontSize: 14, fontFamily: T.sansB },
   notice: { backgroundColor: "rgba(34,211,166,0.07)", borderWidth: 1, borderColor: "rgba(34,211,166,0.2)", borderRadius: 12, padding: 13 },
   noticeT: { color: C.teal, fontSize: 13, lineHeight: 18 },
 });

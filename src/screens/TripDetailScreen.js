@@ -59,7 +59,7 @@ function StatusBadge({ status, size = "md" }) {
   const fs = size === "lg" ? 13 : 11;
   return (
     <View style={{ backgroundColor: st.bg, borderColor: st.border, borderWidth: 1, borderRadius: 999, ...px }}>
-      <Text style={{ color: st.text, fontSize: fs, fontWeight: "700" }}>{status}</Text>
+      <Text style={{ color: st.text, fontSize: fs, fontFamily: T.sansB }}>{status}</Text>
     </View>
   );
 }
@@ -739,13 +739,13 @@ export default function TripDetailScreen({ route, navigation }) {
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
   header: { borderRadius: 20, padding: 18, borderWidth: 1, borderColor: C.line, marginBottom: 4 },
-  tripTitle: { color: C.ink, fontSize: 24, fontWeight: "700" },
+  tripTitle: { color: C.ink, fontSize: 24, fontFamily: T.sansB },
   tripDate: { color: C.mut, fontSize: 14, marginTop: 4 },
   pillRow: { flexDirection: "row", gap: 8, marginTop: 12, flexWrap: "wrap" },
   pillLive: { backgroundColor: "rgba(34,211,166,0.14)", borderColor: "rgba(34,211,166,0.3)", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
-  pillLiveT: { color: C.teal, fontSize: 11, fontWeight: "700" },
+  pillLiveT: { color: C.teal, fontSize: 11, fontFamily: T.sansB },
   pillInfo: { backgroundColor: "rgba(201,169,110,0.12)", borderColor: "rgba(201,169,110,0.25)", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
-  pillInfoT: { color: C.gold, fontSize: 11, fontWeight: "600" },
+  pillInfoT: { color: C.gold, fontSize: 11, fontFamily: T.sansM },
 
   // Risk loading
   riskLoadingRow: { flexDirection: "row", alignItems: "center", padding: 14, backgroundColor: C.card, borderRadius: 14, borderWidth: 1, borderColor: C.line, marginBottom: 10 },
@@ -754,9 +754,9 @@ const s = StyleSheet.create({
   connRiskCard: { borderRadius: 14, borderWidth: 1, padding: 14, marginBottom: 10 },
   connRiskLevel: { fontSize: 12, fontWeight: "800", letterSpacing: 0.5, flex: 1 },
   connRiskScore: { fontSize: 14, fontWeight: "800" },
-  connRiskRoute: { color: C.ink, fontSize: 13, fontWeight: "600", marginBottom: 4 },
+  connRiskRoute: { color: C.ink, fontSize: 13, fontFamily: T.sansM, marginBottom: 4 },
   connRiskRec: { color: C.mut, fontSize: 12, lineHeight: 17 },
-  connRiskDownstream: { fontSize: 12, fontWeight: "700", marginTop: 6 },
+  connRiskDownstream: { fontSize: 12, fontFamily: T.sansB, marginTop: 6 },
 
   // Hotel alert
   hotelAlertCard: { backgroundColor: "rgba(201,169,110,0.08)", borderRadius: 12, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", padding: 12, marginBottom: 10 },
@@ -776,14 +776,14 @@ const s = StyleSheet.create({
 
   // Disruption CTA
   disruptionCta: { marginTop: -4, marginBottom: 10, paddingHorizontal: 4 },
-  disruptionCtaText: { color: C.gold, fontSize: 12, fontWeight: "600" },
+  disruptionCtaText: { color: C.gold, fontSize: 12, fontFamily: T.sansM },
 
   // Weather
   weatherWrap: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.line },
-  weatherTitle: { color: C.mut, fontSize: 11, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 },
+  weatherTitle: { color: C.mut, fontSize: 11, fontFamily: T.sansB, letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 },
   riskWrap: { marginTop: 4 },
   riskRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 4 },
-  riskLabel: { color: C.ink, fontSize: 13, fontWeight: "600" },
+  riskLabel: { color: C.ink, fontSize: 13, fontFamily: T.sansM },
   riskPct: { fontSize: 13, fontWeight: "800" },
   riskTrack: { height: 6, backgroundColor: C.card2, borderRadius: 99, overflow: "hidden" },
   riskFill: { height: "100%", borderRadius: 99 },
@@ -793,45 +793,45 @@ const s = StyleSheet.create({
   factorD: { color: C.ink, fontWeight: "500" },
 
   // Hotel card
-  legCardTitle: { color: C.ink, fontSize: 15, fontWeight: "700", marginBottom: 4 },
+  legCardTitle: { color: C.ink, fontSize: 15, fontFamily: T.sansB, marginBottom: 4 },
   legCardSub: { color: C.mut, fontSize: 12, marginTop: 2 },
 
   // Empty
   emptyCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 32, alignItems: "center", marginBottom: 12 },
-  emptyT: { color: C.ink, fontSize: 16, fontWeight: "700", marginBottom: 6 },
+  emptyT: { color: C.ink, fontSize: 16, fontFamily: T.sansB, marginBottom: 6 },
   emptySub: { color: C.mut, fontSize: 13, textAlign: "center", lineHeight: 19 },
 
   // Outcome card (learning loop)
   outcomeCard: { backgroundColor: C.card, borderWidth: 1, borderColor: "rgba(201,169,110,0.25)", borderRadius: 18, padding: 18, marginBottom: 12 },
-  outcomeTitle: { color: C.ink, fontSize: 16, fontWeight: "700", marginBottom: 6 },
+  outcomeTitle: { color: C.ink, fontSize: 16, fontFamily: T.sansB, marginBottom: 6 },
   outcomeSub: { color: C.mut, fontSize: 13, lineHeight: 19, marginBottom: 12 },
   starRow: { flexDirection: "row", gap: 8 },
   starBtn: { padding: 4 },
   star: { fontSize: 28, color: C.line },
-  ratingLabel: { color: C.gold, fontSize: 13, fontWeight: "600", marginTop: 8 },
+  ratingLabel: { color: C.gold, fontSize: 13, fontFamily: T.sansM, marginTop: 8 },
 
   // Concierge CTA
   conciergeCard: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 14, marginBottom: 8 },
   conciergeDot: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  conciergeT: { color: C.ink, fontSize: 14, fontWeight: "700", marginBottom: 2 },
+  conciergeT: { color: C.ink, fontSize: 14, fontFamily: T.sansB, marginBottom: 2 },
   conciergeS: { color: C.mut, fontSize: 12, lineHeight: 17 },
 
   // Destination intel card
   intelCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 16, marginBottom: 12 },
   intelRow: { flexDirection: "row", gap: 12, marginBottom: 12, alignItems: "flex-start" },
   intelIc: { fontSize: 18, width: 24, textAlign: "center", marginTop: 2 },
-  intelLabel: { color: C.mut, fontSize: 9, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase", marginBottom: 3 },
+  intelLabel: { color: C.mut, fontSize: 9, fontFamily: T.sansB, letterSpacing: 1, textTransform: "uppercase", marginBottom: 3 },
   intelText: { color: C.ink, fontSize: 13, lineHeight: 19 },
   intelCTA: { borderTopWidth: 0.5, borderTopColor: C.line, paddingTop: 12, marginTop: 4 },
-  intelCTAT: { color: C.gold, fontSize: 13, fontWeight: "600" },
+  intelCTAT: { color: C.gold, fontSize: 13, fontFamily: T.sansM },
 
   // Companion card
   companionCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 16, marginBottom: 12 },
   companionRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 },
   companionAvatar: { width: 30, height: 30, borderRadius: 15, backgroundColor: C.card2, borderWidth: 1, borderColor: C.line, alignItems: "center", justifyContent: "center" },
-  companionAvatarT: { color: C.gold, fontSize: 13, fontWeight: "700" },
+  companionAvatarT: { color: C.gold, fontSize: 13, fontFamily: T.sansB },
   companionEmail: { color: C.ink, fontSize: 13, flex: 1 },
-  companionStatus: { fontSize: 11, fontWeight: "700" },
+  companionStatus: { fontSize: 11, fontFamily: T.sansB },
   companionEmpty: { color: C.mut, fontSize: 13, lineHeight: 19, marginBottom: 12 },
   companionInputRow: { flexDirection: "row", gap: 10, alignItems: "center" },
   companionInput: { flex: 1, backgroundColor: C.card2, borderWidth: 1, borderColor: C.line, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10 },
@@ -839,23 +839,23 @@ const s = StyleSheet.create({
 
   // Pro upsell card
   proUpsellCard: { backgroundColor: "rgba(201,169,110,0.06)", borderWidth: 1, borderColor: "rgba(201,169,110,0.3)", borderRadius: 18, padding: 18, marginBottom: 12 },
-  proUpsellTitle: { color: C.gold, fontSize: 15, fontWeight: "700", marginBottom: 6 },
+  proUpsellTitle: { color: C.gold, fontSize: 15, fontFamily: T.sansB, marginBottom: 6 },
   proUpsellSub: { color: C.mut, fontSize: 13, lineHeight: 19, marginBottom: 10 },
-  proUpsellCta: { color: C.gold, fontSize: 13, fontWeight: "700" },
+  proUpsellCta: { color: C.gold, fontSize: 13, fontFamily: T.sansB },
 
   // Wallet button
   walletBtn: { backgroundColor: "#1C1C1E", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" },
-  walletBtnT: { color: "#FFFFFF", fontSize: 12, fontWeight: "600" },
+  walletBtnT: { color: "#FFFFFF", fontSize: 12, fontFamily: T.sansM },
 
   // Upgrade bid button
   upgradeBidBtn: { backgroundColor: "rgba(201,169,110,0.08)", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: "rgba(201,169,110,0.3)" },
-  upgradeBidBtnT: { color: C.gold, fontSize: 12, fontWeight: "600" },
+  upgradeBidBtnT: { color: C.gold, fontSize: 12, fontFamily: T.sansM },
 
   // Compensation button
   compensationBtn: { backgroundColor: "rgba(79,142,247,0.08)", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: "rgba(79,142,247,0.3)" },
-  compensationBtnT: { color: "#4F8EF7", fontSize: 12, fontWeight: "600" },
+  compensationBtnT: { color: "#4F8EF7", fontSize: 12, fontFamily: T.sansM },
 
   // Ground transport button
   groundTransportBtn: { backgroundColor: "rgba(78,205,196,0.08)", borderWidth: 1, borderColor: "rgba(78,205,196,0.25)", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
-  groundTransportBtnT: { color: "#4ECDC4", fontSize: 13, fontWeight: "600" },
+  groundTransportBtnT: { color: "#4ECDC4", fontSize: 13, fontFamily: T.sansM },
 });

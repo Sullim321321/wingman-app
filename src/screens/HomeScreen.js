@@ -7,10 +7,11 @@ import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
   ActivityIndicator, RefreshControl, Alert, Animated, Easing,
 } from "react-native";
+import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
-import { C, T } from "../theme";
-import { Btn, SerifText, g } from "../components";
+import { C, T, T } from "../theme";
+import { Btn, tap, SerifText, g } from "../components";
 import { getTrips, deleteTrip, getFlightStatus, getPrediction, getGroundIntel, getMe, getLoyaltyAccounts, getTripBriefing } from "../api";
 import { scheduleDisruption } from "../notify";
 

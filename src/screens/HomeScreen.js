@@ -7,7 +7,6 @@ import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
   ActivityIndicator, RefreshControl, Alert, Animated, Easing,
 } from "react-native";
-import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { C, T } from "../theme";

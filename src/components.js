@@ -7,9 +7,18 @@ import {
   View, Text, Pressable, Animated, Easing, StyleSheet, Platform,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
 import { C, T, GRAD } from "./theme";
+// Safe BlurView — require() so a missing/broken native module doesn't crash at import time
+let _BlurView = null;
+try { _BlurView = require("expo-blur").BlurView; } catch (_) {}
+function SafeBlur({ intensity, tint, style, children }) {
+  if (_BlurView) {
+    const BV = _BlurView;
+    return <BV intensity={intensity} tint={tint} style={style}>{children}</BV>;
+  }
+  return <View style={[style, { backgroundColor: "rgba(15,13,10,0.92)" }]}>{children}</View>;
+}
 
 // ─── Haptics ─────────────────────────────────────────────────────────────────
 export const tap = (style = "light") => {
@@ -113,7 +122,7 @@ export function PressCard({ onPress, style, children }) {
 // ─── Back navigation bar — frosted glass ─────────────────────────────────────
 export function BackBar({ nav, label = "", serif = false }) {
   return (
-    <BlurView intensity={60} tint="dark" style={g.backbarBlur}>
+    <SafeBlur intensity={60} tint="dark" style={g.backbarBlur}>
       <View style={g.backbar}>
         <Pressable onPress={() => { tap(); nav.goBack(); }} style={g.backBtn}>
           <Text style={g.backArrow}>‹</Text>
@@ -126,10 +135,9 @@ export function BackBar({ nav, label = "", serif = false }) {
         ) : null}
         <View style={{ width: 60 }} />
       </View>
-    </BlurView>
+    </SafeBlur>
   );
 }
-
 // ─── Chip / tag ───────────────────────────────────────────────────────────────
 export function Chip({ children, color }) {
   return (

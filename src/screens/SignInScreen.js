@@ -4,11 +4,17 @@ import {
   Platform, StyleSheet, Animated, Easing, Pressable,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from "expo-blur";
 import { C, T, GRAD } from "../theme";
 import { SerifText, Btn, tap } from "../components";
 import { requestCode, verifyCode } from "../api";
 import { useAuth } from "../auth";
+// Safe BlurView fallback
+let _BlurView = null;
+try { _BlurView = require("expo-blur").BlurView; } catch (_) {}
+function SafeBlur({ intensity, tint, style, children }) {
+  if (_BlurView) { const BV = _BlurView; return <BV intensity={intensity} tint={tint} style={style}>{children}</BV>; }
+  return <View style={[style, { backgroundColor: "rgba(15,13,10,0.92)" }]}>{children}</View>;
+}
 
 export default function SignInScreen() {
   const { signIn } = useAuth();
@@ -83,7 +89,7 @@ export default function SignInScreen() {
           </Text>
 
           {/* Input */}
-          <BlurView intensity={20} tint="dark" style={s.inputWrap}>
+          <SafeBlur intensity={20} tint="dark" style={s.inputWrap}>
             {stage === "email" ? (
               <TextInput
                 style={s.input}
@@ -112,7 +118,7 @@ export default function SignInScreen() {
                 returnKeyType="go"
               />
             )}
-          </BlurView>
+          </SafeBlur>
 
           {hint ? <Text style={s.hint}>{hint}</Text> : null}
           {err  ? <Text style={s.err}>{err}</Text>  : null}

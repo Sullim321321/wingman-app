@@ -1,4 +1,5 @@
 import { API_BASE } from "./config";
+export { API_BASE };
 
 let _token = null;
 export function setToken(t) { _token = t; }

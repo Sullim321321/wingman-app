@@ -4,13 +4,19 @@ import {
   StyleSheet, Pressable, ActivityIndicator, Animated, Easing,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from "expo-blur";
 import * as Notifications from "expo-notifications";
 import * as Linking from "expo-linking";
 import * as SecureStore from "expo-secure-store";
 import { C, T, GRAD } from "../theme";
 import { SerifText, Btn, tap } from "../components";
 import { getGmailConnectUrl, registerPushToken } from "../api";
+// Safe BlurView fallback
+let _BlurView = null;
+try { _BlurView = require("expo-blur").BlurView; } catch (_) {}
+function SafeBlur({ intensity, tint, style, children }) {
+  if (_BlurView) { const BV = _BlurView; return <BV intensity={intensity} tint={tint} style={style}>{children}</BV>; }
+  return <View style={[style, { backgroundColor: "rgba(15,13,10,0.92)" }]}>{children}</View>;
+}
 
 const { width } = Dimensions.get("window");
 const KEY_ONBOARDED = "wingman_onboarded";
@@ -82,7 +88,7 @@ function SlideWatch() {
   return (
     <View style={s.slide}>
       <SlideIn delay={100}>
-        <BlurView intensity={18} tint="dark" style={s.featureCard}>
+        <SafeBlur intensity={18} tint="dark" style={s.featureCard}>
           {[
             { color: C.coral,  label: "DELAYED",   t: "UA 412 — 45 min delay", s: "Gate B22 → B31 · New dep 3:15 PM" },
             { color: C.gold,   label: "RISK",       t: "Weather risk at DEN — 68%", s: "Snow band on inbound radar" },
@@ -98,7 +104,7 @@ function SlideWatch() {
               </View>
             </View>
           ))}
-        </BlurView>
+        </SafeBlur>
       </SlideIn>
 
       <SlideIn delay={200}>
@@ -118,7 +124,7 @@ function SlideConcierge() {
   return (
     <View style={s.slide}>
       <SlideIn delay={100}>
-        <BlurView intensity={18} tint="dark" style={s.chatCard}>
+        <SafeBlur intensity={18} tint="dark" style={s.chatCard}>
           <View style={s.bubbleLeft}>
             <Text style={s.bubbleText}>My flight to Denver was just cancelled — what do I do?</Text>
           </View>
@@ -137,7 +143,7 @@ function SlideConcierge() {
               <Text style={[s.bubbleText, { color: "#0F0D0A" }]}>Done. Confirmation sent to your email. ✓</Text>
             </LinearGradient>
           </View>
-        </BlurView>
+        </SafeBlur>
       </SlideIn>
 
       <SlideIn delay={200}>
@@ -174,7 +180,7 @@ function SlideNotifications({ onDone, onSkip }) {
   return (
     <View style={s.slide}>
       <SlideIn delay={100}>
-        <BlurView intensity={18} tint="dark" style={s.permCard}>
+        <SafeBlur intensity={18} tint="dark" style={s.permCard}>
           <LinearGradient colors={[C.amber + "20", "transparent"]} style={s.permGlow} />
           <View style={s.permIconWrap}>
             <LinearGradient colors={[C.amber + "40", C.amber + "15"]} style={s.permIconBg}>
@@ -193,7 +199,7 @@ function SlideNotifications({ onDone, onSkip }) {
               </View>
             ))}
           </View>
-        </BlurView>
+        </SafeBlur>
       </SlideIn>
 
       <SlideIn delay={200}>
@@ -239,7 +245,7 @@ function SlideGmail({ onDone }) {
   return (
     <View style={s.slide}>
       <SlideIn delay={100}>
-        <BlurView intensity={18} tint="dark" style={s.permCard}>
+        <SafeBlur intensity={18} tint="dark" style={s.permCard}>
           <LinearGradient colors={[C.gold + "18", "transparent"]} style={s.permGlow} />
           <View style={s.permIconWrap}>
             <LinearGradient colors={GRAD.gold} style={s.permIconBg}>
@@ -258,7 +264,7 @@ function SlideGmail({ onDone }) {
               </View>
             ))}
           </View>
-        </BlurView>
+        </SafeBlur>
       </SlideIn>
 
       <SlideIn delay={200}>

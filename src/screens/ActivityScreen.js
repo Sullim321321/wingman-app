@@ -3,6 +3,7 @@ import {
   SafeAreaView, ScrollView, View, Text, StyleSheet,
   ActivityIndicator, RefreshControl, Pressable,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { C } from "../theme";
 import { g } from "../components";
@@ -22,32 +23,36 @@ function timeAgo(iso) {
 }
 
 const TYPE_META = {
-  disruption:  { ic: "⚠️", color: C.coral },
-  delay:       { ic: "⏱",  color: C.amber },
-  recovery:    { ic: "✅", color: C.teal },
-  departed:    { ic: "🛫", color: C.accent },
-  landed:      { ic: "🛬", color: "#818CF8" },
-  status:      { ic: "ℹ️", color: C.mut },
-  import:      { ic: "📥", color: C.teal },
-  trip:        { ic: "🧭", color: C.accent },
-  weather:     { ic: "🌨️", color: C.accent },
-  seat_alert:  { ic: "🪑", color: C.teal },
-  hotel_email: { ic: "✉️", color: "#818CF8" },
+  disruption:  { ic: "⚠️", color: C.coral,   actionable: true },
+  delay:       { ic: "⏱",  color: C.amber,   actionable: true },
+  recovery:    { ic: "✅", color: C.teal,    actionable: false },
+  departed:    { ic: "🛫", color: C.accent,  actionable: false },
+  landed:      { ic: "🛬", color: "#818CF8", actionable: false },
+  status:      { ic: "ℹ️", color: C.mut,     actionable: false },
+  import:      { ic: "📥", color: C.teal,    actionable: false },
+  trip:        { ic: "🧭", color: C.accent,  actionable: false },
+  weather:     { ic: "🌨️", color: C.amber,   actionable: true },
+  seat_alert:  { ic: "🪑", color: C.teal,    actionable: false },
+  hotel_email: { ic: "✉️", color: "#818CF8", actionable: false },
 };
 
-function EventItem({ event, isLast }) {
+function EventItem({ event, isLast, onAction }) {
   const meta = TYPE_META[event.type] || TYPE_META.status;
+  const isActionable = meta.actionable;
+
   return (
     <View style={s.item}>
       <View style={s.railWrap}>
-        <View style={[s.dot, { backgroundColor: meta.color + "26", borderColor: meta.color + "50" }]}>
-          <Text style={{ fontSize: 13 }}>{meta.ic}</Text>
+        <View style={[s.dot, { backgroundColor: meta.color + "1A", borderColor: meta.color + "40" }]}>
+          <Text style={{ fontSize: 14 }}>{meta.ic}</Text>
         </View>
         {!isLast && <View style={s.rail} />}
       </View>
-      <View style={{ flex: 1, paddingBottom: 18 }}>
+
+      <View style={{ flex: 1, paddingBottom: 20 }}>
         <Text style={s.eventTitle}>{event.title}</Text>
         {event.body ? <Text style={s.eventBody}>{event.body}</Text> : null}
+
         <View style={s.metaRow}>
           {event.trip_title && (
             <View style={s.tripTag}>
@@ -56,6 +61,18 @@ function EventItem({ event, isLast }) {
           )}
           <Text style={s.when}>{timeAgo(event.created_at)}</Text>
         </View>
+
+        {/* Action button for disruptions and delays */}
+        {isActionable && (
+          <Pressable
+            style={[s.actionBtn, { borderColor: meta.color + "40", backgroundColor: meta.color + "0D" }]}
+            onPress={() => onAction(event)}
+          >
+            <Text style={[s.actionBtnT, { color: meta.color }]}>
+              {event.type === "disruption" ? "See rescue options →" : "Review options →"}
+            </Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -83,7 +100,22 @@ export default function ActivityScreen({ navigation }) {
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
-  const disruptionCount = events.filter(e => e.type === "disruption" || e.type === "delay").length;
+  // Navigate to AlertScreen pre-loaded with the event's flight context
+  const handleAction = (event) => {
+    const flight = event.flight
+      ? event.flight
+      : {
+          origin: event.origin || null,
+          destination: event.destination || null,
+          carrier: event.carrier || null,
+          flight_number: event.flight_number || null,
+          departs_at: event.departs_at || null,
+          tripTitle: event.trip_title || null,
+        };
+    navigation.navigate("Alert", { flight });
+  };
+
+  const disruptionCount = events.filter(e => e.type === "disruption" || e.type === "delay" || e.type === "weather").length;
 
   return (
     <SafeAreaView style={s.app}>
@@ -95,6 +127,7 @@ export default function ActivityScreen({ navigation }) {
           </View>
         )}
       </View>
+
       <ScrollView
         contentContainerStyle={[g.scroll, { paddingTop: 8 }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={C.teal} />}
@@ -110,7 +143,7 @@ export default function ActivityScreen({ navigation }) {
         ) : events.length === 0 ? (
           <View style={s.emptyCard}>
             <Text style={s.emptyIc}>📡</Text>
-            <Text style={s.emptyT}>No activity yet</Text>
+            <Text style={s.emptyT}>Nothing yet</Text>
             <Text style={s.emptySub}>
               Add a trip with upcoming flights and Wingman will monitor them every 15 minutes — delays, cancellations, and gate changes will appear here.
             </Text>
@@ -120,17 +153,39 @@ export default function ActivityScreen({ navigation }) {
           </View>
         ) : (
           <>
+            {/* Disruption banner with CTA */}
             {disruptionCount > 0 && (
-              <View style={s.banner}>
-                <Text style={{ fontSize: 18 }}>⚡</Text>
-                <Text style={s.bannerT}>
-                  Wingman caught <Text style={{ color: C.coral, fontWeight: "700" }}>{disruptionCount} disruption{disruptionCount !== 1 ? "s" : ""}</Text> on your upcoming trips.
-                </Text>
-              </View>
+              <Pressable
+                style={s.banner}
+                onPress={() => {
+                  const firstDisruption = events.find(e => e.type === "disruption" || e.type === "delay" || e.type === "weather");
+                  if (firstDisruption) handleAction(firstDisruption);
+                }}
+              >
+                <LinearGradient colors={["rgba(255,77,109,0.10)", "rgba(255,77,109,0.04)"]} style={s.bannerGrad}>
+                  <Text style={{ fontSize: 20 }}>⚡</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.bannerT}>
+                      Wingman caught{" "}
+                      <Text style={{ color: C.coral, fontWeight: "800" }}>
+                        {disruptionCount} disruption{disruptionCount !== 1 ? "s" : ""}
+                      </Text>
+                      {" "}on your upcoming trips.
+                    </Text>
+                    <Text style={s.bannerSub}>Tap to review options →</Text>
+                  </View>
+                </LinearGradient>
+              </Pressable>
             )}
+
             <View style={s.feed}>
               {events.map((event, i) => (
-                <EventItem key={event.id} event={event} isLast={i === events.length - 1} />
+                <EventItem
+                  key={event.id || i}
+                  event={event}
+                  isLast={i === events.length - 1}
+                  onAction={handleAction}
+                />
               ))}
             </View>
           </>
@@ -146,19 +201,31 @@ const s = StyleSheet.create({
   headT: { color: C.ink, fontSize: 20, fontWeight: "700", letterSpacing: -0.5 },
   countBadge: { backgroundColor: "rgba(74,114,255,0.12)", borderWidth: 1, borderColor: "rgba(74,114,255,0.25)", borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 },
   countT: { color: C.accent, fontSize: 11, fontWeight: "700", letterSpacing: 0.3 },
-  banner: { flexDirection: "row", gap: 12, alignItems: "center", backgroundColor: "rgba(255,77,109,0.07)", borderWidth: 1, borderColor: "rgba(255,77,109,0.2)", borderRadius: 18, padding: 16, marginBottom: 20 },
-  bannerT: { flex: 1, color: C.ink, fontSize: 14, lineHeight: 20 },
+
+  // Disruption banner
+  banner: { marginBottom: 20, borderRadius: 20, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,77,109,0.2)" },
+  bannerGrad: { flexDirection: "row", gap: 12, alignItems: "center", padding: 16 },
+  bannerT: { color: C.ink, fontSize: 14, lineHeight: 20, fontWeight: "500" },
+  bannerSub: { color: C.coral, fontSize: 12, fontWeight: "600", marginTop: 3 },
+
+  // Feed
   feed: { gap: 0 },
   item: { flexDirection: "row", gap: 14 },
   railWrap: { alignItems: "center", width: 36 },
   dot: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", borderWidth: 1 },
-  rail: { flex: 1, width: 1, backgroundColor: C.line, marginTop: 4, minHeight: 20, opacity: 0.5 },
+  rail: { flex: 1, width: 1, backgroundColor: C.line, marginTop: 4, minHeight: 20, opacity: 0.4 },
   eventTitle: { color: C.ink, fontSize: 14, fontWeight: "600", lineHeight: 20, letterSpacing: 0.1 },
   eventBody: { color: C.mut, fontSize: 13, marginTop: 3, lineHeight: 19 },
   metaRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 7 },
-  tripTag: { backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: "rgba(255,255,255,0.04)" },
+  tripTag: { backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: "rgba(255,255,255,0.06)" },
   tripTagT: { color: C.mut, fontSize: 11, fontWeight: "600", letterSpacing: 0.2 },
   when: { color: C.mut, fontSize: 11, letterSpacing: 0.2 },
+
+  // Action button
+  actionBtn: { marginTop: 10, alignSelf: "flex-start", borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 7 },
+  actionBtnT: { fontSize: 13, fontWeight: "700", letterSpacing: 0.2 },
+
+  // Empty state
   emptyCard: { alignItems: "center", padding: 44, backgroundColor: C.card, borderRadius: 24, borderWidth: 1, borderColor: C.line },
   emptyIc: { fontSize: 44, marginBottom: 14 },
   emptyT: { color: C.ink, fontSize: 19, fontWeight: "700", marginBottom: 8, letterSpacing: -0.3 },

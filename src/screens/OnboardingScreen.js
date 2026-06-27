@@ -50,9 +50,9 @@ function SlideWatch() {
     <View style={s.slide}>
       <View style={s.featureCard}>
         {[
-          { ic: "⚠️", c: C.coral, t: "UA 412 Delayed 45m", s: "Gate B22 → B31 · New dep 3:15 PM" },
+          { ic: "⚠️", c: C.coral,  t: "UA 412 Delayed 45m", s: "Gate B22 → B31 · New dep 3:15 PM" },
           { ic: "🌨️", c: C.accent, t: "Weather risk: DEN 68%", s: "Snow band on inbound radar" },
-          { ic: "✅", c: C.teal,  t: "AA 1847 On Time", s: "Boarding in 22 min · Gate C14" },
+          { ic: "✅", c: C.teal,   t: "AA 1847 On Time", s: "Boarding in 22 min · Gate C14" },
         ].map((item, i) => (
           <View key={i} style={[s.mockRow, i > 0 && { borderTopWidth: 1, borderTopColor: C.line }]}>
             <View style={[s.mockIc, { backgroundColor: item.c + "22" }]}>
@@ -99,27 +99,14 @@ function SlideConcierge() {
   );
 }
 
-// ─── Slide 4: Setup ─────────────────────────────────────────────────────────
+// ─── Slide 4: Push Notifications (single ask, high acceptance) ──────────────
 
-function SlideSetup({ onDone }) {
-  const [gmailDone, setGmailDone] = useState(false);
-  const [notifDone, setNotifDone] = useState(false);
-  const [gmailLoading, setGmailLoading] = useState(false);
+function SlideNotifications({ onDone, onSkip }) {
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
 
-  const connectGmail = async () => {
-    setGmailLoading(true);
-    try {
-      const { url } = await getGmailConnectUrl();
-      if (url) await Linking.openURL(url);
-      setGmailDone(true);
-    } catch (e) {
-      setGmailDone(true);
-    } finally {
-      setGmailLoading(false);
-    }
-  };
-
-  const enableNotifications = async () => {
+  const enable = async () => {
+    setLoading(true);
     try {
       const { status } = await Notifications.requestPermissionsAsync();
       if (status === "granted") {
@@ -129,7 +116,78 @@ function SlideSetup({ onDone }) {
         if (t?.data) await registerPushToken(t.data);
       }
     } catch (e) {}
-    setNotifDone(true);
+    setLoading(false);
+    setDone(true);
+    setTimeout(onDone, 600);
+  };
+
+  return (
+    <View style={s.slide}>
+      <LinearGradient colors={[C.amber + "18", "transparent"]} style={s.permCard}>
+        <View style={s.permIconWrap}>
+          <LinearGradient colors={[C.amber + "33", C.amber + "11"]} style={s.permIconBg}>
+            <Text style={{ fontSize: 36 }}>{done ? "✅" : "🔔"}</Text>
+          </LinearGradient>
+        </View>
+        <Text style={s.permTitle}>Don't miss a thing</Text>
+        <Text style={s.permBody}>
+          Wingman needs permission to send you alerts when a flight is delayed, cancelled, or your gate changes. You'll only hear from us when it matters.
+        </Text>
+
+        <View style={s.permBullets}>
+          {[
+            "Delay & cancellation alerts",
+            "Gate change notifications",
+            "Disruption rescue prompts",
+          ].map(b => (
+            <View key={b} style={s.permBulletRow}>
+              <Text style={{ color: C.teal, fontSize: 13 }}>✓</Text>
+              <Text style={s.permBulletT}>{b}</Text>
+            </View>
+          ))}
+        </View>
+      </LinearGradient>
+
+      <View style={{ width: "100%", marginTop: 8 }}>
+        {loading ? (
+          <View style={s.loadingRow}>
+            <ActivityIndicator color={C.teal} />
+            <Text style={{ color: C.mut, fontSize: 14, marginLeft: 10 }}>Enabling alerts…</Text>
+          </View>
+        ) : done ? (
+          <View style={s.doneRow}>
+            <Text style={{ color: C.teal, fontSize: 15, fontWeight: "700" }}>✓ Alerts enabled</Text>
+          </View>
+        ) : (
+          <>
+            <Btn title="Enable disruption alerts" onPress={enable} />
+            <Pressable style={{ marginTop: 14, alignItems: "center" }} onPress={onSkip}>
+              <Text style={s.skipLink}>Not now</Text>
+            </Pressable>
+          </>
+        )}
+      </View>
+    </View>
+  );
+}
+
+// ─── Slide 5: Gmail (separate step, after user is invested) ─────────────────
+
+function SlideGmail({ onDone }) {
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const connect = async () => {
+    setLoading(true);
+    try {
+      const { url } = await getGmailConnectUrl();
+      if (url) await Linking.openURL(url);
+      setDone(true);
+    } catch (e) {
+      setDone(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const finish = async () => {
@@ -139,54 +197,52 @@ function SlideSetup({ onDone }) {
 
   return (
     <View style={s.slide}>
-      <LinearGradient colors={[C.accent + "22", "transparent"]} style={s.setupHeader}>
-        <Text style={{ fontSize: 36 }}>🛡</Text>
-        <Text style={s.setupHeadT}>You're almost protected</Text>
-        <Text style={s.setupHeadS}>Two quick steps and Wingman is fully active.</Text>
+      <LinearGradient colors={[C.accent + "14", "transparent"]} style={s.permCard}>
+        <View style={s.permIconWrap}>
+          <LinearGradient colors={[C.accent + "33", C.accent + "11"]} style={s.permIconBg}>
+            <Text style={{ fontSize: 36 }}>{done ? "✅" : "📧"}</Text>
+          </LinearGradient>
+        </View>
+        <Text style={s.permTitle}>Import trips automatically</Text>
+        <Text style={s.permBody}>
+          Connect Gmail and Wingman will scan for flight and hotel confirmations — no manual entry needed. We only read booking emails, nothing else.
+        </Text>
+
+        <View style={s.permBullets}>
+          {[
+            "Auto-import flight confirmations",
+            "Hotel & car rental bookings",
+            "Read-only · never sends email",
+          ].map(b => (
+            <View key={b} style={s.permBulletRow}>
+              <Text style={{ color: C.teal, fontSize: 13 }}>✓</Text>
+              <Text style={s.permBulletT}>{b}</Text>
+            </View>
+          ))}
+        </View>
       </LinearGradient>
 
-      <Pressable
-        style={[s.setupRow, gmailDone && s.setupRowDone]}
-        onPress={gmailDone ? undefined : connectGmail}
-      >
-        <View style={[s.setupIc, { backgroundColor: gmailDone ? C.teal + "22" : C.accent + "22" }]}>
-          {gmailLoading
-            ? <ActivityIndicator color={C.accent} size="small" />
-            : <Text style={{ fontSize: 20 }}>{gmailDone ? "✅" : "📧"}</Text>
-          }
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={s.setupT}>{gmailDone ? "Gmail connected" : "Connect Gmail"}</Text>
-          <Text style={s.setupS}>
-            {gmailDone
-              ? "Booking confirmations will import automatically"
-              : "Auto-import flight & hotel confirmations from your inbox"}
-          </Text>
-        </View>
-        {!gmailDone && <Text style={s.arrow}>›</Text>}
-      </Pressable>
-
-      <Pressable
-        style={[s.setupRow, notifDone && s.setupRowDone]}
-        onPress={notifDone ? undefined : enableNotifications}
-      >
-        <View style={[s.setupIc, { backgroundColor: notifDone ? C.teal + "22" : C.amber + "22" }]}>
-          <Text style={{ fontSize: 20 }}>{notifDone ? "✅" : "🔔"}</Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={s.setupT}>{notifDone ? "Alerts enabled" : "Enable disruption alerts"}</Text>
-          <Text style={s.setupS}>
-            {notifDone
-              ? "You'll be notified the moment something changes"
-              : "Get notified the moment a flight is delayed or cancelled"}
-          </Text>
-        </View>
-        {!notifDone && <Text style={s.arrow}>›</Text>}
-      </Pressable>
-
-      <View style={{ marginTop: 20, width: "100%" }}>
-        <Btn title="Start using Wingman →" onPress={finish} />
-        <Text style={s.skip} onPress={finish}>Skip for now</Text>
+      <View style={{ width: "100%", marginTop: 8 }}>
+        {loading ? (
+          <View style={s.loadingRow}>
+            <ActivityIndicator color={C.teal} />
+            <Text style={{ color: C.mut, fontSize: 14, marginLeft: 10 }}>Opening Gmail…</Text>
+          </View>
+        ) : done ? (
+          <>
+            <View style={s.doneRow}>
+              <Text style={{ color: C.teal, fontSize: 15, fontWeight: "700" }}>✓ Gmail connected</Text>
+            </View>
+            <Btn title="Start using Wingman →" onPress={finish} style={{ marginTop: 14 }} />
+          </>
+        ) : (
+          <>
+            <Btn title="Connect Gmail" onPress={connect} />
+            <Pressable style={{ marginTop: 14, alignItems: "center" }} onPress={finish}>
+              <Text style={s.skipLink}>Skip — I'll add trips manually</Text>
+            </Pressable>
+          </>
+        )}
       </View>
     </View>
   );
@@ -197,7 +253,7 @@ function SlideSetup({ onDone }) {
 export default function OnboardingScreen({ navigation }) {
   const [page, setPage] = useState(0);
   const ref = useRef(null);
-  const TOTAL = 4;
+  const TOTAL = 5; // Hero, Watch, Concierge, Notifications, Gmail
 
   const onScroll = (e) => setPage(Math.round(e.nativeEvent.contentOffset.x / width));
 
@@ -206,11 +262,14 @@ export default function OnboardingScreen({ navigation }) {
   };
 
   const goSignIn = () => navigation.navigate("SignIn");
-  const isLast = page === TOTAL - 1;
+
+  // Slides 4 and 5 have their own CTAs — hide the shared Next/footer buttons
+  const isPermSlide = page === 3 || page === 4;
 
   return (
     <SafeAreaView style={s.app}>
-      {!isLast && (
+      {/* Skip button — only on info slides */}
+      {!isPermSlide && (
         <Pressable style={s.skipBtn} onPress={goSignIn}>
           <Text style={s.skipBtnT}>Skip</Text>
         </Pressable>
@@ -228,17 +287,32 @@ export default function OnboardingScreen({ navigation }) {
         <SlideHero />
         <SlideWatch />
         <SlideConcierge />
-        <SlideSetup onDone={goSignIn} />
+        <SlideNotifications onDone={next} onSkip={next} />
+        <SlideGmail onDone={goSignIn} />
       </ScrollView>
 
-      <View style={s.footer}>
-        <View style={s.dots}>
-          {Array.from({ length: TOTAL }).map((_, i) => (
-            <View key={i} style={[s.dot, i === page && s.dotOn]} />
-          ))}
+      {/* Footer dots + Next button — only on info slides */}
+      {!isPermSlide && (
+        <View style={s.footer}>
+          <View style={s.dots}>
+            {Array.from({ length: TOTAL }).map((_, i) => (
+              <View key={i} style={[s.dot, i === page && s.dotOn]} />
+            ))}
+          </View>
+          <Btn title="Next" onPress={next} />
         </View>
-        {!isLast && <Btn title="Next" onPress={next} />}
-      </View>
+      )}
+
+      {/* Dots only on permission slides */}
+      {isPermSlide && (
+        <View style={[s.footer, { paddingBottom: 20 }]}>
+          <View style={s.dots}>
+            {Array.from({ length: TOTAL }).map((_, i) => (
+              <View key={i} style={[s.dot, i === page && s.dotOn]} />
+            ))}
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -275,23 +349,25 @@ const s = StyleSheet.create({
   bubbleRight: { alignSelf: "flex-end", backgroundColor: C.accent, borderRadius: 14, borderBottomRightRadius: 4, padding: 11, maxWidth: "85%" },
   bubbleText: { color: C.mut, fontSize: 12.5, lineHeight: 18 },
 
-  // Setup
-  setupHeader: { width: "100%", borderRadius: 18, padding: 20, alignItems: "center", marginBottom: 20 },
-  setupHeadT: { color: C.ink, fontSize: 20, fontWeight: "700", marginTop: 8, marginBottom: 4 },
-  setupHeadS: { color: C.mut, fontSize: 13, textAlign: "center" },
-  setupRow: { flexDirection: "row", alignItems: "center", gap: 14, width: "100%", backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, padding: 16, marginBottom: 12 },
-  setupRowDone: { borderColor: C.teal + "55", backgroundColor: C.teal + "0A" },
-  setupIc: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
-  setupT: { color: C.ink, fontSize: 14, fontWeight: "600" },
-  setupS: { color: C.mut, fontSize: 12, marginTop: 2, lineHeight: 16 },
-  arrow: { color: C.mut, fontSize: 24, fontWeight: "300" },
+  // Permission slides
+  permCard: { width: "100%", borderRadius: 24, padding: 24, alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", marginBottom: 8 },
+  permIconWrap: { marginBottom: 18 },
+  permIconBg: { width: 80, height: 80, borderRadius: 24, alignItems: "center", justifyContent: "center" },
+  permTitle: { color: C.ink, fontSize: 22, fontWeight: "700", letterSpacing: -0.4, marginBottom: 10, textAlign: "center" },
+  permBody: { color: C.mut, fontSize: 14, lineHeight: 21, textAlign: "center", marginBottom: 20 },
+  permBullets: { width: "100%", gap: 10 },
+  permBulletRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  permBulletT: { color: C.ink, fontSize: 14, fontWeight: "500" },
+
+  loadingRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 16 },
+  doneRow: { alignItems: "center", paddingVertical: 14 },
+  skipLink: { color: C.mut, fontSize: 14 },
 
   // Shared
-  title: { color: C.ink, fontSize: 25, fontWeight: "700", marginBottom: 10, textAlign: "center" },
+  title: { color: C.ink, fontSize: 25, fontWeight: "700", marginBottom: 10, textAlign: "center", letterSpacing: -0.4 },
   body: { color: C.mut, fontSize: 14, lineHeight: 21, textAlign: "center", maxWidth: 320 },
   footer: { paddingHorizontal: 24, paddingBottom: 34, paddingTop: 6 },
   dots: { flexDirection: "row", gap: 7, justifyContent: "center", marginBottom: 14 },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.line },
   dotOn: { backgroundColor: C.accent, width: 22 },
-  skip: { color: C.mut, fontSize: 13, textAlign: "center", marginTop: 14 },
 });

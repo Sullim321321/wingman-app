@@ -39,11 +39,17 @@ export async function registerForPush() {
   }
 }
 
-export async function scheduleDisruption() {
+export async function scheduleDisruption(flight = null) {
+  const route = flight?.origin && flight?.destination
+    ? `${flight.origin} → ${flight.destination}`
+    : "DEN → ASE";
+  const flightLabel = flight
+    ? [(flight.carrier || ""), (flight.flight_number || "")].filter(Boolean).join(" ") || route
+    : "UA 5821";
   await Notifications.scheduleNotificationAsync({
     content: {
       title: "Heads up — act before takeoff",
-      body: "Denver weather is deteriorating. Your DEN to Aspen flight has a high cancellation risk. Tap to review your options.",
+      body: `Conditions on ${route} are deteriorating. ${flightLabel} has a high disruption risk. Tap to review your options.`,
       data: { route: "Alert" },
     },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 3 },

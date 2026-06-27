@@ -11,7 +11,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { C, T } from "../theme";
 import { Btn, SerifText, g } from "../components";
-import { getTrips, deleteTrip, getFlightStatus, getPrediction, getGroundIntel } from "../api";
+import { getTrips, deleteTrip, getFlightStatus, getPrediction, getGroundIntel, getMe } from "../api";
 import { scheduleDisruption } from "../notify";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -382,6 +382,10 @@ export default function HomeScreen({ navigation }) {
   const [trips, setTrips]         = useState([]);
   const [loading, setLoading]     = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  useEffect(() => {
+    getMe().then(u => { if (u?.first_name) setFirstName(u.first_name); }).catch(() => {});
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -448,7 +452,7 @@ export default function HomeScreen({ navigation }) {
           <>
             {/* ── Serif greeting ─────────────────────────────────────────── */}
             <View style={s.greetWrap}>
-              <SerifText style={s.greetH}>{greeting()}, Alex.</SerifText>
+              <SerifText style={s.greetH}>{greeting()}{firstName ? `, ${firstName}.` : "."}</SerifText>
               <Text style={s.greetS}>
                 {nextFlight
                   ? `Next flight: ${nextFlight.origin} → ${nextFlight.destination}`

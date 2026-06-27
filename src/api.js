@@ -46,8 +46,8 @@ export const registerPushToken = (pushToken) =>
 
 export const getMe = () => req("/me");
 export const getProfile = () => req("/me");
-export const updateProfile = (preferences) =>
-  req("/profile", { method: "PATCH", body: JSON.stringify({ preferences }) });
+export const updateProfile = (data) =>
+  req("/profile", { method: "PATCH", body: JSON.stringify(data) });
 
 // Gmail
 export const getGmailConnectUrl = () => req("/auth/gmail/connect");

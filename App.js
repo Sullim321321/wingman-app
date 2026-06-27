@@ -60,6 +60,7 @@ import FlightConfirmScreen from "./src/screens/FlightConfirmScreen";
 import DataSourcesScreen from "./src/screens/DataSourcesScreen";
 import AutonomySettingsScreen from "./src/screens/AutonomySettingsScreen";
 import InsightsScreen from "./src/screens/InsightsScreen";
+import ProfileSetupScreen from "./src/screens/ProfileSetupScreen";
 
 export const navRef = createNavigationContainerRef();
 const Stack = createNativeStackNavigator();
@@ -80,18 +81,20 @@ const navTheme = {
 // ─── Tab bar icon — hairline Unicode symbols ──────────────────────────────────
 // Using thin Unicode characters that read as clean line icons
 const TAB_ICONS = {
-  Home:     { active: "⌂", inactive: "⌂" },   // house
-  Trips:    { active: "⊡", inactive: "⊡" },   // briefcase-like square
-  Alerts:   { active: "◎", inactive: "◎" },   // bell-like circle
-  Insights: { active: "◈", inactive: "◈" },   // insights diamond
+  Home:      { active: "⌂", inactive: "⌂" },   // house
+  Trips:     { active: "⊡", inactive: "⊡" },   // briefcase-like square
+  Alerts:    { active: "◎", inactive: "◎" },   // bell-like circle
+  Concierge: { active: "✦", inactive: "✦" },   // concierge star
+  Insights:  { active: "◈", inactive: "◈" },   // insights diamond
 };
 
 // Tab labels — wide-tracked all-caps
 const TAB_LABELS = {
-  Home:     "HOME",
-  Trips:    "TRIPS",
-  Alerts:   "ALERTS",
-  Insights: "INSIGHTS",
+  Home:      "HOME",
+  Trips:     "TRIPS",
+  Alerts:    "ALERTS",
+  Concierge: "CONCIERGE",
+  Insights:  "INSIGHTS",
 };
 
 function TabIcon({ name, focused }) {
@@ -133,19 +136,23 @@ function Tabs() {
         tabBarIcon: ({ focused }) => <TabIcon name={route.name} focused={focused} />,
       })}
     >
-      <Tab.Screen name="Home"     component={HomeScreen} />
-      <Tab.Screen name="Trips"    component={ActivityScreen} />
-      <Tab.Screen name="Alerts"   component={AlertScreen} />
-      <Tab.Screen name="Insights" component={InsightsScreen} />
+      <Tab.Screen name="Home"      component={HomeScreen} />
+      <Tab.Screen name="Trips"     component={ActivityScreen} />
+      <Tab.Screen name="Alerts"    component={AlertScreen} />
+      <Tab.Screen name="Concierge" component={ConciergeScreen} />
+      <Tab.Screen name="Insights"  component={InsightsScreen} />
     </Tab.Navigator>
   );
 }
 
 // ─── Root navigator ───────────────────────────────────────────────────────────
 
+const KEY_PROFILE_DONE = "wingman_profile_done";
+
 function Root() {
   const { token, ready } = useAuth();
-  const [onboarded, setOnboarded] = useState(null);
+  const [onboarded, setOnboarded]     = useState(null);
+  const [profileDone, setProfileDone] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -157,6 +164,19 @@ function Root() {
       }
     })();
   }, []);
+
+  // Check if new user needs profile setup
+  useEffect(() => {
+    if (!token) { setProfileDone(null); return; }
+    (async () => {
+      try {
+        const val = await SecureStore.getItemAsync(KEY_PROFILE_DONE);
+        setProfileDone(!!val);
+      } catch {
+        setProfileDone(false);
+      }
+    })();
+  }, [token]);
 
   useEffect(() => { setupNotificationHandler(); }, []);
 
@@ -190,7 +210,7 @@ function Root() {
     return () => { resp.remove(); recv.remove(); };
   }, []);
 
-  if (!ready || onboarded === null) {
+  if (!ready || onboarded === null || (token && profileDone === null)) {
     return (
       <View style={{ flex: 1, backgroundColor: C.bg, alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator color={C.gold} />
@@ -209,6 +229,9 @@ function Root() {
       >
         {token ? (
           <>
+            {!profileDone && (
+              <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
+            )}
             <Stack.Screen name="Tabs"         component={Tabs} />
             <Stack.Screen name="Alert"        component={AlertScreen} />
             <Stack.Screen name="Reason"       component={ReasonScreen} />

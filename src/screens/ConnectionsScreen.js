@@ -1,35 +1,52 @@
+// ConnectionsScreen — Ambient Sync / Connections
+// Warm espresso palette + champagne gold + DM Sans
+
 import React, { useState, useEffect } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
-  Alert, ActivityIndicator, TextInput, Linking, Platform,
+  Alert, ActivityIndicator, TextInput, Linking,
 } from "react-native";
 import * as Calendar from "expo-calendar";
-import { C } from "../theme";
-import { BackBar, Btn, g } from "../components";
+import { C, T } from "../theme";
+import { BackBar, Btn, SerifText, g } from "../components";
 import { getMe, getGmailConnectUrl, triggerGmailScan, scanEmailBody } from "../api";
 
-// ─── Feature bullet ──────────────────────────────────────────────────────────
+// ─── Hairline icon labels for each channel ────────────────────────────────────
+// Using clean Unicode characters instead of emoji
+const CHANNEL_ICONS = {
+  gmail:     { char: "@",  bg: C.gold + "12" },
+  calendar:  { char: "#",  bg: C.gold + "12" },
+  uber:      { char: "U",  bg: C.card2 },
+  whatsapp:  { char: "W",  bg: C.card2 },
+  imessage:  { char: "M",  bg: C.card2 },
+  paste:     { char: "P",  bg: C.gold + "12" },
+};
+
+// ─── Feature bullet ───────────────────────────────────────────────────────────
 
 function Feat({ ic, t, color }) {
   return (
     <View style={g.feat}>
-      <Text style={{ color: color || C.teal, fontSize: 14 }}>{ic}</Text>
-      <Text style={{ color: C.ink, fontSize: 13, flex: 1, lineHeight: 18 }}>{t}</Text>
+      <View style={s.featIcon}>
+        <Text style={{ color: color || C.gold, fontSize: 12, fontFamily: T.sansB }}>{ic}</Text>
+      </View>
+      <Text style={{ color: C.ink, fontSize: 13, fontFamily: T.sans, flex: 1, lineHeight: 19 }}>{t}</Text>
     </View>
   );
 }
 
 // ─── Connection row ───────────────────────────────────────────────────────────
 
-function ConnRow({ ic, iconBg, title, sub, right, onPress, disabled, last }) {
+function ConnRow({ iconKey, title, sub, right, onPress, disabled, last }) {
+  const icon = CHANNEL_ICONS[iconKey] || { char: "·", bg: C.card2 };
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled || !onPress}
       style={[s.row, last && { borderBottomWidth: 0 }]}
     >
-      <View style={[s.iconBox, { backgroundColor: iconBg || "rgba(255,255,255,0.06)" }]}>
-        <Text style={{ fontSize: 18 }}>{ic}</Text>
+      <View style={[s.iconBox, { backgroundColor: icon.bg }]}>
+        <Text style={{ fontSize: 14, color: C.gold, fontFamily: T.sansB }}>{icon.char}</Text>
       </View>
       <View style={{ flex: 1 }}>
         <Text style={s.rowT}>{title}</Text>
@@ -43,17 +60,16 @@ function ConnRow({ ic, iconBg, title, sub, right, onPress, disabled, last }) {
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function ConnectionsScreen({ navigation }) {
-  const [gmailConnected, setGmailConnected] = useState(false);
+  const [gmailConnected,  setGmailConnected]  = useState(false);
   const [calendarGranted, setCalendarGranted] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading,    setLoading]    = useState(true);
   const [connecting, setConnecting] = useState(false);
-  const [scanning, setScanning] = useState(false);
-  const [calGranting, setCalGranting] = useState(false);
+  const [scanning,   setScanning]   = useState(false);
+  const [calGranting,setCalGranting]= useState(false);
 
-  // Email paste import
-  const [showPaste, setShowPaste] = useState(false);
-  const [pasteText, setPasteText] = useState("");
-  const [pasteLoading, setPasteLoading] = useState(false);
+  const [showPaste,   setShowPaste]   = useState(false);
+  const [pasteText,   setPasteText]   = useState("");
+  const [pasteLoading,setPasteLoading]= useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -61,7 +77,6 @@ export default function ConnectionsScreen({ navigation }) {
         const data = await getMe();
         setGmailConnected(data.gmail_connected || false);
       } catch {}
-      // Check calendar permission status
       try {
         const { status } = await Calendar.getCalendarPermissionsAsync();
         setCalendarGranted(status === "granted");
@@ -70,8 +85,6 @@ export default function ConnectionsScreen({ navigation }) {
     };
     init();
   }, []);
-
-  // ── Gmail ──────────────────────────────────────────────────────────────────
 
   const connectGmail = async () => {
     setConnecting(true);
@@ -84,10 +97,7 @@ export default function ConnectionsScreen({ navigation }) {
             const me = await getMe();
             setGmailConnected(me.gmail_connected || false);
             if (me.gmail_connected) {
-              Alert.alert(
-                "Gmail connected!",
-                "Wingman is scanning your inbox for travel bookings. Pull to refresh on the Trips tab in a moment."
-              );
+              Alert.alert("Gmail connected", "Wingman is scanning your inbox for travel bookings. Pull to refresh on the Trips tab in a moment.");
             }
           } catch {}
         }, 3000);
@@ -103,18 +113,13 @@ export default function ConnectionsScreen({ navigation }) {
     setScanning(true);
     try {
       await triggerGmailScan();
-      Alert.alert(
-        "Scan started",
-        "Wingman is re-scanning your inbox. Pull to refresh on the Trips tab in about 30 seconds."
-      );
+      Alert.alert("Scan started", "Wingman is re-scanning your inbox. Pull to refresh on the Trips tab in about 30 seconds.");
     } catch (e) {
       Alert.alert("Error", e.message);
     } finally {
       setScanning(false);
     }
   };
-
-  // ── Email paste import ─────────────────────────────────────────────────────
 
   const submitPaste = async () => {
     if (!pasteText.trim()) return;
@@ -123,15 +128,12 @@ export default function ConnectionsScreen({ navigation }) {
       const result = await scanEmailBody(pasteText.trim(), "paste");
       if (result.trips_created > 0) {
         Alert.alert(
-          `${result.trips_created} trip${result.trips_created > 1 ? "s" : ""} imported!`,
+          `${result.trips_created} trip${result.trips_created > 1 ? "s" : ""} imported`,
           "Pull to refresh on the Trips tab to see them.",
           [{ text: "Done", onPress: () => { setPasteText(""); setShowPaste(false); } }]
         );
       } else {
-        Alert.alert(
-          "No trips found",
-          "Wingman couldn't find a flight or hotel confirmation in that text. Try pasting the full booking confirmation email."
-        );
+        Alert.alert("No trips found", "Wingman couldn't find a flight or hotel confirmation in that text. Try pasting the full booking confirmation email.");
       }
     } catch (e) {
       Alert.alert("Error", e.message);
@@ -140,23 +142,15 @@ export default function ConnectionsScreen({ navigation }) {
     }
   };
 
-  // ── Calendar ───────────────────────────────────────────────────────────────
-
   const connectCalendar = async () => {
     setCalGranting(true);
     try {
       const { status } = await Calendar.requestCalendarPermissionsAsync();
       if (status === "granted") {
         setCalendarGranted(true);
-        Alert.alert(
-          "Calendar connected!",
-          "Wingman will now read your calendar to detect travel events and pre-fill trip dates."
-        );
+        Alert.alert("Calendar connected", "Wingman will now read your calendar to detect travel events and pre-fill trip dates.");
       } else {
-        Alert.alert(
-          "Permission denied",
-          "You can enable Calendar access in Settings → Privacy → Calendars → Wingman."
-        );
+        Alert.alert("Permission denied", "You can enable Calendar access in Settings → Privacy → Calendars → Wingman.");
       }
     } catch (e) {
       Alert.alert("Error", e.message);
@@ -165,10 +159,8 @@ export default function ConnectionsScreen({ navigation }) {
     }
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
-
   const ConnBadge = ({ on }) => on ? (
-    <View style={s.connectedBadge}><Text style={s.connectedT}>✓ On</Text></View>
+    <View style={s.connectedBadge}><Text style={s.connectedT}>ON</Text></View>
   ) : null;
 
   return (
@@ -176,15 +168,16 @@ export default function ConnectionsScreen({ navigation }) {
       <ScrollView contentContainerStyle={g.scroll}>
         <BackBar nav={navigation} label="Connections" />
 
+        {/* Trust note */}
         <View style={g.trustNote}>
           <Text style={g.trustNoteT}>
             Wingman connects through{" "}
-            <Text style={{ color: C.teal, fontWeight: "700" }}>official APIs and on-device permissions</Text>
+            <Text style={{ color: C.gold, fontFamily: T.sansB }}>official APIs and on-device permissions</Text>
             {" "}— reading only travel-relevant details. Encrypted, scoped, and revocable anytime.
           </Text>
         </View>
 
-        {/* ── Ambient sources ─────────────────────────────────────────────── */}
+        {/* ── Ambient sources ──────────────────────────────────────────────── */}
         <Text style={g.sectionT}>AMBIENT SOURCES</Text>
         <Text style={s.ambientNote}>
           With your permission, Wingman watches these sources silently in the background. Your trips appear automatically — no manual entry needed.
@@ -193,22 +186,21 @@ export default function ConnectionsScreen({ navigation }) {
         <View style={g.group}>
           {/* Gmail */}
           <ConnRow
-            ic="✉️"
-            iconBg="rgba(255,107,94,0.12)"
+            iconKey="gmail"
             title="Gmail"
             sub={
               loading ? "Checking..." :
               gmailConnected ? "Connected — scanning for bookings" :
-              "Import flight & hotel confirmations automatically"
+              "Import flight and hotel confirmations automatically"
             }
             right={
               loading ? (
-                <ActivityIndicator color={C.teal} size="small" />
+                <ActivityIndicator color={C.gold} size="small" />
               ) : gmailConnected ? (
                 <View style={{ flexDirection: "row", gap: 8 }}>
                   <Pressable style={s.rescanBtn} onPress={rescan} disabled={scanning}>
                     {scanning
-                      ? <ActivityIndicator color={C.teal} size="small" />
+                      ? <ActivityIndicator color={C.gold} size="small" />
                       : <Text style={s.rescanT}>Re-scan</Text>}
                   </Pressable>
                   <ConnBadge on />
@@ -216,7 +208,7 @@ export default function ConnectionsScreen({ navigation }) {
               ) : (
                 <Pressable style={s.connectBtn} onPress={connectGmail} disabled={connecting}>
                   {connecting
-                    ? <ActivityIndicator color="#fff" size="small" />
+                    ? <ActivityIndicator color={C.inkD} size="small" />
                     : <Text style={s.connectBtnT}>Connect</Text>}
                 </Pressable>
               )
@@ -225,8 +217,7 @@ export default function ConnectionsScreen({ navigation }) {
 
           {/* Calendar */}
           <ConnRow
-            ic="📅"
-            iconBg="rgba(74,114,255,0.12)"
+            iconKey="calendar"
             title="Calendar"
             sub={
               calendarGranted
@@ -239,7 +230,7 @@ export default function ConnectionsScreen({ navigation }) {
               ) : (
                 <Pressable style={s.connectBtn} onPress={connectCalendar} disabled={calGranting}>
                   {calGranting
-                    ? <ActivityIndicator color="#fff" size="small" />
+                    ? <ActivityIndicator color={C.inkD} size="small" />
                     : <Text style={s.connectBtnT}>Connect</Text>}
                 </Pressable>
               )
@@ -248,8 +239,7 @@ export default function ConnectionsScreen({ navigation }) {
 
           {/* Uber */}
           <ConnRow
-            ic="🚗"
-            iconBg="rgba(0,0,0,0.3)"
+            iconKey="uber"
             title="Uber"
             sub="Auto-opens Uber with airport pickup when you land — no account needed"
             right={<ConnBadge on />}
@@ -257,32 +247,29 @@ export default function ConnectionsScreen({ navigation }) {
 
           {/* WhatsApp */}
           <ConnRow
-            ic="💬"
-            iconBg="rgba(37,211,102,0.12)"
+            iconKey="whatsapp"
             title="WhatsApp"
             sub="Group-chat trip plans — coming soon"
-            right={<View style={s.soonBadge}><Text style={s.soonT}>Soon</Text></View>}
+            right={<View style={s.soonBadge}><Text style={s.soonT}>SOON</Text></View>}
             disabled
           />
 
           {/* iMessage */}
           <ConnRow
-            ic="📱"
-            iconBg="rgba(34,211,166,0.12)"
+            iconKey="imessage"
             title="iMessage"
             sub='"We\'re delayed" texts — coming soon'
-            right={<View style={s.soonBadge}><Text style={s.soonT}>Soon</Text></View>}
+            right={<View style={s.soonBadge}><Text style={s.soonT}>SOON</Text></View>}
             disabled
             last
           />
         </View>
 
-        {/* ── Manual import ────────────────────────────────────────────────── */}
+        {/* ── Manual import ─────────────────────────────────────────────────── */}
         <Text style={g.sectionT}>MANUAL IMPORT</Text>
         <View style={g.group}>
           <ConnRow
-            ic="📋"
-            iconBg="rgba(255,176,46,0.12)"
+            iconKey="paste"
             title="Paste a confirmation email"
             sub="Copy a booking confirmation and paste it here — Wingman extracts the trip instantly"
             right={
@@ -309,21 +296,20 @@ export default function ConnectionsScreen({ navigation }) {
             <Btn
               title={pasteLoading ? "Scanning…" : "Import trip"}
               onPress={submitPaste}
-              disabled={pasteLoading || !pasteText.trim()}
               style={{ marginTop: 10 }}
             />
           </View>
         )}
 
-        {/* ── What Wingman reads ───────────────────────────────────────────── */}
+        {/* ── What Wingman reads ────────────────────────────────────────────── */}
         <Text style={g.sectionT}>WHAT WINGMAN READS</Text>
         <View style={[g.group, { paddingVertical: 12 }]}>
-          <Feat ic="✈️" t="Booking & flight confirmations from Gmail" />
-          <Feat ic="📆" t="Trip dates and flight times from Calendar" />
-          <Feat ic="🏨" t="Hotel check-in and check-out confirmations" />
-          <Feat ic="🚗" t="Opens Uber on landing — no account linking required" />
-          <Feat ic="🔒" t="Read-only access — Wingman never sends emails or edits events" />
-          <Feat ic="⦸" color={C.coral} t="Nothing personal or off-topic — ever." />
+          <Feat ic="+" t="Booking and flight confirmations from Gmail" />
+          <Feat ic="#" t="Trip dates and flight times from Calendar" />
+          <Feat ic="H" t="Hotel check-in and check-out confirmations" />
+          <Feat ic="U" t="Opens Uber on landing — no account linking required" />
+          <Feat ic="L" t="Read-only access — Wingman never sends emails or edits events" />
+          <Feat ic="X" color={C.coral} t="Nothing personal or off-topic — ever." />
         </View>
 
         <Text style={s.note}>Revoke any connection in one tap. Your data is never sold or shared.</Text>
@@ -335,42 +321,59 @@ export default function ConnectionsScreen({ navigation }) {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
-  app: { flex: 1, backgroundColor: C.bg },
-  ambientNote: { color: C.mut, fontSize: 13, lineHeight: 20, marginBottom: 14 },
+  app:         { flex: 1, backgroundColor: C.bg },
+  ambientNote: { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 20, marginBottom: 14 },
+
   row: {
     flexDirection: "row", alignItems: "center", gap: 12,
     paddingVertical: 14, paddingHorizontal: 16,
-    borderBottomWidth: 1, borderBottomColor: C.line,
+    borderBottomWidth: 0.5, borderBottomColor: C.line,
   },
-  iconBox: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  rowT: { color: C.ink, fontSize: 14, fontWeight: "600" },
-  rowS: { color: C.mut, fontSize: 12, marginTop: 2, lineHeight: 17 },
-  connectBtn: { backgroundColor: C.accent, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
-  connectBtnT: { color: "#fff", fontSize: 13, fontWeight: "700" },
+  iconBox: {
+    width: 36, height: 36, borderRadius: 10,
+    borderWidth: 1, borderColor: C.line,
+    alignItems: "center", justifyContent: "center",
+  },
+  rowT: { color: C.ink, fontSize: 14, fontFamily: T.sansM },
+  rowS: { color: C.mut, fontSize: 12, fontFamily: T.sans, marginTop: 2, lineHeight: 17 },
+
+  connectBtn:  { backgroundColor: C.gold, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
+  connectBtnT: { color: C.inkD, fontSize: 12, fontFamily: T.sansB, letterSpacing: 0.3 },
+
   connectedBadge: {
-    backgroundColor: "rgba(20,201,153,0.12)", borderWidth: 1,
-    borderColor: "rgba(20,201,153,0.25)", borderRadius: 10,
-    paddingHorizontal: 10, paddingVertical: 6,
+    backgroundColor: C.gold + "15", borderWidth: 1,
+    borderColor: C.gold + "40", borderRadius: 8,
+    paddingHorizontal: 10, paddingVertical: 5,
   },
-  connectedT: { color: C.teal, fontSize: 12, fontWeight: "700" },
+  connectedT: { color: C.gold, fontSize: 10, fontFamily: T.sansB, letterSpacing: T.trackMed },
+
   rescanBtn: {
-    backgroundColor: C.card, borderWidth: 1, borderColor: C.line,
+    backgroundColor: C.card2, borderWidth: 1, borderColor: C.line,
     borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6,
   },
-  rescanT: { color: C.ink, fontSize: 12, fontWeight: "600" },
+  rescanT: { color: C.ink, fontSize: 12, fontFamily: T.sansM },
+
   soonBadge: {
-    backgroundColor: C.card, borderWidth: 1, borderColor: C.line,
-    borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6,
+    backgroundColor: C.card2, borderWidth: 1, borderColor: C.line,
+    borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5,
   },
-  soonT: { color: C.mut, fontSize: 12 },
+  soonT: { color: C.mut, fontSize: 10, fontFamily: T.sansB, letterSpacing: T.trackMed },
+
   pasteWrap: {
-    backgroundColor: C.card, borderRadius: 18, borderWidth: 1,
+    backgroundColor: C.card, borderRadius: 16, borderWidth: 1,
     borderColor: C.line, padding: 16, marginBottom: 14,
   },
   pasteInput: {
-    color: C.ink, fontSize: 14, lineHeight: 22,
+    color: C.ink, fontSize: 14, fontFamily: T.sans, lineHeight: 22,
     minHeight: 140, backgroundColor: C.card2,
     borderRadius: 12, padding: 14, borderWidth: 1, borderColor: C.line,
   },
-  note: { color: C.mut, fontSize: 12, textAlign: "center", marginTop: 10 },
+
+  featIcon: {
+    width: 22, height: 22, borderRadius: 6,
+    backgroundColor: C.gold + "10", borderWidth: 1, borderColor: C.gold + "25",
+    alignItems: "center", justifyContent: "center",
+  },
+
+  note: { color: C.mut, fontSize: 12, fontFamily: T.sans, textAlign: "center", marginTop: 10 },
 });

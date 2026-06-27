@@ -1,5 +1,9 @@
+// Wingman App — Root
+// Loads Playfair Display + DM Sans via expo-google-fonts
+// Custom tab bar: wide-tracked caps labels + hairline Unicode icons + champagne gold
+
 import React, { useEffect, useState } from "react";
-import { View, ActivityIndicator, Text } from "react-native";
+import { View, ActivityIndicator, Text, StyleSheet } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer, DarkTheme, createNavigationContainerRef } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -7,11 +11,27 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { StatusBar } from "expo-status-bar";
 import * as Notifications from "expo-notifications";
 import * as Linking from "expo-linking";
-import { C } from "./src/theme";
+import * as SecureStore from "expo-secure-store";
+
+// Google Fonts — Playfair Display + DM Sans
+import {
+  useFonts,
+  PlayfairDisplay_400Regular,
+  PlayfairDisplay_400Regular_Italic,
+  PlayfairDisplay_700Bold,
+} from "@expo-google-fonts/playfair-display";
+import {
+  DMSans_400Regular,
+  DMSans_500Medium,
+  DMSans_700Bold,
+} from "@expo-google-fonts/dm-sans";
+
+import { C, T } from "./src/theme";
 import { setupNotificationHandler, registerForPush } from "./src/notify";
 import { AuthProvider, useAuth } from "./src/auth";
-import * as SecureStore from "expo-secure-store";
 import ErrorBoundary from "./src/ErrorBoundary";
+
+// Screens
 import HomeScreen from "./src/screens/HomeScreen";
 import ConciergeScreen from "./src/screens/ConciergeScreen";
 import ActivityScreen from "./src/screens/ActivityScreen";
@@ -40,49 +60,89 @@ import FlightConfirmScreen from "./src/screens/FlightConfirmScreen";
 
 export const navRef = createNavigationContainerRef();
 const Stack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
+const Tab   = createBottomTabNavigator();
 
-const theme = {
+const navTheme = {
   ...DarkTheme,
-  colors: { ...DarkTheme.colors, background: C.bg, card: C.bg, text: C.ink, border: C.line, primary: C.teal },
+  colors: {
+    ...DarkTheme.colors,
+    background: C.bg,
+    card:       C.bg,
+    text:       C.ink,
+    border:     C.line,
+    primary:    C.gold,
+  },
 };
 
-const TAB_ICON = { Trips: "🧭", Concierge: "💬", Activity: "⚡" };
+// ─── Tab bar icon — hairline Unicode symbols ──────────────────────────────────
+// Using thin Unicode characters that read as clean line icons
+const TAB_ICONS = {
+  Home:     { active: "⌂", inactive: "⌂" },   // house
+  Trips:    { active: "⊡", inactive: "⊡" },   // briefcase-like square
+  Alerts:   { active: "◎", inactive: "◎" },   // bell-like circle
+  Insights: { active: "◈", inactive: "◈" },   // insights diamond
+};
+
+// Tab labels — wide-tracked all-caps
+const TAB_LABELS = {
+  Home:     "HOME",
+  Trips:    "TRIPS",
+  Alerts:   "ALERTS",
+  Insights: "INSIGHTS",
+};
+
+function TabIcon({ name, focused }) {
+  const icons = TAB_ICONS[name] || { active: "·", inactive: "·" };
+  return (
+    <View style={[tb.iconWrap, focused && tb.iconWrapActive]}>
+      <Text style={[tb.icon, focused && tb.iconActive]}>
+        {focused ? icons.active : icons.inactive}
+      </Text>
+    </View>
+  );
+}
+
+// ─── Tab navigator ────────────────────────────────────────────────────────────
 
 function Tabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: C.accent,
-        tabBarInactiveTintColor: C.mut,
         sceneContainerStyle: { backgroundColor: C.bg },
+        tabBarActiveTintColor:   C.gold,
+        tabBarInactiveTintColor: C.mut,
         tabBarStyle: {
-          backgroundColor: "#030408",
-          borderTopColor: "rgba(255,255,255,0.06)",
-          borderTopWidth: 0.5,
+          backgroundColor: C.bg,
+          borderTopColor:  C.line,
+          borderTopWidth:  0.5,
           height: 88,
-          paddingTop: 8,
-          paddingBottom: 4,
+          paddingTop: 10,
+          paddingBottom: 8,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "600", letterSpacing: 0.3, marginTop: 2 },
-        tabBarIcon: ({ focused }) => (
-          <View style={focused ? { backgroundColor: C.accent + "18", borderRadius: 12, width: 36, height: 28, alignItems: "center", justifyContent: "center" } : {}}>
-            <Text style={{ fontSize: 17, opacity: focused ? 1 : 0.4 }}>{TAB_ICON[route.name]}</Text>
-          </View>
-        ),
+        tabBarLabelStyle: {
+          fontSize:      9,
+          fontFamily:    T.sansB,
+          letterSpacing: T.trackWide,
+          marginTop:     2,
+        },
+        tabBarLabel: TAB_LABELS[route.name] || route.name.toUpperCase(),
+        tabBarIcon: ({ focused }) => <TabIcon name={route.name} focused={focused} />,
       })}
     >
-      <Tab.Screen name="Trips" component={HomeScreen} />
-      <Tab.Screen name="Concierge" component={ConciergeScreen} />
-      <Tab.Screen name="Activity" component={ActivityScreen} />
+      <Tab.Screen name="Home"     component={HomeScreen} />
+      <Tab.Screen name="Trips"    component={ActivityScreen} />
+      <Tab.Screen name="Alerts"   component={AlertScreen} />
+      <Tab.Screen name="Insights" component={ConciergeScreen} />
     </Tab.Navigator>
   );
 }
 
+// ─── Root navigator ───────────────────────────────────────────────────────────
+
 function Root() {
   const { token, ready } = useAuth();
-  const [onboarded, setOnboarded] = useState(null); // null = loading
+  const [onboarded, setOnboarded] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -95,44 +155,31 @@ function Root() {
     })();
   }, []);
 
-  // Set up notification handler inside useEffect (required for iOS 26 / New Arch)
-  useEffect(() => {
-    setupNotificationHandler();
-  }, []);
+  useEffect(() => { setupNotificationHandler(); }, []);
 
-  // Register for push notifications and send token to backend after login
   useEffect(() => {
-    if (token) {
-      registerForPush();
-    }
+    if (token) registerForPush();
   }, [token]);
 
   useEffect(() => {
-    // Handle notification tap — if payload has a deepLink (e.g. Uber on landing),
-    // open it directly; otherwise navigate to the route specified in the payload.
     const resp = Notifications.addNotificationResponseReceivedListener((r) => {
       const data = r.notification.request.content.data || {};
-
       if (data.deepLink) {
-        // Deep link notification (e.g. Uber pickup on landing)
         Linking.canOpenURL(data.deepLink)
           .then((supported) => {
             const url = supported ? data.deepLink : (data.webFallback || data.fallbackUrl || data.deepLink);
             return Linking.openURL(url);
           })
           .catch(() => {
-            // If Uber app not installed, fall back to web URL
             const fallback = data.webFallback || data.fallbackUrl;
             if (fallback) Linking.openURL(fallback).catch(() => {});
           });
       } else {
-        // Standard in-app navigation notification
         const route = data.route || "Alert";
         if (navRef.isReady()) navRef.navigate(route);
       }
     });
 
-    // Handle foreground notifications — navigate to Alert screen
     const recv = Notifications.addNotificationReceivedListener(() => {
       setTimeout(() => { if (navRef.isReady()) navRef.navigate("Alert"); }, 600);
     });
@@ -143,38 +190,44 @@ function Root() {
   if (!ready || onboarded === null) {
     return (
       <View style={{ flex: 1, backgroundColor: C.bg, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator color={C.teal} />
+        <ActivityIndicator color={C.gold} />
       </View>
     );
   }
 
   return (
-    <NavigationContainer ref={navRef} theme={theme}>
-      <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.bg }, animation: "slide_from_right" }}>
+    <NavigationContainer ref={navRef} theme={navTheme}>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: C.bg },
+          animation: "slide_from_right",
+        }}
+      >
         {token ? (
           <>
-            <Stack.Screen name="Tabs" component={Tabs} />
-            <Stack.Screen name="Alert" component={AlertScreen} />
-            <Stack.Screen name="Reason" component={ReasonScreen} />
-            <Stack.Screen name="Track" component={TrackScreen} />
-            <Stack.Screen name="Exec" component={ExecScreen} options={{ gestureEnabled: false }} />
-            <Stack.Screen name="Done" component={DoneScreen} options={{ gestureEnabled: false }} />
-            <Stack.Screen name="Plan" component={PlanScreen} />
-            <Stack.Screen name="Detour" component={DetourScreen} />
-            <Stack.Screen name="PlanDone" component={PlanDoneScreen} options={{ gestureEnabled: false }} />
-            <Stack.Screen name="Settings" component={SettingsScreen} />
-            <Stack.Screen name="Connections" component={ConnectionsScreen} />
-            <Stack.Screen name="Signal" component={SignalScreen} />
-            <Stack.Screen name="AddTrip" component={AddTripScreen} />
-            <Stack.Screen name="TripDetail" component={TripDetailScreen} />
-            <Stack.Screen name="TasteSetup" component={TasteSetupScreen} />
+            <Stack.Screen name="Tabs"         component={Tabs} />
+            <Stack.Screen name="Alert"        component={AlertScreen} />
+            <Stack.Screen name="Reason"       component={ReasonScreen} />
+            <Stack.Screen name="Track"        component={TrackScreen} />
+            <Stack.Screen name="Exec"         component={ExecScreen}         options={{ gestureEnabled: false }} />
+            <Stack.Screen name="Done"         component={DoneScreen}         options={{ gestureEnabled: false }} />
+            <Stack.Screen name="Plan"         component={PlanScreen} />
+            <Stack.Screen name="Detour"       component={DetourScreen} />
+            <Stack.Screen name="PlanDone"     component={PlanDoneScreen}     options={{ gestureEnabled: false }} />
+            <Stack.Screen name="Settings"     component={SettingsScreen} />
+            <Stack.Screen name="Connections"  component={ConnectionsScreen} />
+            <Stack.Screen name="Signal"       component={SignalScreen} />
+            <Stack.Screen name="AddTrip"      component={AddTripScreen} />
+            <Stack.Screen name="TripDetail"   component={TripDetailScreen} />
+            <Stack.Screen name="TasteSetup"   component={TasteSetupScreen} />
             <Stack.Screen name="Subscription" component={SubscriptionScreen} />
-            <Stack.Screen name="Loyalty" component={LoyaltyScreen} />
-            <Stack.Screen name="HomeAddress" component={HomeAddressScreen} />
+            <Stack.Screen name="Loyalty"      component={LoyaltyScreen} />
+            <Stack.Screen name="HomeAddress"  component={HomeAddressScreen} />
             <Stack.Screen name="FlightSearch" component={FlightSearchScreen} />
-            <Stack.Screen name="FlightBook" component={FlightBookScreen} />
+            <Stack.Screen name="FlightBook"   component={FlightBookScreen} />
             <Stack.Screen name="FlightConfirm" component={FlightConfirmScreen} options={{ gestureEnabled: false }} />
-            <Stack.Screen name="Main" component={Tabs} />
+            <Stack.Screen name="Main"         component={Tabs} />
           </>
         ) : (
           <>
@@ -187,7 +240,27 @@ function Root() {
   );
 }
 
+// ─── App root — loads fonts before rendering ──────────────────────────────────
+
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    PlayfairDisplay_400Regular,
+    PlayfairDisplay_400Regular_Italic,
+    PlayfairDisplay_700Bold,
+    DMSans_400Regular,
+    DMSans_500Medium,
+    DMSans_700Bold,
+  });
+
+  // Show a warm splash while fonts load
+  if (!fontsLoaded) {
+    return (
+      <View style={{ flex: 1, backgroundColor: C.bg, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator color={C.gold} />
+      </View>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
@@ -201,3 +274,27 @@ export default function App() {
     </ErrorBoundary>
   );
 }
+
+// ─── Tab bar styles ───────────────────────────────────────────────────────────
+
+const tb = StyleSheet.create({
+  iconWrap: {
+    width: 36,
+    height: 26,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 8,
+  },
+  iconWrapActive: {
+    backgroundColor: C.gold + "15",
+  },
+  icon: {
+    fontSize: 16,
+    color: C.mut,
+    opacity: 0.5,
+  },
+  iconActive: {
+    color: C.gold,
+    opacity: 1,
+  },
+});

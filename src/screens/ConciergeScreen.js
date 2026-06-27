@@ -1,3 +1,6 @@
+// ConciergeScreen — AI Travel Concierge
+// Warm espresso palette + champagne gold + DM Sans
+
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   SafeAreaView, View, Text, TextInput, Pressable, FlatList,
@@ -5,10 +8,10 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
-import { C } from "../theme";
+import { C, T } from "../theme";
+import { SerifText } from "../components";
 import { sendConciergeMessage, getTrips } from "../api";
 
-// Build a compact trip context string for the system prompt
 function buildTripContext(trips) {
   if (!trips || trips.length === 0) return null;
   const lines = trips.slice(0, 5).map(trip => {
@@ -29,7 +32,6 @@ function buildTripContext(trips) {
   return lines.join("\n");
 }
 
-// Find the next upcoming flight across all trips
 function findNextFlight(trips) {
   const now = Date.now();
   let best = null, bestTime = Infinity;
@@ -43,7 +45,6 @@ function findNextFlight(trips) {
   return best;
 }
 
-// Build dynamic quick chips from the user's actual trips
 function buildQuickChips(trips) {
   const next = findNextFlight(trips);
   const chips = [];
@@ -53,10 +54,7 @@ function buildQuickChips(trips) {
       chips.push(`Is ${next.carrier}${next.flight_number} on time?`);
     }
   }
-  if (trips.length > 0) {
-    chips.push("What's my next trip?");
-  }
-  // Fill up to 4 with generic fallbacks
+  if (trips.length > 0) chips.push("What's my next trip?");
   const fallbacks = [
     "Any disruption risks?",
     "Dinner recommendations?",
@@ -72,24 +70,22 @@ function buildQuickChips(trips) {
 
 export default function ConciergeScreen({ route }) {
   const prefill = route?.params?.prefill || null;
-  const [trips, setTrips] = useState([]);
+  const [trips, setTrips]           = useState([]);
   const [tripsLoaded, setTripsLoaded] = useState(false);
-  const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hi — I'm your Wingman. I can answer questions about your trips, check disruption risk, and help you plan. What do you need?" }
+  const [messages, setMessages]     = useState([
+    { role: "assistant", content: "Good day — I'm your Wingman. I can answer questions about your trips, check disruption risk, and help you plan. What do you need?" }
   ]);
-  const [input, setInput] = useState("");
+  const [input, setInput]   = useState("");
   const [loading, setLoading] = useState(false);
-  const listRef = useRef(null);
+  const listRef     = useRef(null);
   const prefillSent = useRef(false);
 
-  // Load trips on focus so context is always fresh
   useFocusEffect(useCallback(() => {
     getTrips()
       .then(data => { setTrips(data.trips || []); setTripsLoaded(true); })
       .catch(() => setTripsLoaded(true));
   }, []));
 
-  // Auto-send prefill message from TripDetailScreen (after trips load)
   useEffect(() => {
     if (prefill && !prefillSent.current && tripsLoaded) {
       prefillSent.current = true;
@@ -112,17 +108,15 @@ export default function ConciergeScreen({ route }) {
     setMessages(newMessages);
     setLoading(true);
     try {
-      // Build history without the opening greeting, and inject trip context
       const history = newMessages.slice(1).map(m => ({ role: m.role, content: m.content }));
       const tripContext = buildTripContext(trips);
-      // Prepend trip context to the message if this is the first user message
       const isFirstUserMsg = newMessages.filter(m => m.role === "user").length === 1;
       const enrichedMsg = (isFirstUserMsg && tripContext)
         ? `[User's trips:\n${tripContext}]\n\n${msg}`
         : msg;
       const data = await sendConciergeMessage(enrichedMsg, history.slice(0, -1));
       setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
-    } catch (e) {
+    } catch {
       setMessages(prev => [...prev, { role: "assistant", content: "Sorry, I couldn't connect right now. Try again in a moment." }]);
     } finally {
       setLoading(false);
@@ -137,7 +131,7 @@ export default function ConciergeScreen({ route }) {
       <View style={[s.bubble, isUser ? s.userBubble : s.aiBubble]}>
         {!isUser && (
           <View style={s.aiLabel}>
-            <LinearGradient colors={[C.accent, C.teal]} style={s.aiDot} />
+            <View style={s.aiDot} />
             <Text style={s.aiLabelT}>WINGMAN</Text>
           </View>
         )}
@@ -148,12 +142,13 @@ export default function ConciergeScreen({ route }) {
 
   return (
     <SafeAreaView style={s.app}>
+      {/* Header */}
       <View style={s.header}>
-        <LinearGradient colors={[C.accent, C.teal]} style={s.headerMark}>
-          <Text style={{ fontSize: 14 }}>✈</Text>
-        </LinearGradient>
+        <View style={s.headerMark}>
+          <SerifText bold style={{ color: C.gold, fontSize: 16 }}>W</SerifText>
+        </View>
         <View>
-          <Text style={s.headerT}>Concierge</Text>
+          <Text style={s.headerT}>INSIGHTS</Text>
           {trips.length > 0 && (
             <Text style={s.headerSub}>Watching {trips.length} trip{trips.length !== 1 ? "s" : ""}</Text>
           )}
@@ -175,15 +170,15 @@ export default function ConciergeScreen({ route }) {
           ListFooterComponent={loading ? (
             <View style={[s.bubble, s.aiBubble]}>
               <View style={s.aiLabel}>
-                <LinearGradient colors={[C.accent, C.teal]} style={s.aiDot} />
+                <View style={s.aiDot} />
                 <Text style={s.aiLabelT}>WINGMAN</Text>
               </View>
-              <ActivityIndicator color={C.teal} size="small" style={{ marginTop: 4 }} />
+              <ActivityIndicator color={C.gold} size="small" style={{ marginTop: 4 }} />
             </View>
           ) : null}
         />
 
-        {/* Dynamic quick chips — shown until the user sends their first message */}
+        {/* Quick chips — shown until first user message */}
         {messages.length <= 1 && (
           <View style={s.quickRow}>
             {quickChips.map(q => (
@@ -194,12 +189,13 @@ export default function ConciergeScreen({ route }) {
           </View>
         )}
 
+        {/* Input row */}
         <View style={s.inputRow}>
           <TextInput
             style={s.textInput}
             value={input}
             onChangeText={setInput}
-            placeholder="Message Wingman..."
+            placeholder="Message Wingman…"
             placeholderTextColor={C.mut}
             multiline
             maxLength={500}
@@ -207,12 +203,12 @@ export default function ConciergeScreen({ route }) {
             onSubmitEditing={() => send()}
           />
           <Pressable
-            style={[s.sendBtn, (!input.trim() || loading) && { opacity: 0.4 }]}
+            style={[s.sendBtn, (!input.trim() || loading) && { opacity: 0.35 }]}
             onPress={() => send()}
             disabled={!input.trim() || loading}
           >
-            <LinearGradient colors={[C.accent, C.teal]} style={s.sendGrad}>
-              <Text style={{ color: "#fff", fontSize: 16, fontWeight: "700" }}>↑</Text>
+            <LinearGradient colors={[C.gold, C.goldD]} style={s.sendGrad}>
+              <Text style={{ color: C.inkD, fontSize: 16, fontFamily: T.sansB }}>↑</Text>
             </LinearGradient>
           </Pressable>
         </View>
@@ -222,45 +218,54 @@ export default function ConciergeScreen({ route }) {
 }
 
 const s = StyleSheet.create({
-  app: { flex: 1, backgroundColor: C.bg },
+  app:    { flex: 1, backgroundColor: C.bg },
   header: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 14 },
-  headerMark: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  headerT: { color: C.ink, fontSize: 20, fontWeight: "700", letterSpacing: -0.5 },
-  headerSub: { color: C.teal, fontSize: 11, fontWeight: "600", letterSpacing: 0.3, marginTop: 1 },
+  headerMark: { width: 32, height: 32, borderRadius: 8, borderWidth: 1, borderColor: C.gold + "50", alignItems: "center", justifyContent: "center" },
+  headerT:    { color: C.ink, fontSize: 11, fontFamily: T.sansB, letterSpacing: T.trackWide },
+  headerSub:  { color: C.gold, fontSize: 10, fontFamily: T.sansM, letterSpacing: 0.5, marginTop: 2 },
+
   list: { paddingHorizontal: 16, paddingBottom: 8, paddingTop: 4 },
-  bubble: { marginBottom: 14, maxWidth: "86%" },
+
+  bubble:     { marginBottom: 14, maxWidth: "86%" },
   userBubble: {
-    alignSelf: "flex-end", backgroundColor: "#2D4FCC",
-    borderRadius: 20, borderBottomRightRadius: 5, padding: 14,
-    shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 4 },
+    alignSelf: "flex-end",
+    backgroundColor: C.card2,
+    borderRadius: 18, borderBottomRightRadius: 4,
+    padding: 14,
+    borderWidth: 1, borderColor: C.gold + "30",
   },
   aiBubble: {
-    alignSelf: "flex-start", backgroundColor: C.card,
-    borderRadius: 20, borderBottomLeftRadius: 5, padding: 16,
+    alignSelf: "flex-start",
+    backgroundColor: C.card,
+    borderRadius: 18, borderBottomLeftRadius: 4,
+    padding: 16,
     borderWidth: 1, borderColor: C.line,
   },
-  bubbleT: { color: C.ink, fontSize: 15, lineHeight: 23 },
-  userBubbleT: { color: "#fff" },
-  aiLabel: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 },
-  aiDot: { width: 8, height: 8, borderRadius: 4 },
-  aiLabelT: { color: C.teal, fontSize: 10, fontWeight: "800", letterSpacing: 1.2 },
-  quickRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, paddingHorizontal: 16, paddingBottom: 14 },
+  bubbleT:     { color: C.ink, fontSize: 15, fontFamily: T.sans, lineHeight: 23 },
+  userBubbleT: { color: C.ink },
+
+  aiLabel:  { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 },
+  aiDot:    { width: 6, height: 6, borderRadius: 3, backgroundColor: C.gold },
+  aiLabelT: { color: C.gold, fontSize: 9, fontFamily: T.sansB, letterSpacing: T.trackWide },
+
+  quickRow:  { flexDirection: "row", flexWrap: "wrap", gap: 8, paddingHorizontal: 16, paddingBottom: 14 },
   quickChip: {
-    backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.09)", borderRadius: 20,
-    paddingHorizontal: 16, paddingVertical: 9,
+    backgroundColor: C.card, borderWidth: 1,
+    borderColor: C.line, borderRadius: 18,
+    paddingHorizontal: 14, paddingVertical: 9,
   },
-  quickChipT: { color: C.ink, fontSize: 13, fontWeight: "500", letterSpacing: 0.1 },
+  quickChipT: { color: C.ink, fontSize: 13, fontFamily: T.sansM, letterSpacing: 0.1 },
+
   inputRow: {
     flexDirection: "row", alignItems: "flex-end", gap: 10,
     paddingHorizontal: 16, paddingBottom: 16, paddingTop: 10,
-    borderTopWidth: 0.5, borderTopColor: "rgba(255,255,255,0.06)",
+    borderTopWidth: 0.5, borderTopColor: C.line,
   },
   textInput: {
-    flex: 1, backgroundColor: C.card, borderRadius: 24, borderWidth: 1,
+    flex: 1, backgroundColor: C.card, borderRadius: 22, borderWidth: 1,
     borderColor: C.line, paddingHorizontal: 18, paddingVertical: 13,
-    color: C.ink, fontSize: 15, maxHeight: 120, lineHeight: 21,
+    color: C.ink, fontSize: 15, fontFamily: T.sans, maxHeight: 120, lineHeight: 21,
   },
-  sendBtn: { marginBottom: 2 },
-  sendGrad: { width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center" },
+  sendBtn:  { marginBottom: 2 },
+  sendGrad: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
 });

@@ -6,18 +6,18 @@
     "orientation": "portrait",
     "scheme": "wingman",
     "userInterfaceStyle": "dark",
-    "backgroundColor": "#030408",
+    "backgroundColor": "#0F0D0A",
     "icon": "./assets/icon.png",
     "newArchEnabled": false,
     "splash": {
-      "backgroundColor": "#030408",
+      "backgroundColor": "#0F0D0A",
       "resizeMode": "contain",
       "image": "./assets/splash.png"
     },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "club.welcometothefight.wingman",
-      "buildNumber": "41",
+      "buildNumber": "42",
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification"
@@ -32,6 +32,7 @@
     },
     "plugins": [
       "./plugins/withFmtFix",
+      "expo-font",
       "expo-calendar",
       [
         "expo-location",

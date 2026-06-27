@@ -1,3 +1,7 @@
+// HomeScreen — Quiet Luxury / Editorial
+// Warm espresso bg + parchment Next Up card + champagne gold accents
+// Playfair Display serif greeting + DM Sans body
+
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
@@ -5,12 +9,12 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
-import { C } from "../theme";
-import { Btn, g } from "../components";
+import { C, T } from "../theme";
+import { Btn, SerifText, g } from "../components";
 import { getTrips, deleteTrip, getFlightStatus, getPrediction, getGroundIntel } from "../api";
 import { scheduleDisruption } from "../notify";
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function formatDate(iso) {
   if (!iso) return null;
@@ -50,61 +54,68 @@ function findNextFlight(trips) {
   return best;
 }
 
-// ─── Status Badge ────────────────────────────────────────────────────────────
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
 
-function StatusBadge({ status }) {
+// ─── Status Badge ─────────────────────────────────────────────────────────────
+// Shown on parchment card — uses dark ink variants
+
+function StatusBadge({ status, onParch = false }) {
   if (!status) return null;
   const map = {
-    "On Time":   { bg: "rgba(20,201,153,0.12)",  border: "rgba(20,201,153,0.25)",  text: C.teal },
-    "Delayed":   { bg: "rgba(255,176,46,0.12)",   border: "rgba(255,176,46,0.25)",   text: C.amber },
-    "Cancelled": { bg: "rgba(255,77,109,0.12)",   border: "rgba(255,77,109,0.25)",   text: C.coral },
-    "Landed":    { bg: "rgba(99,102,241,0.12)",   border: "rgba(99,102,241,0.25)",   text: "#818CF8" },
-    "Scheduled": { bg: "rgba(134,144,166,0.10)",  border: "rgba(134,144,166,0.2)",   text: C.mut },
-    "In Air":    { bg: "rgba(74,114,255,0.12)",   border: "rgba(74,114,255,0.25)",   text: C.accent },
-    "Booked":    { bg: "rgba(134,144,166,0.10)",  border: "rgba(134,144,166,0.2)",   text: C.mut },
+    "On Time":   { bg: onParch ? "rgba(45,184,150,0.15)"  : "rgba(45,184,150,0.12)",  border: "rgba(45,184,150,0.35)",  text: onParch ? "#1A7A5E" : C.teal },
+    "Delayed":   { bg: onParch ? "rgba(212,144,42,0.15)"  : "rgba(212,144,42,0.12)",  border: "rgba(212,144,42,0.35)",  text: onParch ? "#8A5A00" : C.amber },
+    "Cancelled": { bg: onParch ? "rgba(217,95,95,0.15)"   : "rgba(217,95,95,0.12)",   border: "rgba(217,95,95,0.35)",   text: onParch ? "#8A2020" : C.coral },
+    "Landed":    { bg: onParch ? "rgba(138,128,100,0.15)" : "rgba(138,128,100,0.12)", border: "rgba(138,128,100,0.3)",  text: onParch ? "#5A5040" : C.mut },
+    "Scheduled": { bg: onParch ? "rgba(138,128,100,0.12)" : "rgba(138,128,100,0.10)", border: "rgba(138,128,100,0.2)",  text: onParch ? "#6B5F50" : C.mut },
+    "In Air":    { bg: onParch ? "rgba(201,169,110,0.15)" : "rgba(201,169,110,0.12)", border: "rgba(201,169,110,0.35)", text: onParch ? "#7A5A20" : C.gold },
+    "Booked":    { bg: onParch ? "rgba(138,128,100,0.12)" : "rgba(138,128,100,0.10)", border: "rgba(138,128,100,0.2)",  text: onParch ? "#6B5F50" : C.mut },
   };
   const st = map[status] || map["Scheduled"];
   return (
     <View style={{ backgroundColor: st.bg, borderColor: st.border, borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}>
-      <Text style={{ color: st.text, fontSize: 11, fontWeight: "700", letterSpacing: 0.3 }}>{status}</Text>
+      <Text style={{ color: st.text, fontSize: 10, fontFamily: T.sansB, letterSpacing: T.trackMed }}>{status.toUpperCase()}</Text>
     </View>
   );
 }
 
-// ─── Risk Badge ──────────────────────────────────────────────────────────────
+// ─── Risk Badge ───────────────────────────────────────────────────────────────
 
 function RiskBadge({ risk }) {
-  if (risk == null) return null;
-  if (risk < 30) return null; // only show when meaningful
+  if (risk == null || risk < 30) return null;
   const high = risk >= 60;
   return (
     <View style={{
-      backgroundColor: high ? "rgba(255,77,109,0.12)" : "rgba(255,176,46,0.12)",
-      borderColor: high ? "rgba(255,77,109,0.25)" : "rgba(255,176,46,0.25)",
+      backgroundColor: high ? "rgba(217,95,95,0.12)" : "rgba(212,144,42,0.12)",
+      borderColor:     high ? "rgba(217,95,95,0.25)" : "rgba(212,144,42,0.25)",
       borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4,
       flexDirection: "row", alignItems: "center", gap: 4,
     }}>
-      <Text style={{ color: high ? C.coral : C.amber, fontSize: 11, fontWeight: "700", letterSpacing: 0.3 }}>
-        {high ? "⚠️" : "~"} {risk}% risk
+      <Text style={{ color: high ? C.coral : C.amber, fontSize: 10, fontFamily: T.sansB, letterSpacing: T.trackMed }}>
+        {high ? "!" : "~"} {risk}% RISK
       </Text>
     </View>
   );
 }
 
-// ─── Next Up Card ─────────────────────────────────────────────────────────────
+// ─── Next Up Card (Parchment) ─────────────────────────────────────────────────
+// Light parchment card on dark background — the signature visual of the app
 
 function NextUpCard({ flight, navigation }) {
-  const [risk, setRisk] = useState(null);
+  const [risk, setRisk]             = useState(null);
   const [riskLoading, setRiskLoading] = useState(false);
   const [groundIntel, setGroundIntel] = useState(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    // Subtle pulse on the live dot
     Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 0.3, duration: 900, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 1, duration: 900, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 0.25, duration: 1000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1,    duration: 1000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
       ])
     ).start();
   }, []);
@@ -120,7 +131,6 @@ function NextUpCard({ flight, navigation }) {
 
   useEffect(() => {
     if (!flight?.origin || !flight?.departs_at) return;
-    // Only fetch ground intel if flight is within 6 hours
     const hoursUntil = (new Date(flight.departs_at).getTime() - Date.now()) / 3600000;
     if (hoursUntil > 6 || hoursUntil < 0) return;
     getGroundIntel({
@@ -137,96 +147,101 @@ function NextUpCard({ flight, navigation }) {
 
   const cd = countdown(flight.departs_at);
   const flightLabel = [flight.carrier, flight.flight_number].filter(Boolean).join(" ");
-  const riskColor = risk >= 60 ? C.coral : risk >= 30 ? C.amber : C.teal;
-  const riskGradient = risk >= 60
-    ? ["rgba(255,77,109,0.14)", "rgba(30,14,40,0.0)"]
-    : risk >= 30
-      ? ["rgba(255,176,46,0.10)", "rgba(30,14,40,0.0)"]
-      : ["rgba(20,201,153,0.10)", "rgba(30,14,40,0.0)"];
+  const riskColor = risk >= 60 ? "#8A2020" : risk >= 30 ? "#8A5A00" : "#1A7A5E";
+  const statusText = risk == null ? null : risk >= 60 ? "HIGH RISK" : risk >= 30 ? "MOD. RISK" : "ON TIME";
 
   return (
-    <Pressable onPress={() => navigation.navigate("Alert", { flight })} style={{ marginBottom: 20 }}>
-      <LinearGradient colors={["#0E1420", "#0A0F1A"]} style={s.nextCard}>
-        {/* Top row */}
-        <View style={g.rowBetween}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <Animated.View style={[s.liveDot, { opacity: pulseAnim }]} />
-            <Text style={s.nextLabel}>NEXT FLIGHT</Text>
+    <Pressable onPress={() => navigation.navigate("Alert", { flight })} style={{ marginBottom: 22 }}>
+      {/* Parchment card — light on dark */}
+      <View style={s.parchCard}>
+        {/* Top row: NEXT UP label + status badge */}
+        <View style={[g.rowBetween, { marginBottom: 16 }]}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            {/* Hairline plane icon in a circle */}
+            <View style={s.parchIcon}>
+              <Text style={{ fontSize: 14, color: C.inkD }}>+</Text>
+            </View>
+            <Text style={s.parchLabel}>NEXT UP</Text>
           </View>
-          {cd && <Text style={s.nextCountdown}>{cd}</Text>}
+          {statusText && !riskLoading && (
+            <View style={{
+              backgroundColor: risk >= 60 ? "rgba(217,95,95,0.12)" : risk >= 30 ? "rgba(212,144,42,0.12)" : "rgba(45,184,150,0.12)",
+              borderColor:     risk >= 60 ? "rgba(217,95,95,0.3)"  : risk >= 30 ? "rgba(212,144,42,0.3)"  : "rgba(45,184,150,0.3)",
+              borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4,
+            }}>
+              <Text style={{ color: riskColor, fontSize: 10, fontFamily: T.sansB, letterSpacing: T.trackMed }}>
+                {statusText}
+              </Text>
+            </View>
+          )}
+          {cd && (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Animated.View style={[s.liveDot, { opacity: pulseAnim }]} />
+              <Text style={s.parchCountdown}>{cd}</Text>
+            </View>
+          )}
         </View>
 
-        {/* Route */}
-        <View style={s.nextRouteRow}>
-          <Text style={s.nextAirport}>{flight.origin || "—"}</Text>
-          <View style={s.nextArrowWrap}>
-            <View style={s.nextArrowLine} />
-            <Text style={s.nextArrowIc}>✈</Text>
+        {/* Route: large serif airport codes */}
+        <View style={s.parchRouteRow}>
+          <SerifText bold style={s.parchAirport}>{flight.origin || "—"}</SerifText>
+          <View style={s.parchArrowWrap}>
+            <View style={s.parchArrowLine} />
+            <Text style={s.parchArrowIc}>›</Text>
+            <View style={s.parchArrowLine} />
           </View>
-          <Text style={s.nextAirport}>{flight.destination || "—"}</Text>
+          <SerifText bold style={s.parchAirport}>{flight.destination || "—"}</SerifText>
         </View>
 
-        {/* Meta row */}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 6 }}>
-          {flightLabel ? <Text style={s.nextMeta}>{flightLabel}</Text> : null}
-          {flight.departs_at ? <Text style={s.nextMeta}>· {formatTime(flight.departs_at)}</Text> : null}
-          {flight.tripTitle ? <Text style={s.nextMeta}>· {flight.tripTitle}</Text> : null}
+        {/* Flight meta */}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 }}>
+          {flightLabel ? <Text style={s.parchMeta}>{flightLabel}</Text> : null}
+          {flight.departs_at ? <Text style={s.parchMetaDot}>·</Text> : null}
+          {flight.departs_at ? <Text style={s.parchMeta}>{formatTime(flight.departs_at)}</Text> : null}
+          {flight.tripTitle ? <Text style={s.parchMetaDot}>·</Text> : null}
+          {flight.tripTitle ? <Text style={s.parchMeta}>{flight.tripTitle}</Text> : null}
         </View>
 
-        {/* Ground Intelligence timeline — shown within 6 hours of departure */}
-        {groundIntel && groundIntel.timeline && groundIntel.timeline.length > 0 && (
-          <View style={s.groundIntelWrap}>
-            <Text style={s.groundIntelLabel}>GROUND TIMELINE</Text>
+        {/* Ground Intelligence timeline */}
+        {groundIntel?.timeline?.length > 0 && (
+          <View style={s.groundWrap}>
+            <Text style={s.groundLabel}>GROUND TIMELINE</Text>
             {groundIntel.timeline.map((step, i) => (
-              <View key={i} style={s.groundIntelRow}>
-                <Text style={s.groundIntelIc}>{step.icon || '→'}</Text>
-                <Text style={s.groundIntelStep}>{step.label}</Text>
-                <Text style={[s.groundIntelTime, step.minutes > 30 ? { color: C.amber } : {}]}>
-                  {step.minutes > 0 ? `${step.minutes}m` : 'Now'}
+              <View key={i} style={s.groundRow}>
+                <Text style={[s.groundIc, { color: C.inkD }]}>{step.icon || "›"}</Text>
+                <Text style={s.groundStep}>{step.label}</Text>
+                <Text style={[s.groundTime, step.minutes > 30 ? { color: "#8A5A00" } : {}]}>
+                  {step.minutes > 0 ? `${step.minutes}m` : "Now"}
                 </Text>
               </View>
             ))}
             {groundIntel.bufferMinutes != null && (
-              <View style={[s.groundIntelVerdict, {
-                backgroundColor: groundIntel.atRisk
-                  ? 'rgba(255,77,109,0.08)'
-                  : 'rgba(20,201,153,0.08)',
-                borderColor: groundIntel.atRisk
-                  ? 'rgba(255,77,109,0.2)'
-                  : 'rgba(20,201,153,0.2)',
+              <View style={[s.groundVerdict, {
+                backgroundColor: groundIntel.atRisk ? "rgba(217,95,95,0.10)" : "rgba(45,184,150,0.10)",
+                borderColor:     groundIntel.atRisk ? "rgba(217,95,95,0.25)" : "rgba(45,184,150,0.25)",
               }]}>
-                <Text style={{ color: groundIntel.atRisk ? C.coral : C.teal, fontSize: 12, fontWeight: '700' }}>
-                  {groundIntel.verdict === 'will_miss' ? '⚠️  At risk of missing flight'
-                    : groundIntel.verdict === 'tight' ? `⏱  Tight — ${groundIntel.bufferMinutes}m buffer`
-                    : groundIntel.verdict === 'on_track' ? `✓  On track — ${groundIntel.bufferMinutes}m to spare`
-                    : `✓  Plenty of time — ${groundIntel.bufferMinutes}m buffer`}
+                <Text style={{ color: groundIntel.atRisk ? "#8A2020" : "#1A7A5E", fontSize: 12, fontFamily: T.sansB }}>
+                  {groundIntel.verdict === "will_miss" ? "!  At risk of missing flight"
+                    : groundIntel.verdict === "tight"    ? `~  Tight — ${groundIntel.bufferMinutes}m buffer`
+                    : groundIntel.verdict === "on_track" ? `+  On track — ${groundIntel.bufferMinutes}m to spare`
+                    : `+  Plenty of time — ${groundIntel.bufferMinutes}m buffer`}
                 </Text>
               </View>
             )}
           </View>
         )}
 
-        {/* Risk strip */}
-        <LinearGradient colors={riskGradient} style={s.nextRiskStrip}>
-          {riskLoading ? (
-            <ActivityIndicator size="small" color={C.mut} />
-          ) : risk != null ? (
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-              <Text style={[s.nextRiskT, { color: riskColor }]}>
-                {risk >= 60 ? "⚠️  High disruption risk" : risk >= 30 ? "~  Moderate risk" : "✓  Conditions look good"}
-              </Text>
-              <Text style={[s.nextRiskPct, { color: riskColor }]}>{risk}%</Text>
-            </View>
-          ) : (
-            <Text style={s.nextRiskT}>Tap to check conditions →</Text>
-          )}
-        </LinearGradient>
-      </LinearGradient>
+        {/* View Details link */}
+        <View style={[g.rowBetween, { marginTop: 16 }]}>
+          <Text style={s.parchHint}>Tap for rescue options</Text>
+          <Text style={s.parchArrow}>View Details  ›</Text>
+        </View>
+      </View>
     </Pressable>
   );
 }
 
-// ─── Flight Leg Row ──────────────────────────────────────────────────────────
+// ─── Flight Leg Row ───────────────────────────────────────────────────────────
 
 function FlightLeg({ leg }) {
   const [status, setStatus] = useState(leg.status || null);
@@ -251,20 +266,23 @@ function FlightLeg({ leg }) {
 
   return (
     <View style={s.leg}>
-      <Text style={s.legIc}>🛫</Text>
+      {/* Hairline plane icon */}
+      <View style={s.legIconWrap}>
+        <Text style={s.legIc}>+</Text>
+      </View>
       <View style={{ flex: 1 }}>
         <Text style={s.legT}>{title}</Text>
         {sub ? <Text style={s.legS}>{sub}</Text> : null}
       </View>
       {fetching
-        ? <ActivityIndicator size="small" color={C.teal} />
+        ? <ActivityIndicator size="small" color={C.gold} />
         : <StatusBadge status={status || "Scheduled"} />
       }
     </View>
   );
 }
 
-// ─── Trip Card ───────────────────────────────────────────────────────────────
+// ─── Trip Card ────────────────────────────────────────────────────────────────
 
 function TripCard({ trip, onDelete, navigation }) {
   const [risk, setRisk] = useState(null);
@@ -274,7 +292,6 @@ function TripCard({ trip, onDelete, navigation }) {
 
   useEffect(() => {
     if (!firstFlight?.origin || !firstFlight?.destination) return;
-    // Only fetch risk for upcoming trips
     const dep = firstFlight.departs_at ? new Date(firstFlight.departs_at).getTime() : 0;
     if (dep < Date.now()) return;
     getPrediction({ dep: firstFlight.origin, arr: firstFlight.destination })
@@ -283,8 +300,8 @@ function TripCard({ trip, onDelete, navigation }) {
   }, [firstFlight?.origin, firstFlight?.destination]);
 
   return (
-    <Pressable onPress={() => navigation.navigate("TripDetail", { trip })} style={{ marginBottom: 14 }}>
-      <LinearGradient colors={["#111827", "#0D1120"]} style={s.tripCard}>
+    <Pressable onPress={() => navigation.navigate("TripDetail", { trip })} style={{ marginBottom: 12 }}>
+      <View style={s.tripCard}>
         <View style={g.rowBetween}>
           <View style={{ flex: 1 }}>
             <Text style={s.dest}>{trip.title}</Text>
@@ -292,22 +309,32 @@ function TripCard({ trip, onDelete, navigation }) {
           </View>
           <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
             {risk != null && <RiskBadge risk={risk} />}
-            {risk == null && <View style={s.pillLive}><Text style={s.pillLiveT}>● Monitoring</Text></View>}
+            {risk == null && (
+              <View style={s.pillLive}>
+                <View style={s.pillDot} />
+                <Text style={s.pillLiveT}>MONITORING</Text>
+              </View>
+            )}
             <Pressable onPress={() => Alert.alert("Delete trip?", trip.title, [
               { text: "Cancel", style: "cancel" },
               { text: "Delete", style: "destructive", onPress: () => onDelete(trip.id) }
-            ])}><Text style={{ color: C.mut, fontSize: 18 }}>×</Text></Pressable>
+            ])}>
+              <Text style={{ color: C.mut, fontSize: 18, lineHeight: 22 }}>×</Text>
+            </Pressable>
           </View>
         </View>
 
         {legs.map((leg, i) => {
           if (leg.type === "flight") return <FlightLeg key={i} leg={leg} />;
-          const ic = leg.type === "hotel" ? "🏨" : "🚗";
+          // Hotel / transfer
+          const ic = leg.type === "hotel" ? "H" : "T";
           const title = leg.carrier || leg.destination || "Booking";
           const sub = formatDate(leg.departs_at || leg.check_in);
           return (
             <View key={i} style={s.leg}>
-              <Text style={s.legIc}>{ic}</Text>
+              <View style={s.legIconWrap}>
+                <Text style={[s.legIc, { fontSize: 11 }]}>{ic}</Text>
+              </View>
               <View style={{ flex: 1 }}>
                 <Text style={s.legT}>{title}</Text>
                 {sub ? <Text style={s.legS}>{sub}</Text> : null}
@@ -318,39 +345,42 @@ function TripCard({ trip, onDelete, navigation }) {
         })}
 
         {legs.length === 0 && (
-          <Text style={{ color: C.mut, fontSize: 13, marginTop: 8 }}>No legs added yet</Text>
+          <Text style={{ color: C.mut, fontSize: 13, fontFamily: T.sans, marginTop: 8 }}>No legs added yet</Text>
         )}
-        <Text style={s.tapHint}>Tap for details →</Text>
-      </LinearGradient>
+        <Text style={s.tapHint}>Tap for details  ›</Text>
+      </View>
     </Pressable>
   );
 }
 
-// ─── Empty State ─────────────────────────────────────────────────────────────
+// ─── Empty State ──────────────────────────────────────────────────────────────
 
 function EmptyState({ navigation }) {
   return (
     <View style={s.emptyWrap}>
-      <LinearGradient colors={["rgba(74,114,255,0.06)", "rgba(20,201,153,0.04)"]} style={s.emptyCard}>
-        <Text style={s.emptyIc}>✈️</Text>
-        <Text style={s.emptyT}>No trips yet</Text>
+      <View style={s.emptyCard}>
+        {/* Hairline plane in circle */}
+        <View style={s.emptyIcon}>
+          <Text style={{ fontSize: 22, color: C.gold }}>+</Text>
+        </View>
+        <SerifText style={s.emptyT}>No trips yet.</SerifText>
         <Text style={s.emptyS}>Add your first trip and Wingman will watch it around the clock.</Text>
         <Pressable style={s.emptyPrimary} onPress={() => navigation.navigate("AddTrip")}>
           <Text style={s.emptyPrimaryT}>+ Add a trip</Text>
         </Pressable>
         <Pressable style={s.emptySecondary} onPress={() => navigation.navigate("Connections")}>
-          <Text style={s.emptySecondaryT}>📧  Import from email</Text>
+          <Text style={s.emptySecondaryT}>Import from email</Text>
         </Pressable>
-      </LinearGradient>
+      </View>
     </View>
   );
 }
 
-// ─── Main Screen ─────────────────────────────────────────────────────────────
+// ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function HomeScreen({ navigation }) {
-  const [trips, setTrips] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [trips, setTrips]         = useState([]);
+  const [loading, setLoading]     = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
@@ -387,45 +417,68 @@ export default function HomeScreen({ navigation }) {
     <SafeAreaView style={s.app}>
       <ScrollView
         contentContainerStyle={g.scroll}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={C.teal} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); load(); }}
+            tintColor={C.gold}
+          />
+        }
       >
-        {/* Header */}
+        {/* ── Header ─────────────────────────────────────────────────────── */}
         <View style={s.appH}>
+          {/* W monogram + WINGMAN wordmark */}
           <View style={s.logoRow}>
-            <LinearGradient colors={[C.accent, C.teal]} style={s.mark}>
-              <Text style={{ fontSize: 14 }}>✈</Text>
-            </LinearGradient>
-            <Text style={s.logo}>Wingman</Text>
+            <View style={s.wMark}>
+              <SerifText bold style={s.wMarkText}>W</SerifText>
+            </View>
+            <Text style={s.logo}>WINGMAN</Text>
           </View>
+          {/* Avatar / settings */}
           <Pressable style={s.avatar} onPress={() => navigation.navigate("Settings")}>
-            <LinearGradient colors={[C.accent + "80", C.teal + "80"]} style={s.avatarGrad}>
-              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>M</Text>
-            </LinearGradient>
+            <View style={s.avatarInner}>
+              <Text style={s.avatarT}>M</Text>
+            </View>
           </Pressable>
         </View>
 
         {loading ? (
-          <ActivityIndicator color={C.teal} style={{ marginTop: 60 }} />
+          <ActivityIndicator color={C.gold} style={{ marginTop: 60 }} />
         ) : (
           <>
-            {/* Next Up card — shown when there's an upcoming flight */}
-            {nextFlight && <NextUpCard flight={nextFlight} navigation={navigation} />}
+            {/* ── Serif greeting ─────────────────────────────────────────── */}
+            <View style={s.greetWrap}>
+              <SerifText style={s.greetH}>{greeting()}, Alex.</SerifText>
+              <Text style={s.greetS}>
+                {nextFlight
+                  ? `Next flight: ${nextFlight.origin} → ${nextFlight.destination}`
+                  : "You're all set for today."}
+              </Text>
+            </View>
 
-            {/* Trip list or empty state */}
+            {/* ── Next Up parchment card ──────────────────────────────────── */}
+            {nextFlight && (
+              <>
+                <Text style={g.sectionT}>NEXT UP</Text>
+                <NextUpCard flight={nextFlight} navigation={navigation} />
+              </>
+            )}
+
+            {/* ── Trip list or empty state ────────────────────────────────── */}
             {trips.length === 0 ? (
               <EmptyState navigation={navigation} />
             ) : (
               <>
-                {trips.length > 0 && <Text style={g.sectionT}>ALL TRIPS</Text>}
+                <Text style={g.sectionT}>YOUR TRIPS</Text>
                 {trips.map(trip => (
                   <TripCard key={trip.id} trip={trip} onDelete={handleDelete} navigation={navigation} />
                 ))}
                 <Btn title="+ Add a trip" onPress={() => navigation.navigate("AddTrip")} style={{ marginTop: 4 }} />
-                <Btn title="📧  Import from email" kind="ghost" onPress={() => navigation.navigate("Connections")} style={{ marginTop: 8 }} />
+                <Btn title="Import from email" kind="ghost" onPress={() => navigation.navigate("Connections")} style={{ marginTop: 8 }} />
               </>
             )}
 
-            {/* Live monitoring row */}
+            {/* ── Live monitoring row ─────────────────────────────────────── */}
             <Text style={g.sectionT}>LIVE MONITORING</Text>
             <Pressable style={s.monitor} onPress={() => navigation.navigate("Track")}>
               <View style={s.radarMini}>
@@ -435,14 +488,14 @@ export default function HomeScreen({ navigation }) {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={s.mt}>Watching {trips.length} trip{trips.length !== 1 ? "s" : ""}</Text>
-                <Text style={s.ms}>Tap for track record →</Text>
+                <Text style={s.ms}>Tap for track record  ›</Text>
               </View>
               <Text style={{ color: C.mut, fontSize: 18, opacity: 0.5 }}>›</Text>
             </Pressable>
 
-            {/* Simulate disruption */}
+            {/* ── Simulate disruption ─────────────────────────────────────── */}
             <Text style={g.sectionT}>WHEN TRAVEL BREAKS</Text>
-            <Btn title="⚡  Simulate a disruption" onPress={onSimulate} />
+            <Btn title="Simulate a disruption" onPress={onSimulate} />
             <Text style={s.hint}>Schedules a real push in a few seconds — tap it to see the rescue.</Text>
           </>
         )}
@@ -455,67 +508,100 @@ export default function HomeScreen({ navigation }) {
 
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
-  appH: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
-  logoRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  mark: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  logo: { color: C.ink, fontSize: 20, fontWeight: "700", letterSpacing: -0.5 },
-  avatar: { width: 34, height: 34, borderRadius: 17, overflow: "hidden" },
-  avatarGrad: { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center" },
 
-  // Next Up card
-  nextCard: { borderRadius: 24, padding: 20, borderWidth: 1, borderColor: "rgba(255,255,255,0.07)" },
-  liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.teal },
-  nextLabel: { color: C.mut, fontSize: 11, fontWeight: "700", letterSpacing: 1.5 },
-  nextCountdown: { color: C.teal, fontSize: 13, fontWeight: "800", letterSpacing: 0.3 },
-  nextRouteRow: { flexDirection: "row", alignItems: "center", marginTop: 14, marginBottom: 2 },
-  nextAirport: { color: C.ink, fontSize: 36, fontWeight: "800", letterSpacing: -1 },
-  nextArrowWrap: { flex: 1, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 4 },
-  nextArrowLine: { flex: 1, height: 1, backgroundColor: "rgba(255,255,255,0.1)" },
-  nextArrowIc: { color: C.mut, fontSize: 16 },
-  nextMeta: { color: C.mut, fontSize: 13 },
-  nextRiskStrip: { marginTop: 16, paddingTop: 14, borderTopWidth: 0.5, borderTopColor: "rgba(255,255,255,0.06)" },
-  nextRiskT: { color: C.mut, fontSize: 13, fontWeight: "600" },
-  nextRiskPct: { fontSize: 15, fontWeight: "800" },
+  // Header
+  appH:      { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 },
+  logoRow:   { flexDirection: "row", alignItems: "center", gap: 10 },
+  wMark:     { width: 30, height: 30, borderRadius: 8, borderWidth: 1, borderColor: C.gold + "60", alignItems: "center", justifyContent: "center" },
+  wMarkText: { color: C.gold, fontSize: 16 },
+  logo:      { color: C.ink, fontSize: 12, fontFamily: T.sansB, letterSpacing: T.trackWide },
+  avatar:    { width: 32, height: 32, borderRadius: 16, overflow: "hidden" },
+  avatarInner: { width: 32, height: 32, borderRadius: 16, backgroundColor: C.card2, borderWidth: 1, borderColor: C.line, alignItems: "center", justifyContent: "center" },
+  avatarT:   { color: C.gold, fontFamily: T.sansB, fontSize: 13 },
 
-  // Trip cards
-  tripCard: { borderRadius: 22, padding: 18, borderWidth: 1, borderColor: "rgba(255,255,255,0.06)" },
-  dest: { color: C.ink, fontSize: 21, fontWeight: "700", letterSpacing: -0.5 },
-  when: { color: C.mut, fontSize: 13, marginTop: 3 },
-  pillLive: { backgroundColor: "rgba(20,201,153,0.10)", borderColor: "rgba(20,201,153,0.22)", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
-  pillLiveT: { color: C.teal, fontSize: 11, fontWeight: "700", letterSpacing: 0.3 },
-  leg: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.05)" },
-  legIc: { fontSize: 16 },
-  legT: { color: C.ink, fontSize: 14, fontWeight: "600", letterSpacing: 0.1 },
-  legS: { color: C.mut, fontSize: 12, marginTop: 2 },
-  tapHint: { color: C.mut, fontSize: 11, textAlign: "right", marginTop: 12, opacity: 0.5 },
+  // Greeting
+  greetWrap: { marginBottom: 24 },
+  greetH:    { color: C.ink, fontSize: 30, letterSpacing: T.trackTight, marginBottom: 4 },
+  greetS:    { color: C.mut, fontSize: 14, fontFamily: T.sans, lineHeight: 20 },
 
-  // Empty state
-  emptyWrap: { marginBottom: 14 },
-  emptyCard: { borderRadius: 24, padding: 36, alignItems: "center", borderWidth: 1, borderColor: C.line },
-  emptyIc: { fontSize: 48, marginBottom: 16 },
-  emptyT: { color: C.ink, fontSize: 20, fontWeight: "700", marginBottom: 8, letterSpacing: -0.3 },
-  emptyS: { color: C.mut, fontSize: 14, textAlign: "center", lineHeight: 21, marginBottom: 24 },
-  emptyPrimary: { width: "100%", backgroundColor: C.accent, borderRadius: 16, padding: 16, alignItems: "center", marginBottom: 10 },
-  emptyPrimaryT: { color: "#fff", fontSize: 16, fontWeight: "700" },
-  emptySecondary: { width: "100%", backgroundColor: "rgba(255,255,255,0.04)", borderRadius: 16, padding: 14, alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
-  emptySecondaryT: { color: C.mut, fontSize: 15, fontWeight: "600" },
+  // ── Parchment Next Up card ──────────────────────────────────────────────────
+  parchCard: {
+    backgroundColor: C.parch,
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: C.parch2,
+    marginBottom: 4,
+  },
+  parchIcon:      { width: 28, height: 28, borderRadius: 14, borderWidth: 1, borderColor: C.inkD + "30", alignItems: "center", justifyContent: "center" },
+  parchLabel:     { color: C.mutD, fontSize: 10, fontFamily: T.sansB, letterSpacing: T.trackWide },
+  liveDot:        { width: 6, height: 6, borderRadius: 3, backgroundColor: C.teal },
+  parchCountdown: { color: C.inkD, fontSize: 13, fontFamily: T.sansB, letterSpacing: 0.3 },
 
-  // Monitoring row
-  monitor: { flexDirection: "row", gap: 14, alignItems: "center", backgroundColor: C.card, borderColor: C.line, borderWidth: 1, borderRadius: 18, padding: 16 },
-  radarMini: { width: 38, height: 38, borderRadius: 19, borderWidth: 1.5, borderColor: "rgba(74,114,255,0.2)", overflow: "hidden", alignItems: "center", justifyContent: "center" },
-  radarMiniRing: { position: "absolute", width: 22, height: 22, borderRadius: 11, borderWidth: 1, borderColor: "rgba(74,114,255,0.15)" },
-  radarMiniSweep: { position: "absolute", top: 0, left: 18, width: 1.5, height: 19, backgroundColor: C.accent, opacity: 0.8 },
-  radarMiniDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: C.teal, position: "absolute", top: 10, left: 22 },
-  mt: { color: C.ink, fontSize: 14, fontWeight: "600", letterSpacing: 0.1 },
-  ms: { color: C.mut, fontSize: 13, marginTop: 2 },
-  hint: { color: C.mut, fontSize: 12, textAlign: "center", marginTop: 12, lineHeight: 18 },
+  // Route
+  parchRouteRow:  { flexDirection: "row", alignItems: "center", marginTop: 4, marginBottom: 2 },
+  parchAirport:   { color: C.inkD, fontSize: 38, letterSpacing: -1 },
+  parchArrowWrap: { flex: 1, flexDirection: "row", alignItems: "center", paddingHorizontal: 8, gap: 4 },
+  parchArrowLine: { flex: 1, height: 0.5, backgroundColor: C.inkD + "30" },
+  parchArrowIc:   { color: C.mutD, fontSize: 16, fontFamily: T.sans },
 
-  // Ground Intelligence
-  groundIntelWrap: { marginTop: 16, paddingTop: 14, borderTopWidth: 0.5, borderTopColor: "rgba(255,255,255,0.06)" },
-  groundIntelLabel: { color: C.mut, fontSize: 10, fontWeight: "700", letterSpacing: 1.5, marginBottom: 10 },
-  groundIntelRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
-  groundIntelIc: { fontSize: 14, width: 22 },
-  groundIntelStep: { flex: 1, color: C.ink, fontSize: 13, fontWeight: "500" },
-  groundIntelTime: { color: C.mut, fontSize: 13, fontWeight: "700" },
-  groundIntelVerdict: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8, marginTop: 4 },
+  // Meta
+  parchMeta:    { color: C.mutD, fontSize: 13, fontFamily: T.sans },
+  parchMetaDot: { color: C.mutD + "80", fontSize: 13 },
+
+  // Bottom row
+  parchHint:  { color: C.mutD, fontSize: 11, fontFamily: T.sans, opacity: 0.7 },
+  parchArrow: { color: C.inkD, fontSize: 12, fontFamily: T.sansM, letterSpacing: 0.3 },
+
+  // Ground Intelligence (on parchment)
+  groundWrap:    { marginTop: 14, paddingTop: 14, borderTopWidth: 0.5, borderTopColor: C.inkD + "20" },
+  groundLabel:   { color: C.mutD, fontSize: 9, fontFamily: T.sansB, letterSpacing: T.trackWide, marginBottom: 10 },
+  groundRow:     { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
+  groundIc:      { fontSize: 12, width: 20, textAlign: "center" },
+  groundStep:    { flex: 1, color: C.inkD, fontSize: 13, fontFamily: T.sansM },
+  groundTime:    { color: C.mutD, fontSize: 13, fontFamily: T.sansB },
+  groundVerdict: { borderRadius: 8, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8, marginTop: 4 },
+
+  // ── Trip cards ──────────────────────────────────────────────────────────────
+  tripCard: {
+    backgroundColor: C.card,
+    borderRadius: 18,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: C.line,
+  },
+  dest:      { color: C.ink, fontSize: 20, fontFamily: T.sansB, letterSpacing: -0.3 },
+  when:      { color: C.mut, fontSize: 12, fontFamily: T.sans, marginTop: 3 },
+  pillLive:  { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: C.gold + "10", borderColor: C.gold + "30", borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 },
+  pillDot:   { width: 5, height: 5, borderRadius: 3, backgroundColor: C.gold },
+  pillLiveT: { color: C.gold, fontSize: 9, fontFamily: T.sansB, letterSpacing: T.trackMed },
+
+  // Leg row
+  leg:         { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 12, paddingTop: 12, borderTopWidth: 0.5, borderTopColor: C.line },
+  legIconWrap: { width: 26, height: 26, borderRadius: 8, backgroundColor: C.card2, borderWidth: 1, borderColor: C.line, alignItems: "center", justifyContent: "center" },
+  legIc:       { fontSize: 13, color: C.gold, fontFamily: T.sansB },
+  legT:        { color: C.ink, fontSize: 14, fontFamily: T.sansM, letterSpacing: 0.1 },
+  legS:        { color: C.mut, fontSize: 12, fontFamily: T.sans, marginTop: 2 },
+  tapHint:     { color: C.mut, fontSize: 10, fontFamily: T.sans, textAlign: "right", marginTop: 12, opacity: 0.5, letterSpacing: 0.3 },
+
+  // ── Empty state ─────────────────────────────────────────────────────────────
+  emptyWrap:      { marginBottom: 14 },
+  emptyCard:      { backgroundColor: C.card, borderRadius: 20, padding: 36, alignItems: "center", borderWidth: 1, borderColor: C.line },
+  emptyIcon:      { width: 52, height: 52, borderRadius: 26, borderWidth: 1, borderColor: C.gold + "40", alignItems: "center", justifyContent: "center", marginBottom: 18 },
+  emptyT:         { color: C.ink, fontSize: 22, letterSpacing: T.trackTight, marginBottom: 8 },
+  emptyS:         { color: C.mut, fontSize: 14, fontFamily: T.sans, textAlign: "center", lineHeight: 21, marginBottom: 24 },
+  emptyPrimary:   { width: "100%", backgroundColor: C.gold, borderRadius: 14, padding: 16, alignItems: "center", marginBottom: 10 },
+  emptyPrimaryT:  { color: C.inkD, fontSize: 15, fontFamily: T.sansB, letterSpacing: 0.3 },
+  emptySecondary: { width: "100%", backgroundColor: "transparent", borderRadius: 14, padding: 14, alignItems: "center", borderWidth: 1, borderColor: C.line },
+  emptySecondaryT:{ color: C.mut, fontSize: 14, fontFamily: T.sansM },
+
+  // ── Live monitoring row ──────────────────────────────────────────────────────
+  monitor:       { flexDirection: "row", gap: 14, alignItems: "center", backgroundColor: C.card, borderColor: C.line, borderWidth: 1, borderRadius: 16, padding: 16 },
+  radarMini:     { width: 36, height: 36, borderRadius: 18, borderWidth: 1.5, borderColor: C.gold + "30", overflow: "hidden", alignItems: "center", justifyContent: "center" },
+  radarMiniRing: { position: "absolute", width: 20, height: 20, borderRadius: 10, borderWidth: 1, borderColor: C.gold + "20" },
+  radarMiniSweep:{ position: "absolute", top: 0, left: 17, width: 1.5, height: 18, backgroundColor: C.gold, opacity: 0.7 },
+  radarMiniDot:  { width: 5, height: 5, borderRadius: 3, backgroundColor: C.gold, position: "absolute", top: 10, left: 20 },
+  mt:            { color: C.ink, fontSize: 14, fontFamily: T.sansM, letterSpacing: 0.1 },
+  ms:            { color: C.mut, fontSize: 12, fontFamily: T.sans, marginTop: 2 },
+  hint:          { color: C.mut, fontSize: 12, fontFamily: T.sans, textAlign: "center", marginTop: 12, lineHeight: 18 },
 });

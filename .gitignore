@@ -10,3 +10,5 @@ build/
 *.key
 *.mobileprovision
 web-build/
+dist_check/
+dist_check2/

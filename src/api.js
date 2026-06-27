@@ -188,3 +188,38 @@ export const logOutcome = ({ tripId, predictedDelay, actualDelay, rescueAccepted
 
 // ROI dashboard — total value saved
 export const getInsightsROI = () => req("/insights/roi");
+
+// ─── TRANSFER-WINDOW RISK SCORING ─────────────────────────────────────────────
+// GET /trips/:tripId/risk — connection risk scores + hotel alerts
+export const getTripRisk = (tripId) =>
+  req("/trips/" + tripId + "/risk");
+
+// ─── RESCUE DECISION ENGINE (v2.2) ───────────────────────────────────────────
+// POST /trips/:tripId/rescue — ranked cash vs points rescue options
+export const getRescueOptions = (tripId, body) =>
+  req("/trips/" + tripId + "/rescue", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+
+// POST /trips/:tripId/rescue/accept — user accepts a rescue option
+export const acceptRescue = (tripId, body) =>
+  req("/trips/" + tripId + "/rescue/accept", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+
+// POST /trips/:tripId/rescue/reject — user declines all rescue options
+export const rejectRescue = (tripId, body) =>
+  req("/trips/" + tripId + "/rescue/reject", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+
+// ─── LEARNING LOOP OUTCOME CAPTURE (v2.2) ────────────────────────────────────
+// POST /trips/:tripId/outcome — post-trip rating + predicted vs actual
+export const recordTripOutcome = (tripId, body) =>
+  req("/trips/" + tripId + "/outcome", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });

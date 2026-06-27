@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
   ActivityIndicator, Alert, RefreshControl,
@@ -6,7 +6,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { C } from "../theme";
 import { Btn, BackBar, g } from "../components";
-import { getFlightStatus, getPrediction, refreshTrip } from "../api";
+import { getFlightStatus, getPrediction, refreshTrip, getTripRisk, recordTripOutcome } from "../api";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -32,6 +32,11 @@ function minutesToHM(mins) {
   const m = Math.abs(mins) % 60;
   const sign = mins < 0 ? "-" : "+";
   return h > 0 ? `${sign}${h}h ${m}m` : `${sign}${m}m`;
+}
+
+function formatMoney(n) {
+  if (n == null) return null;
+  return "$" + Number(n).toLocaleString("en-US", { maximumFractionDigits: 0 });
 }
 
 // ─── StatusBadge ────────────────────────────────────────────────────────────
@@ -73,6 +78,38 @@ function RiskBar({ risk }) {
       <View style={s.riskTrack}>
         <View style={[s.riskFill, { width: risk + "%", backgroundColor: color }]} />
       </View>
+    </View>
+  );
+}
+
+// ─── ConnectionRiskBadge ─────────────────────────────────────────────────────
+
+function ConnectionRiskBadge({ risk }) {
+  const cfg = {
+    critical: { bg: "rgba(255,77,109,0.15)", border: "rgba(255,77,109,0.4)", text: C.coral, icon: "⚡" },
+    high:     { bg: "rgba(255,140,0,0.12)",  border: "rgba(255,140,0,0.35)",  text: "#FF8C00", icon: "⚠️" },
+    moderate: { bg: "rgba(201,169,110,0.12)", border: "rgba(201,169,110,0.3)", text: C.gold,   icon: "👁" },
+    low:      { bg: "rgba(100,200,140,0.1)",  border: "rgba(100,200,140,0.25)", text: "#64C88C", icon: "✓" },
+  }[risk.risk_level] || { bg: "rgba(201,169,110,0.12)", border: "rgba(201,169,110,0.3)", text: C.gold, icon: "·" };
+
+  return (
+    <View style={[s.connRiskCard, { backgroundColor: cfg.bg, borderColor: cfg.border }]}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 }}>
+        <Text style={{ fontSize: 14 }}>{cfg.icon}</Text>
+        <Text style={[s.connRiskLevel, { color: cfg.text }]}>
+          {risk.risk_level.toUpperCase()} — {risk.connection_minutes}min connection
+        </Text>
+        <Text style={[s.connRiskScore, { color: cfg.text }]}>{risk.risk_score}%</Text>
+      </View>
+      <Text style={s.connRiskRoute}>
+        {risk.leg_a_flight} → {risk.connection_airport} → {risk.leg_b_flight}
+      </Text>
+      <Text style={s.connRiskRec}>{risk.recommendation}</Text>
+      {risk.downstream_value_at_risk > 0 && (
+        <Text style={[s.connRiskDownstream, { color: cfg.text }]}>
+          {formatMoney(risk.downstream_value_at_risk)} downstream value at risk
+        </Text>
+      )}
     </View>
   );
 }
@@ -183,7 +220,7 @@ function FlightLegCard({ leg }) {
 
 // ─── HotelLegCard ───────────────────────────────────────────────────────────
 
-function HotelLegCard({ leg }) {
+function HotelLegCard({ leg, hotelAlert }) {
   const checkIn = fmt(leg.departs_at || leg.check_in);
   const checkOut = fmt(leg.arrives_at || leg.check_out);
   return (
@@ -196,6 +233,74 @@ function HotelLegCard({ leg }) {
         </View>
         <StatusBadge status="Booked" />
       </View>
+      {hotelAlert && (
+        <View style={s.hotelAlertBanner}>
+          <Text style={s.hotelAlertText}>🔔 {hotelAlert.alert}</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+// ─── OutcomeCard (post-trip learning loop) ───────────────────────────────────
+
+function OutcomeCard({ tripId, onSubmitted }) {
+  const [rating, setRating] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!rating) return;
+    setSubmitting(true);
+    try {
+      await recordTripOutcome(tripId, {
+        rating,
+        disruptions_predicted: null,
+        disruptions_actual: null,
+        value_saved: null,
+        notes: null,
+      });
+      setSubmitted(true);
+      if (onSubmitted) onSubmitted();
+    } catch (e) {
+      Alert.alert("Error", "Could not save rating. Try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (submitted) {
+    return (
+      <View style={s.outcomeCard}>
+        <Text style={s.outcomeTitle}>✓ Thanks — Wingman learns from every trip</Text>
+        <Text style={s.outcomeSub}>Your feedback improves future predictions and rescue options.</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={s.outcomeCard}>
+      <Text style={s.outcomeTitle}>How did this trip go?</Text>
+      <Text style={s.outcomeSub}>Your rating helps Wingman improve its predictions and rescue decisions.</Text>
+      <View style={s.starRow}>
+        {[1, 2, 3, 4, 5].map(n => (
+          <Pressable key={n} onPress={() => setRating(n)} style={s.starBtn}>
+            <Text style={[s.star, rating >= n && { color: C.gold }]}>★</Text>
+          </Pressable>
+        ))}
+      </View>
+      {rating && (
+        <Text style={s.ratingLabel}>
+          {rating === 5 ? "Flawless execution" : rating === 4 ? "Mostly smooth" : rating === 3 ? "A few hiccups" : rating === 2 ? "Needed more help" : "Rough trip"}
+        </Text>
+      )}
+      <Btn
+        title={submitting ? "Saving…" : "Submit rating"}
+        kind="accent"
+        onPress={handleSubmit}
+        disabled={!rating || submitting}
+        style={{ marginTop: 12 }}
+      />
     </View>
   );
 }
@@ -207,17 +312,43 @@ export default function TripDetailScreen({ route, navigation }) {
   const [trip, setTrip] = useState(initialTrip);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Risk scoring state
+  const [riskData, setRiskData] = useState(null);
+  const [riskLoading, setRiskLoading] = useState(false);
+
+  // Outcome submitted state
+  const [outcomeSubmitted, setOutcomeSubmitted] = useState(false);
+
   const legs = trip.legs || [];
   const flightLegs = legs.filter(l => l.type === "flight");
   const otherLegs = legs.filter(l => l.type !== "flight");
   const firstFlight = flightLegs[0];
   const depDate = fmt(firstFlight?.departs_at);
 
+  // Determine if trip is in the past (completed)
+  const isCompleted = firstFlight?.departs_at
+    ? new Date(firstFlight.departs_at).getTime() < Date.now() - 24 * 3600000
+    : false;
+
+  // Load risk data on mount
+  useEffect(() => {
+    if (!trip.id || flightLegs.length < 2) return;
+    setRiskLoading(true);
+    getTripRisk(trip.id)
+      .then(d => setRiskData(d))
+      .catch(() => {})
+      .finally(() => setRiskLoading(false));
+  }, [trip.id]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
       await refreshTrip(trip.id);
-      // Re-fetch trip data would require a getTrip endpoint; for now just re-render
+      // Also refresh risk data
+      if (flightLegs.length >= 2) {
+        const d = await getTripRisk(trip.id);
+        setRiskData(d);
+      }
     } catch (e) {
       Alert.alert("Refresh failed", e.message);
     } finally {
@@ -232,6 +363,30 @@ export default function TripDetailScreen({ route, navigation }) {
       ". What should I know?";
     navigation.navigate("Concierge", { prefill: context });
   };
+
+  const openAlert = (leg) => {
+    navigation.navigate("Alert", {
+      flight: leg,
+      tripId: trip.id,
+      legId: leg.id,
+      disruption_type: "delay",
+      delay_minutes: 90,
+    });
+  };
+
+  // Build hotel alert lookup by leg id
+  const hotelAlertMap = {};
+  if (riskData?.hotel_alerts) {
+    for (const alert of riskData.hotel_alerts) {
+      hotelAlertMap[alert.leg_id] = alert;
+    }
+  }
+
+  // Highest risk level across all connections
+  const riskLevels = { critical: 4, high: 3, moderate: 2, low: 1 };
+  const topRisk = riskData?.risks?.reduce((best, r) => {
+    return (riskLevels[r.risk_level] || 0) > (riskLevels[best?.risk_level] || 0) ? r : best;
+  }, null);
 
   return (
     <SafeAreaView style={s.app}>
@@ -252,14 +407,68 @@ export default function TripDetailScreen({ route, navigation }) {
                 <Text style={s.pillInfoT}>{flightLegs.length} flight{flightLegs.length !== 1 ? "s" : ""}</Text>
               </View>
             )}
+            {topRisk && topRisk.risk_level !== "low" && (
+              <View style={[s.pillInfo, {
+                backgroundColor: topRisk.risk_level === "critical" ? "rgba(255,77,109,0.12)" : "rgba(255,140,0,0.1)",
+                borderColor: topRisk.risk_level === "critical" ? "rgba(255,77,109,0.3)" : "rgba(255,140,0,0.3)",
+              }]}>
+                <Text style={[s.pillInfoT, {
+                  color: topRisk.risk_level === "critical" ? C.coral : "#FF8C00",
+                }]}>
+                  {topRisk.risk_level === "critical" ? "⚡ Critical connection" : "⚠️ Tight connection"}
+                </Text>
+              </View>
+            )}
           </View>
         </LinearGradient>
+
+        {/* Connection risk section — only for multi-leg trips */}
+        {riskLoading && (
+          <View style={s.riskLoadingRow}>
+            <ActivityIndicator size="small" color={C.gold} />
+            <Text style={{ color: C.mut, fontSize: 13, marginLeft: 10 }}>Scoring connection risks…</Text>
+          </View>
+        )}
+
+        {!riskLoading && riskData?.risks?.length > 0 && (
+          <>
+            <Text style={g.sectionT}>CONNECTION RISK ANALYSIS</Text>
+            {riskData.risks.map((risk, i) => (
+              <ConnectionRiskBadge key={i} risk={risk} />
+            ))}
+          </>
+        )}
+
+        {/* Hotel alerts */}
+        {riskData?.hotel_alerts?.length > 0 && (
+          <>
+            <Text style={g.sectionT}>HOTEL ALERTS</Text>
+            {riskData.hotel_alerts.map((alert, i) => (
+              <View key={i} style={s.hotelAlertCard}>
+                <Text style={s.hotelAlertCardText}>🔔 {alert.alert}</Text>
+              </View>
+            ))}
+          </>
+        )}
 
         {/* Flight legs */}
         {flightLegs.length > 0 && (
           <>
             <Text style={g.sectionT}>FLIGHTS</Text>
-            {flightLegs.map((leg, i) => <FlightLegCard key={i} leg={leg} />)}
+            {flightLegs.map((leg, i) => (
+              <View key={i}>
+                <FlightLegCard leg={leg} />
+                {/* Disruption CTA for upcoming flights */}
+                {!isCompleted && (
+                  <Pressable
+                    style={s.disruptionCta}
+                    onPress={() => openAlert(leg)}
+                  >
+                    <Text style={s.disruptionCtaText}>⚡ Simulate disruption / rescue options →</Text>
+                  </Pressable>
+                )}
+              </View>
+            ))}
           </>
         )}
 
@@ -267,7 +476,9 @@ export default function TripDetailScreen({ route, navigation }) {
         {otherLegs.length > 0 && (
           <>
             <Text style={g.sectionT}>OTHER BOOKINGS</Text>
-            {otherLegs.map((leg, i) => <HotelLegCard key={i} leg={leg} />)}
+            {otherLegs.map((leg, i) => (
+              <HotelLegCard key={i} leg={leg} hotelAlert={hotelAlertMap[leg.id]} />
+            ))}
           </>
         )}
 
@@ -276,6 +487,14 @@ export default function TripDetailScreen({ route, navigation }) {
             <Text style={s.emptyT}>No legs yet</Text>
             <Text style={s.emptySub}>Add flights or bookings to this trip to see live status.</Text>
           </View>
+        )}
+
+        {/* Post-trip outcome card (learning loop) */}
+        {isCompleted && !outcomeSubmitted && (
+          <>
+            <Text style={g.sectionT}>TRIP OUTCOME</Text>
+            <OutcomeCard tripId={trip.id} onSubmitted={() => setOutcomeSubmitted(true)} />
+          </>
         )}
 
         {/* Concierge CTA */}
@@ -308,11 +527,29 @@ const s = StyleSheet.create({
   header: { borderRadius: 20, padding: 18, borderWidth: 1, borderColor: C.line, marginBottom: 4 },
   tripTitle: { color: C.ink, fontSize: 24, fontWeight: "700" },
   tripDate: { color: C.mut, fontSize: 14, marginTop: 4 },
-  pillRow: { flexDirection: "row", gap: 8, marginTop: 12 },
+  pillRow: { flexDirection: "row", gap: 8, marginTop: 12, flexWrap: "wrap" },
   pillLive: { backgroundColor: "rgba(34,211,166,0.14)", borderColor: "rgba(34,211,166,0.3)", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
   pillLiveT: { color: C.teal, fontSize: 11, fontWeight: "700" },
   pillInfo: { backgroundColor: "rgba(201,169,110,0.12)", borderColor: "rgba(201,169,110,0.25)", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
   pillInfoT: { color: C.gold, fontSize: 11, fontWeight: "600" },
+
+  // Risk loading
+  riskLoadingRow: { flexDirection: "row", alignItems: "center", padding: 14, backgroundColor: C.card, borderRadius: 14, borderWidth: 1, borderColor: C.line, marginBottom: 10 },
+
+  // Connection risk cards
+  connRiskCard: { borderRadius: 14, borderWidth: 1, padding: 14, marginBottom: 10 },
+  connRiskLevel: { fontSize: 12, fontWeight: "800", letterSpacing: 0.5, flex: 1 },
+  connRiskScore: { fontSize: 14, fontWeight: "800" },
+  connRiskRoute: { color: C.ink, fontSize: 13, fontWeight: "600", marginBottom: 4 },
+  connRiskRec: { color: C.mut, fontSize: 12, lineHeight: 17 },
+  connRiskDownstream: { fontSize: 12, fontWeight: "700", marginTop: 6 },
+
+  // Hotel alert
+  hotelAlertCard: { backgroundColor: "rgba(201,169,110,0.08)", borderRadius: 12, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", padding: 12, marginBottom: 10 },
+  hotelAlertCardText: { color: C.gold, fontSize: 13, lineHeight: 18 },
+  hotelAlertBanner: { marginTop: 10, backgroundColor: "rgba(201,169,110,0.08)", borderRadius: 10, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", padding: 10 },
+  hotelAlertText: { color: C.gold, fontSize: 12, lineHeight: 17 },
+
   // Leg cards
   legCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 16, marginBottom: 10 },
   routeRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
@@ -322,6 +559,11 @@ const s = StyleSheet.create({
   infoRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   infoIc: { fontSize: 14 },
   infoT: { color: C.ink, fontSize: 13, fontWeight: "500" },
+
+  // Disruption CTA
+  disruptionCta: { marginTop: -4, marginBottom: 10, paddingHorizontal: 4 },
+  disruptionCtaText: { color: C.gold, fontSize: 12, fontWeight: "600" },
+
   // Weather
   weatherWrap: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.line },
   weatherTitle: { color: C.mut, fontSize: 11, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase", marginBottom: 6 },
@@ -335,13 +577,25 @@ const s = StyleSheet.create({
   factorDot: { color: C.mut, fontSize: 12 },
   factorT: { color: C.mut, fontSize: 12, flex: 1 },
   factorD: { color: C.ink, fontWeight: "500" },
+
   // Hotel card
   legCardTitle: { color: C.ink, fontSize: 15, fontWeight: "700", marginBottom: 4 },
   legCardSub: { color: C.mut, fontSize: 12, marginTop: 2 },
+
   // Empty
   emptyCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 32, alignItems: "center", marginBottom: 12 },
   emptyT: { color: C.ink, fontSize: 16, fontWeight: "700", marginBottom: 6 },
   emptySub: { color: C.mut, fontSize: 13, textAlign: "center", lineHeight: 19 },
+
+  // Outcome card (learning loop)
+  outcomeCard: { backgroundColor: C.card, borderWidth: 1, borderColor: "rgba(201,169,110,0.25)", borderRadius: 18, padding: 18, marginBottom: 12 },
+  outcomeTitle: { color: C.ink, fontSize: 16, fontWeight: "700", marginBottom: 6 },
+  outcomeSub: { color: C.mut, fontSize: 13, lineHeight: 19, marginBottom: 12 },
+  starRow: { flexDirection: "row", gap: 8 },
+  starBtn: { padding: 4 },
+  star: { fontSize: 28, color: C.line },
+  ratingLabel: { color: C.gold, fontSize: 13, fontWeight: "600", marginTop: 8 },
+
   // Concierge CTA
   conciergeCard: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 14, marginBottom: 8 },
   conciergeDot: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },

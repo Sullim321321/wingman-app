@@ -352,7 +352,9 @@ export default function TripDetailScreen({ route, navigation }) {
   // Load destination intel and companions on mount
   useEffect(() => {
     if (!trip.id) return;
-    getDestinationIntel(trip.id).then(d => { if (d?.intel) setDestIntel(d); }).catch(() => {});
+    getDestinationIntel(trip.id).then(d => { if (d?.intel) setDestIntel(d); }).catch(e => {
+      if (e.code === "pro_required") setDestIntel({ pro_required: true });
+    });
     getCompanions(trip.id).then(d => { if (d?.companions) setCompanions(d.companions); }).catch(() => {});
   }, [trip.id]);
 
@@ -366,12 +368,15 @@ export default function TripDetailScreen({ route, navigation }) {
       const d = await getCompanions(trip.id);
       if (d?.companions) setCompanions(d.companions);
     } catch (e) {
-      Alert.alert("Error", e.message);
+            if (e.code === "pro_required") {
+        navigation.navigate("Subscription");
+      } else {
+        Alert.alert("Error", e.message);
+      }
     } finally {
       setInviting(false);
     }
   };
-
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
@@ -523,6 +528,35 @@ export default function TripDetailScreen({ route, navigation }) {
                       <Text style={s.disruptionCtaText}>⚡ Simulate disruption →</Text>
                     </Pressable>
                   )}
+                  {/* Upgrade bid */}
+                  {!isCompleted && leg.id && (
+                    <Pressable
+                      style={s.upgradeBidBtn}
+                      onPress={() => navigation.navigate("UpgradeBid", {
+                        tripId: trip.id,
+                        legId: leg.id,
+                        flightIdent: leg.flight_number,
+                        origin: leg.origin,
+                        destination: leg.destination,
+                        carrier: leg.carrier,
+                      })}
+                    >
+                      <Text style={s.upgradeBidBtnT}>✦ Bid upgrade</Text>
+                    </Pressable>
+                  )}
+                  {/* Compensation (completed trips) */}
+                  {isCompleted && leg.id && (
+                    <Pressable
+                      style={s.compensationBtn}
+                      onPress={() => navigation.navigate("Compensation", {
+                        tripId: trip.id,
+                        legId: leg.id,
+                        flightIdent: leg.flight_number,
+                      })}
+                    >
+                      <Text style={s.compensationBtnT}>€ File compensation</Text>
+                    </Pressable>
+                  )}
                 </View>
               </View>
             ))}
@@ -552,6 +586,18 @@ export default function TripDetailScreen({ route, navigation }) {
             <Text style={g.sectionT}>TRIP OUTCOME</Text>
             <OutcomeCard tripId={trip.id} onSubmitted={() => setOutcomeSubmitted(true)} />
           </>
+        )}
+
+        {/* Destination intelligence — pro upsell */}
+        {destIntel?.pro_required && (
+          <Pressable
+            style={s.proUpsellCard}
+            onPress={() => navigation.navigate("Subscription")}
+          >
+            <Text style={s.proUpsellTitle}>✦ Destination Intel — Pro</Text>
+            <Text style={s.proUpsellSub}>Upgrade to get AI-curated local tips, restaurant picks, and neighbourhood guides for every destination.</Text>
+            <Text style={s.proUpsellCta}>Upgrade to Pro →</Text>
+          </Pressable>
         )}
 
         {/* Destination intelligence card */}
@@ -777,7 +823,21 @@ const s = StyleSheet.create({
   companionInput: { flex: 1, backgroundColor: C.card2, borderWidth: 1, borderColor: C.line, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10 },
   companionInputText: { color: C.ink, fontSize: 13 },
 
+  // Pro upsell card
+  proUpsellCard: { backgroundColor: "rgba(201,169,110,0.06)", borderWidth: 1, borderColor: "rgba(201,169,110,0.3)", borderRadius: 18, padding: 18, marginBottom: 12 },
+  proUpsellTitle: { color: C.gold, fontSize: 15, fontWeight: "700", marginBottom: 6 },
+  proUpsellSub: { color: C.mut, fontSize: 13, lineHeight: 19, marginBottom: 10 },
+  proUpsellCta: { color: C.gold, fontSize: 13, fontWeight: "700" },
+
   // Wallet button
   walletBtn: { backgroundColor: "#1C1C1E", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" },
   walletBtnT: { color: "#FFFFFF", fontSize: 12, fontWeight: "600" },
+
+  // Upgrade bid button
+  upgradeBidBtn: { backgroundColor: "rgba(201,169,110,0.08)", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: "rgba(201,169,110,0.3)" },
+  upgradeBidBtnT: { color: C.gold, fontSize: 12, fontWeight: "600" },
+
+  // Compensation button
+  compensationBtn: { backgroundColor: "rgba(79,142,247,0.08)", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: "rgba(79,142,247,0.3)" },
+  compensationBtnT: { color: "#4F8EF7", fontSize: 12, fontWeight: "600" },
 });

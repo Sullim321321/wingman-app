@@ -28,6 +28,13 @@ async function req(path, opts = {}) {
   const text = await r.text();
   let body;
   try { body = text ? JSON.parse(text) : {}; } catch (e) { body = { raw: text }; }
+  if (r.status === 402) {
+    // Pro feature gate — throw a special error the UI can catch to show upsell
+    const err = new Error(body.error || "pro_required");
+    err.code = "pro_required";
+    err.feature = body.feature || "";
+    throw err;
+  }
   if (!r.ok) throw new Error(body.error || "HTTP " + r.status);
   return body;
 }

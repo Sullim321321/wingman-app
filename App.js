@@ -62,6 +62,8 @@ import AutonomySettingsScreen from "./src/screens/AutonomySettingsScreen";
 import InsightsScreen from "./src/screens/InsightsScreen";
 import ProfileSetupScreen from "./src/screens/ProfileSetupScreen";
 import WingmanWrappedScreen from "./src/screens/WingmanWrappedScreen";
+import CompensationScreen from "./src/screens/CompensationScreen";
+import UpgradeBidScreen from "./src/screens/UpgradeBidScreen";
 
 export const navRef = createNavigationContainerRef();
 const Stack = createNativeStackNavigator();
@@ -267,6 +269,8 @@ function Root() {
             <Stack.Screen name="Autonomy"     component={AutonomySettingsScreen} />
             <Stack.Screen name="InsightsFull" component={InsightsScreen} />
             <Stack.Screen name="Wrapped"      component={WingmanWrappedScreen} />
+            <Stack.Screen name="Compensation" component={CompensationScreen} />
+            <Stack.Screen name="UpgradeBid"   component={UpgradeBidScreen} />
             <Stack.Screen name="Main"         component={Tabs} />
           </>
         ) : (

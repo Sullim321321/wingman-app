@@ -292,6 +292,14 @@ export default function AlertScreen({ navigation, route }) {
         title: "Fixing your trip",
         steps: buildRescueSteps(dep, arr, flightLabel, selectedOption.label),
         doneRoute: "Done",
+        doneParams: {
+          option: selectedOption,
+          dep,
+          arr,
+          flightLabel,
+          valueSaved: selectedOption.downstream_value_protected || 0,
+          currency: selectedOption.currency || "USD",
+        },
       });
     } catch (e) {
       setAccepting(false);

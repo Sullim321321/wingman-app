@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
-  ActivityIndicator, Alert, RefreshControl, Share,
+  ActivityIndicator, Alert, RefreshControl, Share, Linking,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { C } from "../theme";
 import { Btn, BackBar, g } from "../components";
-import { getFlightStatus, getPrediction, refreshTrip, getTripRisk, recordTripOutcome, shareTripLink } from "../api";
+import { getFlightStatus, getPrediction, refreshTrip, getTripRisk, recordTripOutcome, shareTripLink, getDestinationIntel, inviteCompanion, getCompanions } from "../api";
+import { API_BASE } from "../config";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -319,6 +320,14 @@ export default function TripDetailScreen({ route, navigation }) {
   // Outcome submitted state
   const [outcomeSubmitted, setOutcomeSubmitted] = useState(false);
 
+  // Destination intel state
+  const [destIntel, setDestIntel] = useState(null);
+
+  // Companion state
+  const [companions, setCompanions] = useState([]);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviting, setInviting] = useState(false);
+
   const legs = trip.legs || [];
   const flightLegs = legs.filter(l => l.type === "flight");
   const otherLegs = legs.filter(l => l.type !== "flight");
@@ -339,6 +348,29 @@ export default function TripDetailScreen({ route, navigation }) {
       .catch(() => {})
       .finally(() => setRiskLoading(false));
   }, [trip.id]);
+
+  // Load destination intel and companions on mount
+  useEffect(() => {
+    if (!trip.id) return;
+    getDestinationIntel(trip.id).then(d => { if (d?.intel) setDestIntel(d); }).catch(() => {});
+    getCompanions(trip.id).then(d => { if (d?.companions) setCompanions(d.companions); }).catch(() => {});
+  }, [trip.id]);
+
+  const handleInviteCompanion = async () => {
+    if (!inviteEmail.trim()) return;
+    setInviting(true);
+    try {
+      await inviteCompanion(trip.id, inviteEmail.trim());
+      Alert.alert("Invite sent!", `An invite was sent to ${inviteEmail.trim()}.`);
+      setInviteEmail("");
+      const d = await getCompanions(trip.id);
+      if (d?.companions) setCompanions(d.companions);
+    } catch (e) {
+      Alert.alert("Error", e.message);
+    } finally {
+      setInviting(false);
+    }
+  };
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -470,15 +502,28 @@ export default function TripDetailScreen({ route, navigation }) {
             {flightLegs.map((leg, i) => (
               <View key={i}>
                 <FlightLegCard leg={leg} />
-                {/* Disruption CTA for upcoming flights */}
-                {!isCompleted && (
-                  <Pressable
-                    style={s.disruptionCta}
-                    onPress={() => openAlert(leg)}
-                  >
-                    <Text style={s.disruptionCtaText}>⚡ Simulate disruption / rescue options →</Text>
-                  </Pressable>
-                )}
+                <View style={{ flexDirection: "row", gap: 10, marginTop: -4, marginBottom: 10 }}>
+                  {/* Apple Wallet pass */}
+                  {leg.id && (
+                    <Pressable
+                      style={s.walletBtn}
+                      onPress={() => {
+                        Linking.openURL(`${API_BASE}/wallet/pass/${leg.id}`);
+                      }}
+                    >
+                      <Text style={s.walletBtnT}>💳 Add to Wallet</Text>
+                    </Pressable>
+                  )}
+                  {/* Disruption CTA for upcoming flights */}
+                  {!isCompleted && (
+                    <Pressable
+                      style={s.disruptionCta}
+                      onPress={() => openAlert(leg)}
+                    >
+                      <Text style={s.disruptionCtaText}>⚡ Simulate disruption →</Text>
+                    </Pressable>
+                  )}
+                </View>
               </View>
             ))}
           </>
@@ -508,6 +553,105 @@ export default function TripDetailScreen({ route, navigation }) {
             <OutcomeCard tripId={trip.id} onSubmitted={() => setOutcomeSubmitted(true)} />
           </>
         )}
+
+        {/* Destination intelligence card */}
+        {destIntel?.intel && (
+          <>
+            <Text style={g.sectionT}>DESTINATION INTEL — {destIntel.destination}</Text>
+            <View style={s.intelCard}>
+              {destIntel.intel.restaurant && (
+                <View style={s.intelRow}>
+                  <Text style={s.intelIc}>🍽</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.intelLabel}>WHERE TO EAT</Text>
+                    <Text style={s.intelText}>{destIntel.intel.restaurant}</Text>
+                  </View>
+                </View>
+              )}
+              {destIntel.intel.neighbourhood && (
+                <View style={s.intelRow}>
+                  <Text style={s.intelIc}>📍</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.intelLabel}>NEIGHBOURHOOD</Text>
+                    <Text style={s.intelText}>{destIntel.intel.neighbourhood}</Text>
+                  </View>
+                </View>
+              )}
+              {destIntel.intel.hotel_tip && (
+                <View style={s.intelRow}>
+                  <Text style={s.intelIc}>🏨</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.intelLabel}>HOTEL TIP</Text>
+                    <Text style={s.intelText}>{destIntel.intel.hotel_tip}</Text>
+                  </View>
+                </View>
+              )}
+              {destIntel.intel.local_tip && (
+                <View style={[s.intelRow, { marginBottom: 0 }]}>
+                  <Text style={s.intelIc}>💡</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.intelLabel}>LOCAL TIP</Text>
+                    <Text style={s.intelText}>{destIntel.intel.local_tip}</Text>
+                  </View>
+                </View>
+              )}
+              <Pressable
+                style={s.intelCTA}
+                onPress={() => navigation.navigate("Concierge", {
+                  prefill: `Tell me more about ${destIntel.destination} — restaurants, neighbourhoods, what to do.`
+                })}
+              >
+                <Text style={s.intelCTAT}>Ask Wingman for more local tips →</Text>
+              </Pressable>
+            </View>
+          </>
+        )}
+
+        {/* Travel companions */}
+        <Text style={g.sectionT}>TRAVEL COMPANIONS</Text>
+        <View style={s.companionCard}>
+          {companions.length > 0 && (
+            <View style={{ marginBottom: 12 }}>
+              {companions.map((c, i) => (
+                <View key={i} style={s.companionRow}>
+                  <View style={s.companionAvatar}>
+                    <Text style={s.companionAvatarT}>{(c.invitee_email || "?")[0].toUpperCase()}</Text>
+                  </View>
+                  <Text style={s.companionEmail}>{c.invitee_email}</Text>
+                  <Text style={[s.companionStatus, { color: c.accepted_at ? C.teal : C.mut }]}>
+                    {c.accepted_at ? "Joined" : "Pending"}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+          {companions.length === 0 && (
+            <Text style={s.companionEmpty}>No companions yet. Invite someone to share this trip.</Text>
+          )}
+          <View style={s.companionInputRow}>
+            <View style={s.companionInput}>
+              <Text
+                style={s.companionInputText}
+                onPress={() => Alert.prompt(
+                  "Invite companion",
+                  "Enter their email address",
+                  email => { setInviteEmail(email || ""); handleInviteCompanion(); },
+                  "plain-text",
+                  inviteEmail
+                )}
+              >
+                {inviteEmail || "Enter email address…"}
+              </Text>
+            </View>
+            <Btn
+              title={inviting ? "…" : "Invite"}
+              kind="accent"
+              onPress={handleInviteCompanion}
+              disabled={inviting}
+              style={{ paddingHorizontal: 16 }}
+            />
+          </View>
+        </View>
 
         {/* Concierge CTA */}
         <Text style={g.sectionT}>WINGMAN CONCIERGE</Text>
@@ -611,4 +755,29 @@ const s = StyleSheet.create({
   conciergeDot: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   conciergeT: { color: C.ink, fontSize: 14, fontWeight: "700", marginBottom: 2 },
   conciergeS: { color: C.mut, fontSize: 12, lineHeight: 17 },
+
+  // Destination intel card
+  intelCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 16, marginBottom: 12 },
+  intelRow: { flexDirection: "row", gap: 12, marginBottom: 12, alignItems: "flex-start" },
+  intelIc: { fontSize: 18, width: 24, textAlign: "center", marginTop: 2 },
+  intelLabel: { color: C.mut, fontSize: 9, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase", marginBottom: 3 },
+  intelText: { color: C.ink, fontSize: 13, lineHeight: 19 },
+  intelCTA: { borderTopWidth: 0.5, borderTopColor: C.line, paddingTop: 12, marginTop: 4 },
+  intelCTAT: { color: C.gold, fontSize: 13, fontWeight: "600" },
+
+  // Companion card
+  companionCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 16, marginBottom: 12 },
+  companionRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 },
+  companionAvatar: { width: 30, height: 30, borderRadius: 15, backgroundColor: C.card2, borderWidth: 1, borderColor: C.line, alignItems: "center", justifyContent: "center" },
+  companionAvatarT: { color: C.gold, fontSize: 13, fontWeight: "700" },
+  companionEmail: { color: C.ink, fontSize: 13, flex: 1 },
+  companionStatus: { fontSize: 11, fontWeight: "700" },
+  companionEmpty: { color: C.mut, fontSize: 13, lineHeight: 19, marginBottom: 12 },
+  companionInputRow: { flexDirection: "row", gap: 10, alignItems: "center" },
+  companionInput: { flex: 1, backgroundColor: C.card2, borderWidth: 1, borderColor: C.line, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10 },
+  companionInputText: { color: C.ink, fontSize: 13 },
+
+  // Wallet button
+  walletBtn: { backgroundColor: "#1C1C1E", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" },
+  walletBtnT: { color: "#FFFFFF", fontSize: 12, fontWeight: "600" },
 });

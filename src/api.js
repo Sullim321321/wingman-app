@@ -245,3 +245,21 @@ export const shareTripLink = (tripId) =>
 // ─── WINGMAN WRAPPED ──────────────────────────────────────────────────────────
 export const getWrapped = (year = new Date().getFullYear()) =>
   req("/insights/wrapped?year=" + year);
+// ─── DAY-OF-FLIGHT BRIEFING ───────────────────────────────────────────────────
+export const getTripBriefing = (tripId) =>
+  req("/trips/" + tripId + "/briefing");
+// ─── DESTINATION INTELLIGENCE ─────────────────────────────────────────────────
+export const getDestinationIntel = (tripId) =>
+  req("/trips/" + tripId + "/destination-intel");
+// ─── GROUP TRAVEL / COMPANIONS ────────────────────────────────────────────────
+export const inviteCompanion = (tripId, inviteeEmail) =>
+  req("/trips/" + tripId + "/companions/invite", {
+    method: "POST",
+    body: JSON.stringify({ invitee_email: inviteeEmail }),
+  });
+export const getCompanions = (tripId) =>
+  req("/trips/" + tripId + "/companions");
+export const acceptCompanionInvite = (token) =>
+  req("/companions/accept/" + token, { method: "POST" });
+// ─── LOYALTY ACCOUNTS ─────────────────────────────────────────────────────────
+export const getLoyaltyAccounts = () => req("/loyalty");

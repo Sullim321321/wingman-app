@@ -11,7 +11,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { C, T } from "../theme";
 import { Btn, SerifText, g } from "../components";
-import { getTrips, deleteTrip, getFlightStatus, getPrediction, getGroundIntel, getMe } from "../api";
+import { getTrips, deleteTrip, getFlightStatus, getPrediction, getGroundIntel, getMe, getLoyaltyAccounts, getTripBriefing } from "../api";
 import { scheduleDisruption } from "../notify";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -383,14 +383,39 @@ export default function HomeScreen({ navigation }) {
   const [loading, setLoading]     = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [firstName, setFirstName] = useState("");
+  const [briefing, setBriefing]   = useState(null);
+  const [expiringPoints, setExpiringPoints] = useState(null);
+
   useEffect(() => {
     getMe().then(u => { if (u?.first_name) setFirstName(u.first_name); }).catch(() => {});
+    // Check for expiring loyalty points
+    getLoyaltyAccounts().then(data => {
+      const accts = data?.accounts || [];
+      const soon = accts.filter(a => {
+        if (!a.expiration_date || !a.points_balance) return false;
+        const days = Math.round((new Date(a.expiration_date) - Date.now()) / 86400000);
+        return days > 0 && days <= 60 && a.points_balance > 1000;
+      });
+      if (soon.length > 0) setExpiringPoints(soon[0]);
+    }).catch(() => {});
   }, []);
 
   const load = useCallback(async () => {
     try {
       const data = await getTrips();
-      setTrips(data.trips || []);
+      const fetchedTrips = data.trips || [];
+      setTrips(fetchedTrips);
+      // Check if any trip departs today — fetch briefing if so
+      const today = new Date().toDateString();
+      const todayTrip = fetchedTrips.find(trip =>
+        (trip.legs || []).some(l => l.type === 'flight' && l.departs_at && new Date(l.departs_at).toDateString() === today)
+      );
+      if (todayTrip) {
+        try {
+          const b = await getTripBriefing(todayTrip.id);
+          if (b && b.flight) setBriefing({ ...b, tripId: todayTrip.id });
+        } catch { /* briefing is best-effort */ }
+      }
     } catch (e) {
       console.error("[trips]", e.message);
     } finally {
@@ -459,6 +484,78 @@ export default function HomeScreen({ navigation }) {
                   : "You're all set for today."}
               </Text>
             </View>
+
+            {/* ── Day-of-flight mission briefing ────────────────────────── */}
+            {briefing && briefing.flight && (
+              <>
+                <Text style={g.sectionT}>TODAY'S BRIEFING</Text>
+                <Pressable
+                  style={s.briefingCard}
+                  onPress={() => navigation.navigate("TripDetail", { tripId: briefing.tripId })}
+                >
+                  <View style={s.briefingHeader}>
+                    <Text style={s.briefingFlight}>
+                      {briefing.flight.carrier}{briefing.flight.flight_number}  ·  {briefing.flight.origin} → {briefing.flight.destination}
+                    </Text>
+                    {briefing.live_status?.status && (
+                      <StatusBadge status={briefing.live_status.status} />
+                    )}
+                  </View>
+                  <View style={s.briefingRow}>
+                    <View style={s.briefingItem}>
+                      <Text style={s.briefingLabel}>DEPARTS</Text>
+                      <Text style={s.briefingValue}>{formatTime(briefing.flight.departs_at)}</Text>
+                    </View>
+                    {briefing.live_status?.gate && (
+                      <View style={s.briefingItem}>
+                        <Text style={s.briefingLabel}>GATE</Text>
+                        <Text style={s.briefingValue}>{briefing.live_status.gate}</Text>
+                      </View>
+                    )}
+                    {briefing.live_status?.terminal && (
+                      <View style={s.briefingItem}>
+                        <Text style={s.briefingLabel}>TERMINAL</Text>
+                        <Text style={s.briefingValue}>{briefing.live_status.terminal}</Text>
+                      </View>
+                    )}
+                    {briefing.tsa_wait?.wait_minutes && (
+                      <View style={s.briefingItem}>
+                        <Text style={s.briefingLabel}>TSA WAIT</Text>
+                        <Text style={s.briefingValue}>{briefing.tsa_wait.wait_minutes}m</Text>
+                      </View>
+                    )}
+                  </View>
+                  {briefing.live_status?.delay > 0 && (
+                    <View style={s.briefingAlert}>
+                      <Text style={s.briefingAlertT}>⚠ Delayed {briefing.live_status.delay} minutes</Text>
+                    </View>
+                  )}
+                  <Pressable
+                    style={s.briefingCTA}
+                    onPress={() => navigation.navigate("Concierge", {
+                      prefill: `What do I need to know for my ${briefing.flight.carrier}${briefing.flight.flight_number} flight today?`
+                    })}
+                  >
+                    <Text style={s.briefingCTAT}>Ask Wingman about this flight →</Text>
+                  </Pressable>
+                </Pressable>
+              </>
+            )}
+
+            {/* ── Points expiry alert card ────────────────────────────────── */}
+            {expiringPoints && (
+              <Pressable
+                style={s.expiryCard}
+                onPress={() => navigation.navigate("Loyalty")}
+              >
+                <Text style={s.expiryTitle}>⏳ Points expiring soon</Text>
+                <Text style={s.expiryBody}>
+                  {Number(expiringPoints.points_balance).toLocaleString()} {expiringPoints.program} points expire in{" "}
+                  {Math.round((new Date(expiringPoints.expiration_date) - Date.now()) / 86400000)} days.
+                  Tap to see redemption options.
+                </Text>
+              </Pressable>
+            )}
 
             {/* ── Next Up parchment card ──────────────────────────────────── */}
             {nextFlight && (
@@ -608,4 +705,22 @@ const s = StyleSheet.create({
   mt:            { color: C.ink, fontSize: 14, fontFamily: T.sansM, letterSpacing: 0.1 },
   ms:            { color: C.mut, fontSize: 12, fontFamily: T.sans, marginTop: 2 },
   hint:          { color: C.mut, fontSize: 12, fontFamily: T.sans, textAlign: "center", marginTop: 12, lineHeight: 18 },
+
+  // ── Day-of-flight briefing card ─────────────────────────────────────────────
+  briefingCard:   { backgroundColor: C.card, borderRadius: 18, padding: 18, borderWidth: 1, borderColor: C.gold + "40", marginBottom: 4 },
+  briefingHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 14 },
+  briefingFlight: { color: C.ink, fontSize: 15, fontFamily: T.sansB, letterSpacing: 0.3, flex: 1 },
+  briefingRow:    { flexDirection: "row", gap: 16, marginBottom: 12 },
+  briefingItem:   { alignItems: "center" },
+  briefingLabel:  { color: C.mut, fontSize: 9, fontFamily: T.sansB, letterSpacing: T.trackWide, marginBottom: 3 },
+  briefingValue:  { color: C.ink, fontSize: 16, fontFamily: T.sansB },
+  briefingAlert:  { backgroundColor: C.amber + "15", borderColor: C.amber + "40", borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 10 },
+  briefingAlertT: { color: C.amber, fontSize: 13, fontFamily: T.sansM },
+  briefingCTA:    { borderTopWidth: 0.5, borderTopColor: C.line, paddingTop: 12, marginTop: 4 },
+  briefingCTAT:   { color: C.gold, fontSize: 13, fontFamily: T.sansM, letterSpacing: 0.2 },
+
+  // ── Points expiry card ───────────────────────────────────────────────────────
+  expiryCard:     { backgroundColor: C.amber + "10", borderRadius: 14, padding: 14, borderWidth: 1, borderColor: C.amber + "30", marginBottom: 12 },
+  expiryTitle:    { color: C.amber, fontSize: 13, fontFamily: T.sansB, marginBottom: 4 },
+  expiryBody:     { color: C.ink, fontSize: 13, fontFamily: T.sans, lineHeight: 19 },
 });

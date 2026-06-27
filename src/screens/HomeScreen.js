@@ -441,7 +441,7 @@ export default function HomeScreen({ navigation }) {
           {/* Avatar / settings */}
           <Pressable style={s.avatar} onPress={() => navigation.navigate("Settings")}>
             <View style={s.avatarInner}>
-              <Text style={s.avatarT}>M</Text>
+              <Text style={s.avatarT}>{firstName ? firstName[0].toUpperCase() : "W"}</Text>
             </View>
           </Pressable>
         </View>

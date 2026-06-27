@@ -34,8 +34,10 @@ export default function HomeAddressScreen({ navigation }) {
     setSaving(true);
     try {
       await updateProfile({
-        home_address: address.trim(),
-        home_airport: homeAirport.trim().toUpperCase(),
+        preferences: {
+          home_address: address.trim(),
+          home_airport: homeAirport.trim().toUpperCase(),
+        },
       });
       Alert.alert(
         "Saved ✓",

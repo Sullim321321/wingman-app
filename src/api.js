@@ -134,8 +134,8 @@ export const syncCalendar = (events) =>
   req("/sync/calendar", { method: "POST", body: JSON.stringify({ events }) });
 
 // Messages/SMS parsing — parse pasted itineraries or forwarded texts
-export const parseMessages = (text) =>
-  req("/sync/messages", { method: "POST", body: JSON.stringify({ text }) });
+export const parseMessages = (messages) =>
+  req("/sync/messages", { method: "POST", body: JSON.stringify({ messages: Array.isArray(messages) ? messages : [{ body: messages, sender: "Manual", timestamp: new Date().toISOString() }] }) });
 
 // ─── MONITORING ENGINE ────────────────────────────────────────────────────────
 // Trip risk profile — downstream value at risk if upstream flight is delayed
@@ -165,12 +165,12 @@ export const executeRescue = ({ offerId, tripId, paymentMethod }) =>
   });
 
 // ─── AUTONOMY POLICY ─────────────────────────────────────────────────────────
-// Save user delegation rules
+// Save user delegation rules — backend is at /policy (not /profile/policy)
 export const updatePolicy = (policy) =>
-  req("/profile/policy", { method: "PATCH", body: JSON.stringify({ policy }) });
+  req("/policy", { method: "PATCH", body: JSON.stringify(policy) });
 
 // Get current policy
-export const getPolicy = () => req("/profile/policy");
+export const getPolicy = () => req("/policy");
 
 // ─── LEARNING LOOP ────────────────────────────────────────────────────────────
 // Log post-trip outcome
@@ -188,6 +188,10 @@ export const logOutcome = ({ tripId, predictedDelay, actualDelay, rescueAccepted
 
 // ROI dashboard — total value saved
 export const getInsightsROI = () => req("/insights/roi");
+
+// Locale / currency preferences
+export const updateLocale = ({ locale, currency }) =>
+  req("/profile/locale", { method: "PATCH", body: JSON.stringify({ locale, currency }) });
 
 // ─── TRANSFER-WINDOW RISK SCORING ─────────────────────────────────────────────
 // GET /trips/:tripId/risk — connection risk scores + hotel alerts

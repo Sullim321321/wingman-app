@@ -1,0 +1,104 @@
+★ eas-cli@20.4.0 is now available.
+To upgrade, run:
+npm install -g eas-cli
+Proceeding with outdated version.
+
+(node:80665) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+An Expo user account is required to proceed.
+Either log in with eas login or set the EXPO_TOKEN environment variable if you're using EAS CLI on CI (Learn more: https://docs.expo.dev/accounts/programmatic-access/)
+    Error: build command failed.
+★ eas-cli@20.4.0 is now available.
+To upgrade, run:
+npm install -g eas-cli
+Proceeding with outdated version.
+
+(node:80881) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+⚠️ Detected that your app uses Expo Go for development, this is not recommended when building production apps.
+Learn more: https://expo.fyi/why-not-build-expo-go-for-production
+To suppress this warning, set EAS_BUILD_NO_EXPO_GO_WARNING=true.
+
+Resolved "production" environment for the build. Learn more: https://docs.expo.dev/eas/environment-variables/#setting-the-environment-for-your-builds
+No environment variables with visibility "Plain text" and "Sensitive" found for the "production" environment on EAS.
+
+- Incrementing buildNumber from 49 to 50.
+✔ Incremented buildNumber from 49 to 50.
+
+
+ios.buildNumber field in app config is ignored when version source is set to remote, but this value will still be in the manifest available via expo-constants. It's recommended to remove this value from app config.
+✔ Using remote iOS credentials (Expo server)
+
+Distribution Certificate is not validated for non-interactive builds.
+Using App Store Connect API Key from EAS credentials service.
+- Fetching Apple provisioning profiles
+✔ Fetched Apple provisioning profiles
+
+Project Credentials Configuration
+
+Project                   @sullim321/wingman-app
+Bundle Identifier         club.welcometothefight.wingman
+                          
+App Store Configuration   
+                          
+Distribution Certificate  
+Serial Number             64F5AF5F436776F41BDDE11C185DC344
+Expiration Date           Mon, 21 Jun 2027 15:54:36 UTC
+Apple Team                7BXHSR34RG (MADELINE GALLAGHER SULLIVAN (Individual))
+Updated                   6 days ago
+                          
+Provisioning Profile      
+Developer Portal ID       Y8J93A8QK3
+Status                    active
+Expiration                Mon, 21 Jun 2027 15:54:36 UTC
+Apple Team                7BXHSR34RG (MADELINE GALLAGHER SULLIVAN (Individual))
+Updated                   1 day ago
+                          
+All credentials are ready to build @sullim321/wingman-app (club.welcometothefight.wingman)
+
+
+Compressing project files and uploading to EAS Build. Learn more: https://expo.fyi/eas-build-archive
+- Uploading to EAS Build (0 / 2.9 MB)
+✔ Uploaded to EAS 
+- Computing project fingerprint
+✔ Computed project fingerprint
+
+See logs: https://expo.dev/accounts/sullim321/projects/wingman-app/builds/84fffa53-2b95-4bd0-924e-1f4dbff5df1a
+
+Looking up credentials configuration for club.welcometothefight.wingman...
+✔ App Store Connect API Key already set up.
+Using Api Key ID: T7S74WBYBN ([Expo] EAS Submit myh3wvCdOR)
+
+ASC App ID:                 6782656727
+Project ID:                 4a6e7311-c1fa-4c7a-a5a8-0fc8a041ac41
+App Store Connect API Key:  
+    Key Name  :  [Expo] EAS Submit myh3wvCdOR
+    Key ID    :  T7S74WBYBN
+    Key Source:  EAS servers
+Build:                      
+    Build ID    :  84fffa53-2b95-4bd0-924e-1f4dbff5df1a
+    Build Date  :  6/27/2026, 8:43:43 PM
+    App Version :  1.0.49
+    Build number:  50
+
+- Scheduling iOS submission
+✔ Scheduled iOS submission
+
+Submission details: https://expo.dev/accounts/sullim321/projects/wingman-app/submissions/c618287f-c648-4efb-8ffd-40d8400049eb
+
+Waiting for build to complete. You can press Ctrl+C to exit.
+- Waiting for build to complete.
+✔ Build finished
+
+🍏 iOS app:
+https://expo.dev/artifacts/eas/AoUkjtWSZ0HKTmS5VVa_TgIWw5vetiaXs6dgg2vW6To.ipa
+
+Waiting for submission to complete. You can press Ctrl+C to exit.
+- Submitting
+✔ Submitted your app to Apple App Store Connect!
+
+Your binary has been successfully uploaded to App Store Connect!
+- It is now being processed by Apple - you will receive an email when the processing finishes.
+- It usually takes about 5-10 minutes depending on how busy Apple servers are.
+- When it's done, you can see your build here: https://appstoreconnect.apple.com/apps/6782656727/testflight/ios

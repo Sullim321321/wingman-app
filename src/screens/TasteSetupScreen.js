@@ -262,11 +262,13 @@ export default function TasteSetupScreen({ navigation, route }) {
     setSaving(true);
     try {
       await updateProfile({
-        editorial_sources: sources,
-        hotel_prefs: hotelPrefs,
-        seat_prefs: seatPrefs,
-        food_prefs: foodPrefs,
-        taste_setup_complete: true,
+        preferences: {
+          editorial_sources: sources,
+          hotel_prefs: hotelPrefs,
+          seat_prefs: seatPrefs,
+          food_prefs: foodPrefs,
+          taste_setup_complete: true,
+        },
       });
     } catch (e) {
       console.warn("Profile save error:", e.message);

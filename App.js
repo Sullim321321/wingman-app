@@ -187,24 +187,32 @@ function Root() {
   useEffect(() => {
     const resp = Notifications.addNotificationResponseReceivedListener((r) => {
       const data = r.notification.request.content.data || {};
-      if (data.deepLink) {
-        Linking.canOpenURL(data.deepLink)
-          .then((supported) => {
-            const url = supported ? data.deepLink : (data.webFallback || data.fallbackUrl || data.deepLink);
-            return Linking.openURL(url);
-          })
-          .catch(() => {
-            const fallback = data.webFallback || data.fallbackUrl;
-            if (fallback) Linking.openURL(fallback).catch(() => {});
-          });
+      if (!navRef.isReady()) return;
+      const route = data.route || "Alert";
+      // Pass tripId / legId / flightIdent through to the target screen
+      const params = {};
+      if (data.tripId)      params.tripId      = data.tripId;
+      if (data.legId)       params.legId       = data.legId;
+      if (data.flightIdent) params.flightIdent = data.flightIdent;
+      if (route === "Alert" || route === "TripDetail") {
+        navRef.navigate(route, Object.keys(params).length ? params : undefined);
       } else {
-        const route = data.route || "Alert";
-        if (navRef.isReady()) navRef.navigate(route);
+        navRef.navigate(route);
       }
     });
 
-    const recv = Notifications.addNotificationReceivedListener(() => {
-      setTimeout(() => { if (navRef.isReady()) navRef.navigate("Alert"); }, 600);
+    // Foreground notification — navigate to Alert tab
+    const recv = Notifications.addNotificationReceivedListener((n) => {
+      const data = n.request.content.data || {};
+      const route = data.route || "Alert";
+      setTimeout(() => {
+        if (!navRef.isReady()) return;
+        const params = {};
+        if (data.tripId)      params.tripId      = data.tripId;
+        if (data.legId)       params.legId       = data.legId;
+        if (data.flightIdent) params.flightIdent = data.flightIdent;
+        navRef.navigate(route, Object.keys(params).length ? params : undefined);
+      }, 600);
     });
 
     return () => { resp.remove(); recv.remove(); };

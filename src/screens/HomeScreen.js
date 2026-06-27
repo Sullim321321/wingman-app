@@ -530,14 +530,27 @@ export default function HomeScreen({ navigation }) {
                       <Text style={s.briefingAlertT}>⚠ Delayed {briefing.live_status.delay} minutes</Text>
                     </View>
                   )}
-                  <Pressable
-                    style={s.briefingCTA}
-                    onPress={() => navigation.navigate("Concierge", {
-                      prefill: `What do I need to know for my ${briefing.flight.carrier}${briefing.flight.flight_number} flight today?`
-                    })}
-                  >
-                    <Text style={s.briefingCTAT}>Ask Wingman about this flight →</Text>
-                  </Pressable>
+                  <View style={{ flexDirection: "row", gap: 10, marginTop: 4 }}>
+                    <Pressable
+                      style={s.briefingCTA}
+                      onPress={() => navigation.navigate("Concierge", {
+                        prefill: `What do I need to know for my ${briefing.flight.carrier}${briefing.flight.flight_number} flight today?`
+                      })}
+                    >
+                      <Text style={s.briefingCTAT}>Ask Wingman →</Text>
+                    </Pressable>
+                    {briefing.flight.destination && (
+                      <Pressable
+                        style={s.briefingGroundBtn}
+                        onPress={() => navigation.navigate("GroundTransport", {
+                          iata: briefing.flight.destination,
+                          city: briefing.flight.destination,
+                        })}
+                      >
+                        <Text style={s.briefingGroundBtnT}>🚆 Ground transport</Text>
+                      </Pressable>
+                    )}
+                  </View>
                 </Pressable>
               </>
             )}
@@ -718,6 +731,8 @@ const s = StyleSheet.create({
   briefingAlertT: { color: C.amber, fontSize: 13, fontFamily: T.sansM },
   briefingCTA:    { borderTopWidth: 0.5, borderTopColor: C.line, paddingTop: 12, marginTop: 4 },
   briefingCTAT:   { color: C.gold, fontSize: 13, fontFamily: T.sansM, letterSpacing: 0.2 },
+  briefingGroundBtn:  { borderTopWidth: 0.5, borderTopColor: C.line, paddingTop: 12, marginTop: 4 },
+  briefingGroundBtnT: { color: "#4ECDC4", fontSize: 13, fontFamily: T.sansM, letterSpacing: 0.2 },
 
   // ── Points expiry card ───────────────────────────────────────────────────────
   expiryCard:     { backgroundColor: C.amber + "10", borderRadius: 14, padding: 14, borderWidth: 1, borderColor: C.amber + "30", marginBottom: 12 },

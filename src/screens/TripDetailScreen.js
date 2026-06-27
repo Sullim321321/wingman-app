@@ -557,6 +557,20 @@ export default function TripDetailScreen({ route, navigation }) {
                       <Text style={s.compensationBtnT}>€ File compensation</Text>
                     </Pressable>
                   )}
+                  {/* Ground transport — show for every leg's destination */}
+                  {leg.destination && (
+                    <Pressable
+                      style={s.groundTransportBtn}
+                      onPress={() => navigation.navigate("GroundTransport", {
+                        iata: leg.destination,
+                        city: leg.destination,
+                        destination: trip.destination_city || null,
+                        tripId: trip.id,
+                      })}
+                    >
+                      <Text style={s.groundTransportBtnT}>🚆 Ground transport</Text>
+                    </Pressable>
+                  )}
                 </View>
               </View>
             ))}
@@ -840,4 +854,8 @@ const s = StyleSheet.create({
   // Compensation button
   compensationBtn: { backgroundColor: "rgba(79,142,247,0.08)", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: "rgba(79,142,247,0.3)" },
   compensationBtnT: { color: "#4F8EF7", fontSize: 12, fontWeight: "600" },
+
+  // Ground transport button
+  groundTransportBtn: { backgroundColor: "rgba(78,205,196,0.08)", borderWidth: 1, borderColor: "rgba(78,205,196,0.25)", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
+  groundTransportBtnT: { color: "#4ECDC4", fontSize: 13, fontWeight: "600" },
 });

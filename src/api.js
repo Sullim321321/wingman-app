@@ -270,3 +270,7 @@ export const acceptCompanionInvite = (token) =>
   req("/companions/accept/" + token, { method: "POST" });
 // ─── LOYALTY ACCOUNTS ─────────────────────────────────────────────────────────
 export const getLoyaltyAccounts = () => req("/loyalty");
+// ─── GROUND TRANSPORT ────────────────────────────────────────────────────────
+export const getGroundTransport = (iata, destination = null) =>
+  req(`/ground-transport/${encodeURIComponent(iata)}${destination ? `?destination=${encodeURIComponent(destination)}` : ""}`);
+

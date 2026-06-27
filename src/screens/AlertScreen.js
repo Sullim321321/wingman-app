@@ -49,9 +49,9 @@ function formatPoints(n) {
 
 function AwardRow({ award, selected, onSelect }) {
   const isPoints = award.type === "points";
-  const accentColor = isPoints ? C.amber : C.accent;
-  const accentBg = isPoints ? "rgba(255,176,46,0.08)" : "rgba(74,114,255,0.08)";
-  const accentBorder = isPoints ? "rgba(255,176,46,0.2)" : "rgba(74,114,255,0.2)";
+  const accentColor = isPoints ? C.amber : C.gold;
+  const accentBg = isPoints ? "rgba(212,144,42,0.08)" : "rgba(201,169,110,0.08)";
+  const accentBorder = isPoints ? "rgba(212,144,42,0.2)" : "rgba(201,169,110,0.2)";
 
   return (
     <Pressable
@@ -211,7 +211,7 @@ export default function AlertScreen({ navigation, route }) {
         <BackBar nav={navigation} label="Disruption · live" />
 
         {/* ── Hero card ───────────────────────────────────────────────────── */}
-        <LinearGradient colors={["#3A1B2A", "#1E0E28"]} style={s.heroCard}>
+        <LinearGradient colors={["#2A1A10", "#1C1410"]} style={s.heroCard}>
           <Text style={{ fontSize: 30 }}>{heroEmoji}</Text>
           <Text style={s.heroH}>{heroTitle}</Text>
           <Text style={s.heroRoute}>{dep} → {arr} · {flightLabel}</Text>
@@ -340,7 +340,7 @@ const s = StyleSheet.create({
   riskBar: { height: 8, borderRadius: 99, backgroundColor: "rgba(255,77,109,0.15)", marginTop: 16, overflow: "hidden" },
   riskFill: { height: "100%", borderRadius: 99, backgroundColor: C.coral },
   riskLbl: { color: C.mut, fontSize: 12, marginTop: 8 },
-  whyLink: { color: C.accent, fontSize: 14, fontWeight: "600", textAlign: "center", marginVertical: 16 },
+  whyLink: { color: C.gold, fontSize: 14, fontWeight: "600", textAlign: "center", marginVertical: 16 },
 
   // Award options
   awardNote: { color: C.mut, fontSize: 13, lineHeight: 19, marginBottom: 12 },

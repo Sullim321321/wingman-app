@@ -23,7 +23,7 @@ function SlideHero() {
         {[180, 130, 82].map((sz, i) => (
           <View key={i} style={[s.ring, { width: sz, height: sz, borderRadius: sz / 2 }]} />
         ))}
-        <LinearGradient colors={[C.accent, C.teal]} style={s.heroIcon}>
+        <LinearGradient colors={[C.gold, C.goldD]} style={s.heroIcon}>
           <Text style={{ fontSize: 38 }}>✈️</Text>
         </LinearGradient>
       </View>
@@ -51,7 +51,7 @@ function SlideWatch() {
       <View style={s.featureCard}>
         {[
           { ic: "⚠️", c: C.coral,  t: "UA 412 Delayed 45m", s: "Gate B22 → B31 · New dep 3:15 PM" },
-          { ic: "🌨️", c: C.accent, t: "Weather risk: DEN 68%", s: "Snow band on inbound radar" },
+          { ic: "🌨️", c: C.gold,   t: "Weather risk: DEN 68%", s: "Snow band on inbound radar" },
           { ic: "✅", c: C.teal,   t: "AA 1847 On Time", s: "Boarding in 22 min · Gate C14" },
         ].map((item, i) => (
           <View key={i} style={[s.mockRow, i > 0 && { borderTopWidth: 1, borderTopColor: C.line }]}>
@@ -197,9 +197,9 @@ function SlideGmail({ onDone }) {
 
   return (
     <View style={s.slide}>
-      <LinearGradient colors={[C.accent + "14", "transparent"]} style={s.permCard}>
+      <LinearGradient colors={[C.gold + "14", "transparent"]} style={s.permCard}>
         <View style={s.permIconWrap}>
-          <LinearGradient colors={[C.accent + "33", C.accent + "11"]} style={s.permIconBg}>
+          <LinearGradient colors={[C.gold + "33", C.gold + "11"]} style={s.permIconBg}>
             <Text style={{ fontSize: 36 }}>{done ? "✅" : "📧"}</Text>
           </LinearGradient>
         </View>
@@ -329,7 +329,7 @@ const s = StyleSheet.create({
 
   // Hero
   heroWrap: { width: 190, height: 190, alignItems: "center", justifyContent: "center", marginBottom: 28 },
-  ring: { position: "absolute", borderWidth: 1.5, borderColor: C.accent, opacity: 0.18 },
+  ring: { position: "absolute", borderWidth: 1.5, borderColor: C.gold, opacity: 0.18 },
   heroIcon: { width: 80, height: 80, borderRadius: 22, alignItems: "center", justifyContent: "center" },
   statRow: { flexDirection: "row", marginTop: 24, borderWidth: 1, borderColor: C.line, borderRadius: 16, overflow: "hidden", width: "100%" },
   stat: { flex: 1, alignItems: "center", paddingVertical: 14 },
@@ -346,7 +346,7 @@ const s = StyleSheet.create({
   // Concierge
   chatCard: { width: "100%", backgroundColor: C.card, borderRadius: 18, borderWidth: 1, borderColor: C.line, padding: 14, gap: 10, marginBottom: 24 },
   bubbleLeft: { alignSelf: "flex-start", backgroundColor: C.card2, borderRadius: 14, borderBottomLeftRadius: 4, padding: 11, maxWidth: "82%" },
-  bubbleRight: { alignSelf: "flex-end", backgroundColor: C.accent, borderRadius: 14, borderBottomRightRadius: 4, padding: 11, maxWidth: "85%" },
+  bubbleRight: { alignSelf: "flex-end", backgroundColor: C.gold, borderRadius: 14, borderBottomRightRadius: 4, padding: 11, maxWidth: "85%" },
   bubbleText: { color: C.mut, fontSize: 12.5, lineHeight: 18 },
 
   // Permission slides
@@ -369,5 +369,5 @@ const s = StyleSheet.create({
   footer: { paddingHorizontal: 24, paddingBottom: 34, paddingTop: 6 },
   dots: { flexDirection: "row", gap: 7, justifyContent: "center", marginBottom: 14 },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.line },
-  dotOn: { backgroundColor: C.accent, width: 22 },
+  dotOn: { backgroundColor: C.gold, width: 22 },
 });

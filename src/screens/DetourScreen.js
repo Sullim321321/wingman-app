@@ -32,7 +32,7 @@ export default function DetourScreen({ navigation }) {
 
         <Text style={g.sectionT}>PREFER SOMEWHERE ELSE?</Text>
         <View style={g.metaRow}>
-          {["Gothenburg", "Hamburg", "Oslo", "Bruges"].map((x, i) => <Chip key={i} color={C.accent}>{x}</Chip>)}
+          {["Gothenburg", "Hamburg", "Oslo", "Bruges"].map((x, i) => <Chip key={i} color={C.gold}>{x}</Chip>)}
         </View>
 
         <View style={s.sticky}>

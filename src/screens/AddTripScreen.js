@@ -358,9 +358,9 @@ const s = StyleSheet.create({
   // Tab switcher
   tabRow: { flexDirection: "row", gap: 8, marginBottom: 10 },
   tabBtn: { flex: 1, paddingVertical: 10, borderRadius: 12, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, alignItems: "center" },
-  tabBtnOn: { borderColor: C.accent, backgroundColor: "rgba(74,114,255,0.08)" },
+  tabBtnOn: { borderColor: C.gold, backgroundColor: "rgba(74,114,255,0.08)" },
   tabT: { color: C.mut, fontSize: 13, fontWeight: "600" },
-  tabTOn: { color: C.accent },
+  tabTOn: { color: C.gold },
 
   // Fields
   field: { paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: C.line },
@@ -373,7 +373,7 @@ const s = StyleSheet.create({
   lookedT: { color: C.teal, fontSize: 11, fontWeight: "700" },
 
   // Parse button inside paste tab
-  parseBtn: { margin: 12, backgroundColor: C.accent, borderRadius: 14, padding: 14, alignItems: "center" },
+  parseBtn: { margin: 12, backgroundColor: C.gold, borderRadius: 14, padding: 14, alignItems: "center" },
   parseBtnT: { color: "#fff", fontSize: 15, fontWeight: "700" },
 
   // Email import card
@@ -383,5 +383,5 @@ const s = StyleSheet.create({
   importT: { color: C.ink, fontSize: 14, fontWeight: "700", marginBottom: 2 },
   importS: { color: C.mut, fontSize: 12, lineHeight: 17 },
   importBtn: { backgroundColor: "rgba(74,114,255,0.15)", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: "rgba(74,114,255,0.3)" },
-  importBtnT: { color: C.accent, fontSize: 13, fontWeight: "700" },
+  importBtnT: { color: C.gold, fontSize: 13, fontWeight: "700" },
 });

@@ -44,7 +44,7 @@ function StatusBadge({ status, size = "md" }) {
     "Cancelled": { bg: "rgba(255,92,122,0.14)",  border: "rgba(255,92,122,0.3)",  text: C.coral },
     "Landed":    { bg: "rgba(99,102,241,0.14)",  border: "rgba(99,102,241,0.3)",  text: "#818CF8" },
     "Scheduled": { bg: "rgba(148,163,184,0.14)", border: "rgba(148,163,184,0.3)", text: C.mut },
-    "In Air":    { bg: "rgba(91,140,255,0.14)",  border: "rgba(91,140,255,0.3)",  text: C.accent },
+    "In Air":    { bg: "rgba(201,169,110,0.14)",  border: "rgba(201,169,110,0.3)",  text: C.gold },
     "Booked":    { bg: "rgba(148,163,184,0.14)", border: "rgba(148,163,184,0.3)", text: C.mut },
     "Unknown":   { bg: "rgba(148,163,184,0.14)", border: "rgba(148,163,184,0.3)", text: C.mut },
   };
@@ -242,7 +242,7 @@ export default function TripDetailScreen({ route, navigation }) {
         <BackBar nav={navigation} label="Trips" />
 
         {/* Trip header */}
-        <LinearGradient colors={["#1D2A52", "#141D38"]} style={s.header}>
+        <LinearGradient colors={[C.card, C.card2]} style={s.header}>
           <Text style={s.tripTitle}>{trip.title}</Text>
           {depDate && <Text style={s.tripDate}>{depDate}</Text>}
           <View style={s.pillRow}>
@@ -281,7 +281,7 @@ export default function TripDetailScreen({ route, navigation }) {
         {/* Concierge CTA */}
         <Text style={g.sectionT}>WINGMAN CONCIERGE</Text>
         <Pressable style={s.conciergeCard} onPress={openConcierge}>
-          <LinearGradient colors={[C.accent, C.teal]} style={s.conciergeDot}>
+          <LinearGradient colors={[C.gold, C.goldD]} style={s.conciergeDot}>
             <Text style={{ fontSize: 14 }}>✈</Text>
           </LinearGradient>
           <View style={{ flex: 1 }}>
@@ -311,8 +311,8 @@ const s = StyleSheet.create({
   pillRow: { flexDirection: "row", gap: 8, marginTop: 12 },
   pillLive: { backgroundColor: "rgba(34,211,166,0.14)", borderColor: "rgba(34,211,166,0.3)", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
   pillLiveT: { color: C.teal, fontSize: 11, fontWeight: "700" },
-  pillInfo: { backgroundColor: "rgba(91,140,255,0.12)", borderColor: "rgba(91,140,255,0.25)", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
-  pillInfoT: { color: C.accent, fontSize: 11, fontWeight: "600" },
+  pillInfo: { backgroundColor: "rgba(201,169,110,0.12)", borderColor: "rgba(201,169,110,0.25)", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
+  pillInfoT: { color: C.gold, fontSize: 11, fontWeight: "600" },
   // Leg cards
   legCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 16, marginBottom: 10 },
   routeRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
@@ -329,7 +329,7 @@ const s = StyleSheet.create({
   riskRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 4 },
   riskLabel: { color: C.ink, fontSize: 13, fontWeight: "600" },
   riskPct: { fontSize: 13, fontWeight: "800" },
-  riskTrack: { height: 6, backgroundColor: "#0E1530", borderRadius: 99, overflow: "hidden" },
+  riskTrack: { height: 6, backgroundColor: C.card2, borderRadius: 99, overflow: "hidden" },
   riskFill: { height: "100%", borderRadius: 99 },
   factorRow: { flexDirection: "row", gap: 6 },
   factorDot: { color: C.mut, fontSize: 12 },

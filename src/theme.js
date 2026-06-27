@@ -22,6 +22,7 @@ export const C = {
 
   // ─── Accents ────────────────────────────────────────────────────────────────
   gold:  "#C9A96E",   // Champagne gold — primary accent (replaces blue)
+  accent:"#C9A96E",   // Alias → gold (used in TripDetail, Alert, Onboarding, etc.)
   goldD: "#A8884E",   // Deeper gold for pressed states
   teal:  "#2DB896",   // Muted emerald — used sparingly for "on time" status
   coral: "#D95F5F",   // Warm red for alerts / disruptions

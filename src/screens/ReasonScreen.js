@@ -71,5 +71,5 @@ const s = StyleSheet.create({
   confLbl: { fontSize: 11, color: C.mut, letterSpacing: 1, marginTop: 2 },
   contrib: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 14, marginBottom: 12 },
   contribT: { fontSize: 11, color: C.mut, letterSpacing: 1, marginBottom: 12 },
-  trackLink: { color: C.accent, fontSize: 13, fontWeight: "600", textAlign: "center", marginVertical: 16 },
+  trackLink: { color: C.gold, fontSize: 13, fontWeight: "600", textAlign: "center", marginVertical: 16 },
 });

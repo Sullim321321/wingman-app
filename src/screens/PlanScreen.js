@@ -34,7 +34,7 @@ export default function PlanScreen({ navigation }) {
 
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
-  me: { alignSelf: "flex-end", maxWidth: "85%", backgroundColor: C.accent, borderRadius: 16, borderBottomRightRadius: 5, padding: 12, marginBottom: 10 },
+  me: { alignSelf: "flex-end", maxWidth: "85%", backgroundColor: C.gold, borderRadius: 16, borderBottomRightRadius: 5, padding: 12, marginBottom: 10 },
   meT: { color: "#fff", fontSize: 13.5, lineHeight: 19 },
   bot: { alignSelf: "flex-start", maxWidth: "90%", backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, borderBottomLeftRadius: 5, padding: 12, marginBottom: 14 },
   botH: { color: C.teal, fontSize: 10, fontWeight: "700", marginBottom: 4 },

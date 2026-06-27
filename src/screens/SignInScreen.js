@@ -39,7 +39,7 @@ export default function SignInScreen() {
   return (
     <SafeAreaView style={s.app}>
       <KeyboardAvoidingView style={s.wrap} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <LinearGradient colors={[C.accent, C.teal]} style={s.mark}><Text style={{ fontSize: 26 }}>✈</Text></LinearGradient>
+        <LinearGradient colors={[C.gold, C.goldD]} style={s.mark}><Text style={{ fontSize: 26 }}>✈</Text></LinearGradient>
         <Text style={s.h}>{stage === "email" ? "Sign in to Wingman" : "Enter your code"}</Text>
         <Text style={s.sub}>
           {stage === "email" ? "We'll email you a one-time code — no password." : `Sent to ${email}`}

@@ -75,7 +75,7 @@ function OfferCard({ offer, onSelect }) {
         )}
         {offer.conditions?.changeable && (
           <View style={[s.badge, { backgroundColor: "rgba(91,140,255,0.12)", borderColor: "rgba(91,140,255,0.3)" }]}>
-            <Text style={[s.badgeT, { color: C.accent }]}>Changeable</Text>
+            <Text style={[s.badgeT, { color: C.gold }]}>Changeable</Text>
           </View>
         )}
         {offer.baggages?.some(b => b.type === "checked" && b.quantity > 0) && (
@@ -164,7 +164,7 @@ export default function FlightSearchScreen({ navigation }) {
               />
             </View>
             <Pressable style={s.swap} onPress={() => { tap(); const t = origin; setOrigin(destination); setDestination(t); }}>
-              <Text style={{ color: C.accent, fontSize: 18 }}>⇄</Text>
+              <Text style={{ color: C.gold, fontSize: 18 }}>⇄</Text>
             </Pressable>
             <View style={[s.inputWrap, { flex: 1 }]}>
               <Text style={s.inputLabel}>To</Text>

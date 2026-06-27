@@ -1,17 +1,17 @@
 import React, { useState, useRef } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, TextInput, Pressable,
-  StyleSheet, Alert, ActivityIndicator, TouchableOpacity, Animated, Easing,
+  StyleSheet, Alert, ActivityIndicator, TouchableOpacity, Animated,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { C } from "../theme";
 import { BackBar, Btn, g, tap } from "../components";
-import { createTrip, getFlightStatus } from "../api";
+import { createTrip, getFlightStatus, draftTripFromText, scanEmailBody } from "../api";
 
 const MODES = [
-  { id: "solo",    label: "Solo",    icon: "🧳", desc: "Efficiency mode" },
-  { id: "client",  label: "Client",  icon: "💼", desc: "Prestige & optics" },
-  { id: "partner", label: "Partner", icon: "❤️",  desc: "Leisure & romance" },
+  { id: "solo",    label: "Solo",    icon: "◆", desc: "Efficiency mode" },
+  { id: "client",  label: "Client",  icon: "◈", desc: "Prestige & optics" },
+  { id: "partner", label: "Partner", icon: "◇", desc: "Leisure & romance" },
 ];
 
 // Parse "UA 412", "UA412", "united 412" → { carrier: "UA", number: "412" }
@@ -47,6 +47,14 @@ export default function AddTripScreen({ navigation }) {
   const [title, setTitle] = useState("");
   const [mode, setMode] = useState("solo");
 
+  // Tab: "ai" | "manual" | "paste"
+  const [tab, setTab] = useState("ai");
+
+  // AI / NL drafting
+  const [nlText, setNlText] = useState("");
+  const [drafting, setDrafting] = useState(false);
+  const [drafted, setDrafted] = useState(false);
+
   // Flight lookup state
   const [flightQuery, setFlightQuery] = useState("");
   const [lookingUp, setLookingUp] = useState(false);
@@ -61,13 +69,11 @@ export default function AddTripScreen({ navigation }) {
   const [confirmation, setConfirmation] = useState("");
 
   // Email paste tab
-  const [tab, setTab] = useState("manual"); // "manual" | "paste"
   const [pasteText, setPasteText] = useState("");
   const [parsing, setParsing] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
-  // Shake animation for validation errors
   const shake = useRef(new Animated.Value(0)).current;
   const doShake = () => {
     Animated.sequence([
@@ -76,6 +82,34 @@ export default function AddTripScreen({ navigation }) {
       Animated.timing(shake, { toValue: 6, duration: 50, useNativeDriver: true }),
       Animated.timing(shake, { toValue: 0, duration: 50, useNativeDriver: true }),
     ]).start();
+  };
+
+  // Natural language trip drafting
+  const draftFromNL = async () => {
+    if (!nlText.trim()) return;
+    setDrafting(true);
+    try {
+      const data = await draftTripFromText(nlText.trim());
+      // data: { title, origin, destination, carrier, flight_number, departs_at, confirmation, legs }
+      if (data.title) setTitle(data.title);
+      if (data.origin) setOrigin(data.origin.toUpperCase());
+      if (data.destination) setDestination(data.destination.toUpperCase());
+      if (data.carrier) setCarrier(data.carrier.toUpperCase());
+      if (data.flight_number) setFlightNum(String(data.flight_number));
+      if (data.departs_at) {
+        const d = new Date(data.departs_at);
+        if (!isNaN(d)) setDepDate(d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }));
+      }
+      if (data.confirmation) setConfirmation(data.confirmation.toUpperCase());
+      setDrafted(true);
+      setTab("manual");
+      tap("medium");
+      Alert.alert("Trip drafted", "Review the details below and save when ready.");
+    } catch (e) {
+      Alert.alert("Couldn't draft trip", e.message || "Try being more specific, e.g. 'UA 412 from JFK to ASE on Jan 15'.");
+    } finally {
+      setDrafting(false);
+    }
   };
 
   // Auto-lookup when user types a valid flight number
@@ -98,12 +132,11 @@ export default function AddTripScreen({ navigation }) {
           setDepDate(d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }));
         }
         if (!title && data.origin && data.destination) {
-          setTitle(`${data.origin} → ${data.destination}`);
+          setTitle(`${data.origin} \u2192 ${data.destination}`);
         }
         setLooked(true);
       }
     } catch (_) {
-      // Silent — user can fill manually
       setCarrier(parsed.carrier);
       setFlightNum(parsed.number);
     } finally {
@@ -111,12 +144,19 @@ export default function AddTripScreen({ navigation }) {
     }
   };
 
-  // Parse a pasted confirmation email using the backend concierge
+  // Parse a pasted confirmation email
   const parsePaste = async () => {
     if (!pasteText.trim()) return;
     setParsing(true);
     try {
-      // Use the concierge endpoint with a structured extraction prompt
+      const data = await scanEmailBody(pasteText.trim(), "paste");
+      if (data && data.trips_created > 0) {
+        tap("medium");
+        Alert.alert("Trip imported", `${data.trips_created} trip${data.trips_created > 1 ? "s" : ""} added from your email.`);
+        navigation.goBack();
+        return;
+      }
+      // Fallback: try concierge extraction
       const res = await fetch(require("../config").API_BASE + "/concierge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -127,7 +167,6 @@ export default function AddTripScreen({ navigation }) {
       });
       const json = await res.json();
       const reply = json.reply || "";
-      // Try to parse JSON from the reply
       const match = reply.match(/\{[\s\S]*\}/);
       if (match) {
         const parsed = JSON.parse(match[0]);
@@ -188,104 +227,167 @@ export default function AddTripScreen({ navigation }) {
       <ScrollView contentContainerStyle={g.scroll} keyboardShouldPersistTaps="handled">
         <BackBar nav={navigation} label="Add Trip" />
 
-        {/* Trip Mode */}
-        <Text style={g.sectionT}>TRIP MODE</Text>
-        <View style={s.modeRow}>
-          {MODES.map(m => (
-            <TouchableOpacity
-              key={m.id}
-              style={[s.modeBtn, mode === m.id && s.modeBtnOn]}
-              onPress={() => { tap(); setMode(m.id); }}
-              activeOpacity={0.8}
-            >
-              <Text style={s.modeIcon}>{m.icon}</Text>
-              <Text style={[s.modeLabel, mode === m.id && s.modeLabelOn]}>{m.label}</Text>
-              <Text style={s.modeDesc}>{m.desc}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <Text style={s.modeHint}>
-          {mode === "solo" && "Wingman optimizes for speed and efficiency."}
-          {mode === "client" && "Wingman prioritizes prestige venues, private dining, and car service."}
-          {mode === "partner" && "Wingman suggests romantic boutique hotels, chef's table dinners, and no 6am flights."}
-        </Text>
-
-        {/* Trip Name */}
-        <Text style={g.sectionT}>TRIP NAME</Text>
-        <Animated.View style={[g.group, { transform: [{ translateX: shake }] }]}>
-          <View style={[s.field, { borderBottomWidth: 0 }]}>
-            <TextInput
-              style={s.input}
-              value={title}
-              onChangeText={setTitle}
-              placeholder="e.g. Tokyo Client Trip, Paris Weekend"
-              placeholderTextColor={C.mut}
-              autoCapitalize="words"
-            />
-          </View>
-        </Animated.View>
-
-        {/* Flight — tab switcher */}
-        <Text style={g.sectionT}>FLIGHT (OPTIONAL)</Text>
+        {/* Tab switcher */}
         <View style={s.tabRow}>
+          <Pressable style={[s.tabBtn, tab === "ai" && s.tabBtnOn]} onPress={() => { tap(); setTab("ai"); }}>
+            <Text style={[s.tabT, tab === "ai" && s.tabTOn]}>Ask Wingman</Text>
+          </Pressable>
           <Pressable style={[s.tabBtn, tab === "manual" && s.tabBtnOn]} onPress={() => { tap(); setTab("manual"); }}>
             <Text style={[s.tabT, tab === "manual" && s.tabTOn]}>Enter manually</Text>
           </Pressable>
           <Pressable style={[s.tabBtn, tab === "paste" && s.tabBtnOn]} onPress={() => { tap(); setTab("paste"); }}>
-            <Text style={[s.tabT, tab === "paste" && s.tabTOn]}>Paste confirmation</Text>
+            <Text style={[s.tabT, tab === "paste" && s.tabTOn]}>Paste email</Text>
           </Pressable>
         </View>
 
-        {tab === "manual" ? (
-          <View style={g.group}>
-            {/* Smart flight number lookup */}
-            <View style={s.field}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                <Text style={s.label}>Flight Number</Text>
-                {lookingUp && <ActivityIndicator size="small" color={C.teal} />}
-                {looked && !lookingUp && (
-                  <View style={s.lookedBadge}>
-                    <Text style={s.lookedT}>✓ Found</Text>
-                  </View>
-                )}
-              </View>
+        {/* AI / NL drafting tab */}
+        {tab === "ai" && (
+          <View>
+            <LinearGradient
+              colors={[C.cardWarm, C.card]}
+              style={s.aiCard}
+            >
+              <Text style={s.aiHeadline}>One sentence.{"\n"}A complete trip drafted.</Text>
+              <Text style={s.aiSub}>Tell Wingman where you're going and when — it will handle the rest.</Text>
               <TextInput
-                style={s.input}
-                value={flightQuery}
-                onChangeText={onFlightQueryChange}
-                placeholder="UA 412 — we'll look it up"
+                style={s.aiInput}
+                value={nlText}
+                onChangeText={setNlText}
+                placeholder={"e.g. Flying UA 412 from JFK to Aspen on January 15th for a client trip"}
                 placeholderTextColor={C.mut}
-                autoCapitalize="characters"
-                autoCorrect={false}
+                multiline
+                autoCapitalize="sentences"
+                autoCorrect
+                returnKeyType="done"
               />
-            </View>
-            <Field label="From (airport code)" value={origin} onChangeText={setOrigin} placeholder="JFK" editable={!looked} />
-            <Field label="To (airport code)" value={destination} onChangeText={setDestination} placeholder="ASE" editable={!looked} />
-            <Field label="Airline" value={carrier} onChangeText={setCarrier} placeholder="UA" editable={!looked} />
-            <View style={s.field}>
-              <Text style={s.label}>Departure Date</Text>
-              <TextInput
-                style={s.input}
-                value={depDate}
-                onChangeText={setDepDate}
-                placeholder="Jan 15 2026 or 2026-01-15"
-                placeholderTextColor={C.mut}
-                autoCapitalize="none"
-              />
-            </View>
-            <View style={[s.field, { borderBottomWidth: 0 }]}>
-              <Text style={s.label}>Confirmation #</Text>
-              <TextInput
-                style={s.input}
-                value={confirmation}
-                onChangeText={setConfirmation}
-                placeholder="ABC123"
-                placeholderTextColor={C.mut}
-                autoCapitalize="characters"
-              />
-            </View>
+              <Pressable
+                style={[s.aiBtn, (!nlText.trim() || drafting) && { opacity: 0.5 }]}
+                onPress={draftFromNL}
+                disabled={!nlText.trim() || drafting}
+              >
+                {drafting
+                  ? <ActivityIndicator color={C.bg} size="small" />
+                  : <Text style={s.aiBtnT}>Draft trip →</Text>
+                }
+              </Pressable>
+            </LinearGradient>
+
+            {/* Quick examples */}
+            <Text style={[s.label, { paddingHorizontal: 0, marginTop: 20, marginBottom: 10 }]}>EXAMPLES</Text>
+            {[
+              "AA 100 JFK to LAX on March 3rd, solo",
+              "Flying to Tokyo for a client meeting, departing Feb 12 on JAL",
+              "Weekend in Paris with my partner, leaving Friday on Air France",
+            ].map((ex, i) => (
+              <Pressable key={i} style={s.exRow} onPress={() => { tap(); setNlText(ex); }}>
+                <Text style={s.exT}>{ex}</Text>
+                <Text style={s.exArrow}>›</Text>
+              </Pressable>
+            ))}
           </View>
-        ) : (
+        )}
+
+        {/* Manual tab */}
+        {tab === "manual" && (
+          <View>
+            {drafted && (
+              <View style={s.draftedBanner}>
+                <Text style={s.draftedT}>✓ Drafted by Wingman — review and save</Text>
+              </View>
+            )}
+
+            {/* Trip Mode */}
+            <Text style={g.sectionT}>TRIP MODE</Text>
+            <View style={s.modeRow}>
+              {MODES.map(m => (
+                <TouchableOpacity
+                  key={m.id}
+                  style={[s.modeBtn, mode === m.id && s.modeBtnOn]}
+                  onPress={() => { tap(); setMode(m.id); }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[s.modeIcon, mode === m.id && { color: C.gold }]}>{m.icon}</Text>
+                  <Text style={[s.modeLabel, mode === m.id && s.modeLabelOn]}>{m.label}</Text>
+                  <Text style={s.modeDesc}>{m.desc}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Trip Name */}
+            <Text style={g.sectionT}>TRIP NAME</Text>
+            <Animated.View style={[g.group, { transform: [{ translateX: shake }] }]}>
+              <View style={[s.field, { borderBottomWidth: 0 }]}>
+                <TextInput
+                  style={s.input}
+                  value={title}
+                  onChangeText={setTitle}
+                  placeholder="e.g. Tokyo Client Trip, Paris Weekend"
+                  placeholderTextColor={C.mut}
+                  autoCapitalize="words"
+                />
+              </View>
+            </Animated.View>
+
+            {/* Flight fields */}
+            <Text style={g.sectionT}>FLIGHT (OPTIONAL)</Text>
+            <View style={g.group}>
+              <View style={s.field}>
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <Text style={s.label}>Flight Number</Text>
+                  {lookingUp && <ActivityIndicator size="small" color={C.gold} />}
+                  {looked && !lookingUp && (
+                    <View style={s.lookedBadge}>
+                      <Text style={s.lookedT}>✓ Found</Text>
+                    </View>
+                  )}
+                </View>
+                <TextInput
+                  style={s.input}
+                  value={flightQuery}
+                  onChangeText={onFlightQueryChange}
+                  placeholder="UA 412 — we'll look it up"
+                  placeholderTextColor={C.mut}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                />
+              </View>
+              <Field label="From (airport code)" value={origin} onChangeText={setOrigin} placeholder="JFK" editable={!looked} />
+              <Field label="To (airport code)" value={destination} onChangeText={setDestination} placeholder="ASE" editable={!looked} />
+              <Field label="Airline" value={carrier} onChangeText={setCarrier} placeholder="UA" editable={!looked} />
+              <View style={s.field}>
+                <Text style={s.label}>Departure Date</Text>
+                <TextInput
+                  style={s.input}
+                  value={depDate}
+                  onChangeText={setDepDate}
+                  placeholder="Jan 15 2026 or 2026-01-15"
+                  placeholderTextColor={C.mut}
+                  autoCapitalize="none"
+                />
+              </View>
+              <View style={[s.field, { borderBottomWidth: 0 }]}>
+                <Text style={s.label}>Confirmation #</Text>
+                <TextInput
+                  style={s.input}
+                  value={confirmation}
+                  onChangeText={setConfirmation}
+                  placeholder="ABC123"
+                  placeholderTextColor={C.mut}
+                  autoCapitalize="characters"
+                />
+              </View>
+            </View>
+
+            <Btn
+              title={loading ? "Saving…" : "Save Trip"}
+              onPress={save}
+              style={{ marginTop: 20 }}
+            />
+          </View>
+        )}
+
+        {/* Paste email tab */}
+        {tab === "paste" && (
           <View style={g.group}>
             <View style={[s.field, { borderBottomWidth: 0 }]}>
               <Text style={s.label}>Paste your confirmation email</Text>
@@ -306,24 +408,17 @@ export default function AddTripScreen({ navigation }) {
               disabled={!pasteText.trim() || parsing}
             >
               {parsing
-                ? <ActivityIndicator color="#fff" size="small" />
+                ? <ActivityIndicator color={C.bg} size="small" />
                 : <Text style={s.parseBtnT}>Extract flight details →</Text>
               }
             </Pressable>
           </View>
         )}
 
-        {/* Save */}
-        <Btn
-          title={loading ? "Saving…" : "Save Trip"}
-          onPress={save}
-          style={{ marginTop: 20 }}
-        />
-
-        {/* Email import CTA */}
+        {/* Connect Gmail CTA */}
         <View style={s.importCard}>
-          <LinearGradient colors={["rgba(74,114,255,0.08)", "rgba(20,201,153,0.06)"]} style={s.importGrad}>
-            <Text style={s.importIc}>📧</Text>
+          <View style={s.importInner}>
+            <Text style={s.importIc}>✉</Text>
             <View style={{ flex: 1 }}>
               <Text style={s.importT}>Import all trips automatically</Text>
               <Text style={s.importS}>Connect Gmail and Wingman finds every booking in your inbox.</Text>
@@ -331,7 +426,7 @@ export default function AddTripScreen({ navigation }) {
             <Pressable style={s.importBtn} onPress={() => navigation.navigate("Connections")}>
               <Text style={s.importBtnT}>Connect →</Text>
             </Pressable>
-          </LinearGradient>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -341,47 +436,73 @@ export default function AddTripScreen({ navigation }) {
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
 
+  // Tab switcher
+  tabRow: { flexDirection: "row", gap: 8, marginBottom: 20 },
+  tabBtn: { flex: 1, paddingVertical: 10, borderRadius: 12, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, alignItems: "center" },
+  tabBtnOn: { borderColor: C.gold, backgroundColor: "rgba(201,169,110,0.08)" },
+  tabT: { color: C.mut, fontSize: 12, fontWeight: "600", letterSpacing: 0.3 },
+  tabTOn: { color: C.gold },
+
+  // AI card
+  aiCard: { borderRadius: 20, padding: 24, borderWidth: 1, borderColor: C.line, marginBottom: 4 },
+  aiHeadline: { color: C.ink, fontSize: 26, fontFamily: "PlayfairDisplay_700Bold", lineHeight: 34, marginBottom: 10 },
+  aiSub: { color: C.mut, fontSize: 14, lineHeight: 20, marginBottom: 18 },
+  aiInput: {
+    color: C.ink, fontSize: 16, lineHeight: 24, minHeight: 80,
+    backgroundColor: C.bg, borderRadius: 14, padding: 14,
+    borderWidth: 1, borderColor: C.line, marginBottom: 16,
+  },
+  aiBtn: { backgroundColor: C.gold, borderRadius: 14, padding: 16, alignItems: "center" },
+  aiBtnT: { color: C.bg, fontSize: 15, fontWeight: "700", letterSpacing: 0.5 },
+
+  // Examples
+  exRow: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: C.line,
+  },
+  exT: { color: C.mut, fontSize: 13, flex: 1, lineHeight: 19 },
+  exArrow: { color: C.gold, fontSize: 18, marginLeft: 8 },
+
+  // Drafted banner
+  draftedBanner: {
+    backgroundColor: "rgba(201,169,110,0.12)", borderRadius: 12,
+    padding: 12, marginBottom: 16, borderWidth: 1, borderColor: "rgba(201,169,110,0.25)",
+  },
+  draftedT: { color: C.gold, fontSize: 13, fontWeight: "600" },
+
   // Mode selector
-  modeRow: { flexDirection: "row", gap: 10, paddingHorizontal: 20, marginBottom: 10 },
+  modeRow: { flexDirection: "row", gap: 10, marginBottom: 10 },
   modeBtn: {
     flex: 1, alignItems: "center", backgroundColor: C.card,
     borderRadius: 16, paddingVertical: 14, paddingHorizontal: 8,
     borderWidth: 1.5, borderColor: "transparent",
   },
-  modeBtnOn: { borderColor: C.teal, backgroundColor: "#091A12" },
-  modeIcon: { fontSize: 22, marginBottom: 4 },
+  modeBtnOn: { borderColor: C.gold, backgroundColor: "rgba(201,169,110,0.06)" },
+  modeIcon: { fontSize: 18, marginBottom: 4, color: C.mut },
   modeLabel: { color: C.mut, fontSize: 13, fontWeight: "700" },
-  modeLabelOn: { color: C.teal },
+  modeLabelOn: { color: C.gold },
   modeDesc: { color: C.mut, fontSize: 10, marginTop: 2, textAlign: "center" },
-  modeHint: { color: C.mut, fontSize: 13, paddingHorizontal: 4, marginBottom: 4, lineHeight: 19 },
-
-  // Tab switcher
-  tabRow: { flexDirection: "row", gap: 8, marginBottom: 10 },
-  tabBtn: { flex: 1, paddingVertical: 10, borderRadius: 12, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, alignItems: "center" },
-  tabBtnOn: { borderColor: C.gold, backgroundColor: "rgba(74,114,255,0.08)" },
-  tabT: { color: C.mut, fontSize: 13, fontWeight: "600" },
-  tabTOn: { color: C.gold },
 
   // Fields
-  field: { paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: C.line },
+  field: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.line },
   label: { color: C.mut, fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.5 },
   input: { color: C.ink, fontSize: 16, fontWeight: "500" },
   pasteInput: { minHeight: 120, marginTop: 8, lineHeight: 22 },
 
   // Lookup badge
-  lookedBadge: { backgroundColor: "rgba(20,201,153,0.12)", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: "rgba(20,201,153,0.25)" },
-  lookedT: { color: C.teal, fontSize: 11, fontWeight: "700" },
+  lookedBadge: { backgroundColor: "rgba(201,169,110,0.12)", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: "rgba(201,169,110,0.25)" },
+  lookedT: { color: C.gold, fontSize: 11, fontWeight: "700" },
 
   // Parse button inside paste tab
   parseBtn: { margin: 12, backgroundColor: C.gold, borderRadius: 14, padding: 14, alignItems: "center" },
-  parseBtnT: { color: "#fff", fontSize: 15, fontWeight: "700" },
+  parseBtnT: { color: C.bg, fontSize: 15, fontWeight: "700" },
 
   // Email import card
-  importCard: { marginTop: 20, borderRadius: 20, overflow: "hidden", borderWidth: 1, borderColor: C.line },
-  importGrad: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },
-  importIc: { fontSize: 24 },
+  importCard: { marginTop: 24, borderRadius: 20, borderWidth: 1, borderColor: C.line, overflow: "hidden" },
+  importInner: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16, backgroundColor: C.card },
+  importIc: { fontSize: 22, color: C.gold },
   importT: { color: C.ink, fontSize: 14, fontWeight: "700", marginBottom: 2 },
   importS: { color: C.mut, fontSize: 12, lineHeight: 17 },
-  importBtn: { backgroundColor: "rgba(74,114,255,0.15)", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: "rgba(74,114,255,0.3)" },
+  importBtn: { backgroundColor: "rgba(201,169,110,0.12)", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: "rgba(201,169,110,0.25)" },
   importBtnT: { color: C.gold, fontSize: 13, fontWeight: "700" },
 });

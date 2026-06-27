@@ -123,3 +123,68 @@ export const getFlightOffer = (offerId) => req("/flights/offer/" + offerId);
 export const bookFlight = (body) =>
   req("/flights/book", { method: "POST", body: JSON.stringify(body) });
 export const getFlightOrders = () => req("/flights/orders");
+
+// ─── AMBIENT INGESTION ────────────────────────────────────────────────────────
+// Natural language trip drafting ("One sentence. A complete trip drafted.")
+export const draftTripFromText = (text) =>
+  req("/trips/draft", { method: "POST", body: JSON.stringify({ text }) });
+
+// Calendar sync — ingest iCal/Google Calendar events
+export const syncCalendar = (events) =>
+  req("/sync/calendar", { method: "POST", body: JSON.stringify({ events }) });
+
+// Messages/SMS parsing — parse pasted itineraries or forwarded texts
+export const parseMessages = (text) =>
+  req("/sync/messages", { method: "POST", body: JSON.stringify({ text }) });
+
+// ─── MONITORING ENGINE ────────────────────────────────────────────────────────
+// Trip risk profile — downstream value at risk if upstream flight is delayed
+export const getTripRiskProfile = (tripId) =>
+  req("/trips/" + tripId + "/risk-profile");
+
+// Disruption evaluation — compare rescue cost vs downstream loss
+export const evaluateDisruption = ({ tripId, delayMinutes, rescueOptions }) =>
+  req("/disruption/evaluate", {
+    method: "POST",
+    body: JSON.stringify({ trip_id: tripId, delay_minutes: delayMinutes, rescue_options: rescueOptions }),
+  });
+
+// ─── RESCUE DECISION ENGINE ───────────────────────────────────────────────────
+// Rescue search — ranked options across cash and points
+export const searchRescueOptions = ({ origin, destination, date, cabin = "economy", tripId }) =>
+  req("/flights/rescue/search", {
+    method: "POST",
+    body: JSON.stringify({ origin, destination, date, cabin, trip_id: tripId }),
+  });
+
+// Autonomous rescue execution
+export const executeRescue = ({ offerId, tripId, paymentMethod }) =>
+  req("/flights/rescue/execute", {
+    method: "POST",
+    body: JSON.stringify({ offer_id: offerId, trip_id: tripId, payment_method: paymentMethod }),
+  });
+
+// ─── AUTONOMY POLICY ─────────────────────────────────────────────────────────
+// Save user delegation rules
+export const updatePolicy = (policy) =>
+  req("/profile/policy", { method: "PATCH", body: JSON.stringify({ policy }) });
+
+// Get current policy
+export const getPolicy = () => req("/profile/policy");
+
+// ─── LEARNING LOOP ────────────────────────────────────────────────────────────
+// Log post-trip outcome
+export const logOutcome = ({ tripId, predictedDelay, actualDelay, rescueAccepted, notes }) =>
+  req("/outcomes/log", {
+    method: "POST",
+    body: JSON.stringify({
+      trip_id: tripId,
+      predicted_delay: predictedDelay,
+      actual_delay: actualDelay,
+      rescue_accepted: rescueAccepted,
+      notes,
+    }),
+  });
+
+// ROI dashboard — total value saved
+export const getInsightsROI = () => req("/insights/roi");

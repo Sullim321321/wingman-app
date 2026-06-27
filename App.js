@@ -57,6 +57,9 @@ import HomeAddressScreen from "./src/screens/HomeAddressScreen";
 import FlightSearchScreen from "./src/screens/FlightSearchScreen";
 import FlightBookScreen from "./src/screens/FlightBookScreen";
 import FlightConfirmScreen from "./src/screens/FlightConfirmScreen";
+import DataSourcesScreen from "./src/screens/DataSourcesScreen";
+import AutonomySettingsScreen from "./src/screens/AutonomySettingsScreen";
+import InsightsScreen from "./src/screens/InsightsScreen";
 
 export const navRef = createNavigationContainerRef();
 const Stack = createNativeStackNavigator();
@@ -133,7 +136,7 @@ function Tabs() {
       <Tab.Screen name="Home"     component={HomeScreen} />
       <Tab.Screen name="Trips"    component={ActivityScreen} />
       <Tab.Screen name="Alerts"   component={AlertScreen} />
-      <Tab.Screen name="Insights" component={ConciergeScreen} />
+      <Tab.Screen name="Insights" component={InsightsScreen} />
     </Tab.Navigator>
   );
 }
@@ -227,6 +230,9 @@ function Root() {
             <Stack.Screen name="FlightSearch" component={FlightSearchScreen} />
             <Stack.Screen name="FlightBook"   component={FlightBookScreen} />
             <Stack.Screen name="FlightConfirm" component={FlightConfirmScreen} options={{ gestureEnabled: false }} />
+            <Stack.Screen name="DataSources"  component={DataSourcesScreen} />
+            <Stack.Screen name="Autonomy"     component={AutonomySettingsScreen} />
+            <Stack.Screen name="InsightsFull" component={InsightsScreen} />
             <Stack.Screen name="Main"         component={Tabs} />
           </>
         ) : (

@@ -1,0 +1,261 @@
+import React, { useState, useEffect } from "react";
+import {
+  SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
+  Switch, Alert, ActivityIndicator,
+} from "react-native";
+// Slider replaced with Segmented to avoid native dependency
+import { C } from "../theme";
+import { BackBar, Btn, g, tap } from "../components";
+import { getPolicy, updatePolicy } from "../api";
+
+const MODES = [
+  {
+    id: "always_ask",
+    icon: "◻",
+    title: "Always ask",
+    desc: "Wingman surfaces options and waits for your approval before taking any action.",
+  },
+  {
+    id: "auto_under_threshold",
+    icon: "◈",
+    title: "Auto-approve under threshold",
+    desc: "Wingman acts instantly when the rescue cost is below your limit. You approve anything above.",
+  },
+  {
+    id: "full_autonomy",
+    icon: "◆",
+    title: "Full autonomy",
+    desc: "Wingman executes the best option automatically. You receive a summary after.",
+  },
+];
+
+const PAYMENT_PREFS = [
+  { id: "cash_first",   label: "Cash first",   desc: "Prefer paying cash over redeeming points." },
+  { id: "points_first", label: "Points first",  desc: "Burn points before spending cash." },
+  { id: "best_value",   label: "Best value",    desc: "Wingman picks whichever saves the most net value." },
+];
+
+const CABIN_PREFS = [
+  { id: "economy",  label: "Economy" },
+  { id: "premium",  label: "Premium Economy" },
+  { id: "business", label: "Business" },
+  { id: "first",    label: "First" },
+];
+
+export default function AutonomySettingsScreen({ navigation }) {
+  const [autonomyMode, setAutonomyMode] = useState("always_ask");
+  const [threshold, setThreshold] = useState(500);
+  const [paymentPref, setPaymentPref] = useState("best_value");
+  const [cabinPref, setCabinPref] = useState("economy");
+  const [notifyOnAction, setNotifyOnAction] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    getPolicy()
+      .then((data) => {
+        if (data?.policy) {
+          const p = data.policy;
+          if (p.autonomy_mode) setAutonomyMode(p.autonomy_mode);
+          if (p.threshold != null) setThreshold(p.threshold);
+          if (p.payment_preference) setPaymentPref(p.payment_preference);
+          if (p.cabin_preference) setCabinPref(p.cabin_preference);
+          if (p.notify_on_action != null) setNotifyOnAction(p.notify_on_action);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await updatePolicy({
+        autonomy_mode: autonomyMode,
+        threshold,
+        payment_preference: paymentPref,
+        cabin_preference: cabinPref,
+        notify_on_action: notifyOnAction,
+      });
+      tap("medium");
+      Alert.alert("Policy saved", "Wingman will follow these rules for all future disruptions.");
+    } catch (e) {
+      Alert.alert("Error", e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={s.app}>
+        <BackBar nav={navigation} label="Autonomy Settings" />
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <ActivityIndicator color={C.gold} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={s.app}>
+      <ScrollView contentContainerStyle={g.scroll}>
+        <BackBar nav={navigation} label="Autonomy Settings" />
+
+        {/* Hero */}
+        <View style={s.hero}>
+          <Text style={s.heroH}>Fully autonomous.{"\n"}Always in control.</Text>
+          <Text style={s.heroSub}>
+            Set a policy threshold and Wingman executes instantly — or waits for your approval. You decide how much autonomy to grant.
+          </Text>
+        </View>
+
+        {/* Autonomy mode */}
+        <Text style={g.sectionT}>AUTONOMY MODE</Text>
+        <View style={g.group}>
+          {MODES.map((m, i) => (
+            <Pressable
+              key={m.id}
+              style={[s.modeRow, i === MODES.length - 1 && { borderBottomWidth: 0 }]}
+              onPress={() => { tap(); setAutonomyMode(m.id); }}
+            >
+              <View style={[s.modeRadio, autonomyMode === m.id && s.modeRadioOn]}>
+                {autonomyMode === m.id && <View style={s.modeRadioDot} />}
+              </View>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <Text style={s.modeIcon}>{m.icon}</Text>
+                  <Text style={[s.modeTitle, autonomyMode === m.id && { color: C.gold }]}>{m.title}</Text>
+                </View>
+                <Text style={s.modeDesc}>{m.desc}</Text>
+              </View>
+            </Pressable>
+          ))}
+        </View>
+
+        {/* Threshold slider — only show for auto mode */}
+        {autonomyMode === "auto_under_threshold" && (
+          <View>
+            <Text style={g.sectionT}>AUTO-APPROVE THRESHOLD</Text>
+            <View style={[g.group, { paddingVertical: 20 }]}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
+                <Text style={s.thresholdLabel}>Auto-approve rebooking under</Text>
+                <Text style={s.thresholdValue}>${threshold.toFixed(0)}</Text>
+              </View>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+                {[100, 250, 500, 1000, 2000].map(v => (
+                  <Pressable
+                    key={v}
+                    onPress={() => { tap(); setThreshold(v); }}
+                    style={[s.thresholdBtn, threshold === v && s.thresholdBtnActive]}
+                  >
+                    <Text style={[s.thresholdBtnT, threshold === v && s.thresholdBtnTActive]}>${v.toLocaleString()}</Text>
+                  </Pressable>
+                ))}
+              </View>
+              <Text style={s.thresholdNote}>
+                Wingman will automatically rebook when the best rescue option costs less than ${threshold.toFixed(0)}. You approve anything above.
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Payment preference */}
+        <Text style={g.sectionT}>PAYMENT PREFERENCE</Text>
+        <View style={g.group}>
+          {PAYMENT_PREFS.map((p, i) => (
+            <Pressable
+              key={p.id}
+              style={[s.prefRow, i === PAYMENT_PREFS.length - 1 && { borderBottomWidth: 0 }]}
+              onPress={() => { tap(); setPaymentPref(p.id); }}
+            >
+              <View style={[s.modeRadio, paymentPref === p.id && s.modeRadioOn]}>
+                {paymentPref === p.id && <View style={s.modeRadioDot} />}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.prefTitle, paymentPref === p.id && { color: C.gold }]}>{p.label}</Text>
+                <Text style={s.prefDesc}>{p.desc}</Text>
+              </View>
+            </Pressable>
+          ))}
+        </View>
+
+        {/* Cabin preference */}
+        <Text style={g.sectionT}>RESCUE CABIN PREFERENCE</Text>
+        <View style={[g.group, { flexDirection: "row", flexWrap: "wrap", gap: 8, padding: 16 }]}>
+          {CABIN_PREFS.map((c) => (
+            <Pressable
+              key={c.id}
+              style={[s.cabinChip, cabinPref === c.id && s.cabinChipOn]}
+              onPress={() => { tap(); setCabinPref(c.id); }}
+            >
+              <Text style={[s.cabinChipT, cabinPref === c.id && s.cabinChipTOn]}>{c.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {/* Notify on action */}
+        <Text style={g.sectionT}>NOTIFICATIONS</Text>
+        <View style={g.group}>
+          <View style={s.switchRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={s.switchTitle}>Notify when Wingman acts</Text>
+              <Text style={s.switchSub}>Receive a push notification every time Wingman takes an autonomous action on your behalf.</Text>
+            </View>
+            <Switch
+              value={notifyOnAction}
+              onValueChange={setNotifyOnAction}
+              trackColor={{ false: C.line, true: "rgba(201,169,110,0.4)" }}
+              thumbColor={notifyOnAction ? C.gold : C.mut}
+            />
+          </View>
+        </View>
+
+        <Btn
+          title={saving ? "Saving…" : "Save Policy"}
+          onPress={save}
+          style={{ marginTop: 24 }}
+        />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const s = StyleSheet.create({
+  app: { flex: 1, backgroundColor: C.bg },
+
+  hero: { marginBottom: 24 },
+  heroH: { color: C.ink, fontSize: 28, fontFamily: "PlayfairDisplay_700Bold", lineHeight: 36, marginBottom: 10 },
+  heroSub: { color: C.mut, fontSize: 14, lineHeight: 21 },
+
+  modeRow: { flexDirection: "row", alignItems: "flex-start", gap: 14, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.line },
+  modeRadio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: C.line, alignItems: "center", justifyContent: "center", marginTop: 2 },
+  modeRadioOn: { borderColor: C.gold },
+  modeRadioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: C.gold },
+  modeIcon: { fontSize: 14, color: C.gold },
+  modeTitle: { color: C.ink, fontSize: 15, fontWeight: "700" },
+  modeDesc: { color: C.mut, fontSize: 12, lineHeight: 18, marginTop: 3 },
+
+  thresholdLabel: { color: C.mut, fontSize: 13 },
+  thresholdValue: { color: C.gold, fontSize: 26, fontFamily: "PlayfairDisplay_700Bold" },
+  sliderEdge: { color: C.mut, fontSize: 11 },
+  thresholdBtn: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 20, borderWidth: 1, borderColor: C.line, backgroundColor: C.card },
+  thresholdBtnActive: { borderColor: C.gold, backgroundColor: "rgba(201,169,110,0.1)" },
+  thresholdBtnT: { color: C.mut, fontSize: 13, fontWeight: "600" },
+  thresholdBtnTActive: { color: C.gold },
+  thresholdNote: { color: C.mut, fontSize: 12, lineHeight: 18, marginTop: 8 },
+
+  prefRow: { flexDirection: "row", alignItems: "flex-start", gap: 14, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.line },
+  prefTitle: { color: C.ink, fontSize: 14, fontWeight: "700" },
+  prefDesc: { color: C.mut, fontSize: 12, lineHeight: 18, marginTop: 2 },
+
+  cabinChip: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 20, borderWidth: 1, borderColor: C.line, backgroundColor: C.card },
+  cabinChipOn: { borderColor: C.gold, backgroundColor: "rgba(201,169,110,0.1)" },
+  cabinChipT: { color: C.mut, fontSize: 13, fontWeight: "600" },
+  cabinChipTOn: { color: C.gold },
+
+  switchRow: { flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 14 },
+  switchTitle: { color: C.ink, fontSize: 15, fontWeight: "700" },
+  switchSub: { color: C.mut, fontSize: 12, lineHeight: 18, marginTop: 3 },
+});

@@ -84,6 +84,14 @@ export default function SettingsScreen({ navigation }) {
           </View>
         </View>
 
+        <Text style={g.sectionT}>AUTONOMY & DATA</Text>
+        <View style={g.group}>
+          <SetRow ic="◈" iconColor={C.gold} t="Autonomy settings" sub="Delegation policy, approval thresholds, payment prefs" right={<Chip color={C.gold}>Edit ›</Chip>} onPress={() => navigation.navigate("Autonomy")} />
+          <View style={{ borderBottomWidth: 0 }}>
+            <SetRow ic="◎" iconColor={C.gold} t="Data sources" sub="Gmail, Calendar, Messages — ambient ingestion" right={<Chip color={C.gold}>Manage ›</Chip>} onPress={() => navigation.navigate("DataSources")} />
+          </View>
+        </View>
+
         <Text style={g.sectionT}>SUBSCRIPTION</Text>
         <View style={g.group}>
           <View style={{ borderBottomWidth: 0 }}>

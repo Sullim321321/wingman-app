@@ -4,7 +4,7 @@ import {
   Switch, Alert, ActivityIndicator,
 } from "react-native";
 // Slider replaced with Segmented to avoid native dependency
-import { C } from "../theme";
+import { C, T } from "../theme";
 import { BackBar, Btn, g, tap } from "../components";
 import { getPolicy, updatePolicy } from "../api";
 

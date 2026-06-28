@@ -5,6 +5,7 @@ import {
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { req } from "../api";
+import { T } from "../theme";
 
 const C = {
   bg: "#0A0A0F", card: "#13131A", card2: "#1C1C28", border: "#2A2A3A",

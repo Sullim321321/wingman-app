@@ -9,7 +9,7 @@ import { C, T } from "../theme";
 import { BackBar, Btn, g } from "../components";
 import { getProfile } from "../api";
 import * as SecureStore from "expo-secure-store";
-const API_BASE = require("../config").API_BASE;
+import { API_BASE } from "../config";
 
 // ---------------------------------------------------------------------------
 // Program metadata (mirrors backend LOYALTY_PROGRAMS)

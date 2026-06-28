@@ -4,7 +4,7 @@ import {
   Pressable, ActivityIndicator, Alert,
 } from "react-native";
 import { StripeProvider, useStripe } from "@stripe/stripe-react-native";
-import { C } from "../theme";
+import { C, T } from "../theme";
 import { g } from "../components";
 import { API_BASE, getToken } from "../api";
 

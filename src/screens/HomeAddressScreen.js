@@ -3,7 +3,7 @@ import {
   SafeAreaView, ScrollView, View, Text, TextInput,
   StyleSheet, Pressable, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
 } from "react-native";
-import { C } from "../theme";
+import { C, T } from "../theme";
 import { BackBar, g } from "../components";
 import { getProfile, updateProfile } from "../api";
 

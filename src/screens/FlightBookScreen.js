@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BackBar, Btn, g, tap } from "../components";
-import { C } from "../theme";
+import { C, T } from "../theme";
 import * as api from "../api";
 
 function formatTime(dt) {

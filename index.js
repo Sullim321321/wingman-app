@@ -11,7 +11,7 @@ let _setCrashInfo = null;
 function CrashScreen({ error }) {
   return (
     <View style={cs.container}>
-      <Text style={cs.title}>⚠ Fatal JS Error (Build 72)</Text>
+      <Text style={cs.title}>⚠ Fatal JS Error (Build 79)</Text>
       <ScrollView style={cs.scroll}>
         <Text style={cs.name}>{String(error?.name)}: {String(error?.message)}</Text>
         <Text style={cs.stack}>{String(error?.stack || "")}</Text>

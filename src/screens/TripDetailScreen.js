@@ -4,7 +4,7 @@ import {
   ActivityIndicator, Alert, RefreshControl, Share, Linking,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { C } from "../theme";
+import { C, T } from "../theme";
 import { Btn, BackBar, g } from "../components";
 import { getFlightStatus, getPrediction, refreshTrip, getTripRisk, recordTripOutcome, shareTripLink, getDestinationIntel, inviteCompanion, getCompanions } from "../api";
 import { API_BASE } from "../config";

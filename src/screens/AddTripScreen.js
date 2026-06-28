@@ -4,7 +4,7 @@ import {
   StyleSheet, Alert, ActivityIndicator, TouchableOpacity, Animated,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { C } from "../theme";
+import { C, T } from "../theme";
 import { BackBar, Btn, g, tap } from "../components";
 import { createTrip, getFlightStatus, draftTripFromText, scanEmailBody } from "../api";
 
@@ -244,7 +244,7 @@ export default function AddTripScreen({ navigation }) {
         {tab === "ai" && (
           <View>
             <LinearGradient
-              colors={[C.cardWarm, C.card]}
+              colors={[C.card2, C.card]}
               style={s.aiCard}
             >
               <Text style={s.aiHeadline}>One sentence.{"\n"}A complete trip drafted.</Text>

@@ -1,6 +1,5 @@
-// Build 77 — Binary search: screens 15-21 of the second batch
-// OnboardingScreen, SignInScreen, AddTripScreen, TripDetailScreen,
-// TasteSetupScreen, SubscriptionScreen, LoyaltyScreen
+// Build 78 — Binary search: screens 15-18
+// OnboardingScreen, SignInScreen, AddTripScreen, TripDetailScreen
 import React from "react";
 import { View, Text } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -29,14 +28,11 @@ import { setupNotificationHandler, registerForPush } from "./src/notify";
 import { AuthProvider, useAuth } from "./src/auth";
 import ErrorBoundary from "./src/ErrorBoundary";
 
-// Screens 15-21
+// Screens 15-18
 import OnboardingScreen from "./src/screens/OnboardingScreen";
 import SignInScreen from "./src/screens/SignInScreen";
 import AddTripScreen from "./src/screens/AddTripScreen";
 import TripDetailScreen from "./src/screens/TripDetailScreen";
-import TasteSetupScreen from "./src/screens/TasteSetupScreen";
-import SubscriptionScreen from "./src/screens/SubscriptionScreen";
-import LoyaltyScreen from "./src/screens/LoyaltyScreen";
 
 export const navRef = createNavigationContainerRef();
 const Stack = createNativeStackNavigator();
@@ -58,7 +54,7 @@ export default function App() {
         Wingman
       </Text>
       <Text style={{ color: "#fff", fontSize: 16, marginTop: 12 }}>
-        Screens 15-21 OK — Build 77
+        Screens 15-18 OK — Build 78
       </Text>
       <Text style={{ color: "#888", fontSize: 13, marginTop: 8 }}>
         Fonts: {fontsLoaded ? "loaded" : "loading..."}

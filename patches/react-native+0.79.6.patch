@@ -1,3 +1,34 @@
+diff --git a/node_modules/react-native/React/Base/RCTAssert.m b/node_modules/react-native/React/Base/RCTAssert.m
+index ca8542e..537a987 100644
+--- a/node_modules/react-native/React/Base/RCTAssert.m
++++ b/node_modules/react-native/React/Base/RCTAssert.m
+@@ -144,7 +144,8 @@ void RCTFatal(NSError *error)
+       // name: RCTFatalException: <underlying error description>
+       // reason: <underlying error description plus JS stack trace, truncated to 175 characters>
+       // userInfo: <underlying error userinfo, plus untruncated description plus JS stack trace>
+-      @throw [[NSException alloc] initWithName:name reason:message userInfo:userInfo];
++      // iOS 26 fix: @throw removed — NSException across dispatch queue → SIGABRT
++      NSLog(@"[RCTFatal] %@: %@", name, message);
+ #if DEBUG
+     } @catch (NSException *e) {
+     }
+@@ -211,14 +212,8 @@ void RCTFatalException(NSException *exception)
+   if (fatalExceptionHandler) {
+     fatalExceptionHandler(exception);
+   } else {
+-#if DEBUG
+-    @try {
+-#endif
+-      @throw exception;
+-#if DEBUG
+-    } @catch (NSException *e) {
+-    }
+-#endif
++    // iOS 26 fix: @throw removed — NSException across dispatch queue → SIGABRT
++    NSLog(@"[RCTFatalException] %@: %@", exception.name, exception.reason);
+   }
+ }
+ 
 diff --git a/node_modules/react-native/React/CxxModule/RCTNativeModule.mm b/node_modules/react-native/React/CxxModule/RCTNativeModule.mm
 index 3f86bc8..a5a2ff2 100644
 --- a/node_modules/react-native/React/CxxModule/RCTNativeModule.mm

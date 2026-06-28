@@ -153,6 +153,13 @@ function Tabs() {
 
 const KEY_PROFILE_DONE = "wingman_profile_done";
 
+function withTimeout(promise, ms = 3000, fallback = null) {
+  return Promise.race([
+    promise,
+    new Promise(resolve => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
 function Root() {
   const { token, ready } = useAuth();
   const [onboarded, setOnboarded]     = useState(null);
@@ -161,7 +168,7 @@ function Root() {
   useEffect(() => {
     (async () => {
       try {
-        const val = await SecureStore.getItemAsync("wingman_onboarded");
+        const val = await withTimeout(SecureStore.getItemAsync("wingman_onboarded"));
         setOnboarded(!!val);
       } catch {
         setOnboarded(false);
@@ -174,7 +181,7 @@ function Root() {
     if (!token) { setProfileDone(null); return; }
     (async () => {
       try {
-        const val = await SecureStore.getItemAsync(KEY_PROFILE_DONE);
+        const val = await withTimeout(SecureStore.getItemAsync(KEY_PROFILE_DONE));
         setProfileDone(!!val);
       } catch {
         setProfileDone(false);
@@ -289,7 +296,7 @@ function Root() {
 // ─── App root — loads fonts before rendering ──────────────────────────────────
 
 export default function App() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     PlayfairDisplay_400Regular,
     PlayfairDisplay_400Regular_Italic,
     PlayfairDisplay_700Bold,
@@ -298,8 +305,17 @@ export default function App() {
     DMSans_700Bold,
   });
 
+  // Safety timeout: if fonts haven't loaded after 5 s (e.g. native module stuck on iOS 26),
+  // proceed with system fonts rather than showing a permanent black screen.
+  const [fontTimeout, setFontTimeout] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setFontTimeout(true), 5000);
+    return () => clearTimeout(t);
+  }, []);
+
   // Show a warm splash while fonts load
-  if (!fontsLoaded) {
+  // fontError / fontTimeout: proceed with system fonts if loading fails
+  if (!fontsLoaded && !fontError && !fontTimeout) {
     return (
       <View style={{ flex: 1, backgroundColor: C.bg, alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator color={C.gold} />

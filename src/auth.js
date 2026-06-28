@@ -4,6 +4,15 @@ import { setToken } from "./api";
 
 const KEY_T = "wingman_token";
 const KEY_E = "wingman_email";
+
+// Timeout helper: if SecureStore native module is stuck (iOS 26 resilience),
+// resolve with null after 3 seconds rather than blocking forever.
+function withTimeout(promise, ms = 3000, fallback = null) {
+  return Promise.race([
+    promise,
+    new Promise(resolve => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
 const AuthCtx = createContext(null);
 
 // Decode JWT payload without verifying signature (client-side only)
@@ -34,8 +43,8 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     (async () => {
       try {
-        const t = await SecureStore.getItemAsync(KEY_T);
-        const e = await SecureStore.getItemAsync(KEY_E);
+        const t = await withTimeout(SecureStore.getItemAsync(KEY_T));
+        const e = await withTimeout(SecureStore.getItemAsync(KEY_E));
         if (t) {
           if (isTokenExpired(t)) {
             await SecureStore.deleteItemAsync(KEY_T);

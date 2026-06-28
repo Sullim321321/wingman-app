@@ -46,3 +46,21 @@ index 441a16f..0c2cd7a 100644
      } @finally {
        [retainedObjectsForInvocation removeAllObjects];
      }
+diff --git a/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModuleManager.mm b/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModuleManager.mm
+index 81dd4ef..b43d2c9 100644
+--- a/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModuleManager.mm
++++ b/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModuleManager.mm
+@@ -614,10 +614,9 @@ typedef struct {
+                   stringWithFormat:
+                       @"TurboModule %@ which requires main queue setup is initializing during sync rendering. This would have caused a deadlock. Please fix this by avoiding main queue setup or eager initializing this TurboModule.",
+                       NSStringFromClass(moduleClass)];
+-              NSException *exception = [NSException exceptionWithName:@"UnsafeTurboModuleException"
+-                                                               reason:reason
+-                                                             userInfo:nil];
+-              @throw exception;
++              // iOS 26 fix: @throw removed — propagating NSException across dispatch queue
++              // boundaries causes std::terminate() → SIGABRT. Log instead.
++              RCTLogError(@"%@", reason);
+             }
+           }
+           modulesSettingUpOnMainQueueCount++;

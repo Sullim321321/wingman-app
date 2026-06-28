@@ -1,9 +1,6 @@
-// Build 76 — Binary search: screens 15-27 imported (second half)
-// OnboardingScreen, SignInScreen, AddTripScreen, TripDetailScreen, TasteSetupScreen,
-// SubscriptionScreen, LoyaltyScreen, HomeAddressScreen, FlightSearchScreen,
-// FlightBookScreen, FlightConfirmScreen, DataSourcesScreen, AutonomySettingsScreen
-// (InsightsScreen, ProfileSetupScreen, WingmanWrappedScreen, CompensationScreen,
-//  UpgradeBidScreen, GroundTransportScreen NOT included yet — will narrow further)
+// Build 77 — Binary search: screens 15-21 of the second batch
+// OnboardingScreen, SignInScreen, AddTripScreen, TripDetailScreen,
+// TasteSetupScreen, SubscriptionScreen, LoyaltyScreen
 import React from "react";
 import { View, Text } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -32,7 +29,7 @@ import { setupNotificationHandler, registerForPush } from "./src/notify";
 import { AuthProvider, useAuth } from "./src/auth";
 import ErrorBoundary from "./src/ErrorBoundary";
 
-// Screens 15-27
+// Screens 15-21
 import OnboardingScreen from "./src/screens/OnboardingScreen";
 import SignInScreen from "./src/screens/SignInScreen";
 import AddTripScreen from "./src/screens/AddTripScreen";
@@ -40,18 +37,6 @@ import TripDetailScreen from "./src/screens/TripDetailScreen";
 import TasteSetupScreen from "./src/screens/TasteSetupScreen";
 import SubscriptionScreen from "./src/screens/SubscriptionScreen";
 import LoyaltyScreen from "./src/screens/LoyaltyScreen";
-import HomeAddressScreen from "./src/screens/HomeAddressScreen";
-import FlightSearchScreen from "./src/screens/FlightSearchScreen";
-import FlightBookScreen from "./src/screens/FlightBookScreen";
-import FlightConfirmScreen from "./src/screens/FlightConfirmScreen";
-import DataSourcesScreen from "./src/screens/DataSourcesScreen";
-import AutonomySettingsScreen from "./src/screens/AutonomySettingsScreen";
-import InsightsScreen from "./src/screens/InsightsScreen";
-import ProfileSetupScreen from "./src/screens/ProfileSetupScreen";
-import WingmanWrappedScreen from "./src/screens/WingmanWrappedScreen";
-import CompensationScreen from "./src/screens/CompensationScreen";
-import UpgradeBidScreen from "./src/screens/UpgradeBidScreen";
-import GroundTransportScreen from "./src/screens/GroundTransportScreen";
 
 export const navRef = createNavigationContainerRef();
 const Stack = createNativeStackNavigator();
@@ -73,7 +58,7 @@ export default function App() {
         Wingman
       </Text>
       <Text style={{ color: "#fff", fontSize: 16, marginTop: 12 }}>
-        Screens 15-27 OK — Build 76
+        Screens 15-21 OK — Build 77
       </Text>
       <Text style={{ color: "#888", fontSize: 13, marginTop: 8 }}>
         Fonts: {fontsLoaded ? "loaded" : "loading..."}

@@ -1,7 +1,19 @@
 diff --git a/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm b/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm
-index 441a16f..3275eee 100644
+index 441a16f..9ccc327 100644
 --- a/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm
 +++ b/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm
+@@ -373,9 +373,9 @@ id ObjCTurboModule::performMethodInvocation(
+         // We can only convert NSException to JSError in sync method calls.
+         // See https://github.com/reactwg/react-native-new-architecture/discussions/276#discussioncomment-12567155
+         throw convertNSExceptionToJSError(runtime, exception, std::string{moduleName}, methodNameStr);
+-      } else {
+-        @throw exception;
+       }
++      // async: silently drop NSException to prevent std::terminate() on iOS 26
++      // (re-throwing on a background dispatch queue escapes the queue and calls abort)
+     } @finally {
+       [retainedObjectsForInvocation removeAllObjects];
+     }
 @@ -437,8 +437,6 @@ void ObjCTurboModule::performVoidMethodInvocation(
  
      @try {

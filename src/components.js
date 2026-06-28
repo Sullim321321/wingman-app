@@ -9,14 +9,8 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { C, T, GRAD } from "./theme";
-// Safe BlurView — require() so a missing/broken native module doesn't crash at import time
-let _BlurView = null;
-try { _BlurView = require("expo-blur").BlurView; } catch (_) {}
-function SafeBlur({ intensity, tint, style, children }) {
-  if (_BlurView) {
-    const BV = _BlurView;
-    return <BV intensity={intensity} tint={tint} style={style}>{children}</BV>;
-  }
+// SafeBlur — expo-blur removed; renders a semi-opaque View instead of native UIVisualEffectView
+function SafeBlur({ style, children }) {
   return <View style={[style, { backgroundColor: "rgba(15,13,10,0.92)" }]}>{children}</View>;
 }
 

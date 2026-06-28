@@ -8,11 +8,8 @@ import { C, T, GRAD } from "../theme";
 import { SerifText, Btn, tap } from "../components";
 import { requestCode, verifyCode } from "../api";
 import { useAuth } from "../auth";
-// Safe BlurView fallback
-let _BlurView = null;
-try { _BlurView = require("expo-blur").BlurView; } catch (_) {}
-function SafeBlur({ intensity, tint, style, children }) {
-  if (_BlurView) { const BV = _BlurView; return <BV intensity={intensity} tint={tint} style={style}>{children}</BV>; }
+// SafeBlur — expo-blur removed; plain semi-opaque View
+function SafeBlur({ style, children }) {
   return <View style={[style, { backgroundColor: "rgba(15,13,10,0.92)" }]}>{children}</View>;
 }
 

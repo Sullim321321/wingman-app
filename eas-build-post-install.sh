@@ -1,27 +1,33 @@
 #!/bin/bash
-# EAS post-install hook: verify and apply RCTTurboModule.mm patch
-TURBO_FILE="node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm"
-echo "[eas-hook] Checking RCTTurboModule.mm..."
-if [ ! -f "$TURBO_FILE" ]; then
-  echo "[eas-hook] File not found: $TURBO_FILE"
-  exit 0
-fi
-echo "[eas-hook] @catch count before: $(grep -c '@catch' "$TURBO_FILE" || echo 0)"
-python3 - << 'PYEOF'
-import re
-with open('node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm') as f:
-    content = f.read()
-new_content = re.sub(
-    r'    \} @catch \(NSException \*exception\) \{.*?\n    \} @finally \{',
-    '    } @finally {',
-    content,
-    flags=re.DOTALL
-)
-if new_content != content:
-    with open('node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm', 'w') as f:
-        f.write(new_content)
-    print("[eas-hook] Patch applied successfully")
-else:
-    print("[eas-hook] No changes needed (already patched)")
+# EAS post-install hook: patch RCTNativeModule.mm and RCTTurboModule.mm (iOS 26 fix)
+echo "[eas-hook] Applying iOS 26 SIGABRT patches..."
+
+python3 << 'PYEOF'
+import re, os, glob
+
+base = 'node_modules/react-native'
+
+# Patch 1: RCTNativeModule.mm
+for p in glob.glob(f'{base}/**/RCTNativeModule.mm', recursive=True):
+    with open(p) as f: content = f.read()
+    old = "    // Pass on JS exceptions\n    if ([exception.name hasPrefix:RCTFatalExceptionName]) {\n      @throw exception;\n    }"
+    new = "    // iOS 26 fix: @throw removed to prevent SIGABRT across queue boundaries"
+    if old in content:
+        with open(p, 'w') as f: f.write(content.replace(old, new))
+        print(f"[eas-hook] Patched {p}")
+    else:
+        print(f"[eas-hook] {p} — no change needed")
+
+# Patch 2: RCTTurboModule.mm
+for p in glob.glob(f'{base}/**/RCTTurboModule.mm', recursive=True):
+    with open(p) as f: content = f.read()
+    new_content = re.sub(
+        r'    \} @catch \(NSException \*exception\) \{.*?\n    \} @finally \{',
+        '    } @finally {', content, flags=re.DOTALL)
+    if new_content != content:
+        with open(p, 'w') as f: f.write(new_content)
+        print(f"[eas-hook] Patched {p}")
+    else:
+        print(f"[eas-hook] {p} — no change needed")
 PYEOF
-echo "[eas-hook] @catch count after: $(grep -c '@catch' "$TURBO_FILE" || echo 0)"
+echo "[eas-hook] Done."

@@ -1,12 +1,9 @@
 /**
  * Expo config plugin: withRCTTurboModuleFix
  *
- * Patches RCTTurboModule.mm via Podfile post_install hook — runs AFTER pod install,
- * immediately before xcodebuild, guaranteeing the patch is compiled in.
- *
- * Removes ALL @catch blocks from performMethodInvocation and performVoidMethodInvocation
- * to prevent any NSException from being re-thrown on a background queue on iOS 26,
- * which causes std::terminate() → SIGABRT.
+ * Patches RCTNativeModule.mm and RCTTurboModule.mm via Podfile post_install hook.
+ * Removes all @throw / C++ throw paths that cause SIGABRT on iOS 26 when
+ * NSExceptions propagate across dispatch queue boundaries.
  *
  * Ref: https://github.com/reactwg/react-native-new-architecture/discussions/276
  */
@@ -35,24 +32,38 @@ const withRCTTurboModuleFix = (config) => {
         return config;
       }
 
-      // Ruby post_install: remove ALL @catch blocks from RCTTurboModule.mm
-      // Uses gsub with multiline regex to match the full @catch...@finally pattern
       const rubySnippet = `
-  # withRCTTurboModuleFix: Remove ALL @catch blocks from RCTTurboModule.mm (iOS 26 SIGABRT fix)
+  # withRCTTurboModuleFix: iOS 26 SIGABRT fix
+  # Removes @throw paths in RCTNativeModule.mm and RCTTurboModule.mm
+  # that cause std::terminate() when NSExceptions cross dispatch queue boundaries.
   # Ref: reactwg/react-native-new-architecture#276
+
+  # Patch 1: RCTNativeModule.mm — remove @throw in RCTFatalExceptionName check
+  Dir.glob(File.join(installer.sandbox.root.to_s, '..', 'node_modules', 'react-native', '**', 'RCTNativeModule.mm')).each do |mm_path|
+    content = File.read(mm_path)
+    original = content.dup
+    content.gsub!(
+      /    \/\/ Pass on JS exceptions\\n    if \\(\\[exception\\.name hasPrefix:RCTFatalExceptionName\\]\\) \\{\\n      @throw exception;\\n    \\}/,
+      "    // iOS 26 fix: @throw removed to prevent SIGABRT across queue boundaries"
+    )
+    if content != original
+      File.write(mm_path, content)
+      puts "[withRCTTurboModuleFix] Patched RCTNativeModule.mm"
+    else
+      puts "[withRCTTurboModuleFix] RCTNativeModule.mm — no change (has @throw: #{content.include?('@throw exception')})"
+    end
+  end
+
+  # Patch 2: RCTTurboModule.mm — remove all @catch blocks
   Dir.glob(File.join(installer.sandbox.root.to_s, '..', 'node_modules', 'react-native', '**', 'RCTTurboModule.mm')).each do |mm_path|
     content = File.read(mm_path)
     original = content.dup
-    # Remove any @catch block that precedes @finally in these methods
     content.gsub!(/    \\} @catch \\(NSException \\*exception\\) \\{.*?\\n    \\} @finally \\{/m, "    } @finally {")
     if content != original
       File.write(mm_path, content)
-      puts "[withRCTTurboModuleFix] Patched #{mm_path} — removed @catch blocks"
+      puts "[withRCTTurboModuleFix] Patched RCTTurboModule.mm"
     else
-      puts "[withRCTTurboModuleFix] #{mm_path} — no changes (already patched or pattern mismatch)"
-      # Log file size for debugging
-      puts "[withRCTTurboModuleFix] File size: #{content.length} bytes"
-      puts "[withRCTTurboModuleFix] Has @catch: #{content.include?('@catch')}"
+      puts "[withRCTTurboModuleFix] RCTTurboModule.mm — no change (has @catch: #{content.include?('@catch')})"
     end
   end`;
 

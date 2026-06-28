@@ -1,3 +1,23 @@
+diff --git a/node_modules/react-native/React/CxxModule/RCTNativeModule.mm b/node_modules/react-native/React/CxxModule/RCTNativeModule.mm
+index 3f86bc8..a5a2ff2 100644
+--- a/node_modules/react-native/React/CxxModule/RCTNativeModule.mm
++++ b/node_modules/react-native/React/CxxModule/RCTNativeModule.mm
+@@ -210,10 +210,11 @@ static MethodCallResult invokeInner(
+       BridgeNativeModulePerfLogger::asyncMethodCallExecutionFail(moduleName, methodName, (int32_t)callId);
+     }
+ 
+-    // Pass on JS exceptions
+-    if ([exception.name hasPrefix:RCTFatalExceptionName]) {
+-      @throw exception;
+-    }
++    // iOS 26 fix: do NOT re-throw — propagating NSException across dispatch queue
++    // boundaries calls std::terminate() → SIGABRT. Let RCTFatalException handle it.
++    // if ([exception.name hasPrefix:RCTFatalExceptionName]) {
++    //   @throw exception;
++    // }
+ 
+ #if RCT_DEBUG
+     NSString *message = [NSString
 diff --git a/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm b/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm
 index 441a16f..0c2cd7a 100644
 --- a/node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios/ReactCommon/RCTTurboModule.mm

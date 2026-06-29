@@ -59,29 +59,26 @@ export default function ProfileSetupScreen({ navigation }) {
   const next = () => setStep(s => s + 1);
 
   const finish = async () => {
+    if (busy) return;
     setBusy(true);
-    setErr("");
-    try {
-      await updateProfile({
-        first_name: firstName.trim(),
-        preferences: {
-          cabin_preference: cabin,
-          seat_preference: travelStyles.includes("window") ? "window" : travelStyles.includes("aisle") ? "aisle" : null,
-          direct_only: travelStyles.includes("direct"),
-          points_maximiser: travelStyles.includes("points"),
-          payment_preference: travelStyles.includes("points") ? "best_value" : "cash_first",
-          taste_setup_complete: true,
-        },
-      });
-      await updateLocale({ locale, currency });
-      await SecureStore.setItemAsync(KEY_PROFILE_DONE, "1");
-      navigation.replace("Tabs");
-    } catch (e) {
-      setErr("Couldn't save your profile. Try again.");
-      setBusy(false);
-      return;
-    }
-    setBusy(false);
+    // Mark profile done locally first — never block navigation on a network error.
+    try { await SecureStore.setItemAsync(KEY_PROFILE_DONE, "1"); } catch (_) {}
+    // Fire API saves in background (don't await — a failure here is non-fatal)
+    updateProfile({
+      first_name: firstName.trim(),
+      preferences: {
+        cabin_preference: cabin,
+        seat_preference: travelStyles.includes("window") ? "window" : travelStyles.includes("aisle") ? "aisle" : null,
+        direct_only: travelStyles.includes("direct"),
+        points_maximiser: travelStyles.includes("points"),
+        payment_preference: travelStyles.includes("points") ? "best_value" : "cash_first",
+        taste_setup_complete: true,
+      },
+    }).catch(e => console.warn("[ProfileSetup] updateProfile:", e.message));
+    updateLocale({ locale, currency })
+      .catch(e => console.warn("[ProfileSetup] updateLocale:", e.message));
+    // Reset the stack so the user lands on Tabs and can't swipe back to setup
+    navigation.reset({ index: 0, routes: [{ name: "Tabs" }] });
   };
 
   return (

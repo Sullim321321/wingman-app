@@ -283,9 +283,6 @@ export const getWrapped = (year = new Date().getFullYear()) =>
 // ─── DAY-OF-FLIGHT BRIEFING ───────────────────────────────────────────────────
 export const getTripBriefing = (tripId) =>
   req("/trips/" + tripId + "/briefing");
-// ─── DESTINATION INTELLIGENCE ─────────────────────────────────────────────────
-export const getDestinationIntel = (tripId) =>
-  req("/trips/" + tripId + "/destination-intel");
 // ─── GROUP TRAVEL / COMPANIONS ────────────────────────────────────────────────
 export const inviteCompanion = (tripId, inviteeEmail) =>
   req("/trips/" + tripId + "/companions/invite", {

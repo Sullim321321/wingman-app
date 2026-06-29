@@ -1,7 +1,7 @@
-// SignInScreen — multi-method auth
-// Methods: Sign in with Apple (primary), Face ID/Touch ID (returning users),
-//          SMS OTP, Email OTP (fallback)
-import React, { useState, useRef, useEffect } from "react";
+// SignInScreen — multi-method auth — Build 87
+// Methods: Face ID / Touch ID, Sign in with Apple, SMS OTP, Email OTP
+// Full error states: resend cooldown, expired code, rate limit, wrong number, email fallback
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   SafeAreaView, KeyboardAvoidingView, View, Text, TextInput,
   Platform, StyleSheet, Animated, Easing, Pressable, ActivityIndicator,
@@ -17,9 +17,25 @@ import { useAuth } from "../auth";
 
 const KEY_T = "wingman_token";
 const KEY_E = "wingman_email";
+const RESEND_COOLDOWN = 30; // seconds
 
 function SafeBlur({ style, children }) {
   return <View style={[style, { backgroundColor: "rgba(15,13,10,0.92)" }]}>{children}</View>;
+}
+
+function ResendTimer({ seconds, onResend, busy }) {
+  if (seconds > 0) {
+    return (
+      <Text style={s.resendTimer}>
+        Resend code in <Text style={{ color: C.gold }}>{seconds}s</Text>
+      </Text>
+    );
+  }
+  return (
+    <Pressable style={s.resendBtn} onPress={onResend} disabled={busy}>
+      <Text style={s.resendBtnT}>Resend code</Text>
+    </Pressable>
+  );
 }
 
 export default function SignInScreen() {
@@ -31,11 +47,15 @@ export default function SignInScreen() {
   const [code, setCode]       = useState("");
   const [busy, setBusy]       = useState(false);
   const [err, setErr]         = useState("");
+  const [errType, setErrType] = useState(""); // "wrong_code" | "expired" | "rate_limit" | "network" | ""
+  const [attempts, setAttempts] = useState(0);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const [biometricAvail, setBiometricAvail] = useState(false);
   const [appleAvail, setAppleAvail]         = useState(false);
 
   const fadeAnim  = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(24)).current;
+  const timerRef  = useRef(null);
 
   useEffect(() => {
     Animated.parallel([
@@ -43,7 +63,6 @@ export default function SignInScreen() {
       Animated.timing(slideAnim, { toValue: 0, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
     ]).start();
 
-    // Check biometric availability — only useful for returning users who have a stored token
     (async () => {
       try {
         const has = await LocalAuthentication.hasHardwareAsync();
@@ -51,19 +70,56 @@ export default function SignInScreen() {
           const enrolled = await LocalAuthentication.isEnrolledAsync();
           if (enrolled) {
             const t = await SecureStore.getItemAsync(KEY_T);
-            if (t) setBiometricAvail(true); // only show if there's a stored session
+            if (t) setBiometricAvail(true);
           }
         }
       } catch (_) {}
     })();
 
-    // Check Sign in with Apple availability (iOS 13+)
     AppleAuthentication.isAvailableAsync().then(setAppleAvail).catch(() => {});
+
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
+
+  const startResendTimer = useCallback(() => {
+    setResendCooldown(RESEND_COOLDOWN);
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setResendCooldown(prev => {
+        if (prev <= 1) { clearInterval(timerRef.current); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
+
+  // ── Error message mapping ──────────────────────────────────────────────────
+  const parseError = (e, context = "") => {
+    const msg = (e?.message || "").toLowerCase();
+    if (msg.includes("rate") || msg.includes("too many") || msg.includes("429")) {
+      setErrType("rate_limit");
+      return "Too many attempts. Please wait a few minutes before trying again.";
+    }
+    if (msg.includes("expired") || msg.includes("invalid") || msg.includes("not found")) {
+      if (context === "verify") {
+        setErrType("wrong_code");
+        return "That code didn't match. Double-check and try again, or request a new one.";
+      }
+    }
+    if (msg.includes("network") || msg.includes("fetch") || msg.includes("connect")) {
+      setErrType("network");
+      return "Connection error. Check your internet and try again.";
+    }
+    if (msg.includes("phone") || msg.includes("number") || msg.includes("invalid")) {
+      setErrType("wrong_number");
+      return "Invalid phone number. Make sure to include your country code (e.g. +1 555 000 0000).";
+    }
+    setErrType("");
+    return e?.message || "Something went wrong. Please try again.";
+  };
 
   // ── Biometric unlock ────────────────────────────────────────────────────────
   const tryBiometric = async () => {
-    setBusy(true); setErr("");
+    setBusy(true); setErr(""); setErrType("");
     try {
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: "Unlock Wingman",
@@ -73,16 +129,16 @@ export default function SignInScreen() {
       if (!result.success) { setBusy(false); return; }
       const t = await SecureStore.getItemAsync(KEY_T);
       const e = await SecureStore.getItemAsync(KEY_E);
-      if (!t) { setErr("No saved session found. Please sign in again."); setBusy(false); return; }
+      if (!t) { setErr("No saved session found. Please sign in again."); setErrType(""); setBusy(false); return; }
       await signIn(t, e);
     } catch (_) {
-      setErr("Biometric authentication failed.");
+      setErr("Biometric authentication failed. Try another sign-in method.");
     } finally { setBusy(false); }
   };
 
   // ── Sign in with Apple ──────────────────────────────────────────────────────
   const tryApple = async () => {
-    setBusy(true); setErr("");
+    setBusy(true); setErr(""); setErrType("");
     try {
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
@@ -105,47 +161,107 @@ export default function SignInScreen() {
 
   // ── Email OTP ───────────────────────────────────────────────────────────────
   const sendEmailCode = async () => {
-    setErr(""); setBusy(true);
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed || !trimmed.includes("@")) {
+      setErr("Enter a valid email address."); setErrType(""); return;
+    }
+    setErr(""); setErrType(""); setBusy(true);
     try {
-      await requestCode(email.trim());
+      await requestCode(trimmed);
       setStage("code");
-    } catch (_) {
-      setErr("Couldn't send code. Check your connection.");
+      setAttempts(0);
+      startResendTimer();
+    } catch (e) {
+      setErr(parseError(e));
     } finally { setBusy(false); }
   };
 
   const verifyEmailCode = async () => {
-    setErr(""); setBusy(true);
+    if (!code.trim() || code.trim().length < 6) {
+      setErr("Enter the 6-digit code from your email."); setErrType(""); return;
+    }
+    setErr(""); setErrType(""); setBusy(true);
     try {
-      const r = await verifyCode(email.trim(), code.trim());
+      const r = await verifyCode(email.trim().toLowerCase(), code.trim());
       await signIn(r.token, r.email);
-    } catch (_) {
-      setErr("That code didn't work. Try again.");
+    } catch (e) {
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
+      setErr(parseError(e, "verify"));
+      if (newAttempts >= 3) {
+        setErrType("too_many_attempts");
+      }
+    } finally { setBusy(false); }
+  };
+
+  const resendEmailCode = async () => {
+    setErr(""); setErrType(""); setCode(""); setBusy(true);
+    try {
+      await requestCode(email.trim().toLowerCase());
+      setAttempts(0);
+      startResendTimer();
+    } catch (e) {
+      setErr(parseError(e));
     } finally { setBusy(false); }
   };
 
   // ── SMS OTP ─────────────────────────────────────────────────────────────────
   const sendSmsCode = async () => {
-    setErr(""); setBusy(true);
+    const trimmed = phone.trim();
+    if (!trimmed || trimmed.length < 7) {
+      setErr("Enter a valid phone number with country code (e.g. +1 555 000 0000)."); setErrType(""); return;
+    }
+    setErr(""); setErrType(""); setBusy(true);
     try {
-      await requestSmsCode(phone.trim());
+      await requestSmsCode(trimmed);
       setStage("code");
-    } catch (_) {
-      setErr("Couldn't send SMS. Check your number.");
+      setAttempts(0);
+      startResendTimer();
+    } catch (e) {
+      setErr(parseError(e));
     } finally { setBusy(false); }
   };
 
   const verifySmsCodeFn = async () => {
-    setErr(""); setBusy(true);
+    if (!code.trim() || code.trim().length < 6) {
+      setErr("Enter the 6-digit code from your text message."); setErrType(""); return;
+    }
+    setErr(""); setErrType(""); setBusy(true);
     try {
       const r = await verifySmsCode(phone.trim(), code.trim());
       await signIn(r.token, r.email);
-    } catch (_) {
-      setErr("That code didn't work. Try again.");
+    } catch (e) {
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
+      setErr(parseError(e, "verify"));
+      if (newAttempts >= 3) {
+        setErrType("too_many_attempts");
+      }
     } finally { setBusy(false); }
   };
 
-  const reset = () => { setMethod("choose"); setStage("input"); setCode(""); setErr(""); };
+  const resendSmsCode = async () => {
+    setErr(""); setErrType(""); setCode(""); setBusy(true);
+    try {
+      await requestSmsCode(phone.trim());
+      setAttempts(0);
+      startResendTimer();
+    } catch (e) {
+      setErr(parseError(e));
+    } finally { setBusy(false); }
+  };
+
+  const reset = () => {
+    setMethod("choose"); setStage("input"); setCode(""); setErr(""); setErrType("");
+    setAttempts(0); setResendCooldown(0);
+    if (timerRef.current) clearInterval(timerRef.current);
+  };
+
+  const switchToEmail = () => {
+    setMethod("email"); setStage("input"); setCode(""); setErr(""); setErrType("");
+    setAttempts(0); setResendCooldown(0);
+    if (timerRef.current) clearInterval(timerRef.current);
+  };
 
   return (
     <SafeAreaView style={s.app}>
@@ -163,7 +279,16 @@ export default function SignInScreen() {
           <SerifText bold style={s.h}>Welcome back.</SerifText>
           <Text style={s.sub}>Sign in to your Wingman account.</Text>
 
-          {err ? <Text style={s.err}>{err}</Text> : null}
+          {err ? (
+            <View style={[s.errBox, errType === "rate_limit" && { borderColor: C.coral + "60" }]}>
+              <Text style={s.errText}>{err}</Text>
+              {errType === "too_many_attempts" && method === "sms" && (
+                <Pressable onPress={switchToEmail} style={s.errAction}>
+                  <Text style={s.errActionT}>Try email sign-in instead →</Text>
+                </Pressable>
+              )}
+            </View>
+          ) : null}
 
           {/* ── Method chooser ── */}
           {method === "choose" && (
@@ -225,14 +350,14 @@ export default function SignInScreen() {
               <Text style={s.cardSub}>
                 {stage === "input"
                   ? "We'll send a one-time sign-in code."
-                  : `Code sent to ${email.trim()}. Expires in 10 minutes.`}
+                  : `Code sent to ${email.trim().toLowerCase()}. Expires in 10 minutes.`}
               </Text>
               <View style={s.inputWrap}>
                 {stage === "input" ? (
                   <TextInput
                     style={s.input}
                     value={email}
-                    onChangeText={t => { setEmail(t); setErr(""); }}
+                    onChangeText={t => { setEmail(t); setErr(""); setErrType(""); }}
                     placeholder="your@email.com"
                     placeholderTextColor={C.mut}
                     keyboardType="email-address"
@@ -241,12 +366,13 @@ export default function SignInScreen() {
                     autoComplete="email"
                     returnKeyType="done"
                     onSubmitEditing={sendEmailCode}
+                    autoFocus
                   />
                 ) : (
                   <TextInput
                     style={[s.input, s.codeInput]}
                     value={code}
-                    onChangeText={t => { setCode(t.replace(/\D/g, "").slice(0, 6)); setErr(""); }}
+                    onChangeText={t => { setCode(t.replace(/\D/g, "").slice(0, 6)); setErr(""); setErrType(""); }}
                     placeholder="000000"
                     placeholderTextColor={C.mut}
                     keyboardType="number-pad"
@@ -266,6 +392,9 @@ export default function SignInScreen() {
                     style={{ marginHorizontal: 4 }}
                   />
                 )}
+                {stage === "code" && !busy && (
+                  <ResendTimer seconds={resendCooldown} onResend={resendEmailCode} busy={busy} />
+                )}
                 <Pressable style={s.backLink} onPress={reset}>
                   <Text style={s.backLinkT}>← Other sign-in options</Text>
                 </Pressable>
@@ -279,7 +408,7 @@ export default function SignInScreen() {
               <Text style={s.cardTitle}>{stage === "input" ? "Enter your number" : "Check your texts"}</Text>
               <Text style={s.cardSub}>
                 {stage === "input"
-                  ? "We'll text you a one-time sign-in code."
+                  ? "We'll text you a one-time sign-in code. Include country code."
                   : `Code sent to ${phone.trim()}. Expires in 10 minutes.`}
               </Text>
               <View style={s.inputWrap}>
@@ -287,19 +416,20 @@ export default function SignInScreen() {
                   <TextInput
                     style={s.input}
                     value={phone}
-                    onChangeText={t => { setPhone(t); setErr(""); }}
+                    onChangeText={t => { setPhone(t); setErr(""); setErrType(""); }}
                     placeholder="+1 555 000 0000"
                     placeholderTextColor={C.mut}
                     keyboardType="phone-pad"
                     autoComplete="tel"
                     returnKeyType="done"
                     onSubmitEditing={sendSmsCode}
+                    autoFocus
                   />
                 ) : (
                   <TextInput
                     style={[s.input, s.codeInput]}
                     value={code}
-                    onChangeText={t => { setCode(t.replace(/\D/g, "").slice(0, 6)); setErr(""); }}
+                    onChangeText={t => { setCode(t.replace(/\D/g, "").slice(0, 6)); setErr(""); setErrType(""); }}
                     placeholder="000000"
                     placeholderTextColor={C.mut}
                     keyboardType="number-pad"
@@ -318,6 +448,14 @@ export default function SignInScreen() {
                     onPress={stage === "input" ? sendSmsCode : verifySmsCodeFn}
                     style={{ marginHorizontal: 4 }}
                   />
+                )}
+                {stage === "code" && !busy && (
+                  <ResendTimer seconds={resendCooldown} onResend={resendSmsCode} busy={busy} />
+                )}
+                {stage === "code" && !busy && (
+                  <Pressable style={s.switchMethod} onPress={switchToEmail}>
+                    <Text style={s.switchMethodT}>Not getting texts? Try email instead →</Text>
+                  </Pressable>
                 )}
                 <Pressable style={s.backLink} onPress={reset}>
                   <Text style={s.backLinkT}>← Other sign-in options</Text>
@@ -342,28 +480,36 @@ const s = StyleSheet.create({
   wrap:       { flex: 1, justifyContent: "center", paddingHorizontal: 26 },
   content:    { alignItems: "center" },
   markWrap:   { marginBottom: 24 },
-  markGrad:   { width: 68, height: 68, borderRadius: 21, alignItems: "center", justifyContent: "center", shadowColor: C.gold, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 18 },
+  markGrad:   { width: 68, height: 68, borderRadius: 21, alignItems: "center", justifyContent: "center", shadowColor: C.gold, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.45, shadowRadius: 18 },
   markIcon:   { color: "#0F0D0A", fontSize: 26, fontFamily: T.sansB },
-  h:          { color: C.ink, fontSize: 30, marginBottom: 6, letterSpacing: -0.5 },
-  sub:        { color: C.mut, fontSize: 14, fontFamily: T.sans, marginBottom: 20, textAlign: "center" },
-  err:        { color: C.coral, fontSize: 13, fontFamily: T.sansM, marginBottom: 12, textAlign: "center" },
-  card:       { width: "100%", borderRadius: 24, borderWidth: 1, borderColor: C.line, overflow: "hidden", paddingVertical: 4 },
-  cardTitle:  { color: C.ink, fontSize: 17, fontFamily: T.sansB, paddingHorizontal: 16, paddingTop: 14, marginBottom: 4 },
-  cardSub:    { color: C.mut, fontSize: 13, fontFamily: T.sans, paddingHorizontal: 16, marginBottom: 12, lineHeight: 19 },
-  authRow:    { flexDirection: "row", alignItems: "center", padding: 14, gap: 14 },
+  h:          { color: C.ink, fontSize: 28, marginBottom: 6 },
+  sub:        { color: C.mut, fontSize: 14, fontFamily: T.sans, marginBottom: 24 },
+  errBox:     { width: "100%", backgroundColor: C.coral + "18", borderRadius: 14, borderWidth: 1, borderColor: C.coral + "40", padding: 14, marginBottom: 14 },
+  errText:    { color: C.coral, fontSize: 13, fontFamily: T.sansM, lineHeight: 19 },
+  errAction:  { marginTop: 8 },
+  errActionT: { color: C.gold, fontSize: 13, fontFamily: T.sansM },
+  card:       { width: "100%", borderRadius: 22, borderWidth: 1, borderColor: C.line, overflow: "hidden", marginBottom: 16 },
+  cardTitle:  { color: C.ink, fontSize: 16, fontFamily: T.sansB, paddingHorizontal: 18, paddingTop: 18, paddingBottom: 4 },
+  cardSub:    { color: C.mut, fontSize: 13, fontFamily: T.sans, paddingHorizontal: 18, paddingBottom: 14, lineHeight: 19 },
+  inputWrap:  { paddingHorizontal: 14, paddingBottom: 14 },
+  input:      { backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 12, padding: 14, borderWidth: 1, borderColor: C.line, color: C.ink, fontSize: 16, fontFamily: T.sans },
+  codeInput:  { letterSpacing: 6, fontSize: 22, textAlign: "center" },
+  btnGroup:   { paddingHorizontal: 14, paddingBottom: 16, gap: 10 },
+  backLink:   { alignItems: "center", padding: 6 },
+  backLinkT:  { color: C.mut, fontSize: 13, fontFamily: T.sansM },
+  resendTimer:{ color: C.mut, fontSize: 13, fontFamily: T.sans, textAlign: "center", paddingVertical: 4 },
+  resendBtn:  { alignItems: "center", padding: 6 },
+  resendBtnT: { color: C.teal, fontSize: 13, fontFamily: T.sansM },
+  switchMethod:{ alignItems: "center", padding: 4 },
+  switchMethodT:{ color: C.gold, fontSize: 13, fontFamily: T.sansM },
+  authRow:    { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 16, gap: 14 },
   authRowBorder: { borderTopWidth: 1, borderTopColor: C.line },
-  authIcon:   { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-  authIconText: { fontSize: 20 },
+  authIcon:   { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  authIconText: { fontSize: 18 },
   authInfo:   { flex: 1 },
   authTitle:  { color: C.ink, fontSize: 15, fontFamily: T.sansM },
   authSub:    { color: C.mut, fontSize: 12, fontFamily: T.sans, marginTop: 2 },
-  authChev:   { color: C.mut, fontSize: 20, fontFamily: T.sansM },
-  inputWrap:  { paddingHorizontal: 14, marginBottom: 4 },
-  input:      { backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 14, padding: 14, borderWidth: 1, borderColor: C.line, color: C.ink, fontSize: 16, fontFamily: T.sans },
-  codeInput:  { letterSpacing: 8, fontSize: 22, textAlign: "center", fontFamily: T.sansB },
-  btnGroup:   { paddingHorizontal: 14, paddingBottom: 14, gap: 8 },
-  backLink:   { alignItems: "center", padding: 6 },
-  backLinkT:  { color: C.mut, fontSize: 13, fontFamily: T.sansM },
-  privacy:    { color: C.mut, fontSize: 11, fontFamily: T.sans, textAlign: "center", lineHeight: 16, marginTop: 20, paddingHorizontal: 10 },
-  wordmark:   { position: "absolute", bottom: 32, alignSelf: "center", color: C.mut + "60", fontSize: 10, fontFamily: T.sansB, letterSpacing: 6 },
+  authChev:   { color: C.mut, fontSize: 20, fontFamily: T.sans },
+  privacy:    { color: C.mut, fontSize: 11, fontFamily: T.sans, textAlign: "center", lineHeight: 17, marginTop: 8 },
+  wordmark:   { position: "absolute", bottom: 24, alignSelf: "center", color: C.line, fontSize: 10, fontFamily: T.sansB, letterSpacing: 6 },
 });

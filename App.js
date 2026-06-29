@@ -69,6 +69,7 @@ import WingmanPointsScreen from "./src/screens/WingmanPointsScreen";
 import DestinationScreen from "./src/screens/DestinationScreen";
 import AirportDiningScreen from "./src/screens/AirportDiningScreen";
 import AirportNavigationScreen from "./src/screens/AirportNavigationScreen";
+import LoungeCardsScreen from "./src/screens/LoungeCardsScreen";
 
 export const navRef = createNavigationContainerRef();
 const Stack = createNativeStackNavigator();
@@ -209,8 +210,17 @@ function Root() {
       if (data.tripId)      params.tripId      = data.tripId;
       if (data.legId)       params.legId       = data.legId;
       if (data.flightIdent) params.flightIdent = data.flightIdent;
-      if (data.prefill) params.prefill = data.prefill;
-      if (["Alert", "TripDetail", "Concierge"].includes(route)) {
+      if (data.prefill)     params.prefill     = data.prefill;
+      if (data.iata)        params.iata        = data.iata;
+      if (data.gate)        params.gate        = data.gate;
+      // All deep-linkable routes — pass params where relevant
+      const PARAM_ROUTES = [
+        "Alert", "TripDetail", "Concierge",
+        "AirportDining", "AirportNavigation", "GroundTransport",
+        "Destination", "WingmanPoints", "InsightsFull",
+        "Compensation", "UpgradeBid",
+      ];
+      if (PARAM_ROUTES.includes(route)) {
         navRef.navigate(route, Object.keys(params).length ? params : undefined);
       } else {
         navRef.navigate(route);
@@ -227,6 +237,9 @@ function Root() {
         if (data.tripId)      params.tripId      = data.tripId;
         if (data.legId)       params.legId       = data.legId;
         if (data.flightIdent) params.flightIdent = data.flightIdent;
+        if (data.iata)        params.iata        = data.iata;
+        if (data.gate)        params.gate        = data.gate;
+        if (data.prefill)     params.prefill     = data.prefill;
         navRef.navigate(route, Object.keys(params).length ? params : undefined);
       }, 600);
     });
@@ -288,6 +301,7 @@ function Root() {
             <Stack.Screen name="Destination"       component={DestinationScreen} />
             <Stack.Screen name="AirportDining"      component={AirportDiningScreen} />
             <Stack.Screen name="AirportNavigation"  component={AirportNavigationScreen} />
+            <Stack.Screen name="LoungeCards"          component={LoungeCardsScreen} />
             <Stack.Screen name="Main"         component={Tabs} />
           </>
         ) : (

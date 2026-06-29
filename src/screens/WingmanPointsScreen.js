@@ -1,21 +1,21 @@
-// WingmanPointsScreen — gamification hub
-// Tier progress bar, balance, earn history, action checklist
+// WingmanPointsScreen — Build 87
+// Tier progress, balance, earn checklist, redemption catalog
 import React, { useState, useCallback } from "react";
 import {
   SafeAreaView, View, Text, ScrollView, Pressable,
-  StyleSheet, ActivityIndicator,
+  StyleSheet, ActivityIndicator, Alert, Modal,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
-import { C, T } from "../theme";
-import { SerifText } from "../components";
-import { getPoints } from "../api";
+import { C, T, GRAD } from "../theme";
+import { SerifText, tap } from "../components";
+import { getPoints, redeemPoints } from "../api";
 
 const TIER_COLORS = {
-  explorer:  { bg: C.card,   accent: C.mut,  label: "EXPLORER"  },
-  flyer:     { bg: "#1A1F2E", accent: "#5B8CFF", label: "FLYER"  },
-  navigator: { bg: "#1E1A10", accent: C.gold,   label: "NAVIGATOR" },
-  elite:     { bg: "#1A0F0A", accent: "#FF9F43", label: "ELITE"    },
+  explorer:  { bg: C.card,    accent: C.mut,     label: "EXPLORER"  },
+  flyer:     { bg: "#1A1F2E", accent: "#5B8CFF", label: "FLYER"     },
+  navigator: { bg: "#1E1A10", accent: C.gold,    label: "NAVIGATOR" },
+  elite:     { bg: "#1A0F0A", accent: "#FF9F43", label: "ELITE"     },
 };
 
 const EARN_ACTIONS = [
@@ -37,17 +37,99 @@ const TIER_PERKS = {
   elite:     ["White-glove rescue", "Points transfer advice", "Dedicated concierge mode"],
 };
 
-export default function WingmanPointsScreen({ navigation }) {
-  const [data, setData]       = useState(null);
-  const [loading, setLoading] = useState(true);
+const REDEEMABLE_PERKS = [
+  { id: "priority_support", cost: 300, label: "Priority Support",   icon: "⚡", desc: "Jump to the front of the support queue for your next issue.", color: "#5B8CFF" },
+  { id: "upgrade_boost",    cost: 400, label: "Upgrade Bid Boost",  icon: "🚀", desc: "2× points on your next upgrade bid — doubles your chances.", color: C.gold },
+  { id: "free_month",       cost: 500, label: "1 Month Free",       icon: "✦",  desc: "One full month of Wingman Premium at no charge.", color: "#FF9F43" },
+  { id: "lounge_day_pass",  cost: 600, label: "Lounge Day Pass",    icon: "◈",  desc: "One-day Priority Pass lounge access at any participating airport.", color: "#4ECDC4" },
+  { id: "concierge_call",   cost: 800, label: "Concierge Call",     icon: "◆",  desc: "30-minute call with a Wingman travel expert — your personal fixer.", color: "#C9A96E" },
+];
 
-  useFocusEffect(useCallback(() => {
+function RedeemModal({ perk, balance, onConfirm, onCancel, redeeming }) {
+  const canAfford = balance >= perk.cost;
+  return (
+    <Modal transparent animationType="fade" visible>
+      <View style={m.overlay}>
+        <View style={m.sheet}>
+          <LinearGradient colors={["#1A1610", "#0F0D0A"]} style={StyleSheet.absoluteFill} />
+          <View style={[m.perkIcon, { backgroundColor: perk.color + "20", borderColor: perk.color + "40" }]}>
+            <Text style={[m.perkIconT, { color: perk.color }]}>{perk.icon}</Text>
+          </View>
+          <Text style={m.title}>{perk.label}</Text>
+          <Text style={m.desc}>{perk.desc}</Text>
+          <View style={m.costRow}>
+            <Text style={m.costLabel}>Cost</Text>
+            <LinearGradient colors={GRAD.gold} style={m.costBadge}>
+              <Text style={m.costBadgeT}>{perk.cost.toLocaleString()} pts</Text>
+            </LinearGradient>
+          </View>
+          {!canAfford && (
+            <View style={m.insufficientBanner}>
+              <Text style={m.insufficientT}>
+                You need {(perk.cost - balance).toLocaleString()} more points to redeem this perk.
+              </Text>
+            </View>
+          )}
+          <View style={m.btnRow}>
+            <Pressable style={m.cancelBtn} onPress={onCancel} disabled={redeeming}>
+              <Text style={m.cancelBtnT}>Cancel</Text>
+            </Pressable>
+            <Pressable
+              style={[m.confirmBtn, !canAfford && m.confirmBtnDisabled]}
+              onPress={canAfford ? onConfirm : undefined}
+              disabled={!canAfford || redeeming}
+            >
+              {redeeming
+                ? <ActivityIndicator color="#0F0D0A" size="small" />
+                : <Text style={m.confirmBtnT}>Redeem →</Text>}
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+export default function WingmanPointsScreen({ navigation }) {
+  const [data, setData]           = useState(null);
+  const [loading, setLoading]     = useState(true);
+  const [selectedPerk, setSelectedPerk] = useState(null);
+  const [redeeming, setRedeeming] = useState(false);
+
+  const load = useCallback(() => {
     setLoading(true);
     getPoints()
       .then(d => setData(d))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []));
+  }, []);
+
+  useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  const handleRedeem = async () => {
+    if (!selectedPerk) return;
+    setRedeeming(true);
+    try {
+      const r = await redeemPoints(selectedPerk.id);
+      setSelectedPerk(null);
+      // Refresh balance
+      const updated = await getPoints();
+      setData(updated);
+      Alert.alert(
+        "Redeemed! ✦",
+        `${selectedPerk.label} has been applied to your account. New balance: ${r.new_balance.toLocaleString()} pts.`,
+        [{ text: "Done", style: "default" }]
+      );
+    } catch (e) {
+      setSelectedPerk(null);
+      const msg = e?.message || "";
+      if (msg.includes("insufficient")) {
+        Alert.alert("Not enough points", "Earn more points to unlock this perk.");
+      } else {
+        Alert.alert("Couldn't redeem", msg || "Please try again.");
+      }
+    } finally { setRedeeming(false); }
+  };
 
   if (loading) {
     return (
@@ -102,7 +184,6 @@ export default function WingmanPointsScreen({ navigation }) {
             </View>
           </View>
 
-          {/* Progress bar */}
           {nextTier && (
             <View style={s.progressWrap}>
               <View style={s.progressBar}>
@@ -135,6 +216,36 @@ export default function WingmanPointsScreen({ navigation }) {
           ))}
         </View>
 
+        {/* Redemption catalog */}
+        <Text style={s.sectionT}>REDEEM POINTS</Text>
+        <View style={s.redeemGrid}>
+          {REDEEMABLE_PERKS.map(perk => {
+            const canAfford = balance >= perk.cost;
+            return (
+              <Pressable
+                key={perk.id}
+                style={[s.redeemCard, !canAfford && s.redeemCardLocked]}
+                onPress={() => { tap(); setSelectedPerk(perk); }}
+              >
+                <LinearGradient
+                  colors={canAfford ? [perk.color + "18", "transparent"] : ["transparent", "transparent"]}
+                  style={StyleSheet.absoluteFill}
+                />
+                <View style={[s.redeemIcon, { backgroundColor: perk.color + "20", borderColor: perk.color + "30" }]}>
+                  <Text style={[s.redeemIconT, { color: canAfford ? perk.color : C.mut }]}>{perk.icon}</Text>
+                </View>
+                <Text style={[s.redeemLabel, !canAfford && { color: C.mut }]}>{perk.label}</Text>
+                <View style={s.redeemCostRow}>
+                  <Text style={[s.redeemCost, canAfford ? { color: C.gold } : { color: C.mut }]}>
+                    {perk.cost.toLocaleString()} pts
+                  </Text>
+                  {!canAfford && <Text style={s.lockIcon}>🔒</Text>}
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+
         {/* Earn checklist */}
         <Text style={s.sectionT}>EARN POINTS</Text>
         <View style={s.earnCard}>
@@ -163,7 +274,7 @@ export default function WingmanPointsScreen({ navigation }) {
           <>
             <Text style={s.sectionT}>RECENT ACTIVITY</Text>
             <View style={s.earnCard}>
-              {events.slice(0, 8).map((ev, i) => (
+              {events.slice(0, 10).map((ev, i) => (
                 <View key={i} style={[s.earnRow, i > 0 && { borderTopWidth: 1, borderTopColor: C.line }]}>
                   <View style={{ flex: 1 }}>
                     <Text style={s.earnLabel}>{ev.description}</Text>
@@ -171,7 +282,9 @@ export default function WingmanPointsScreen({ navigation }) {
                       {new Date(ev.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                     </Text>
                   </View>
-                  <Text style={[s.earnPts, { color: C.gold }]}>+{ev.points}</Text>
+                  <Text style={[s.earnPts, { color: ev.points < 0 ? C.coral : C.gold }]}>
+                    {ev.points < 0 ? ev.points.toLocaleString() : `+${ev.points}`}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -180,6 +293,17 @@ export default function WingmanPointsScreen({ navigation }) {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Redemption modal */}
+      {selectedPerk && (
+        <RedeemModal
+          perk={selectedPerk}
+          balance={balance}
+          onConfirm={handleRedeem}
+          onCancel={() => setSelectedPerk(null)}
+          redeeming={redeeming}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -208,6 +332,15 @@ const s = StyleSheet.create({
   perkRow:   { flexDirection: "row", alignItems: "center", gap: 12, padding: 14 },
   perkDot:   { fontSize: 10 },
   perkT:     { color: C.ink, fontSize: 14, fontFamily: T.sansM, flex: 1 },
+  redeemGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 24 },
+  redeemCard: { width: "47%", borderRadius: 16, borderWidth: 1, borderColor: C.line, padding: 14, overflow: "hidden", backgroundColor: C.card, gap: 8 },
+  redeemCardLocked: { opacity: 0.6 },
+  redeemIcon: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center", borderWidth: 1 },
+  redeemIconT:{ fontSize: 18 },
+  redeemLabel:{ color: C.ink, fontSize: 13, fontFamily: T.sansM, lineHeight: 18 },
+  redeemCostRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  redeemCost: { fontSize: 12, fontFamily: T.sansB },
+  lockIcon:   { fontSize: 11 },
   earnCard:  { backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, marginBottom: 24, overflow: "hidden" },
   earnRow:   { flexDirection: "row", alignItems: "center", gap: 12, padding: 14 },
   earnIcon:  { width: 32, height: 32, borderRadius: 8, backgroundColor: C.card2, alignItems: "center", justifyContent: "center" },
@@ -215,4 +348,26 @@ const s = StyleSheet.create({
   earnLabel: { color: C.ink, fontSize: 14, fontFamily: T.sansM },
   earnDate:  { color: C.mut, fontSize: 11, fontFamily: T.sans, marginTop: 2 },
   earnPts:   { color: C.gold, fontSize: 13, fontFamily: T.sansB },
+  coral:     { color: C.coral },
+});
+
+const m = StyleSheet.create({
+  overlay:  { flex: 1, backgroundColor: "rgba(0,0,0,0.75)", alignItems: "center", justifyContent: "flex-end" },
+  sheet:    { width: "100%", borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 28, paddingBottom: 44, alignItems: "center", overflow: "hidden", borderTopWidth: 1, borderColor: C.line },
+  perkIcon: { width: 64, height: 64, borderRadius: 20, alignItems: "center", justifyContent: "center", borderWidth: 1, marginBottom: 16 },
+  perkIconT:{ fontSize: 28 },
+  title:    { color: C.ink, fontSize: 22, fontFamily: T.serifB, marginBottom: 8, textAlign: "center" },
+  desc:     { color: C.mut, fontSize: 14, fontFamily: T.sans, lineHeight: 21, textAlign: "center", marginBottom: 20 },
+  costRow:  { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 20 },
+  costLabel:{ color: C.mut, fontSize: 14, fontFamily: T.sans },
+  costBadge:{ borderRadius: 10, paddingHorizontal: 14, paddingVertical: 6 },
+  costBadgeT:{ color: "#0F0D0A", fontSize: 14, fontFamily: T.sansB },
+  insufficientBanner: { backgroundColor: C.coral + "18", borderRadius: 12, padding: 12, marginBottom: 16, width: "100%" },
+  insufficientT: { color: C.coral, fontSize: 13, fontFamily: T.sansM, textAlign: "center" },
+  btnRow:   { flexDirection: "row", gap: 12, width: "100%" },
+  cancelBtn:{ flex: 1, paddingVertical: 14, borderRadius: 14, borderWidth: 1, borderColor: C.line, alignItems: "center" },
+  cancelBtnT:{ color: C.mut, fontSize: 15, fontFamily: T.sansM },
+  confirmBtn:{ flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: "center", overflow: "hidden", backgroundColor: C.gold },
+  confirmBtnDisabled: { backgroundColor: C.card2 },
+  confirmBtnT:{ color: "#0F0D0A", fontSize: 15, fontFamily: T.sansB },
 });

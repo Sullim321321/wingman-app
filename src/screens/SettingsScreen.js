@@ -289,8 +289,9 @@ export default function SettingsScreen({ navigation }) {
 
         <Text style={g.sectionT}>LOYALTY PROGRAMS</Text>
         <View style={g.group}>
+          <SetRow ic="L" iconColor={C.gold} t="Frequent flyer & hotel programs" sub="Marriott, Hilton, United, Delta, Hyatt & more" right={<Chip color={C.teal}>Manage ›</Chip>} onPress={() => navigation.navigate("Loyalty")} />
           <View style={{ borderBottomWidth: 0 }}>
-            <SetRow ic="L" iconColor={C.gold} t="Frequent flyer & hotel programs" sub="Marriott, Hilton, United, Delta, Hyatt & more" right={<Chip color={C.teal}>Manage ›</Chip>} onPress={() => navigation.navigate("Loyalty")} />
+            <SetRow ic="◈" iconColor={C.teal} t="Lounge access cards" sub="Amex Platinum, Priority Pass, Chase Sapphire & more" right={<Chip color={C.teal}>Edit ›</Chip>} onPress={() => navigation.navigate("LoungeCards")} />
           </View>
         </View>
 

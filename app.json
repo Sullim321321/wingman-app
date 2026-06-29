@@ -29,6 +29,11 @@
         "NSCalendarsUsageDescription": "Wingman reads your calendar to detect travel events and pre-fill trip dates.",
         "NSLocationWhenInUseUsageDescription": "Wingman uses your location to estimate drive time to the airport and predict if you'll make your flight.",
         "NSFaceIDUsageDescription": "Wingman uses Face ID to unlock your account securely."
+      },
+      "entitlements": {
+        "com.apple.developer.applesignin": [
+          "Default"
+        ]
       }
     },
     "plugins": [

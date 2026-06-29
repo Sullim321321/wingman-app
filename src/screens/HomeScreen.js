@@ -5,13 +5,13 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
-  ActivityIndicator, RefreshControl, Alert, Animated, Easing,
+  ActivityIndicator, RefreshControl, Alert, Animated, Easing, TextInput,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { C, T } from "../theme";
 import { Btn, tap, SerifText, g } from "../components";
-import { getTrips, deleteTrip, getFlightStatus, getPrediction, getGroundIntel, getMe, getLoyaltyAccounts, getTripBriefing } from "../api";
+import { getTrips, deleteTrip, getFlightStatus, getFlightStatusPublic, getPrediction, getGroundIntel, getMe, getLoyaltyAccounts, getTripBriefing, getNextTripWindow } from "../api";
 import { scheduleDisruption } from "../notify";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -356,22 +356,112 @@ function TripCard({ trip, onDelete, navigation }) {
 // ─── Empty State ──────────────────────────────────────────────────────────────
 
 function EmptyState({ navigation }) {
+  const [flightNum, setFlightNum] = useState("");
+  const [tracking, setTracking]   = useState(false);
+  const [tracked, setTracked]     = useState(null);
+  const [trackErr, setTrackErr]   = useState("");
+
+  const STATUS_COLORS = {
+    "On Time": C.teal, "Delayed": C.amber, "Cancelled": C.coral,
+    "In Air": C.gold, "Landed": C.mut, "Scheduled": C.mut,
+  };
+
+  const trackFlight = async () => {
+    const q = flightNum.trim().toUpperCase().replace(/\s+/g, "");
+    if (!q) return;
+    setTracking(true); setTrackErr(""); setTracked(null);
+    try {
+      const data = await getFlightStatusPublic(q);
+      if (!data || data.status === "Unknown") {
+        setTrackErr("Flight not found. Try a format like UA412 or AA100.");
+      } else {
+        setTracked(data);
+      }
+    } catch (e) {
+      setTrackErr("Couldn't reach flight data. Check your connection.");
+    } finally {
+      setTracking(false);
+    }
+  };
+
   return (
     <View style={s.emptyWrap}>
-      <View style={s.emptyCard}>
-        {/* Hairline plane in circle */}
-        <View style={s.emptyIcon}>
-          <Text style={{ fontSize: 22, color: C.gold }}>+</Text>
+      {/* Live flight tracker — works before any trip is added */}
+      <View style={s.trackerCard}>
+        <LinearGradient colors={[C.gold + "10", "transparent"]} style={{ position: "absolute", top: 0, left: 0, right: 0, height: 80, borderRadius: 22 }} />
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 14 }}>
+          <View style={s.emptyIcon}><Text style={{ fontSize: 14, color: C.gold }}>+</Text></View>
+          <Text style={s.trackerTitle}>Track any flight, right now</Text>
         </View>
-        <SerifText style={s.emptyT}>No trips yet.</SerifText>
-        <Text style={s.emptyS}>Add your first trip and Wingman will watch it around the clock.</Text>
-        <Pressable style={s.emptyPrimary} onPress={() => navigation.navigate("AddTrip")}>
-          <Text style={s.emptyPrimaryT}>+ Add a trip</Text>
-        </Pressable>
-        <Pressable style={s.emptySecondary} onPress={() => navigation.navigate("Connections")}>
-          <Text style={s.emptySecondaryT}>Import from email</Text>
-        </Pressable>
+        <Text style={s.trackerSub}>No trip needed. Enter any flight number to see live status.</Text>
+        <View style={s.trackerRow}>
+          <TextInput
+            style={s.trackerInput}
+            value={flightNum}
+            onChangeText={t => { setFlightNum(t); setTrackErr(""); setTracked(null); }}
+            placeholder="UA412, AA100, DL55…"
+            placeholderTextColor={C.mut}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            returnKeyType="search"
+            onSubmitEditing={trackFlight}
+          />
+          <Pressable
+            style={[s.trackerBtn, (!flightNum.trim() || tracking) && { opacity: 0.5 }]}
+            onPress={trackFlight}
+            disabled={!flightNum.trim() || tracking}
+          >
+            {tracking
+              ? <ActivityIndicator color={C.bg} size="small" />
+              : <Text style={s.trackerBtnT}>Track</Text>
+            }
+          </Pressable>
+        </View>
+        {trackErr ? <Text style={s.trackerErr}>{trackErr}</Text> : null}
+        {tracked && (
+          <View style={s.trackedResult}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <Text style={s.trackedIdent}>{tracked.ident || flightNum}</Text>
+              <View style={{ backgroundColor: (STATUS_COLORS[tracked.status] || C.mut) + "22", borderColor: (STATUS_COLORS[tracked.status] || C.mut) + "55", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}>
+                <Text style={{ color: STATUS_COLORS[tracked.status] || C.mut, fontSize: 10, fontFamily: T.sansB }}>{(tracked.status || "Unknown").toUpperCase()}</Text>
+              </View>
+            </View>
+            {(tracked.origin || tracked.destination) && (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <SerifText bold style={{ color: C.ink, fontSize: 22 }}>{tracked.origin || "—"}</SerifText>
+                <Text style={{ color: C.mut, fontSize: 14 }}>→</Text>
+                <SerifText bold style={{ color: C.ink, fontSize: 22 }}>{tracked.destination || "—"}</SerifText>
+              </View>
+            )}
+            {tracked.departs_at && (
+              <Text style={{ color: C.mut, fontSize: 12, fontFamily: T.sans }}>
+                Departs {formatTime(tracked.departs_at)}{tracked.delay > 0 ? `  ·  +${tracked.delay}m delay` : ""}
+              </Text>
+            )}
+            <Pressable style={[s.emptyPrimary, { marginTop: 14 }]} onPress={() => navigation.navigate("AddTrip")}>
+              <Text style={s.emptyPrimaryT}>+ Add this trip to Wingman</Text>
+            </Pressable>
+          </View>
+        )}
       </View>
+
+      {/* Gmail import CTA */}
+      <Pressable style={s.gmailCard} onPress={() => navigation.navigate("Connections")}>
+        <LinearGradient colors={[C.gold + "0A", "transparent"]} style={{ position: "absolute", top: 0, left: 0, right: 0, height: 60, borderRadius: 18 }} />
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <View style={[s.emptyIcon, { width: 40, height: 40, borderRadius: 12 }]}>
+            <Text style={{ fontSize: 16, color: C.gold }}>@</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.gmailTitle}>Auto-import all your trips</Text>
+            <Text style={s.gmailSub}>Connect Gmail and Wingman finds every booking — no manual entry.</Text>
+          </View>
+          <Text style={{ color: C.gold, fontSize: 18 }}>›</Text>
+        </View>
+      </Pressable>
+
+      {/* Add trip manually */}
+      <Btn title="+ Add a trip manually" onPress={() => navigation.navigate("AddTrip")} style={{ marginTop: 6 }} />
     </View>
   );
 }
@@ -385,10 +475,16 @@ export default function HomeScreen({ navigation }) {
   const [firstName, setFirstName] = useState("");
   const [briefing, setBriefing]   = useState(null);
   const [expiringPoints, setExpiringPoints] = useState(null);
+  const [nextTripWindow, setNextTripWindow] = useState(null);
 
   useEffect(() => {
     getMe().then(u => { if (u?.first_name) setFirstName(u.first_name); }).catch(() => {});
     // Check for expiring loyalty points
+    getNextTripWindow().then(data => {
+      if (data?.window?.days_until > 0 && data.window.days_until <= 21) {
+        setNextTripWindow(data.window);
+      }
+    }).catch(() => {});
     getLoyaltyAccounts().then(data => {
       const accts = data?.accounts || [];
       const soon = accts.filter(a => {
@@ -556,19 +652,33 @@ export default function HomeScreen({ navigation }) {
             )}
 
             {/* ── Points expiry alert card ────────────────────────────────── */}
-            {expiringPoints && (
-              <Pressable
-                style={s.expiryCard}
-                onPress={() => navigation.navigate("Loyalty")}
-              >
-                <Text style={s.expiryTitle}>⏳ Points expiring soon</Text>
-                <Text style={s.expiryBody}>
-                  {Number(expiringPoints.points_balance).toLocaleString()} {expiringPoints.program} points expire in{" "}
-                  {Math.round((new Date(expiringPoints.expiration_date) - Date.now()) / 86400000)} days.
-                  Tap to see redemption options.
-                </Text>
-              </Pressable>
-            )}
+            {expiringPoints && (() => {
+              const daysLeft = Math.round((new Date(expiringPoints.expiration_date) - Date.now()) / 86400000);
+              const urgent = daysLeft <= 14;
+              return (
+                <Pressable
+                  style={[s.expiryCard, urgent && { borderColor: C.coral + "50", backgroundColor: C.coral + "0D" }]}
+                  onPress={() => navigation.navigate("Loyalty")}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                    <Text style={[s.expiryTitle, urgent && { color: C.coral }]}>
+                      {urgent ? "⚠️" : "⏳"} {daysLeft <= 7 ? `${daysLeft}d left` : daysLeft <= 14 ? "Expiring soon" : "Points expiring"}
+                    </Text>
+                    <Text style={{ color: urgent ? C.coral : C.amber, fontSize: 11, fontFamily: T.sansB }}>
+                      {daysLeft} DAYS
+                    </Text>
+                  </View>
+                  <Text style={s.expiryBody}>
+                    <Text style={{ fontFamily: T.sansB }}>{Number(expiringPoints.points_balance).toLocaleString()}</Text>{" "}
+                    {expiringPoints.program} points expire {daysLeft <= 1 ? "tomorrow" : `in ${daysLeft} days`}.
+                  </Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
+                    <Text style={{ color: C.mut, fontSize: 11, fontFamily: T.sans }}>Tap to see redemption options</Text>
+                    <Text style={{ color: urgent ? C.coral : C.amber, fontSize: 13 }}>›</Text>
+                  </View>
+                </Pressable>
+              );
+            })()}
 
             {/* ── Next Up parchment card ──────────────────────────────────── */}
             {nextFlight && (
@@ -738,4 +848,22 @@ const s = StyleSheet.create({
   expiryCard:     { backgroundColor: C.amber + "10", borderRadius: 14, padding: 14, borderWidth: 1, borderColor: C.amber + "30", marginBottom: 12 },
   expiryTitle:    { color: C.amber, fontSize: 13, fontFamily: T.sansB, marginBottom: 4 },
   expiryBody:     { color: C.ink, fontSize: 13, fontFamily: T.sans, lineHeight: 19 },
+  // ── Day-one empty state — tracker + gmail ────────────────────────────────────
+  trackerCard:    { backgroundColor: C.card, borderRadius: 22, padding: 20, borderWidth: 1, borderColor: C.line, marginBottom: 12, overflow: "hidden" },
+  trackerTitle:   { color: C.ink, fontSize: 16, fontFamily: T.sansB },
+  trackerSub:     { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 19, marginBottom: 14 },
+  trackerRow:     { flexDirection: "row", gap: 8, alignItems: "center" },
+  trackerInput:   { flex: 1, backgroundColor: C.bg, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: C.line, color: C.ink, fontSize: 15, fontFamily: T.sans },
+  trackerBtn:     { backgroundColor: C.gold, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12 },
+  trackerBtnT:    { color: C.bg, fontSize: 14, fontFamily: T.sansB },
+  trackerErr:     { color: C.coral, fontSize: 12, fontFamily: T.sansM, marginTop: 8 },
+  trackedResult:  { marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: C.line },
+  trackedIdent:   { color: C.ink, fontSize: 16, fontFamily: T.sansB },
+  gmailCard:      { backgroundColor: C.card, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: C.line, marginBottom: 12, overflow: "hidden" },
+  gmailTitle:     { color: C.ink, fontSize: 14, fontFamily: T.sansB, marginBottom: 2 },
+  gmailSub:       { color: C.mut, fontSize: 12, fontFamily: T.sans, lineHeight: 17 },
+  // ── Next trip window card ────────────────────────────────────────────────────
+  windowCard:     { backgroundColor: C.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: C.gold + "30", marginBottom: 12 },
+  windowTitle:    { color: C.ink, fontSize: 14, fontFamily: T.sansB },
+  windowBody:     { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 19 },
 });

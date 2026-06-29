@@ -84,8 +84,14 @@ export const getActivity = (limit = 50) =>
   req("/activity?limit=" + limit);
 
 // Flight status (FlightAware AeroAPI)
+// Public variant — no auth required, used by home screen tracker for new users
+export const getFlightStatusPublic = (ident) =>
+  fetch(`${API_BASE}/flight-status-public?ident=${encodeURIComponent(ident)}`)
+    .then(r => r.json())
+    .catch(() => ({ ident, status: "Unknown", live: false }));
 export const getFlightStatus = (ident) =>
   req("/flight-status/" + encodeURIComponent(ident));
+export const getNextTripWindow = () => req("/me/next-trip-window");
 export const refreshTrip = (id) =>
   req("/trips/" + id + "/refresh", { method: "POST" });
 

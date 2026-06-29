@@ -212,9 +212,15 @@ export default function AddTripScreen({ navigation }) {
           confirmation: confirmation.trim() || null,
         });
       }
-      await createTrip({ title: title.trim(), legs, mode });
+      const result = await createTrip({ title: title.trim(), legs, mode });
       tap("medium");
-      navigation.goBack();
+      // Navigate directly to TripDetail so the user sees their trip immediately
+      const tripId = result?.trip?.id;
+      if (tripId) {
+        navigation.replace("TripDetail", { tripId });
+      } else {
+        navigation.goBack();
+      }
     } catch (e) {
       Alert.alert("Error", e.message);
     } finally {

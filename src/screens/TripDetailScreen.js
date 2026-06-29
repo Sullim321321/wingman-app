@@ -557,19 +557,40 @@ export default function TripDetailScreen({ route, navigation }) {
                       <Text style={s.compensationBtnT}>€ File compensation</Text>
                     </Pressable>
                   )}
-                  {/* Ground transport — show for every leg's destination */}
+                  {/* Airport intelligence buttons */}
                   {leg.destination && (
-                    <Pressable
-                      style={s.groundTransportBtn}
-                      onPress={() => navigation.navigate("GroundTransport", {
-                        iata: leg.destination,
-                        city: leg.destination,
-                        destination: trip.destination_city || null,
-                        tripId: trip.id,
-                      })}
-                    >
-                      <Text style={s.groundTransportBtnT}>🚆 Ground transport</Text>
-                    </Pressable>
+                    <View style={s.airportBtnsRow}>
+                      <Pressable
+                        style={s.groundTransportBtn}
+                        onPress={() => navigation.navigate("GroundTransport", {
+                          iata: leg.destination,
+                          city: leg.destination,
+                          destination: trip.destination_city || null,
+                          tripId: trip.id,
+                        })}
+                      >
+                        <Text style={s.groundTransportBtnT}>🚆 Transport</Text>
+                      </Pressable>
+                      <Pressable
+                        style={s.airportDiningBtn}
+                        onPress={() => navigation.navigate("AirportDining", {
+                          iata: leg.destination,
+                          flightInfo: leg.flight_number ? `${leg.carrier || ""}${leg.flight_number}` : null,
+                        })}
+                      >
+                        <Text style={s.airportDiningBtnT}>🍽️ Dining</Text>
+                      </Pressable>
+                      <Pressable
+                        style={s.airportNavBtn}
+                        onPress={() => navigation.navigate("AirportNavigation", {
+                          iata: leg.destination,
+                          gate: null,
+                          flightInfo: leg.flight_number ? `${leg.carrier || ""}${leg.flight_number}` : null,
+                        })}
+                      >
+                        <Text style={s.airportNavBtnT}>🗺️ Navigate</Text>
+                      </Pressable>
+                    </View>
                   )}
                 </View>
               </View>
@@ -867,7 +888,12 @@ const s = StyleSheet.create({
   compensationBtn: { backgroundColor: "rgba(79,142,247,0.08)", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: "rgba(79,142,247,0.3)" },
   compensationBtnT: { color: "#4F8EF7", fontSize: 12, fontFamily: T.sansM },
 
-  // Ground transport button
+  // Ground transport + airport intel buttons
+  airportBtnsRow: { flexDirection: "row", gap: 6, flexWrap: "wrap" },
   groundTransportBtn: { backgroundColor: "rgba(78,205,196,0.08)", borderWidth: 1, borderColor: "rgba(78,205,196,0.25)", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
   groundTransportBtnT: { color: "#4ECDC4", fontSize: 13, fontFamily: T.sansM },
+  airportDiningBtn: { backgroundColor: "rgba(201,169,110,0.08)", borderWidth: 1, borderColor: "rgba(201,169,110,0.25)", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
+  airportDiningBtnT: { color: "#C9A96E", fontSize: 13, fontFamily: T.sansM },
+  airportNavBtn: { backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
+  airportNavBtnT: { color: "#FFFFFF", fontSize: 13, fontFamily: T.sansM },
 });

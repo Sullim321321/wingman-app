@@ -1,6 +1,6 @@
 {
   "name": "wingman-app",
-  "version": "0.1.0",
+  "version": "1.0.81",
   "main": "index.js",
   "scripts": {
     "start": "expo start",

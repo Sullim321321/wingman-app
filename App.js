@@ -67,6 +67,8 @@ import UpgradeBidScreen from "./src/screens/UpgradeBidScreen";
 import GroundTransportScreen from "./src/screens/GroundTransportScreen";
 import WingmanPointsScreen from "./src/screens/WingmanPointsScreen";
 import DestinationScreen from "./src/screens/DestinationScreen";
+import AirportDiningScreen from "./src/screens/AirportDiningScreen";
+import AirportNavigationScreen from "./src/screens/AirportNavigationScreen";
 
 export const navRef = createNavigationContainerRef();
 const Stack = createNativeStackNavigator();
@@ -284,6 +286,8 @@ function Root() {
             <Stack.Screen name="GroundTransport"    component={GroundTransportScreen} />
             <Stack.Screen name="WingmanPoints"     component={WingmanPointsScreen} />
             <Stack.Screen name="Destination"       component={DestinationScreen} />
+            <Stack.Screen name="AirportDining"      component={AirportDiningScreen} />
+            <Stack.Screen name="AirportNavigation"  component={AirportNavigationScreen} />
             <Stack.Screen name="Main"         component={Tabs} />
           </>
         ) : (

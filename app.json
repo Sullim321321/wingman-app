@@ -2,7 +2,7 @@
   "expo": {
     "name": "Wingman",
     "slug": "wingman-app",
-    "version": "1.0.88",
+    "version": "1.0.89",
     "orientation": "portrait",
     "scheme": "wingman",
     "userInterfaceStyle": "dark",
@@ -17,7 +17,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "club.welcometothefight.wingman",
-      "buildNumber": "96",
+      "buildNumber": "102",
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification"

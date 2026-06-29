@@ -246,6 +246,24 @@ export default function AddTripScreen({ navigation }) {
                 <Text style={s.draftedT}>✓ Drafted by Wingman — review and save</Text>
               </View>
             )}
+            {!drafted && !origin && !title && (
+              <Pressable
+                style={s.sampleBtn}
+                onPress={() => {
+                  tap();
+                  setTitle("New York → London");
+                  setOrigin("JFK");
+                  setDestination("LHR");
+                  setCarrier("BA");
+                  setFlightNum("112");
+                  setFlightQuery("BA112");
+                  setDepDate("Jul 15 2026");
+                  setConfirmation("WNGMN1");
+                }}
+              >
+                <Text style={s.sampleBtnT}>Load sample trip →</Text>
+              </Pressable>
+            )}
 
             {/* Trip Mode */}
             <Text style={g.sectionT}>TRIP MODE</Text>
@@ -391,6 +409,10 @@ const s = StyleSheet.create({
     padding: 12, marginBottom: 16, borderWidth: 1, borderColor: "rgba(201,169,110,0.25)",
   },
   draftedT: { color: C.gold, fontSize: 13, fontFamily: T.sansM },
+
+  // Sample trip
+  sampleBtn:  { alignSelf: "flex-end", paddingVertical: 6, paddingHorizontal: 4, marginBottom: 12 },
+  sampleBtnT: { color: C.gold, fontSize: 12, fontFamily: T.sansM, letterSpacing: 0.2 },
 
   // Mode selector
   modeRow: { flexDirection: "row", gap: 10, marginBottom: 10 },

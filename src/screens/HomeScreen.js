@@ -446,6 +446,16 @@ function EmptyState({ navigation }) {
         )}
       </View>
 
+      {/* Quick-try: pre-fill a real flight so testers see live data immediately */}
+      {!tracked && (
+        <Pressable
+          style={s.demoBtn}
+          onPress={() => { tap(); setFlightNum("UA412"); }}
+        >
+          <Text style={s.demoBtnT}>Try a live example: UA412 →</Text>
+        </Pressable>
+      )}
+
       {/* Gmail import CTA */}
       <Pressable style={s.gmailCard} onPress={() => navigation.navigate("Connections")}>
         <LinearGradient colors={[C.gold + "0A", "transparent"]} style={{ position: "absolute", top: 0, left: 0, right: 0, height: 60, borderRadius: 18 }} />
@@ -902,6 +912,8 @@ const s = StyleSheet.create({
   gmailCard:      { backgroundColor: C.card, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: C.line, marginBottom: 12, overflow: "hidden" },
   gmailTitle:     { color: C.ink, fontSize: 14, fontFamily: T.sansB, marginBottom: 2 },
   gmailSub:       { color: C.mut, fontSize: 12, fontFamily: T.sans, lineHeight: 17 },
+  demoBtn:        { alignSelf: "center", paddingVertical: 8, paddingHorizontal: 14, marginBottom: 10 },
+  demoBtnT:       { color: C.gold, fontSize: 13, fontFamily: T.sansM, letterSpacing: 0.2 },
   // ── Next trip window card ────────────────────────────────────────────────────
   windowCard:     { backgroundColor: C.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: C.gold + "30", marginBottom: 12 },
   pointsTile:     { borderRadius: 16, padding: 16, borderWidth: 1, marginBottom: 12, overflow: "hidden" },

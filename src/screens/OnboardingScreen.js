@@ -445,16 +445,25 @@ export default function OnboardingScreen({ navigation }) {
     <SafeAreaView style={s.app}>
       <LinearGradient colors={["#0F0D0A", "#1A1610", "#0F0D0A"]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
       {!isSignUpSlide && (
-        <Pressable style={s.skipBtn} onPress={() => { tap(); goSignIn(); }}>
-          <Text style={s.skipBtnT}>Sign in</Text>
-        </Pressable>
+        <View style={s.topBar}>
+          <Pressable style={s.skipIntroBtn} onPress={() => { tap(); goToPage(TOTAL - 1); }}>
+            <Text style={s.skipIntroBtnT}>Skip intro →</Text>
+          </Pressable>
+          <Pressable style={s.skipBtn} onPress={() => { tap(); goSignIn(); }}>
+            <Text style={s.skipBtnT}>Sign in</Text>
+          </Pressable>
+        </View>
       )}
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView
           ref={ref}
           horizontal
           pagingEnabled
-          scrollEnabled={false}
+          scrollEnabled={!isSignUpSlide}
+          onMomentumScrollEnd={e => {
+            const newPage = Math.round(e.nativeEvent.contentOffset.x / width);
+            if (newPage !== page) setPage(newPage);
+          }}
           showsHorizontalScrollIndicator={false}
           style={{ flex: 1 }}
         >
@@ -480,8 +489,11 @@ export default function OnboardingScreen({ navigation }) {
 
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
-  skipBtn:  { position: "absolute", top: 54, right: 20, zIndex: 10, padding: 8 },
-  skipBtnT: { color: C.mut, fontSize: 14, fontFamily: T.sansM },
+  topBar:       { position: "absolute", top: 54, left: 0, right: 0, zIndex: 10, flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 20 },
+  skipIntroBtn:  { padding: 8 },
+  skipIntroBtnT: { color: C.gold, fontSize: 14, fontFamily: T.sansM },
+  skipBtn:       { padding: 8 },
+  skipBtnT:      { color: C.mut, fontSize: 14, fontFamily: T.sansM },
   slide: { width, alignItems: "center", justifyContent: "center", paddingHorizontal: 26, paddingTop: 10 },
   heroGlow: { position: "absolute", top: -60, alignSelf: "center", width: 280, height: 280, borderRadius: 140, backgroundColor: C.gold + "10" },
   heroMarkWrap: { width: 210, height: 210, alignItems: "center", justifyContent: "center", marginBottom: 28 },

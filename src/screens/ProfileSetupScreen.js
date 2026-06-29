@@ -76,6 +76,7 @@ export default function ProfileSetupScreen({ navigation }) {
 
           {/* Cabin */}
           <Text style={[s.label, { marginTop: 24 }]}>PREFERRED CABIN</Text>
+          <Text style={s.hint}>Wingman uses this to filter upgrade opportunities and lounge access.</Text>
           <View style={s.cabinRow}>
             {CABIN_OPTIONS.map(opt => (
               <Pressable
@@ -133,4 +134,5 @@ const s = StyleSheet.create({
   cabinSub:        { color: C.mut, fontSize: 11, marginTop: 3 },
   cabinSubActive:  { color: C.gold + "99" },
   skip:   { color: C.mut, fontSize: 13, textAlign: "center", marginTop: 16, textDecorationLine: "underline" },
+  hint:   { color: C.mut, fontSize: 12, lineHeight: 17, marginBottom: 10, marginTop: -4 },
 });

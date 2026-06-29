@@ -99,7 +99,7 @@ function RescueRow({ opt, selected, onSelect, rank }) {
             <Text style={{ color: accentColor, fontSize: 14, fontFamily: T.sansB }}>
               {isPoints ? "✦ " : "✈ "}{opt.carrier || "Alternative"}
             </Text>
-            <Text style={{ color: C.charcoal, fontSize: 13, fontFamily: T.sansM }}>{opt.flight}</Text>
+            <Text style={{ color: C.mut, fontSize: 13, fontFamily: T.sansM }}>{opt.flight}</Text>
             {opt.cabin && (
               <View style={[s.cabinBadge, { borderColor: accentBorder, backgroundColor: accentBg }]}>
                 <Text style={{ color: accentColor, fontSize: 9, fontFamily: T.sansB, letterSpacing: 0.5 }}>

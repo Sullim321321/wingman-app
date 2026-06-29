@@ -6,7 +6,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { C, T } from "../theme";
 import { BackBar, Btn, g, tap } from "../components";
-import { createTrip, getFlightStatus, draftTripFromText, scanEmailBody } from "../api";
+import { createTrip, getFlightStatus, draftTripFromText } from "../api";
 
 const MODES = [
   { id: "solo",    label: "Solo",    icon: "◆", desc: "Efficiency mode" },
@@ -67,10 +67,6 @@ export default function AddTripScreen({ navigation }) {
   const [flightNum, setFlightNum] = useState("");
   const [depDate, setDepDate] = useState("");
   const [confirmation, setConfirmation] = useState("");
-
-  // Email paste tab
-  const [pasteText, setPasteText] = useState("");
-  const [parsing, setParsing] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
@@ -144,54 +140,6 @@ export default function AddTripScreen({ navigation }) {
     }
   };
 
-  // Parse a pasted confirmation email
-  const parsePaste = async () => {
-    if (!pasteText.trim()) return;
-    setParsing(true);
-    try {
-      const data = await scanEmailBody(pasteText.trim(), "paste");
-      if (data && data.trips_created > 0) {
-        tap("medium");
-        Alert.alert("Trip imported", `${data.trips_created} trip${data.trips_created > 1 ? "s" : ""} added from your email.`);
-        navigation.goBack();
-        return;
-      }
-      // Fallback: try concierge extraction
-      const res = await fetch(require("../config").API_BASE + "/concierge", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: `Extract the flight details from this booking confirmation and return ONLY a JSON object with keys: title, origin, destination, carrier, flight_number, departs_at (ISO string), confirmation. No other text.\n\n${pasteText}`,
-          history: [],
-        }),
-      });
-      const json = await res.json();
-      const reply = json.reply || "";
-      const match = reply.match(/\{[\s\S]*\}/);
-      if (match) {
-        const parsed = JSON.parse(match[0]);
-        if (parsed.title) setTitle(parsed.title);
-        if (parsed.origin) setOrigin(parsed.origin.toUpperCase());
-        if (parsed.destination) setDestination(parsed.destination.toUpperCase());
-        if (parsed.carrier) setCarrier(parsed.carrier.toUpperCase());
-        if (parsed.flight_number) setFlightNum(parsed.flight_number);
-        if (parsed.departs_at) {
-          const d = new Date(parsed.departs_at);
-          if (!isNaN(d)) setDepDate(d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }));
-        }
-        if (parsed.confirmation) setConfirmation(parsed.confirmation.toUpperCase());
-        setTab("manual");
-        Alert.alert("Details extracted", "Review and save when ready.");
-      } else {
-        Alert.alert("Couldn't parse", "Try copying just the flight details section of the email.");
-      }
-    } catch (e) {
-      Alert.alert("Error", e.message);
-    } finally {
-      setParsing(false);
-    }
-  };
-
   const save = async () => {
     if (!title.trim()) {
       doShake();
@@ -240,9 +188,6 @@ export default function AddTripScreen({ navigation }) {
           </Pressable>
           <Pressable style={[s.tabBtn, tab === "manual" && s.tabBtnOn]} onPress={() => { tap(); setTab("manual"); }}>
             <Text style={[s.tabT, tab === "manual" && s.tabTOn]}>Enter manually</Text>
-          </Pressable>
-          <Pressable style={[s.tabBtn, tab === "paste" && s.tabBtnOn]} onPress={() => { tap(); setTab("paste"); }}>
-            <Text style={[s.tabT, tab === "paste" && s.tabTOn]}>Paste email</Text>
           </Pressable>
         </View>
 
@@ -392,45 +337,16 @@ export default function AddTripScreen({ navigation }) {
           </View>
         )}
 
-        {/* Paste email tab */}
-        {tab === "paste" && (
-          <View style={g.group}>
-            <View style={[s.field, { borderBottomWidth: 0 }]}>
-              <Text style={s.label}>Paste your confirmation email</Text>
-              <TextInput
-                style={[s.input, s.pasteInput]}
-                value={pasteText}
-                onChangeText={setPasteText}
-                placeholder={"Paste the text from your booking confirmation email here — Wingman will extract the flight details automatically."}
-                placeholderTextColor={C.mut}
-                multiline
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-            <Pressable
-              style={[s.parseBtn, (!pasteText.trim() || parsing) && { opacity: 0.5 }]}
-              onPress={parsePaste}
-              disabled={!pasteText.trim() || parsing}
-            >
-              {parsing
-                ? <ActivityIndicator color={C.bg} size="small" />
-                : <Text style={s.parseBtnT}>Extract flight details →</Text>
-              }
-            </Pressable>
-          </View>
-        )}
-
-        {/* Connect Gmail CTA */}
+        {/* Connect / Forward CTA */}
         <View style={s.importCard}>
           <View style={s.importInner}>
             <Text style={s.importIc}>✉</Text>
             <View style={{ flex: 1 }}>
-              <Text style={s.importT}>Import all trips automatically</Text>
-              <Text style={s.importS}>Connect Gmail and Wingman finds every booking in your inbox.</Text>
+              <Text style={s.importT}>Import trips automatically</Text>
+              <Text style={s.importS}>Connect Gmail or forward any booking email to import@wingmantravel.app</Text>
             </View>
             <Pressable style={s.importBtn} onPress={() => navigation.navigate("Connections")}>
-              <Text style={s.importBtnT}>Connect →</Text>
+              <Text style={s.importBtnT}>Set up →</Text>
             </Pressable>
           </View>
         </View>

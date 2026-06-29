@@ -102,7 +102,7 @@ export default function InsightsScreen({ navigation }) {
         <BackBar nav={navigation} label="Insights" />
 
         {/* Hero ROI card */}
-        <LinearGradient colors={[C.cardWarm, C.card]} style={s.roiCard}>
+        <LinearGradient colors={[C.card2, C.card]} style={s.roiCard}>
           <Text style={s.roiEyebrow}>TOTAL VALUE PROTECTED</Text>
           <Text style={s.roiValue}>
             {totalSaved > 0 ? `$${totalSaved.toLocaleString()}` : "—"}

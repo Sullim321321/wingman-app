@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
-  Alert, ActivityIndicator, TextInput, Linking, AppState,
+  Alert, ActivityIndicator, TextInput, Linking, AppState, Clipboard,
 } from "react-native";
 import * as Calendar from "expo-calendar";
 import { C, T } from "../theme";
@@ -20,7 +20,10 @@ const CHANNEL_ICONS = {
   whatsapp:  { char: "W",  bg: C.card2 },
   imessage:  { char: "M",  bg: C.card2 },
   paste:     { char: "P",  bg: C.gold + "12" },
+  forward:   { char: "→",  bg: C.gold + "12" },
 };
+
+const FORWARD_EMAIL = "import@wingmantravel.app";
 
 // ─── Feature bullet ───────────────────────────────────────────────────────────
 function Feat({ ic, t, color }) {
@@ -301,7 +304,7 @@ export default function ConnectionsScreen({ navigation }) {
             iconKey="whatsapp"
             title="WhatsApp"
             sub="Read group-chat trip plans and share disruption alerts — arriving in v2"
-            right={<View style={s.soonBadge}><Text style={s.soonT}>V2</Text></View>}
+            right={<View style={s.soonBadge}><Text style={s.soonT}>SOON</Text></View>}
             disabled
           />
 
@@ -310,7 +313,7 @@ export default function ConnectionsScreen({ navigation }) {
             iconKey="imessage"
             title="iMessage"
             sub="Detect delay texts and forward itineraries — arriving in v2"
-            right={<View style={s.soonBadge}><Text style={s.soonT}>V2</Text></View>}
+            right={<View style={s.soonBadge}><Text style={s.soonT}>SOON</Text></View>}
             disabled
             last
           />
@@ -319,6 +322,24 @@ export default function ConnectionsScreen({ navigation }) {
         {/* ── Manual import ─────────────────────────────────────────────────── */}
         <Text style={g.sectionT}>MANUAL IMPORT</Text>
         <View style={g.group}>
+          {/* Forward-to-import */}
+          <ConnRow
+            iconKey="forward"
+            title="Forward a booking email"
+            sub={`Forward any booking confirmation to ${FORWARD_EMAIL} — Wingman imports it automatically`}
+            right={
+              <Pressable
+                style={s.connectBtn}
+                onPress={() => {
+                  Clipboard.setString(FORWARD_EMAIL);
+                  Alert.alert("Copied!", `${FORWARD_EMAIL} copied to clipboard. Forward any booking confirmation to this address.`);
+                }}
+              >
+                <Text style={s.connectBtnT}>Copy</Text>
+              </Pressable>
+            }
+          />
+          {/* Paste */}
           <ConnRow
             iconKey="paste"
             title="Paste a confirmation email"

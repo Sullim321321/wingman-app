@@ -5,12 +5,15 @@ import {
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { req } from "../api";
-import { T } from "../theme";
+import { C as _C, T } from "../theme";
 
+// Extend shared theme with screen-specific aliases
 const C = {
-  bg: "#0A0A0F", card: "#13131A", card2: "#1C1C28", border: "#2A2A3A",
-  gold: "#C9A96E", teal: "#4ECDC4", text: "#FFFFFF", mut: "#8A8A9A",
-  green: "#4CAF50", amber: "#FFC107", red: "#F44336",
+  ..._C,
+  border: _C.line,   // hairline border
+  text:   _C.ink,    // primary text
+  green:  _C.teal,   // on-time / positive
+  red:    _C.coral,  // alert / negative
 };
 
 const TYPE_ICON = {

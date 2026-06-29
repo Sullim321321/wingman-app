@@ -16,7 +16,7 @@ const YEAR = new Date().getFullYear();
 function WrappedCard({ children, gradient }) {
   return (
     <LinearGradient
-      colors={gradient || [C.cardWarm, C.card]}
+      colors={gradient || [C.card2, C.card]}
       style={s.card}
     >
       {children}

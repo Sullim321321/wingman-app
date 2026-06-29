@@ -4,6 +4,11 @@ export { API_BASE };
 let _token = null;
 export function setToken(t) { _token = t; }
 
+// Register a callback to be called when the server returns 401 (expired/invalid token)
+// App.js / auth.js wires this up so the user is automatically signed out
+let _on401 = null;
+export function setOn401Handler(fn) { _on401 = fn; }
+
 // Retry fetch with exponential backoff
 async function fetchWithRetry(url, opts = {}, retries = 2) {
   for (let i = 0; i <= retries; i++) {
@@ -35,6 +40,11 @@ async function req(path, opts = {}) {
     err.code = "pro_required";
     err.feature = body.feature || "";
     throw err;
+  }
+  if (r.status === 401) {
+    // Token expired or invalid — trigger auto sign-out if handler is registered
+    if (_on401) _on401();
+    throw new Error("Session expired — please sign in again.");
   }
   if (!r.ok) throw new Error(body.error || "HTTP " + r.status);
   return body;

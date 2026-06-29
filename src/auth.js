@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import * as SecureStore from "expo-secure-store";
-import { setToken } from "./api";
+import { setToken, setOn401Handler } from "./api";
 
 const KEY_T = "wingman_token";
 const KEY_E = "wingman_email";
@@ -79,6 +79,15 @@ export function AuthProvider({ children }) {
       await SecureStore.deleteItemAsync(KEY_E);
     } catch (e) {}
   };
+
+  // Wire up the 401 handler so any API call that gets "session expired"
+  // automatically signs the user out and returns them to the sign-in screen
+  useEffect(() => {
+    setOn401Handler(() => {
+      signOut();
+    });
+    return () => setOn401Handler(null);
+  }, []);
 
   return (
     <AuthCtx.Provider value={{ token, email, ready, signIn, signOut }}>

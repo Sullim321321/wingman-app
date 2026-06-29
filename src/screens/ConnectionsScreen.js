@@ -1,10 +1,10 @@
-// ConnectionsScreen — Ambient Sync / Connections
+// ConnectionsScreen — Wingman
 // Warm espresso palette + champagne gold + DM Sans
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
-  Alert, ActivityIndicator, TextInput, Linking,
+  Alert, ActivityIndicator, TextInput, Linking, AppState,
 } from "react-native";
 import * as Calendar from "expo-calendar";
 import { C, T } from "../theme";
@@ -12,10 +12,10 @@ import { BackBar, Btn, SerifText, g } from "../components";
 import { getMe, getGmailConnectUrl, triggerGmailScan, scanEmailBody } from "../api";
 
 // ─── Hairline icon labels for each channel ────────────────────────────────────
-// Using clean Unicode characters instead of emoji
 const CHANNEL_ICONS = {
   gmail:     { char: "@",  bg: C.gold + "12" },
   calendar:  { char: "#",  bg: C.gold + "12" },
+  gcal:      { char: "G",  bg: C.gold + "12" },
   uber:      { char: "U",  bg: C.card2 },
   whatsapp:  { char: "W",  bg: C.card2 },
   imessage:  { char: "M",  bg: C.card2 },
@@ -23,7 +23,6 @@ const CHANNEL_ICONS = {
 };
 
 // ─── Feature bullet ───────────────────────────────────────────────────────────
-
 function Feat({ ic, t, color }) {
   return (
     <View style={g.feat}>
@@ -36,7 +35,6 @@ function Feat({ ic, t, color }) {
 }
 
 // ─── Connection row ───────────────────────────────────────────────────────────
-
 function ConnRow({ iconKey, title, sub, right, onPress, disabled, last }) {
   const icon = CHANNEL_ICONS[iconKey] || { char: "·", bg: C.card2 };
   return (
@@ -58,18 +56,19 @@ function ConnRow({ iconKey, title, sub, right, onPress, disabled, last }) {
 }
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
-
 export default function ConnectionsScreen({ navigation }) {
-  const [gmailConnected,  setGmailConnected]  = useState(false);
-  const [calendarGranted, setCalendarGranted] = useState(false);
-  const [loading,    setLoading]    = useState(true);
-  const [connecting, setConnecting] = useState(false);
-  const [scanning,   setScanning]   = useState(false);
-  const [calGranting,setCalGranting]= useState(false);
+  const [gmailConnected,    setGmailConnected]    = useState(false);
+  const [appleCalGranted,   setAppleCalGranted]   = useState(false);
+  const [loading,           setLoading]           = useState(true);
+  const [connecting,        setConnecting]        = useState(false);
+  const [scanning,          setScanning]          = useState(false);
+  const [calGranting,       setCalGranting]       = useState(false);
+  const [showPaste,         setShowPaste]         = useState(false);
+  const [pasteText,         setPasteText]         = useState("");
+  const [pasteLoading,      setPasteLoading]      = useState(false);
 
-  const [showPaste,   setShowPaste]   = useState(false);
-  const [pasteText,   setPasteText]   = useState("");
-  const [pasteLoading,setPasteLoading]= useState(false);
+  // Track whether we're waiting for the user to return from Gmail OAuth in Safari
+  const awaitingGmailReturn = useRef(false);
 
   useEffect(() => {
     const init = async () => {
@@ -79,11 +78,38 @@ export default function ConnectionsScreen({ navigation }) {
       } catch {}
       try {
         const { status } = await Calendar.getCalendarPermissionsAsync();
-        setCalendarGranted(status === "granted");
+        setAppleCalGranted(status === "granted");
       } catch {}
       setLoading(false);
     };
     init();
+  }, []);
+
+  // When the app returns to foreground, re-check Gmail status if we sent the
+  // user to Safari to complete OAuth. This replaces the unreliable 3-second timeout.
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", async (nextState) => {
+      if (nextState === "active" && awaitingGmailReturn.current) {
+        awaitingGmailReturn.current = false;
+        try {
+          const me = await getMe();
+          const connected = me.gmail_connected || false;
+          setGmailConnected(connected);
+          if (connected) {
+            Alert.alert(
+              "Gmail connected",
+              "Wingman is scanning your inbox for travel bookings. Pull to refresh on the Trips tab in a moment."
+            );
+          } else {
+            Alert.alert(
+              "Not connected yet",
+              "It looks like Gmail wasn't connected. Please try again — make sure to complete the sign-in and grant Wingman read-only access."
+            );
+          }
+        } catch {}
+      }
+    });
+    return () => sub.remove();
   }, []);
 
   const connectGmail = async () => {
@@ -91,16 +117,8 @@ export default function ConnectionsScreen({ navigation }) {
     try {
       const data = await getGmailConnectUrl();
       if (data.url) {
+        awaitingGmailReturn.current = true;
         await Linking.openURL(data.url);
-        setTimeout(async () => {
-          try {
-            const me = await getMe();
-            setGmailConnected(me.gmail_connected || false);
-            if (me.gmail_connected) {
-              Alert.alert("Gmail connected", "Wingman is scanning your inbox for travel bookings. Pull to refresh on the Trips tab in a moment.");
-            }
-          } catch {}
-        }, 3000);
       }
     } catch (e) {
       Alert.alert("Error", e.message);
@@ -142,21 +160,34 @@ export default function ConnectionsScreen({ navigation }) {
     }
   };
 
-  const connectCalendar = async () => {
+  const connectAppleCalendar = async () => {
     setCalGranting(true);
     try {
       const { status } = await Calendar.requestCalendarPermissionsAsync();
       if (status === "granted") {
-        setCalendarGranted(true);
-        Alert.alert("Calendar connected", "Wingman will now read your calendar to detect travel events and pre-fill trip dates.");
+        setAppleCalGranted(true);
+        Alert.alert("Apple Calendar connected", "Wingman will now read your calendar to detect travel events and pre-fill trip dates.");
       } else {
-        Alert.alert("Permission denied", "You can enable Calendar access in Settings → Privacy → Calendars → Wingman.");
+        Alert.alert("Permission denied", "Enable Calendar access in Settings → Privacy & Security → Calendars → Wingman.");
       }
     } catch (e) {
       Alert.alert("Error", e.message);
     } finally {
       setCalGranting(false);
     }
+  };
+
+  const connectGoogleCalendar = async () => {
+    // Google Calendar is accessed via the same Gmail OAuth scope (calendar.readonly).
+    // For now, direct users to connect Gmail which covers both inbox + calendar.
+    Alert.alert(
+      "Google Calendar",
+      "Connect Gmail above to give Wingman access to both your Gmail and Google Calendar — it uses the same sign-in.",
+      [
+        { text: "Connect Gmail", onPress: connectGmail },
+        { text: "Cancel", style: "cancel" },
+      ]
+    );
   };
 
   const ConnBadge = ({ on }) => on ? (
@@ -215,23 +246,43 @@ export default function ConnectionsScreen({ navigation }) {
             }
           />
 
-          {/* Calendar */}
+          {/* Apple Calendar */}
           <ConnRow
             iconKey="calendar"
-            title="Calendar"
+            title="Apple Calendar"
             sub={
-              calendarGranted
+              appleCalGranted
                 ? "Connected — reading travel events and flight dates"
-                : "Detect trip dates and pre-fill itinerary from your calendar"
+                : "Detect trip dates and pre-fill itinerary from your Apple Calendar"
             }
             right={
-              calendarGranted ? (
+              appleCalGranted ? (
                 <ConnBadge on />
               ) : (
-                <Pressable style={s.connectBtn} onPress={connectCalendar} disabled={calGranting}>
+                <Pressable style={s.connectBtn} onPress={connectAppleCalendar} disabled={calGranting}>
                   {calGranting
                     ? <ActivityIndicator color={C.inkD} size="small" />
                     : <Text style={s.connectBtnT}>Connect</Text>}
+                </Pressable>
+              )
+            }
+          />
+
+          {/* Google Calendar */}
+          <ConnRow
+            iconKey="gcal"
+            title="Google Calendar"
+            sub={
+              gmailConnected
+                ? "Connected via Gmail — reading travel events"
+                : "Connect via Gmail to read your Google Calendar"
+            }
+            right={
+              gmailConnected ? (
+                <ConnBadge on />
+              ) : (
+                <Pressable style={s.connectBtn} onPress={connectGoogleCalendar}>
+                  <Text style={s.connectBtnT}>Connect</Text>
                 </Pressable>
               )
             }
@@ -249,8 +300,8 @@ export default function ConnectionsScreen({ navigation }) {
           <ConnRow
             iconKey="whatsapp"
             title="WhatsApp"
-            sub="Group-chat trip plans — coming soon"
-            right={<View style={s.soonBadge}><Text style={s.soonT}>SOON</Text></View>}
+            sub="Read group-chat trip plans and share disruption alerts — arriving in v2"
+            right={<View style={s.soonBadge}><Text style={s.soonT}>V2</Text></View>}
             disabled
           />
 
@@ -258,8 +309,8 @@ export default function ConnectionsScreen({ navigation }) {
           <ConnRow
             iconKey="imessage"
             title="iMessage"
-            sub={`"We're delayed" texts — coming soon`}
-            right={<View style={s.soonBadge}><Text style={s.soonT}>SOON</Text></View>}
+            sub="Detect delay texts and forward itineraries — arriving in v2"
+            right={<View style={s.soonBadge}><Text style={s.soonT}>V2</Text></View>}
             disabled
             last
           />
@@ -280,7 +331,6 @@ export default function ConnectionsScreen({ navigation }) {
             last
           />
         </View>
-
         {showPaste && (
           <View style={s.pasteWrap}>
             <TextInput
@@ -292,6 +342,8 @@ export default function ConnectionsScreen({ navigation }) {
               multiline
               numberOfLines={8}
               textAlignVertical="top"
+              autoCorrect={false}
+              spellCheck={false}
             />
             <Btn
               title={pasteLoading ? "Scanning…" : "Import trip"}
@@ -311,7 +363,6 @@ export default function ConnectionsScreen({ navigation }) {
           <Feat ic="L" t="Read-only access — Wingman never sends emails or edits events" />
           <Feat ic="X" color={C.coral} t="Nothing personal or off-topic — ever." />
         </View>
-
         <Text style={s.note}>Revoke any connection in one tap. Your data is never sold or shared.</Text>
       </ScrollView>
     </SafeAreaView>
@@ -319,11 +370,9 @@ export default function ConnectionsScreen({ navigation }) {
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-
 const s = StyleSheet.create({
   app:         { flex: 1, backgroundColor: C.bg },
   ambientNote: { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 20, marginBottom: 14 },
-
   row: {
     flexDirection: "row", alignItems: "center", gap: 12,
     paddingVertical: 14, paddingHorizontal: 16,
@@ -336,29 +385,24 @@ const s = StyleSheet.create({
   },
   rowT: { color: C.ink, fontSize: 14, fontFamily: T.sansM },
   rowS: { color: C.mut, fontSize: 12, fontFamily: T.sans, marginTop: 2, lineHeight: 17 },
-
   connectBtn:  { backgroundColor: C.gold, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
   connectBtnT: { color: C.inkD, fontSize: 12, fontFamily: T.sansB, letterSpacing: 0.3 },
-
   connectedBadge: {
     backgroundColor: C.gold + "15", borderWidth: 1,
     borderColor: C.gold + "40", borderRadius: 8,
     paddingHorizontal: 10, paddingVertical: 5,
   },
   connectedT: { color: C.gold, fontSize: 10, fontFamily: T.sansB, letterSpacing: T.trackMed },
-
   rescanBtn: {
     backgroundColor: C.card2, borderWidth: 1, borderColor: C.line,
     borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6,
   },
   rescanT: { color: C.ink, fontSize: 12, fontFamily: T.sansM },
-
   soonBadge: {
     backgroundColor: C.card2, borderWidth: 1, borderColor: C.line,
     borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5,
   },
   soonT: { color: C.mut, fontSize: 10, fontFamily: T.sansB, letterSpacing: T.trackMed },
-
   pasteWrap: {
     backgroundColor: C.card, borderRadius: 16, borderWidth: 1,
     borderColor: C.line, padding: 16, marginBottom: 14,
@@ -368,12 +412,10 @@ const s = StyleSheet.create({
     minHeight: 140, backgroundColor: C.card2,
     borderRadius: 12, padding: 14, borderWidth: 1, borderColor: C.line,
   },
-
   featIcon: {
     width: 22, height: 22, borderRadius: 6,
     backgroundColor: C.gold + "10", borderWidth: 1, borderColor: C.gold + "25",
     alignItems: "center", justifyContent: "center",
   },
-
   note: { color: C.mut, fontSize: 12, fontFamily: T.sans, textAlign: "center", marginTop: 10 },
 });

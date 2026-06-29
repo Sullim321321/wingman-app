@@ -261,6 +261,9 @@ export default function ConciergeScreen({ route }) {
             maxLength={500}
             returnKeyType="send"
             onSubmitEditing={() => send()}
+            autoCorrect
+            spellCheck
+            autoCapitalize="sentences"
           />
           <Pressable
             style={[s.sendBtn, (!input.trim() || loading) && { opacity: 0.35 }]}

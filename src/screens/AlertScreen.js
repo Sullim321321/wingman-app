@@ -167,6 +167,7 @@ export default function AlertScreen({ navigation, route }) {
   const [status, setStatus] = useState("loading");
   const [flight, setFlight] = useState(paramFlight);
   const [tripId, setTripId] = useState(paramTripId);
+  const [noTrips, setNoTrips] = useState(false);
 
   // Rescue engine state
   const [rescueData, setRescueData] = useState(null);
@@ -191,12 +192,15 @@ export default function AlertScreen({ navigation, route }) {
           if (alive) {
             setFlight(fl);
             if (fl?.tripId) { tid = fl.tripId; setTripId(fl.tripId); }
+            // If no upcoming flights exist, show the empty state instead of demo data
+            if (!fl) { setNoTrips(true); setStatus("no_trips"); return; }
           }
-        } catch (_) {}
+        } catch (_) { if (alive) { setNoTrips(true); setStatus("no_trips"); return; } }
       }
 
-      const dep = fl?.origin || "DEN";
-      const arr = fl?.destination || "ASE";
+      const dep = fl?.origin || "";
+      const arr = fl?.destination || "";
+      if (!dep || !arr) { if (alive) { setNoTrips(true); setStatus("no_trips"); } return; }
 
       // Get disruption prediction
       try {
@@ -236,11 +240,11 @@ export default function AlertScreen({ navigation, route }) {
     return () => { alive = false; };
   }, []);
 
-  const dep = flight?.origin || "DEN";
-  const arr = flight?.destination || "ASE";
+  const dep = flight?.origin || "";
+  const arr = flight?.destination || "";
   const flightLabel = flight
     ? [(flight.carrier || ""), (flight.flight_number || "")].filter(Boolean).join(" ") || `${dep} → ${arr}`
-    : "UA 5821";
+    : "";
   const tripTitle = flight?.tripTitle || "your trip";
 
   const target = pred ? pred.risk : status === "offline" ? 78 : 0;
@@ -318,6 +322,32 @@ export default function AlertScreen({ navigation, route }) {
     } catch (_) {}
     navigation.goBack();
   };
+
+  // ── Empty state: no upcoming flights ──────────────────────────────────────
+  if (noTrips) {
+    return (
+      <SafeAreaView style={s.app}>
+        <ScrollView contentContainerStyle={g.scroll}>
+          <BackBar nav={navigation} label="Alerts" />
+          <View style={s.emptyWrap}>
+            <View style={s.emptyIcon}>
+              <Text style={{ color: C.gold, fontSize: 22 }}>✈</Text>
+            </View>
+            <Text style={s.emptyH}>No upcoming flights</Text>
+            <Text style={s.emptyBody}>
+              Add a trip with at least one flight leg and Wingman will monitor it for delays, cancellations, and gate changes — and surface rescue options here if anything goes wrong.
+            </Text>
+            <Btn
+              title="Add a trip"
+              kind="accent"
+              onPress={() => navigation.navigate("AddTrip")}
+              style={{ marginTop: 24, alignSelf: "stretch" }}
+            />
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={s.app}>
@@ -523,4 +553,14 @@ const s = StyleSheet.create({
   sum: { color: C.mut, fontSize: 13, textAlign: "center", marginBottom: 12, lineHeight: 19 },
   declineBtn: { marginTop: 10, paddingVertical: 12, alignItems: "center" },
   declineText: { color: C.mut, fontSize: 13, fontFamily: T.sansM },
+
+  // Empty state
+  emptyWrap: { alignItems: "center", paddingTop: 60, paddingHorizontal: 32 },
+  emptyIcon: {
+    width: 64, height: 64, borderRadius: 20,
+    backgroundColor: C.gold + "12", borderWidth: 1, borderColor: C.gold + "30",
+    alignItems: "center", justifyContent: "center", marginBottom: 20,
+  },
+  emptyH: { color: C.ink, fontSize: 20, fontFamily: T.sansB, textAlign: "center", marginBottom: 10 },
+  emptyBody: { color: C.mut, fontSize: 14, lineHeight: 21, textAlign: "center" },
 });

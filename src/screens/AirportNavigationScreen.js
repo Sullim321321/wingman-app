@@ -4,6 +4,7 @@ import {
   ActivityIndicator, RefreshControl, Linking,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getAirportNavigation } from "../api";
 import { C as _C, T } from "../theme";
 
@@ -35,6 +36,7 @@ function getLoungeColor(access) {
 export default function AirportNavigationScreen() {
   const navigation = useNavigation();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
   const { iata = "JFK", gate = null, flightInfo = null } = route.params || {};
 
   const [data, setData] = useState(null);
@@ -68,7 +70,7 @@ export default function AirportNavigationScreen() {
   return (
     <View style={s.container}>
       {/* Header */}
-      <View style={s.header}>
+      <View style={[s.header, { paddingTop: insets.top + 12 }]}>
         <Pressable style={s.backBtn} onPress={() => navigation.goBack()}>
           <Text style={s.backBtnT}>‹</Text>
         </Pressable>
@@ -361,7 +363,7 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
   scroll: { flex: 1 },
   // Header
-  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 56, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: C.border },
+  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 0, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: C.border },
   backBtn: { width: 36, height: 36, justifyContent: "center" },
   backBtnT: { color: C.gold, fontSize: 28, lineHeight: 32 },
   headerCenter: { flex: 1, alignItems: "center" },

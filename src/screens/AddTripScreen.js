@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, TextInput, Pressable,
   StyleSheet, Alert, ActivityIndicator, TouchableOpacity, Animated,
+  KeyboardAvoidingView, Platform,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { C, T } from "../theme";
@@ -178,6 +179,7 @@ export default function AddTripScreen({ navigation }) {
 
   return (
     <SafeAreaView style={s.app}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={g.scroll} keyboardShouldPersistTaps="handled">
         <BackBar nav={navigation} label="Add Trip" />
 
@@ -369,6 +371,7 @@ export default function AddTripScreen({ navigation }) {
           </View>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

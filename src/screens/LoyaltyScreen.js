@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, StyleSheet,
   TouchableOpacity, TextInput, Modal, ActivityIndicator,
-  Alert, RefreshControl,
+  Alert, RefreshControl, KeyboardAvoidingView, Platform,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { C, T } from "../theme";
@@ -175,6 +175,7 @@ function ConnectModal({ visible, onClose, onConnect }) {
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
       <SafeAreaView style={ps.modal}>
         <View style={ps.modalHeader}>
           <Text style={ps.modalTitle}>Connect Loyalty Account</Text>
@@ -247,6 +248,7 @@ function ConnectModal({ visible, onClose, onConnect }) {
           )}
         </ScrollView>
       </SafeAreaView>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

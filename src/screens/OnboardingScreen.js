@@ -13,6 +13,7 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { C, T, GRAD } from "../theme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SerifText, Btn, tap } from "../components";
 import { requestCode, verifyCode, setToken, signInWithAppleToken, registerPushToken } from "../api";
 
@@ -416,6 +417,7 @@ export default function OnboardingScreen({ navigation }) {
     setPage(n);
   };
   const next = () => { if (page < TOTAL - 1) goToPage(page + 1); };
+  const insets = useSafeAreaInsets();
   const goSignIn = () => navigation.navigate("SignIn");
   const isSignUpSlide = page === TOTAL - 1;
 
@@ -445,7 +447,7 @@ export default function OnboardingScreen({ navigation }) {
     <SafeAreaView style={s.app}>
       <LinearGradient colors={["#0F0D0A", "#1A1610", "#0F0D0A"]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
       {!isSignUpSlide && (
-        <View style={s.topBar}>
+        <View style={[s.topBar, { paddingTop: insets.top }]}>
           <Pressable style={s.skipIntroBtn} onPress={() => { tap(); goToPage(TOTAL - 1); }}>
             <Text style={s.skipIntroBtnT}>Skip intro →</Text>
           </Pressable>
@@ -489,7 +491,7 @@ export default function OnboardingScreen({ navigation }) {
 
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
-  topBar:       { position: "absolute", top: 54, left: 0, right: 0, zIndex: 10, flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 20 },
+  topBar:       { position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 20 },
   skipIntroBtn:  { padding: 8 },
   skipIntroBtnT: { color: C.gold, fontSize: 14, fontFamily: T.sansM },
   skipBtn:       { padding: 8 },

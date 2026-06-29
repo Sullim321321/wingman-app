@@ -65,6 +65,8 @@ import WingmanWrappedScreen from "./src/screens/WingmanWrappedScreen";
 import CompensationScreen from "./src/screens/CompensationScreen";
 import UpgradeBidScreen from "./src/screens/UpgradeBidScreen";
 import GroundTransportScreen from "./src/screens/GroundTransportScreen";
+import WingmanPointsScreen from "./src/screens/WingmanPointsScreen";
+import DestinationScreen from "./src/screens/DestinationScreen";
 
 export const navRef = createNavigationContainerRef();
 const Stack = createNativeStackNavigator();
@@ -280,6 +282,8 @@ function Root() {
             <Stack.Screen name="Compensation"     component={CompensationScreen} />
             <Stack.Screen name="UpgradeBid"         component={UpgradeBidScreen} />
             <Stack.Screen name="GroundTransport"    component={GroundTransportScreen} />
+            <Stack.Screen name="WingmanPoints"     component={WingmanPointsScreen} />
+            <Stack.Screen name="Destination"       component={DestinationScreen} />
             <Stack.Screen name="Main"         component={Tabs} />
           </>
         ) : (

@@ -655,14 +655,26 @@ export default function TripDetailScreen({ route, navigation }) {
                   </View>
                 </View>
               )}
-              <Pressable
-                style={s.intelCTA}
-                onPress={() => navigation.navigate("Concierge", {
-                  prefill: `Tell me more about ${destIntel.destination} — restaurants, neighbourhoods, what to do.`
-                })}
-              >
-                <Text style={s.intelCTAT}>Ask Wingman for more local tips →</Text>
-              </Pressable>
+              <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
+                <Pressable
+                  style={[s.intelCTA, { flex: 1 }]}
+                  onPress={() => navigation.navigate("Destination", {
+                    city: destIntel.destination,
+                    trip_id: trip.id,
+                    tripTitle: trip.title,
+                  })}
+                >
+                  <Text style={s.intelCTAT}>Explore {destIntel.destination}  ›</Text>
+                </Pressable>
+                <Pressable
+                  style={[s.intelCTA, { flex: 1 }]}
+                  onPress={() => navigation.navigate("Concierge", {
+                    prefill: `Tell me more about ${destIntel.destination} — restaurants, neighbourhoods, what to do.`
+                  })}
+                >
+                  <Text style={s.intelCTAT}>Ask Wingman  ›</Text>
+                </Pressable>
+              </View>
             </View>
           </>
         )}

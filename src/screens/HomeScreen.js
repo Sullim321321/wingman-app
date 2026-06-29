@@ -11,7 +11,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { C, T } from "../theme";
 import { Btn, tap, SerifText, g } from "../components";
-import { getTrips, deleteTrip, getFlightStatus, getFlightStatusPublic, getPrediction, getGroundIntel, getMe, getLoyaltyAccounts, getTripBriefing, getNextTripWindow } from "../api";
+import { getTrips, deleteTrip, getFlightStatus, getFlightStatusPublic, getPrediction, getGroundIntel, getMe, getLoyaltyAccounts, getTripBriefing, getNextTripWindow, getPoints } from "../api";
 import { scheduleDisruption } from "../notify";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -476,9 +476,11 @@ export default function HomeScreen({ navigation }) {
   const [briefing, setBriefing]   = useState(null);
   const [expiringPoints, setExpiringPoints] = useState(null);
   const [nextTripWindow, setNextTripWindow] = useState(null);
+  const [pointsData, setPointsData]         = useState(null);
 
   useEffect(() => {
     getMe().then(u => { if (u?.first_name) setFirstName(u.first_name); }).catch(() => {});
+    getPoints().then(d => { if (d?.balance !== undefined) setPointsData(d); }).catch(() => {});
     // Check for expiring loyalty points
     getNextTripWindow().then(data => {
       if (data?.window?.days_until > 0 && data.window.days_until <= 21) {
@@ -650,6 +652,39 @@ export default function HomeScreen({ navigation }) {
                 </Pressable>
               </>
             )}
+
+            {/* ── Wingman Points tile ─────────────────────────────────────── */}
+            {pointsData && (() => {
+              const tier = pointsData.tier || "explorer";
+              const TIER_ACCENT = { explorer: C.mut, flyer: "#5B8CFF", navigator: C.gold, elite: "#FF9F43" };
+              const accent = TIER_ACCENT[tier] || C.gold;
+              return (
+                <Pressable
+                  style={[s.pointsTile, { borderColor: accent + "40" }]}
+                  onPress={() => navigation.navigate("WingmanPoints")}
+                >
+                  <LinearGradient colors={[accent + "18", "transparent"]} style={StyleSheet.absoluteFill} />
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                    <View>
+                      <Text style={[s.pointsTileLabel, { color: accent }]}>{tier.toUpperCase()} MEMBER</Text>
+                      <SerifText bold style={s.pointsTileBalance}>{(pointsData.balance || 0).toLocaleString()}</SerifText>
+                      <Text style={s.pointsTileSub}>Wingman Points</Text>
+                    </View>
+                    <View style={{ alignItems: "flex-end", gap: 6 }}>
+                      {pointsData.next_tier && (
+                        <Text style={[s.pointsTileNext, { color: accent }]}>
+                          {(pointsData.points_to_next || 0).toLocaleString()} to {pointsData.next_tier}
+                        </Text>
+                      )}
+                      <View style={s.pointsTileBar}>
+                        <View style={[s.pointsTileBarFill, { width: `${pointsData.progress_pct || 0}%`, backgroundColor: accent }]} />
+                      </View>
+                      <Text style={{ color: C.mut, fontSize: 11, fontFamily: T.sans }}>View history  ›</Text>
+                    </View>
+                  </View>
+                </Pressable>
+              );
+            })()}
 
             {/* ── Points expiry alert card ────────────────────────────────── */}
             {expiringPoints && (() => {
@@ -864,6 +899,13 @@ const s = StyleSheet.create({
   gmailSub:       { color: C.mut, fontSize: 12, fontFamily: T.sans, lineHeight: 17 },
   // ── Next trip window card ────────────────────────────────────────────────────
   windowCard:     { backgroundColor: C.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: C.gold + "30", marginBottom: 12 },
+  pointsTile:     { borderRadius: 16, padding: 16, borderWidth: 1, marginBottom: 12, overflow: "hidden" },
+  pointsTileLabel:{ fontSize: 10, fontFamily: T.sansB, letterSpacing: 1.2, marginBottom: 4 },
+  pointsTileBalance: { fontSize: 28, color: C.ink },
+  pointsTileSub:  { color: C.mut, fontSize: 11, fontFamily: T.sans, marginTop: 2 },
+  pointsTileNext: { fontSize: 11, fontFamily: T.sansM },
+  pointsTileBar:  { width: 100, height: 3, backgroundColor: C.line, borderRadius: 2, overflow: "hidden" },
+  pointsTileBarFill: { height: 3, borderRadius: 2 },
   windowTitle:    { color: C.ink, fontSize: 14, fontFamily: T.sansB },
   windowBody:     { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 19 },
 });

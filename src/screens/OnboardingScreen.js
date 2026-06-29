@@ -5,6 +5,7 @@ import React, { useRef, useState } from "react";
 import {
   SafeAreaView, View, Text, ScrollView, Dimensions,
   StyleSheet, Pressable, ActivityIndicator, Animated, Easing, TextInput,
+  KeyboardAvoidingView, Platform,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import * as SecureStore from "expo-secure-store";
@@ -258,12 +259,16 @@ export default function OnboardingScreen({ navigation }) {
   const ref = useRef(null);
   const TOTAL = 4;
 
-  const onScroll = (e) => setPage(Math.round(e.nativeEvent.contentOffset.x / width));
-  const next = () => {
-    if (page < TOTAL - 1) ref.current?.scrollTo({ x: (page + 1) * width, animated: true });
+  // Update page state immediately — don't rely on onMomentumScrollEnd which
+  // never fires for programmatic scrolls when scrollEnabled={false}
+  const goToPage = (n) => {
+    tap();
+    ref.current?.scrollTo({ x: n * width, animated: true });
+    setPage(n);
   };
+  const next = () => { if (page < TOTAL - 1) goToPage(page + 1); };
   const goSignIn = () => navigation.navigate("SignIn");
-  const isSignUpSlide = page === 3;
+  const isSignUpSlide = page === TOTAL - 1;
 
   const handleSignUpDone = () => {
     navigation.replace("ProfileSetup");
@@ -277,13 +282,13 @@ export default function OnboardingScreen({ navigation }) {
           <Text style={s.skipBtnT}>Sign in</Text>
         </Pressable>
       )}
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView
         ref={ref}
         horizontal
         pagingEnabled
         scrollEnabled={false}
         showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={onScroll}
         style={{ flex: 1 }}
       >
         <SlideHero />
@@ -291,14 +296,17 @@ export default function OnboardingScreen({ navigation }) {
         <SlideConcierge />
         <SlideSignUp onDone={handleSignUpDone} />
       </ScrollView>
-      <View style={[s.footer, isSignUpSlide && { paddingBottom: 20 }]}>
-        <View style={s.dots}>
-          {Array.from({ length: TOTAL }).map((_, i) => (
-            <View key={i} style={[s.dot, i === page && s.dotOn]} />
-          ))}
+      </KeyboardAvoidingView>
+      {!isSignUpSlide && (
+        <View style={s.footer}>
+          <View style={s.dots}>
+            {Array.from({ length: TOTAL }).map((_, i) => (
+              <View key={i} style={[s.dot, i === page && s.dotOn]} />
+            ))}
+          </View>
+          <Btn title="Next" onPress={next} style={{ width: 140 }} />
         </View>
-        {!isSignUpSlide && <Btn title="Next" onPress={next} style={{ width: 140 }} />}
-      </View>
+      )}
     </SafeAreaView>
   );
 }

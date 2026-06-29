@@ -303,3 +303,26 @@ export const getGroundTransport = (iata, destination = null) =>
 export const getHotelAffinity = () => req("/me/hotel-affinity");
 export const removeHotelAffinity = (propertyName) =>
   req(`/me/hotel-affinity/${encodeURIComponent(propertyName)}`, { method: "DELETE" });
+// ─── APPLE + SMS AUTH ─────────────────────────────────────────────────────────
+export const signInWithAppleToken = (identityToken, email, fullName) =>
+  req("/auth/apple", {
+    method: "POST",
+    body: JSON.stringify({ identityToken, email, fullName }),
+  });
+export const requestSmsCode = (phone) =>
+  req("/auth/sms/request", {
+    method: "POST",
+    body: JSON.stringify({ phone }),
+  });
+export const verifySmsCode = (phone, code) =>
+  req("/auth/sms/verify", {
+    method: "POST",
+    body: JSON.stringify({ phone, code }),
+  });
+// ─── AIRPORT INTELLIGENCE ─────────────────────────────────────────────────────
+export const getAirportDining = (iata, terminal = null) =>
+  req(`/airports/${encodeURIComponent(iata)}/dining${terminal ? `?terminal=${encodeURIComponent(terminal)}` : ""}`);
+export const getAirportNavigation = (iata, gate = null) =>
+  req(`/airports/${encodeURIComponent(iata)}/navigate${gate ? `?gate=${encodeURIComponent(gate)}` : ""}`);
+export const getCityTransport = (iata) =>
+  req(`/airports/${encodeURIComponent(iata)}/city-transport`);

@@ -10,6 +10,7 @@ import {
   getPrediction, getTrips,
   getRescueOptions, acceptRescue, rejectRescue,
 } from "../api";
+import { getCachedAlerts } from "../offlineCache";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -187,7 +188,8 @@ export default function AlertScreen({ navigation, route }) {
 
       if (!fl) {
         try {
-          const data = await getTrips();
+          const result = await getCachedAlerts(() => getTrips());
+          const data = result.data;
           fl = findNextFlight(data.trips || []);
           if (alive) {
             setFlight(fl);

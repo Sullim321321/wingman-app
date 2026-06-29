@@ -571,3 +571,6 @@ const r = StyleSheet.create({
   riskDot:   { position: "absolute", top: 60, left: 74, width: 12, height: 12, borderRadius: 6, backgroundColor: C.coral, zIndex: 3 },
   riskRing:  { position: "absolute", top: 60, left: 74, width: 12, height: 12, borderRadius: 6, backgroundColor: C.coral, zIndex: 2 },
 });
+
+// ─── OfflineBanner ────────────────────────────────────────────────────────────
+export { default as OfflineBanner } from "./components/OfflineBanner";

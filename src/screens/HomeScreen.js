@@ -10,7 +10,8 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { C, T } from "../theme";
-import { Btn, tap, SerifText, g } from "../components";
+import { Btn, tap, SerifText, g, OfflineBanner } from "../components";
+import { getCachedTrips, getCachedPoints } from "../offlineCache";
 import { getTrips, deleteTrip, getFlightStatus, getFlightStatusPublic, getPrediction, getGroundIntel, getMe, getLoyaltyAccounts, getTripBriefing, getNextTripWindow, getPoints } from "../api";
 import { scheduleDisruption } from "../notify";
 
@@ -498,9 +499,12 @@ export default function HomeScreen({ navigation }) {
     }).catch(() => {});
   }, []);
 
+  const [offlineInfo, setOfflineInfo] = useState({ cached: false, stale: false, cachedAt: null });
   const load = useCallback(async () => {
     try {
-      const data = await getTrips();
+      const result = await getCachedTrips(() => getTrips());
+      setOfflineInfo({ cached: result.cached, stale: result.stale, cachedAt: result.cachedAt });
+      const data = result.data;
       const fetchedTrips = data.trips || [];
       setTrips(fetchedTrips);
       // Check if any trip departs today — fetch briefing if so
@@ -552,6 +556,7 @@ export default function HomeScreen({ navigation }) {
           />
         }
       >
+        <OfflineBanner cached={offlineInfo.cached} stale={offlineInfo.stale} cachedAt={offlineInfo.cachedAt} style={{ marginTop: 8 }} />
         {/* ── Header ─────────────────────────────────────────────────────── */}
         <View style={s.appH}>
           {/* W monogram + WINGMAN wordmark */}

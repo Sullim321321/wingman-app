@@ -1,12 +1,12 @@
 // SettingsScreen — Trust Controls & Preferences
 // Warm espresso palette + champagne gold + DM Sans
 
-import React, { useState, useEffect } from "react";
-import { SafeAreaView, ScrollView, View, Text, Switch, StyleSheet, ActivityIndicator } from "react-native";
+import React, { useState, useEffect, useCallback } from "react";
+import { SafeAreaView, ScrollView, View, Text, Switch, StyleSheet, ActivityIndicator, TouchableOpacity, Alert } from "react-native";
 import { C, T } from "../theme";
 import { BackBar, Segmented, SetRow, Chip, Btn, g } from "../components";
 import { useAuth } from "../auth";
-import { getPolicy, updatePolicy, updateLocale } from "../api";
+import { getPolicy, updatePolicy, updateLocale, getHotelAffinity, removeHotelAffinity } from "../api";
 
 const LANGUAGES = [
   { code: "en", label: "English" },
@@ -23,6 +23,104 @@ const LANGUAGES = [
 const CURRENCIES = [
   "USD", "EUR", "GBP", "JPY", "CAD", "AUD", "CHF", "CNY", "AED", "SGD",
 ];
+
+const TIER_LABELS = {
+  luxury: "Luxury", boutique: "Boutique", lifestyle: "Lifestyle",
+  business: "Business", value: "Value",
+};
+
+// ── Hotel Affinity Section ────────────────────────────────────────────────────
+function HotelAffinitySection() {
+  const [hotels, setHotels] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    try {
+      const data = await getHotelAffinity();
+      setHotels(data?.hotels || []);
+    } catch (e) {
+      // Silently fail — section just stays empty
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  function confirmRemove(propertyName) {
+    Alert.alert(
+      "Remove from profile",
+      `Remove "${propertyName}" from your learned preferences? Wingman will no longer use it as a reference when recommending hotels.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove", style: "destructive",
+          onPress: async () => {
+            try {
+              await removeHotelAffinity(propertyName);
+              setHotels(prev => prev.filter(h => h.property_name !== propertyName));
+            } catch (e) {
+              Alert.alert("Error", "Couldn't remove — try again.");
+            }
+          },
+        },
+      ]
+    );
+  }
+
+  if (loading) {
+    return (
+      <View style={s.affinityWrap}>
+        <ActivityIndicator color={C.gold} size="small" />
+      </View>
+    );
+  }
+
+  if (hotels.length === 0) {
+    return (
+      <View style={s.affinityWrap}>
+        <Text style={s.affinityEmpty}>
+          Connect Gmail to let Wingman learn your hotel preferences from your booking history. Once learned, Wingman will always recommend the closest match to your favourite properties.
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={s.affinityWrap}>
+      <Text style={s.affinityIntro}>
+        Wingman has learned your hotel preferences from your booking history. These are used to personalise every hotel recommendation — if your favourite brand exists in a destination, it's always the first suggestion.
+      </Text>
+      {hotels.map((h, i) => {
+        const attrs = h.attributes || {};
+        const tags = Object.entries(attrs)
+          .filter(([, v]) => v)
+          .map(([k]) => k.replace(/_/g, " "))
+          .join(" · ");
+        const loc = [h.city, h.country].filter(Boolean).join(", ");
+        return (
+          <View key={i} style={[s.affinityRow, i === hotels.length - 1 && { borderBottomWidth: 0 }]}>
+            <View style={s.affinityLeft}>
+              <Text style={s.affinityName}>{h.property_name}</Text>
+              <Text style={s.affinitySub}>
+                {[
+                  loc,
+                  h.brand,
+                  h.tier ? TIER_LABELS[h.tier] || h.tier : null,
+                  h.stay_count > 1 ? `${h.stay_count} stays` : null,
+                ].filter(Boolean).join(" · ")}
+              </Text>
+              {tags ? <Text style={s.affinityTags}>{tags}</Text> : null}
+            </View>
+            <TouchableOpacity onPress={() => confirmRemove(h.property_name)} style={s.affinityRemove}>
+              <Text style={s.affinityRemoveT}>✕</Text>
+            </TouchableOpacity>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
 
 export default function SettingsScreen({ navigation }) {
   const { email, signOut } = useAuth();
@@ -61,14 +159,12 @@ export default function SettingsScreen({ navigation }) {
   }
 
   async function handleToggle(field, value) {
-    // Optimistic update
     if (field === "weather_alerts") setWeather(value);
     if (field === "price_alerts")   setDrops(value);
     if (field === "quiet_hours")    setQuiet(value);
     try {
       await updatePolicy({ [field]: value });
     } catch (e) {
-      // Revert on failure
       if (field === "weather_alerts") setWeather(!value);
       if (field === "price_alerts")   setDrops(!value);
       if (field === "quiet_hours")    setQuiet(!value);
@@ -188,6 +284,9 @@ export default function SettingsScreen({ navigation }) {
           </View>
         </View>
 
+        <Text style={g.sectionT}>WHAT WINGMAN KNOWS ABOUT YOU</Text>
+        <HotelAffinitySection />
+
         <Text style={g.sectionT}>LOYALTY PROGRAMS</Text>
         <View style={g.group}>
           <View style={{ borderBottomWidth: 0 }}>
@@ -237,4 +336,64 @@ const s = StyleSheet.create({
   },
   chipScroll: { flexGrow: 0 },
   localeChip: { marginRight: 8 },
+  // Hotel affinity
+  affinityWrap: {
+    backgroundColor: C.card,
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    overflow: "hidden",
+  },
+  affinityIntro: {
+    color: C.mut,
+    fontSize: 13,
+    fontFamily: T.sans,
+    lineHeight: 19,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 10,
+  },
+  affinityEmpty: {
+    color: C.mut,
+    fontSize: 13,
+    fontFamily: T.sans,
+    lineHeight: 19,
+    padding: 16,
+  },
+  affinityRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: C.line,
+  },
+  affinityLeft: { flex: 1 },
+  affinityName: {
+    color: C.ink,
+    fontSize: 15,
+    fontFamily: T.sansB,
+    marginBottom: 2,
+  },
+  affinitySub: {
+    color: C.mut,
+    fontSize: 12,
+    fontFamily: T.sans,
+  },
+  affinityTags: {
+    color: C.gold,
+    fontSize: 11,
+    fontFamily: T.sans,
+    marginTop: 3,
+    textTransform: "lowercase",
+  },
+  affinityRemove: {
+    padding: 8,
+    marginLeft: 8,
+  },
+  affinityRemoveT: {
+    color: C.mut,
+    fontSize: 14,
+    fontFamily: T.sans,
+  },
 });

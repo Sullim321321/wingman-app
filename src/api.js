@@ -299,3 +299,7 @@ export const getLoyaltyAccounts = () => req("/loyalty");
 export const getGroundTransport = (iata, destination = null) =>
   req(`/ground-transport/${encodeURIComponent(iata)}${destination ? `?destination=${encodeURIComponent(destination)}` : ""}`);
 
+// ─── HOTEL AFFINITY (revealed preferences) ───────────────────────────────────
+export const getHotelAffinity = () => req("/me/hotel-affinity");
+export const removeHotelAffinity = (propertyName) =>
+  req(`/me/hotel-affinity/${encodeURIComponent(propertyName)}`, { method: "DELETE" });

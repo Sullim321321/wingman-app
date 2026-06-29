@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
-  Alert, ActivityIndicator, TextInput, Linking, AppState, Clipboard,
+  Alert, ActivityIndicator, TextInput, Linking, AppState, Share,
 } from "react-native";
 import * as Calendar from "expo-calendar";
 import { C, T } from "../theme";
@@ -331,11 +331,11 @@ export default function ConnectionsScreen({ navigation }) {
               <Pressable
                 style={s.connectBtn}
                 onPress={() => {
-                  Clipboard.setString(FORWARD_EMAIL);
-                  Alert.alert("Copied!", `${FORWARD_EMAIL} copied to clipboard. Forward any booking confirmation to this address.`);
+                  Share.share({ message: FORWARD_EMAIL, title: "Wingman import address" })
+                    .catch(() => Alert.alert("Forward to", FORWARD_EMAIL));
                 }}
               >
-                <Text style={s.connectBtnT}>Copy</Text>
+                <Text style={s.connectBtnT}>Share</Text>
               </Pressable>
             }
           />

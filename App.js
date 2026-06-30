@@ -88,13 +88,13 @@ const navTheme = {
 };
 
 // ─── Tab bar icon — hairline Unicode symbols ──────────────────────────────────
-// Using thin Unicode characters that read as clean line icons
+// Deck-matching thin line icons
 const TAB_ICONS = {
-  Home:      { active: "⌂", inactive: "⌂" },   // house
-  Trips:     { active: "⊡", inactive: "⊡" },   // briefcase-like square
-  Alerts:    { active: "◎", inactive: "◎" },   // bell-like circle
-  Concierge: { active: "✦", inactive: "✦" },   // concierge star
-  Insights:  { active: "◈", inactive: "◈" },   // insights diamond
+  Home:      { active: "⌂", inactive: "⌂" },
+  Trips:     { active: "☒", inactive: "☐" },
+  Alerts:    { active: "◎", inactive: "○" },
+  Concierge: { active: "✦", inactive: "✧" },
+  Insights:  { active: "◈", inactive: "◇" },
 };
 
 // Tab labels — wide-tracked all-caps
@@ -363,19 +363,16 @@ export default function App() {
 
 const tb = StyleSheet.create({
   iconWrap: {
-    width: 36,
-    height: 26,
+    width: 32,
+    height: 24,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 8,
   },
-  iconWrapActive: {
-    backgroundColor: C.gold + "15",
-  },
+  iconWrapActive: {},  // no pill bg — deck is clean
   icon: {
-    fontSize: 16,
+    fontSize: 18,
     color: C.mut,
-    opacity: 0.5,
+    opacity: 0.55,
   },
   iconActive: {
     color: C.gold,

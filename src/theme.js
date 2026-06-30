@@ -95,20 +95,20 @@ export const GRAD = {
 
 // Typography size constants — exact deck scale
 export const TS = {
-  greetingH:   28,
-  greetingSub: 14,
+  greetingH:   34,   // Deck: ~34pt Playfair Display serif greeting
+  greetingSub: 15,
   sectionLabel:10,
-  nextUpTitle: 28,   // Serif 'JFK to LAX' — larger for Playfair Display
+  nextUpTitle: 36,   // Deck: 'JFK to LAX' is VERY large — dominant serif headline
   nextUpSub:   13,
   nextUpRoute: 13,
-  nextUpMeta:  12,
+  nextUpMeta:  13,
   tripDate:    10,
   tripName:    17,
-  tripSub:     13,
+  tripSub:     12,
   headerMark:  28,
   headerBrand: 11,
   alertLabel:  11,
-  alertTitle:  22,
+  alertTitle:  28,   // Deck: disruption headline ~28pt
   alertBody:   14,
   btnLabel:    15,
   btnSub:      13,

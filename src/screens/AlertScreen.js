@@ -486,26 +486,61 @@ export default function AlertScreen({ navigation, route }) {
               )}
             </View>
           )}
-          <Text style={s.sum}>{confirmSummary}</Text>
-          {/* Parchment approve buttons — exact deck style */}
+          {/* Cash rebooking button — DECK: dark card bg, white text, gold $ icon */}
           <Pressable
-            style={[s.approveBtn, { backgroundColor: C.parch }]}
+            style={[s.approveBtn, s.approveBtnCash]}
             onPress={handleAccept}
             disabled={accepting}
           >
             <View style={s.approveBtnInner}>
-              <View style={s.approveBtnIcon}><Text style={{ fontSize: 14 }}>💵</Text></View>
+              <View style={[s.approveBtnIcon, s.approveBtnIconCash]}>
+                <Text style={{ fontSize: 15, color: C.gold, fontFamily: T.sansB }}>$</Text>
+              </View>
               <View style={{ flex: 1 }}>
-                <Text style={s.approveBtnT}>{accepting ? "Handling it…" : "Approve Rebooking"}</Text>
+                <Text style={[s.approveBtnT, { color: C.ink }]}>
+                  {accepting ? "Handling it…" : "Approve Rebooking"}
+                </Text>
                 {selectedOption?.cost_usd != null && (
-                  <Text style={s.approveBtnS}>
-                    {selectedOption.cost_usd === 0 ? "No charge" : `+${formatMoney(selectedOption.cost_usd)}`}
+                  <Text style={[s.approveBtnS, { color: C.mut }]}>
+                    {selectedOption.cost_usd === 0 ? "No charge" : `(+${formatMoney(selectedOption.cost_usd)})`}
                   </Text>
                 )}
               </View>
-              <Text style={s.approveBtnChev}>›</Text>
+              <Text style={[s.approveBtnChev, { color: C.mut }]}>›</Text>
             </View>
           </Pressable>
+
+          {/* Points rebooking button — DECK: parchment bg, dark ink text, P icon */}
+          <Pressable
+            style={[s.approveBtn, s.approveBtnPoints]}
+            onPress={handleAccept}
+            disabled={accepting}
+          >
+            <View style={s.approveBtnInner}>
+              <View style={[s.approveBtnIcon, s.approveBtnIconPoints]}>
+                <Text style={{ fontSize: 13, color: C.inkD, fontFamily: T.sansB }}>P</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.approveBtnT, { color: C.inkD }]}>Approve Rebooking</Text>
+                <Text style={[s.approveBtnS, { color: C.mutD }]}>
+                  {selectedOption?.points_cost
+                    ? `(${formatPoints(selectedOption.points_cost)})`
+                    : "(Redeem points)"}
+                </Text>
+              </View>
+              <Text style={[s.approveBtnChev, { color: C.mutD }]}>›</Text>
+            </View>
+          </Pressable>
+
+          {/* Footer — DECK: shield + "You're in control. We'll act when you say go." */}
+          <View style={s.controlFooter}>
+            <Text style={s.controlFooterIc}>🛡️</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={s.controlFooterT}>You're in control.</Text>
+              <Text style={s.controlFooterS}>We'll act when you say go.</Text>
+            </View>
+          </View>
+
           <Pressable onPress={handleDecline} style={s.declineBtn}>
             <Text style={s.declineText}>Decline — I'll handle it myself</Text>
           </Pressable>
@@ -526,20 +561,29 @@ const s = StyleSheet.create({
   heroDisruptBadge: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 14 },
   heroDisruptIc: { fontSize: 14 },
   heroDisruptLabel: { color: C.coral, fontSize: 11, fontFamily: T.sansB, letterSpacing: 3.5 },
-  heroH: { color: C.ink, fontSize: 26, fontFamily: T.serif, marginBottom: 8, letterSpacing: -0.4, lineHeight: 34 },
+  heroH: { color: C.ink, fontSize: 30, fontFamily: T.serif, marginBottom: 10, letterSpacing: -0.5, lineHeight: 38 },
   heroRoute: { color: C.mut, fontSize: 15, fontFamily: T.sansM, marginBottom: 4, letterSpacing: 0.5 },
   heroRouteSub: { color: C.mut, fontSize: 13, fontFamily: T.sans, marginBottom: 12, opacity: 0.7 },
   heroP: { color: C.ink, fontSize: 14, lineHeight: 22, opacity: 0.75 },
   riskBar: { height: 6, borderRadius: 99, backgroundColor: "rgba(255,77,109,0.15)", marginTop: 16, overflow: "hidden" },
   riskFill: { height: "100%", borderRadius: 99, backgroundColor: C.coral },
   riskLbl: { color: C.mut, fontSize: 12, marginTop: 8, fontFamily: T.sans },
-  // Parchment approve buttons — exact deck style
-  approveBtn: { borderRadius: 14, marginBottom: 10, overflow: "hidden" },
-  approveBtnInner: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },
-  approveBtnIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(0,0,0,0.12)", alignItems: "center", justifyContent: "center" },
-  approveBtnT: { color: C.inkD, fontSize: 15, fontFamily: T.sansB },
-  approveBtnS: { color: C.mutD, fontSize: 13, fontFamily: T.sans, marginTop: 2 },
-  approveBtnChev: { color: C.mutD, fontSize: 20, fontFamily: T.sans },
+  // Approve buttons — exact deck spec
+  approveBtn:      { borderRadius: 14, marginBottom: 10, overflow: "hidden" },
+  approveBtnCash:  { backgroundColor: C.card2, borderWidth: 1, borderColor: "rgba(201,169,110,0.25)" },
+  approveBtnPoints:{ backgroundColor: C.parch, borderWidth: 0 },
+  approveBtnInner: { flexDirection: "row", alignItems: "center", gap: 14, padding: 18 },
+  approveBtnIcon:  { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center" },
+  approveBtnIconCash:   { backgroundColor: "rgba(201,169,110,0.12)", borderWidth: 1, borderColor: "rgba(201,169,110,0.3)" },
+  approveBtnIconPoints: { backgroundColor: "rgba(0,0,0,0.10)", borderWidth: 1, borderColor: "rgba(0,0,0,0.15)" },
+  approveBtnT:     { fontSize: 15, fontFamily: T.sansB },
+  approveBtnS:     { fontSize: 13, fontFamily: T.sans, marginTop: 2 },
+  approveBtnChev:  { fontSize: 20, fontFamily: T.sans },
+  // Control footer — deck: shield icon + "You're in control. We'll act when you say go."
+  controlFooter:   { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 16, paddingHorizontal: 4, marginTop: 4, borderTopWidth: 0.5, borderTopColor: C.line },
+  controlFooterIc: { fontSize: 18, opacity: 0.6 },
+  controlFooterT:  { color: C.mut, fontSize: 13, fontFamily: T.sansM },
+  controlFooterS:  { color: C.mut, fontSize: 13, fontFamily: T.sans, marginTop: 1 },
   whyLink: { color: C.gold, fontSize: 14, fontFamily: T.sansM, textAlign: "center", marginVertical: 16 },
   downstreamBanner: {
     marginTop: 14, backgroundColor: "rgba(255,140,0,0.1)", borderRadius: 10,

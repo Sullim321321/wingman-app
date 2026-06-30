@@ -238,10 +238,16 @@ function NextUpCard({ flight, navigation }) {
           </View>
         )}
 
-        {/* View Details link */}
+        {/* View Details link — exact deck copy */}
         <View style={[g.rowBetween, { marginTop: 16 }]}>
-          <Text style={s.parchHint}>Tap for rescue options</Text>
-          <Text style={s.parchArrow}>View Details  ›</Text>
+          {risk != null && risk >= 30 ? (
+            <Text style={s.parchRisk}>
+              {risk >= 60 ? "⚠️ High delay risk" : `⚠️ Moderate delay risk`}
+            </Text>
+          ) : (
+            <Text style={s.parchHint}>{flightLabel || ""}</Text>
+          )}
+          <Text style={s.parchArrow}>View Details  →</Text>
         </View>
       </View>
     </Pressable>
@@ -316,6 +322,10 @@ function TripCard({ trip, onDelete, navigation }) {
     : null;
   const dateRange = depDateFmt && arrDateFmt ? `${depDateFmt} – ${arrDateFmt}` : depDateFmt;
 
+  // Hotel name for subtitle — deck shows "Aman Villas at Nusa Dua" not IATA code
+  const hotelLeg = legs.find(l => l.type === "hotel");
+  const hotelName = hotelLeg?.carrier || hotelLeg?.title || null;
+
   // Destination etching thumbnail — use etching system matching parchment card
   const destIcons = { "Bali": "🌴", "Swiss": "⛰️", "Kyoto": "🟯", "Tokyo": "🟯", "Paris": "🗻", "London": "🏰", "New York": "🏙️", "NYC": "🏙️" };
   const iconKey = Object.keys(destIcons).find(k => trip.title?.includes(k));
@@ -347,8 +357,9 @@ function TripCard({ trip, onDelete, navigation }) {
         <View style={s.tripInfo}>
           {dateRange && <Text style={s.tripDateRange}>{dateRange}</Text>}
           <Text style={s.dest}>{trip.title}</Text>
-          {firstFlight?.destination && (
-            <Text style={s.when}>{firstFlight.destination}</Text>
+          {/* Deck shows hotel name; fall back to destination city */}
+          {(hotelName || firstFlight?.destination) && (
+            <Text style={s.when}>{hotelName || firstFlight.destination}</Text>
           )}
         </View>
         {/* Right: risk badge or chevron */}
@@ -574,15 +585,14 @@ export default function HomeScreen({ navigation }) {
         }
       >
         <OfflineBanner cached={offlineInfo.cached} stale={offlineInfo.stale} cachedAt={offlineInfo.cachedAt} style={{ marginTop: 8 }} />
-        {/* ── Header ─────────────────────────────────────────────────────── */}
+        {/* ── Header — exact deck layout: W left, WINGMAN centered, avatar right */}
         <View style={s.appH}>
-          {/* W monogram + WINGMAN wordmark */}
-          <View style={s.logoRow}>
-            <View style={s.wMark}>
-              <SerifText bold style={s.wMarkText}>W</SerifText>
-            </View>
-            <Text style={s.logo}>WINGMAN</Text>
+          {/* W monogram */}
+          <View style={s.wMark}>
+            <SerifText bold style={s.wMarkText}>W</SerifText>
           </View>
+          {/* WINGMAN wordmark — absolutely centered */}
+          <Text style={s.logo}>WINGMAN</Text>
           {/* Avatar / settings */}
           <Pressable style={s.avatar} onPress={() => navigation.navigate("Settings")}>
             <View style={s.avatarInner}>
@@ -790,12 +800,11 @@ export default function HomeScreen({ navigation }) {
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
 
-  // Header — exact deck layout
+  // Header — exact deck layout: W left, WINGMAN centered, avatar right
   appH:      { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 28 },
-  logoRow:   { flexDirection: "row", alignItems: "center", gap: 10 },
   wMark:     { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
   wMarkText: { color: C.gold, fontSize: 32, fontFamily: T.serifI },  // Italic serif W — exact deck monogram
-  logo:      { color: C.ink, fontSize: TS.headerBrand, fontFamily: T.sansB, letterSpacing: T.trackXWide },
+  logo:      { position: "absolute", left: 0, right: 0, textAlign: "center", color: C.gold, fontSize: TS.headerBrand, fontFamily: T.sansB, letterSpacing: T.trackXWide },
   avatar:    { width: 34, height: 34, borderRadius: 17, overflow: "hidden" },
   avatarInner: { width: 34, height: 34, borderRadius: 17, backgroundColor: "transparent", borderWidth: 1.5, borderColor: C.ink + "80", alignItems: "center", justifyContent: "center" },
   avatarT:   { color: C.ink, fontFamily: T.sansB, fontSize: 13 },
@@ -834,7 +843,8 @@ const s = StyleSheet.create({
 
   // Bottom row
   parchHint:  { color: C.mutD, fontSize: TS.nextUpMeta, fontFamily: T.sans, opacity: 0.7 },
-  parchArrow: { color: C.inkD, fontSize: TS.nextUpMeta, fontFamily: T.sansM, letterSpacing: 0.3 },
+  parchRisk:  { color: C.amber, fontSize: TS.nextUpMeta, fontFamily: T.sansM },
+  parchArrow: { color: C.inkD, fontSize: TS.nextUpMeta, fontFamily: T.sansM, letterSpacing: 0.2 },
 
   // Ground Intelligence (on parchment)
   groundWrap:    { marginTop: 14, paddingTop: 14, borderTopWidth: 0.5, borderTopColor: C.inkD + "20" },

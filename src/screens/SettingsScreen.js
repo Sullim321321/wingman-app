@@ -3,10 +3,14 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { SafeAreaView, ScrollView, View, Text, Switch, StyleSheet, ActivityIndicator, TouchableOpacity, Alert } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Location from "expo-location";
 import { C, T } from "../theme";
 import { BackBar, Segmented, SetRow, Chip, Btn, g } from "../components";
 import { useAuth } from "../auth";
 import { getPolicy, updatePolicy, updateLocale, getHotelAffinity, removeHotelAffinity } from "../api";
+
+export const LOCATION_OPT_IN_KEY = "wingman_location_opt_in";
 
 const LANGUAGES = [
   { code: "en", label: "English" },
@@ -130,6 +134,9 @@ export default function SettingsScreen({ navigation }) {
   const [drops,   setDrops]   = useState(true);
   const [quiet,   setQuiet]   = useState(false);
 
+  // Location opt-in
+  const [locationEnabled, setLocationEnabled] = useState(false);
+
   // Locale
   const [locale,   setLocale]   = useState("en");
   const [currency, setCurrency] = useState("USD");
@@ -140,6 +147,9 @@ export default function SettingsScreen({ navigation }) {
 
   useEffect(() => {
     loadPolicy();
+    AsyncStorage.getItem(LOCATION_OPT_IN_KEY).then(v => {
+      if (v === "true") setLocationEnabled(true);
+    }).catch(() => {});
   }, []);
 
   async function loadPolicy() {
@@ -170,6 +180,23 @@ export default function SettingsScreen({ navigation }) {
       if (field === "quiet_hours")    setQuiet(!value);
       console.warn("SettingsScreen toggle save failed:", e.message);
     }
+  }
+
+  async function handleLocationToggle(value) {
+    if (value) {
+      // Request permission before enabling
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Location access needed",
+          "To give you local recommendations, Wingman needs location access. You can enable it in Settings › Privacy › Location Services.",
+          [{ text: "OK" }]
+        );
+        return;
+      }
+    }
+    setLocationEnabled(value);
+    await AsyncStorage.setItem(LOCATION_OPT_IN_KEY, value ? "true" : "false");
   }
 
   async function handleLocaleChange(newLocale, newCurrency) {
@@ -215,6 +242,27 @@ export default function SettingsScreen({ navigation }) {
               Wingman never moves money or books above your limit without an explicit "yes."
             </Text>
           </Text>
+        </View>
+
+        <Text style={g.sectionT}>LOCATION</Text>
+        <View style={g.group}>
+          <View style={{ borderBottomWidth: 0 }}>
+            <SetRow
+              ic="◎"
+              iconColor={C.gold}
+              t="Use my location"
+              sub="Let Wingman know where you are for local restaurant, hotel, and experience recommendations"
+              right={
+                <Switch
+                  value={locationEnabled}
+                  onValueChange={handleLocationToggle}
+                  trackColor={{ true: C.gold, false: C.card2 }}
+                  thumbColor={locationEnabled ? C.inkD : C.mut}
+                  ios_backgroundColor={C.card2}
+                />
+              }
+            />
+          </View>
         </View>
 
         <Text style={g.sectionT}>MONITORING</Text>

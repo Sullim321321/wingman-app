@@ -2,7 +2,7 @@
   "expo": {
     "name": "Wingman",
     "slug": "wingman-app",
-    "version": "1.0.98",
+    "version": "1.0.99",
     "orientation": "portrait",
     "scheme": "wingman",
     "userInterfaceStyle": "dark",
@@ -17,7 +17,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "club.welcometothefight.wingman",
-      "buildNumber": "111",
+      "buildNumber": "112",
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification"
@@ -27,7 +27,7 @@
         "NSMicrophoneUsageDescription": "Wingman does not use the microphone.",
         "NSPhotoLibraryUsageDescription": "Wingman does not access your photo library.",
         "NSCalendarsUsageDescription": "Wingman reads your calendar to detect travel events and pre-fill trip dates.",
-        "NSLocationWhenInUseUsageDescription": "Wingman uses your location to estimate drive time to the airport and predict if you'll make your flight.",
+        "NSLocationWhenInUseUsageDescription": "Wingman uses your location to give you hyper-local restaurant, hotel, and experience recommendations, and to estimate drive time to the airport.",
         "NSFaceIDUsageDescription": "Wingman uses Face ID to unlock your account securely."
       },
       "entitlements": {
@@ -43,7 +43,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Wingman uses your location to estimate drive time to the airport."
+          "locationAlwaysAndWhenInUsePermission": "Wingman uses your location to give you local recommendations and estimate drive time to the airport."
         }
       ],
       [

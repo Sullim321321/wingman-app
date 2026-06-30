@@ -109,8 +109,8 @@ export const refreshTrip = (id) =>
   req("/trips/" + id + "/refresh", { method: "POST" });
 
 // Concierge
-export const sendConciergeMessage = (message, history = [], tripContext = []) =>
-  req("/concierge", { method: "POST", body: JSON.stringify({ message, history, tripContext }) });
+export const sendConciergeMessage = (message, history = [], location = null) =>
+  req("/concierge", { method: "POST", body: JSON.stringify({ message, history, ...(location ? { location } : {}) }) });
 
 // Apple Wallet
 export const getWalletPass = (legId) => req("/wallet/pass/" + legId);

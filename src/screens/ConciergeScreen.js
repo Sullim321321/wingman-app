@@ -6,11 +6,14 @@ import {
   SafeAreaView, View, Text, TextInput, Pressable, FlatList,
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Location from "expo-location";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { C, T } from "../theme";
 import { SerifText } from "../components";
 import { sendConciergeMessage, getTrips, getConciergeThread, saveConciergeThread } from "../api";
+import { LOCATION_OPT_IN_KEY } from "./SettingsScreen";
 
 const WELCOME = "Good day. I'm watching your trips, tracking disruption risk, and ready to act the moment something changes. What can I do for you?";
 
@@ -74,15 +77,24 @@ export default function ConciergeScreen({ route }) {
   const [input, setInput]   = useState("");
   const [loading, setLoading] = useState(false);
   const [threadLoading, setThreadLoading] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
   const listRef     = useRef(null);
   const prefillSent = useRef(false);
   const saveTimer   = useRef(null);
 
-  // Load trips on focus
+  // Load trips on focus; also refresh location opt-in
   useFocusEffect(useCallback(() => {
     getTrips()
       .then(data => { setTrips(data.trips || []); setTripsLoaded(true); })
       .catch(() => setTripsLoaded(true));
+    // Silently fetch location if user has opted in
+    AsyncStorage.getItem(LOCATION_OPT_IN_KEY).then(async (v) => {
+      if (v !== "true") { setUserLocation(null); return; }
+      try {
+        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      } catch { setUserLocation(null); }
+    }).catch(() => {});
   }, []));
 
   // Load thread when activeTripId changes or trips load
@@ -144,7 +156,7 @@ export default function ConciergeScreen({ route }) {
       const tripContext = buildTripContext(trips);
       const isFirstUserMsg = newMessages.filter(m => m.role === "user").length === 1;
       const enrichedMsg = (isFirstUserMsg && tripContext) ? `[User's trips:\n${tripContext}]\n\n${msg}` : msg;
-      const data = await sendConciergeMessage(enrichedMsg, history.slice(0, -1));
+      const data = await sendConciergeMessage(enrichedMsg, history.slice(0, -1), userLocation);
       const updated = [...newMessages, { role: "assistant", content: data.reply }];
       setMessages(updated);
       scheduleSave(updated.slice(1), activeTripId); // don't save the welcome message

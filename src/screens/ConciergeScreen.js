@@ -298,10 +298,10 @@ const s = StyleSheet.create({
   bubble:     { marginBottom: 14, maxWidth: "86%" },
   userBubble: {
     alignSelf: "flex-end",
-    backgroundColor: C.card2,
+    backgroundColor: C.gold + "18",
     borderRadius: 18, borderBottomRightRadius: 4,
     padding: 14,
-    borderWidth: 1, borderColor: C.gold + "30",
+    borderWidth: 1, borderColor: C.gold + "40",
   },
   aiBubble: {
     alignSelf: "flex-start",
@@ -310,7 +310,7 @@ const s = StyleSheet.create({
     padding: 16,
     borderWidth: 1, borderColor: C.line,
   },
-  bubbleT:     { color: C.ink, fontSize: 15, fontFamily: T.sans, lineHeight: 23 },
+  bubbleT:     { color: C.ink, fontSize: 15, fontFamily: T.sans, lineHeight: 24 },
   userBubbleT: { color: C.ink },
 
   aiLabel:  { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 },
@@ -327,14 +327,15 @@ const s = StyleSheet.create({
 
   inputRow: {
     flexDirection: "row", alignItems: "flex-end", gap: 10,
-    paddingHorizontal: 16, paddingBottom: 16, paddingTop: 10,
+    paddingHorizontal: 16, paddingBottom: 20, paddingTop: 12,
     borderTopWidth: 0.5, borderTopColor: C.line,
+    backgroundColor: C.bg,
   },
   textInput: {
-    flex: 1, backgroundColor: C.card, borderRadius: 22, borderWidth: 1,
-    borderColor: C.line, paddingHorizontal: 18, paddingVertical: 13,
-    color: C.ink, fontSize: 15, fontFamily: T.sans, maxHeight: 120, lineHeight: 21,
+    flex: 1, backgroundColor: C.card, borderRadius: 14, borderWidth: 1,
+    borderColor: C.line, paddingHorizontal: 16, paddingVertical: 14,
+    color: C.ink, fontSize: 15, fontFamily: T.sans, maxHeight: 120, lineHeight: 22,
   },
   sendBtn:  { marginBottom: 2 },
-  sendGrad: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
+  sendGrad: { width: 46, height: 46, borderRadius: 14, alignItems: "center", justifyContent: "center" },
 });

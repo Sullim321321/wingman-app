@@ -432,26 +432,23 @@ export const g = StyleSheet.create({
   segT:   { color: C.mut, fontSize: 12, fontFamily: T.sansM, letterSpacing: 0.3 },
   segTOn: { color: C.gold, fontFamily: T.sansB },
 
-  // Settings row
-  setRow: { flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.line },
+  // Settings row — Obsidian v3
+  setRow: { flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 16, borderBottomWidth: 0.5, borderBottomColor: C.line },
   setIc:  {
-    width: 34, height: 34, borderRadius: 10,
+    width: 36, height: 36, borderRadius: 10,
     backgroundColor: C.card2,
     borderWidth: 1, borderColor: C.line,
     alignItems: "center", justifyContent: "center",
   },
-  setT:   { color: C.ink, fontSize: 15, fontFamily: T.sansM, letterSpacing: 0.1 },
-  setS:   { color: C.mut, fontSize: 12, fontFamily: T.sans, marginTop: 2, lineHeight: 18 },
+  setT:   { color: C.ink, fontSize: 15, fontFamily: T.sansM, letterSpacing: 0 },
+  setS:   { color: C.mut, fontSize: 12, fontFamily: T.sans, marginTop: 3, lineHeight: 18 },
 
-  // Group container — with card depth
+  // Group container — Obsidian v3
   group: {
     backgroundColor: C.card,
     borderWidth: 1,
-    borderTopColor: "#FFFFFF0A",
-    borderBottomColor: "#00000050",
-    borderLeftColor: "#FFFFFF05",
-    borderRightColor: "#00000030",
-    borderRadius: 20,
+    borderColor: C.line,
+    borderRadius: 12,
     paddingHorizontal: 16,
   },
 

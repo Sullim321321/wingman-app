@@ -277,7 +277,7 @@ export default function SignInScreen() {
           </View>
 
           <SerifText bold style={s.h}>Welcome back.</SerifText>
-          <Text style={s.sub}>Sign in to your Wingman account.</Text>
+          <Text style={s.sub}>Your trips are waiting.</Text>
 
           {err ? (
             <View style={[s.errBox, errType === "rate_limit" && { borderColor: C.coral + "60" }]}>
@@ -488,7 +488,7 @@ const s = StyleSheet.create({
   errText:    { color: C.coral, fontSize: 13, fontFamily: T.sansM, lineHeight: 19 },
   errAction:  { marginTop: 8 },
   errActionT: { color: C.gold, fontSize: 13, fontFamily: T.sansM },
-  card:       { width: "100%", borderRadius: 22, borderWidth: 1, borderColor: C.line, overflow: "hidden", marginBottom: 16 },
+  card:       { width: "100%", borderRadius: 22, borderWidth: 1, borderColor: "rgba(201,169,110,0.22)", overflow: "hidden", marginBottom: 16 },
   cardTitle:  { color: C.ink, fontSize: 16, fontFamily: T.sansB, paddingHorizontal: 18, paddingTop: 18, paddingBottom: 4 },
   cardSub:    { color: C.mut, fontSize: 13, fontFamily: T.sans, paddingHorizontal: 18, paddingBottom: 14, lineHeight: 19 },
   inputWrap:  { paddingHorizontal: 14, paddingBottom: 14 },
@@ -499,11 +499,11 @@ const s = StyleSheet.create({
   backLinkT:  { color: C.mut, fontSize: 13, fontFamily: T.sansM },
   resendTimer:{ color: C.mut, fontSize: 13, fontFamily: T.sans, textAlign: "center", paddingVertical: 4 },
   resendBtn:  { alignItems: "center", padding: 6 },
-  resendBtnT: { color: C.teal, fontSize: 13, fontFamily: T.sansM },
+  resendBtnT: { color: C.gold, fontSize: 13, fontFamily: T.sansM },
   switchMethod:{ alignItems: "center", padding: 4 },
   switchMethodT:{ color: C.gold, fontSize: 13, fontFamily: T.sansM },
   authRow:    { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 16, gap: 14 },
-  authRowBorder: { borderTopWidth: 1, borderTopColor: C.line },
+  authRowBorder: { borderTopWidth: 1, borderTopColor: "rgba(201,169,110,0.12)" },
   authIcon:   { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   authIconText: { fontSize: 18 },
   authInfo:   { flex: 1 },
@@ -511,5 +511,5 @@ const s = StyleSheet.create({
   authSub:    { color: C.mut, fontSize: 12, fontFamily: T.sans, marginTop: 2 },
   authChev:   { color: C.mut, fontSize: 20, fontFamily: T.sans },
   privacy:    { color: C.mut, fontSize: 11, fontFamily: T.sans, textAlign: "center", lineHeight: 17, marginTop: 8 },
-  wordmark:   { position: "absolute", bottom: 24, alignSelf: "center", color: C.line, fontSize: 10, fontFamily: T.sansB, letterSpacing: 6 },
+  wordmark:   { position: "absolute", bottom: 24, alignSelf: "center", color: "rgba(201,169,110,0.3)", fontSize: 10, fontFamily: T.sansB, letterSpacing: 6 },
 });

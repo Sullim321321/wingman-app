@@ -52,11 +52,11 @@ export default function ProfileSetupScreen({ navigation }) {
 
           {/* Header */}
           <LinearGradient colors={[C.gold, C.goldD || "#b8942a"]} style={s.mark}>
-            <Text style={{ fontSize: 26 }}>✈</Text>
+            <Text style={{ fontSize: 22, color: "#0F0D0A", fontFamily: T.sansB }}>✦</Text>
           </LinearGradient>
-          <Text style={s.h}>One last thing.</Text>
+          <Text style={s.h}>How do you fly?</Text>
           <Text style={s.sub}>
-            Tell Wingman a little about how you fly. You can update these any time in Settings.
+            Tell Wingman your preferences so it can filter the right upgrades, lounges, and rescue options for you.
           </Text>
 
           {/* Name */}
@@ -95,8 +95,7 @@ export default function ProfileSetupScreen({ navigation }) {
           </View>
 
           <Btn
-            title={busy ? "Setting up…" : "Let's fly"}
-            kind="accent"
+            title={busy ? "Setting up…" : "Let's fly  →"}
             onPress={busy ? undefined : finish}
             style={{ marginTop: 32, alignSelf: "stretch" }}
           />
@@ -112,12 +111,12 @@ const s = StyleSheet.create({
   root:   { flex: 1, backgroundColor: C.bg },
   scroll: { flexGrow: 1, padding: 28, paddingTop: 24 },
   mark:   { width: 56, height: 56, borderRadius: 16, alignItems: "center", justifyContent: "center", marginBottom: 20 },
-  h:      { color: C.ink, fontSize: 26, fontFamily: T.sansB, marginBottom: 8, lineHeight: 32 },
+  h:      { color: C.ink, fontSize: 28, fontFamily: "PlayfairDisplay_700Bold", marginBottom: 8, lineHeight: 36, letterSpacing: -0.4 },
   sub:    { color: C.mut, fontSize: 14, lineHeight: 20, marginBottom: 28 },
   label:  { color: C.mut, fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.8, marginBottom: 10, textTransform: "uppercase" },
   input:  {
     backgroundColor: C.card,
-    borderWidth: 1, borderColor: C.line,
+    borderWidth: 1, borderColor: "rgba(201,169,110,0.25)",
     borderRadius: 12, padding: 14,
     color: C.ink, fontSize: 17,
   },

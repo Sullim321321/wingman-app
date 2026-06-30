@@ -53,11 +53,11 @@ function SlideHero() {
         </View>
       </SlideIn>
       <SlideIn delay={200}>
-        <SerifText bold style={s.heroH}>Your personal{"\n"}flight intelligence.</SerifText>
+        <SerifText bold style={s.heroH}>Fully autonomous.{"\n"}Always in control.</SerifText>
       </SlideIn>
       <SlideIn delay={300}>
         <Text style={s.heroSub}>
-          Wingman watches every flight, catches disruptions hours before the airline tells you, and handles the rebooking — automatically.
+          Wingman monitors every flight, catches disruptions before the airline tells you, and handles the rebooking — with your approval or automatically.
         </Text>
       </SlideIn>
       <SlideIn delay={400}>
@@ -98,11 +98,11 @@ function SlideWatch() {
         </SafeBlur>
       </SlideIn>
       <SlideIn delay={200}>
-        <SerifText bold style={s.slideH}>We watch, so{"\n"}you don't have to.</SerifText>
+        <SerifText bold style={s.slideH}>We watch,{"\n"}so you don't have to.</SerifText>
       </SlideIn>
       <SlideIn delay={300}>
         <Text style={s.slideSub}>
-          Every flight on your itinerary is checked every 15 minutes — delays, gate changes, cancellations, weather risk — and you're alerted before it becomes a crisis.
+          Every flight is checked every 15 minutes — delays, gate changes, cancellations, weather risk. You're alerted before it becomes a crisis.
         </Text>
       </SlideIn>
     </View>
@@ -136,11 +136,11 @@ function SlideConcierge() {
         </SafeBlur>
       </SlideIn>
       <SlideIn delay={200}>
-        <SerifText bold style={s.slideH}>Your concierge,{"\n"}on call 24/7.</SerifText>
+        <SerifText bold style={s.slideH}>One tap.{"\n"}Rebooked.</SerifText>
       </SlideIn>
       <SlideIn delay={300}>
         <Text style={s.slideSub}>
-          Ask Wingman anything about your trip — live status, rebooking options, weather risk, gate info — and get a direct answer, not a search result.
+          When something goes wrong, Wingman surfaces the best rescue options — ranked by cost, points value, and speed — and executes the moment you approve.
         </Text>
       </SlideIn>
     </View>
@@ -229,12 +229,12 @@ function SlideSignUp({ onDone }) {
             </LinearGradient>
           </View>
           <SerifText bold style={s.permTitle}>
-            {step === "code" ? "Check your email." : "Get started."}
+            {step === "code" ? "Check your email." : "Your Wingman awaits."}
           </SerifText>
           <Text style={s.permBody}>
             {step === "code"
               ? `We sent a 6-digit code to ${email.trim().toLowerCase()}. It expires in 10 minutes.`
-              : "Create your account to start tracking flights."}
+              : "Create your account. Your first trip is one paste away."}
           </Text>
 
           {/* Choose method */}
@@ -355,12 +355,12 @@ function PushPermissionSlide({ onDone }) {
         <View style={s.pushIconWrap}>
           <View style={s.pushGlow} />
           <LinearGradient colors={GRAD.gold} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.pushMark}>
-            <Text style={s.pushMarkIcon}>🔔</Text>
+            <Text style={s.pushMarkIcon}>✦</Text>
           </LinearGradient>
         </View>
       </SlideIn>
       <SlideIn delay={150}>
-        <SerifText bold style={s.heroH}>Never miss{"\n"}a disruption.</SerifText>
+        <SerifText bold style={s.heroH}>Stay ahead{"\n"}of every disruption.</SerifText>
       </SlideIn>
       <SlideIn delay={250}>
         <Text style={s.heroSub}>
@@ -482,7 +482,7 @@ export default function OnboardingScreen({ navigation }) {
               <View key={i} style={[s.dot, i === page && s.dotOn]} />
             ))}
           </View>
-          <Btn title="Next" onPress={next} style={{ width: 140 }} />
+          <Btn title="Next  →" onPress={next} style={{ flex: 1 }} />
         </View>
       )}
     </SafeAreaView>
@@ -510,19 +510,19 @@ const s = StyleSheet.create({
   statL:  { color: C.mut, fontSize: 10, fontFamily: T.sans, marginTop: 3, letterSpacing: 1.5 },
   slideH:  { color: C.ink, fontSize: 30, textAlign: "center", marginBottom: 12, lineHeight: 38, marginTop: 20, letterSpacing: -0.4 },
   slideSub:{ color: C.mut, fontSize: 15, fontFamily: T.sans, textAlign: "center", lineHeight: 23 },
-  featureCard: { width: "100%", borderRadius: 22, borderWidth: 1, borderColor: C.line, overflow: "hidden", borderTopColor: "#FFFFFF0A", borderBottomColor: "#00000050" },
+  featureCard: { width: "100%", borderRadius: 22, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", overflow: "hidden", borderTopColor: "rgba(201,169,110,0.15)", borderBottomColor: "#00000050" },
   mockRow:   { flexDirection: "row", alignItems: "center", gap: 12, padding: 14 },
   mockBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, alignItems: "center", justifyContent: "center" },
   mockBadgeT:{ fontSize: 9, fontFamily: T.sansB, letterSpacing: 0.8 },
   mockT:     { color: C.ink, fontSize: 13, fontFamily: T.sansM },
   mockS:     { color: C.mut, fontSize: 11, fontFamily: T.sans, marginTop: 2 },
-  chatCard: { width: "100%", borderRadius: 22, borderWidth: 1, borderColor: C.line, padding: 14, gap: 10, borderTopColor: "#FFFFFF0A", borderBottomColor: "#00000050", overflow: "hidden" },
+  chatCard: { width: "100%", borderRadius: 22, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", padding: 14, gap: 10, borderTopColor: "rgba(201,169,110,0.15)", borderBottomColor: "#00000050", overflow: "hidden" },
   bubbleLeft:  { alignSelf: "flex-start", backgroundColor: C.card2, borderRadius: 16, borderBottomLeftRadius: 4, paddingHorizontal: 14, paddingVertical: 10, maxWidth: "80%" },
   bubbleRight: { alignSelf: "flex-end", maxWidth: "80%" },
   bubbleGrad:  { borderRadius: 16, borderBottomRightRadius: 4, paddingHorizontal: 14, paddingVertical: 10 },
   bubbleText:  { fontSize: 13, fontFamily: T.sans, lineHeight: 19, color: C.ink },
   // Sign-up slide — deck exact
-  signUpCard: { width: "100%", borderRadius: 20, borderWidth: 1, borderColor: C.line, overflow: "hidden", padding: 24, backgroundColor: C.card },
+  signUpCard: { width: "100%", borderRadius: 20, borderWidth: 1, borderColor: "rgba(201,169,110,0.3)", overflow: "hidden", padding: 24, backgroundColor: C.card },
   permGlow:   { position: "absolute", top: 0, left: 0, right: 0, height: 100 },
   permIconWrap: { alignItems: "center", marginBottom: 20 },
   permIconBg: { width: 64, height: 64, borderRadius: 20, alignItems: "center", justifyContent: "center" },
@@ -549,8 +549,8 @@ const s = StyleSheet.create({
   pushIconWrap: { width: 160, height: 160, alignItems: "center", justifyContent: "center", marginBottom: 24 },
   pushGlow:     { position: "absolute", width: 160, height: 160, borderRadius: 80, backgroundColor: C.gold + "10" },
   pushMark:     { width: 80, height: 80, borderRadius: 24, alignItems: "center", justifyContent: "center", shadowColor: C.gold, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 18 },
-  pushMarkIcon: { fontSize: 32 },
-  pushPreviewCard: { width: "100%", borderRadius: 20, borderWidth: 1, borderColor: C.line, overflow: "hidden", marginTop: 8 },
+  pushMarkIcon: { fontSize: 28, color: "#0F0D0A", fontFamily: T.sansB },
+  pushPreviewCard: { width: "100%", borderRadius: 20, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", overflow: "hidden", marginTop: 8 },
   pushRow:    { flexDirection: "row", alignItems: "center", gap: 12, padding: 14 },
   pushIconBadge: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   pushRowT:   { color: C.ink, fontSize: 13, fontFamily: T.sansM },

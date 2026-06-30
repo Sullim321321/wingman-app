@@ -1,42 +1,42 @@
 // Wingman Destination Etchings
 // Fine-line Victorian engraving illustrations for the parchment Next Up card.
-// Maps IATA destination codes → local etching asset.
+// Maps IATA destination codes → local etching asset (WebP, ~78% smaller than PNG).
 // For unmapped destinations, returns null (card renders without illustration).
 
 const ETCHINGS = {
   // North America
-  LAX: require("../assets/etchings/los_angeles.png"),
-  BUR: require("../assets/etchings/los_angeles.png"),
-  SNA: require("../assets/etchings/los_angeles.png"),
-  LGB: require("../assets/etchings/los_angeles.png"),
-  JFK: require("../assets/etchings/new_york.png"),
-  LGA: require("../assets/etchings/new_york.png"),
-  EWR: require("../assets/etchings/new_york.png"),
-  MIA: require("../assets/etchings/miami.png"),
-  FLL: require("../assets/etchings/miami.png"),
-  PBI: require("../assets/etchings/miami.png"),
+  LAX: require("../assets/etchings/los_angeles.webp"),
+  BUR: require("../assets/etchings/los_angeles.webp"),
+  SNA: require("../assets/etchings/los_angeles.webp"),
+  LGB: require("../assets/etchings/los_angeles.webp"),
+  JFK: require("../assets/etchings/new_york.webp"),
+  LGA: require("../assets/etchings/new_york.webp"),
+  EWR: require("../assets/etchings/new_york.webp"),
+  MIA: require("../assets/etchings/miami.webp"),
+  FLL: require("../assets/etchings/miami.webp"),
+  PBI: require("../assets/etchings/miami.webp"),
 
   // Europe
-  LHR: require("../assets/etchings/london.png"),
-  LGW: require("../assets/etchings/london.png"),
-  STN: require("../assets/etchings/london.png"),
-  LCY: require("../assets/etchings/london.png"),
-  CDG: require("../assets/etchings/paris.png"),
-  ORY: require("../assets/etchings/paris.png"),
+  LHR: require("../assets/etchings/london.webp"),
+  LGW: require("../assets/etchings/london.webp"),
+  STN: require("../assets/etchings/london.webp"),
+  LCY: require("../assets/etchings/london.webp"),
+  CDG: require("../assets/etchings/paris.webp"),
+  ORY: require("../assets/etchings/paris.webp"),
 
   // Asia-Pacific
-  NRT: require("../assets/etchings/tokyo.png"),
-  HND: require("../assets/etchings/tokyo.png"),
-  SIN: require("../assets/etchings/singapore.png"),
-  DXB: require("../assets/etchings/dubai.png"),
-  AUH: require("../assets/etchings/dubai.png"),
-  DWC: require("../assets/etchings/dubai.png"),
+  NRT: require("../assets/etchings/tokyo.webp"),
+  HND: require("../assets/etchings/tokyo.webp"),
+  SIN: require("../assets/etchings/singapore.webp"),
+  DXB: require("../assets/etchings/dubai.webp"),
+  AUH: require("../assets/etchings/dubai.webp"),
+  DWC: require("../assets/etchings/dubai.webp"),
 
   // Leisure
-  DPS: require("../assets/etchings/bali.png"),  // Bali
-  ZRH: require("../assets/etchings/swiss_alps.png"),
-  GVA: require("../assets/etchings/swiss_alps.png"),
-  BSL: require("../assets/etchings/swiss_alps.png"),
+  DPS: require("../assets/etchings/bali.webp"),       // Bali
+  ZRH: require("../assets/etchings/swiss_alps.webp"),
+  GVA: require("../assets/etchings/swiss_alps.webp"),
+  BSL: require("../assets/etchings/swiss_alps.webp"),
 };
 
 /**

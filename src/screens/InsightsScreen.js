@@ -101,8 +101,8 @@ export default function InsightsScreen({ navigation }) {
       <ScrollView contentContainerStyle={g.scroll}>
         <BackBar nav={navigation} label="Insights" />
 
-        {/* Hero ROI card */}
-        <LinearGradient colors={[C.card2, C.card]} style={s.roiCard}>
+        {/* Hero ROI card — warm gold-tinted gradient, editorial serif value */}
+        <LinearGradient colors={["rgba(201,169,110,0.14)", "rgba(201,169,110,0.04)"]} style={s.roiCard}>
           <Text style={s.roiEyebrow}>TOTAL VALUE PROTECTED</Text>
           <Text style={s.roiValue}>
             {totalSaved > 0 ? `$${totalSaved.toLocaleString()}` : "—"}
@@ -233,9 +233,9 @@ export default function InsightsScreen({ navigation }) {
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
 
-  roiCard: { borderRadius: 20, padding: 28, borderWidth: 1, borderColor: C.line, marginBottom: 20 },
-  roiEyebrow: { color: C.gold, fontSize: 11, fontFamily: T.sansB, letterSpacing: 1.5, marginBottom: 8 },
-  roiValue: { color: C.ink, fontSize: 52, fontFamily: "PlayfairDisplay_700Bold", lineHeight: 60, marginBottom: 8 },
+  roiCard: { borderRadius: 20, padding: 28, borderWidth: 1, borderColor: "rgba(201,169,110,0.3)", marginBottom: 20 },
+  roiEyebrow: { color: C.gold, fontSize: 11, fontFamily: T.sansB, letterSpacing: 2.5, marginBottom: 10 },
+  roiValue: { color: C.ink, fontSize: 56, fontFamily: "PlayfairDisplay_700Bold", lineHeight: 64, marginBottom: 8 },
   roiSub: { color: C.mut, fontSize: 14, lineHeight: 20 },
   shareBtn: { marginTop: 16, alignSelf: "flex-start", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: C.gold + "50", backgroundColor: C.gold + "12" },
   shareBtnT: { color: C.gold, fontSize: 12, fontFamily: T.sansB, letterSpacing: 0.5 },
@@ -247,7 +247,7 @@ const s = StyleSheet.create({
   periodTOn: { color: C.gold },
 
   streakRow: { flexDirection: "row", gap: 10, marginBottom: 20 },
-  streakCard: { flex: 1, backgroundColor: C.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: C.line },
+  streakCard: { flex: 1, backgroundColor: C.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)" },
   streakValue: { color: C.gold, fontSize: 28, fontFamily: "PlayfairDisplay_700Bold", marginBottom: 4 },
   streakLabel: { color: C.ink, fontSize: 13, fontFamily: T.sansB },
   streakSub: { color: C.mut, fontSize: 11, marginTop: 2 },
@@ -255,7 +255,7 @@ const s = StyleSheet.create({
   statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 20 },
   statCard: {
     flex: 1, minWidth: "45%", backgroundColor: C.card,
-    borderRadius: 16, padding: 16, borderWidth: 1, borderColor: C.line,
+    borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "rgba(201,169,110,0.18)",
   },
   statValue: { color: C.gold, fontSize: 28, fontFamily: "PlayfairDisplay_700Bold", marginBottom: 4 },
   statLabel: { color: C.ink, fontSize: 13, fontFamily: T.sansB },

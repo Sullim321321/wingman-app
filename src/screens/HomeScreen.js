@@ -316,7 +316,7 @@ function TripCard({ trip, onDelete, navigation }) {
     : null;
   const dateRange = depDateFmt && arrDateFmt ? `${depDateFmt} – ${arrDateFmt}` : depDateFmt;
 
-  // Destination icon emoji (simple fallback for now)
+  // Destination etching thumbnail — use etching system matching parchment card
   const destIcons = { "Bali": "🌴", "Swiss": "⛰️", "Kyoto": "🟯", "Tokyo": "🟯", "Paris": "🗻", "London": "🏰", "New York": "🏙️", "NYC": "🏙️" };
   const iconKey = Object.keys(destIcons).find(k => trip.title?.includes(k));
   const thumbIcon = iconKey ? destIcons[iconKey] : "✈️";
@@ -331,9 +331,17 @@ function TripCard({ trip, onDelete, navigation }) {
       style={{ marginBottom: 10 }}
     >
       <View style={s.tripCard}>
-        {/* Thumbnail — deck shows line-art illustration */}
+        {/* Thumbnail — destination etching (matches parchment card system) */}
         <View style={s.tripThumb}>
-          <Text style={s.tripThumbT}>{thumbIcon}</Text>
+          {getEtching(firstFlight?.destination) ? (
+            <Image
+              source={getEtching(firstFlight?.destination)}
+              style={{ width: 56, height: 56, borderRadius: 8, opacity: 0.85 }}
+              resizeMode="cover"
+            />
+          ) : (
+            <Text style={s.tripThumbT}>{thumbIcon}</Text>
+          )}
         </View>
         {/* Info block */}
         <View style={s.tripInfo}>
@@ -592,7 +600,7 @@ export default function HomeScreen({ navigation }) {
               <SerifText style={s.greetH}>{greeting()}{firstName ? `, ${firstName}.` : "."}</SerifText>
               <Text style={s.greetS}>
                 {nextFlight
-                  ? `Next flight: ${nextFlight.origin} → ${nextFlight.destination}`
+                  ? `Next flight: ${nextFlight.origin} to ${nextFlight.destination}.`
                   : "You're all set for today."}
               </Text>
             </View>
@@ -818,7 +826,7 @@ const s = StyleSheet.create({
   parchArrowLine: { flex: 1, height: 0.5, backgroundColor: C.inkD + "25" },
   parchArrowIc:   { color: C.mutD, fontSize: 14, fontFamily: T.sans },
   // Etching illustration placeholder (right side of parchment card)
-  parchEtching:   { position: "absolute", right: 0, top: 0, bottom: 0, width: 110, opacity: 0.18, borderRadius: 16, overflow: "hidden" },
+  parchEtching:   { position: "absolute", right: 0, top: 0, bottom: 0, width: 120, opacity: 0.28, borderRadius: 16, overflow: "hidden" },
 
   // Meta
   parchMeta:    { color: C.mutD, fontSize: TS.nextUpSub, fontFamily: T.sans },

@@ -298,10 +298,10 @@ const s = StyleSheet.create({
   bubble:     { marginBottom: 14, maxWidth: "86%" },
   userBubble: {
     alignSelf: "flex-end",
-    backgroundColor: C.gold + "18",
+    backgroundColor: "rgba(201,169,110,0.14)",
     borderRadius: 18, borderBottomRightRadius: 4,
     padding: 14,
-    borderWidth: 1, borderColor: C.gold + "40",
+    borderWidth: 1, borderColor: "rgba(201,169,110,0.45)",
   },
   aiBubble: {
     alignSelf: "flex-start",
@@ -319,11 +319,11 @@ const s = StyleSheet.create({
 
   quickRow:  { flexDirection: "row", flexWrap: "wrap", gap: 8, paddingHorizontal: 16, paddingBottom: 14 },
   quickChip: {
-    backgroundColor: C.card, borderWidth: 1,
-    borderColor: C.line, borderRadius: 18,
+    backgroundColor: "rgba(201,169,110,0.08)", borderWidth: 1,
+    borderColor: "rgba(201,169,110,0.3)", borderRadius: 18,
     paddingHorizontal: 14, paddingVertical: 9,
   },
-  quickChipT: { color: C.ink, fontSize: 13, fontFamily: T.sansM, letterSpacing: 0.1 },
+  quickChipT: { color: C.gold, fontSize: 13, fontFamily: T.sansM, letterSpacing: 0.1 },
 
   inputRow: {
     flexDirection: "row", alignItems: "flex-end", gap: 10,

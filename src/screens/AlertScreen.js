@@ -340,10 +340,16 @@ export default function AlertScreen({ navigation, route }) {
               Add a trip with at least one flight leg and Wingman will monitor it for delays, cancellations, and gate changes — and surface rescue options here if anything goes wrong.
             </Text>
             <Btn
-              title="Add a trip"
-              kind="accent"
+              title="+ Add a trip"
+              kind="primary"
               onPress={() => navigation.navigate("AddTrip")}
               style={{ marginTop: 24, alignSelf: "stretch" }}
+            />
+            <Btn
+              title="Import from email"
+              kind="ghost"
+              onPress={() => navigation.navigate("Connections")}
+              style={{ marginTop: 10, alignSelf: "stretch" }}
             />
           </View>
         </ScrollView>

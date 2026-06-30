@@ -379,11 +379,11 @@ export const g = StyleSheet.create({
   scroll:      { padding: 18, paddingBottom: 40 },
   rowBetween:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
 
-  // Section label — all-caps, wide-tracked, muted gold
+  // Section label — all-caps, wide-tracked, gold (exact deck match)
   sectionT: {
-    color: C.mut,
+    color: C.gold,
     fontSize: 10,
-    letterSpacing: T.trackWide,
+    letterSpacing: 3.5,
     fontFamily: T.sansB,
     textTransform: "uppercase",
     marginTop: 28,

@@ -503,14 +503,14 @@ export default function AlertScreen({ navigation, route }) {
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
 
-  // Hero
-  heroCard: { borderRadius: 22, padding: 20, borderWidth: 1, borderColor: "rgba(255,77,109,0.2)" },
-  heroH: { color: C.ink, fontSize: 20, fontFamily: T.sansB, marginTop: 10, marginBottom: 4, letterSpacing: -0.3 },
-  heroRoute: { color: C.coral, fontSize: 13, fontFamily: T.sansB, marginBottom: 8, letterSpacing: 0.3 },
-  heroP: { color: "rgba(243,245,247,0.7)", fontSize: 14, lineHeight: 21 },
-  riskBar: { height: 8, borderRadius: 99, backgroundColor: "rgba(255,77,109,0.15)", marginTop: 16, overflow: "hidden" },
+  // Hero — exact deck disruption card
+  heroCard: { borderRadius: 16, padding: 20, borderWidth: 1, borderColor: "rgba(255,77,109,0.25)", backgroundColor: "#120808" },
+  heroH: { color: C.ink, fontSize: 22, fontFamily: T.sansB, marginTop: 10, marginBottom: 6, letterSpacing: -0.5 },
+  heroRoute: { color: C.coral, fontSize: 14, fontFamily: T.sansB, marginBottom: 10, letterSpacing: 1.5 },
+  heroP: { color: "rgba(255,255,255,0.7)", fontSize: 14, lineHeight: 22 },
+  riskBar: { height: 6, borderRadius: 99, backgroundColor: "rgba(255,77,109,0.15)", marginTop: 16, overflow: "hidden" },
   riskFill: { height: "100%", borderRadius: 99, backgroundColor: C.coral },
-  riskLbl: { color: C.mut, fontSize: 12, marginTop: 8 },
+  riskLbl: { color: C.mut, fontSize: 12, marginTop: 8, fontFamily: T.sans },
   whyLink: { color: C.gold, fontSize: 14, fontFamily: T.sansM, textAlign: "center", marginVertical: 16 },
   downstreamBanner: {
     marginTop: 14, backgroundColor: "rgba(255,140,0,0.1)", borderRadius: 10,
@@ -522,16 +522,16 @@ const s = StyleSheet.create({
   riskBadge: { borderRadius: 8, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3 },
   riskBadgeText: { fontSize: 10, fontWeight: "800", letterSpacing: 0.8 },
 
-  // Rescue rows
-  rescueNote: { color: C.mut, fontSize: 13, lineHeight: 19, marginBottom: 12 },
-  groupLabel: { color: C.mut, fontSize: 10, fontFamily: T.sansB, letterSpacing: 1.5, marginBottom: 8, marginTop: 4 },
-  pointsNote: { color: C.mut, fontSize: 12, lineHeight: 18, marginBottom: 10 },
-  loadingRow: { flexDirection: "row", alignItems: "center", padding: 16, backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, marginBottom: 10 },
+  // Rescue rows — exact deck option card spec
+  rescueNote: { color: C.mut, fontSize: 13, lineHeight: 19, marginBottom: 12, fontFamily: T.sans },
+  groupLabel: { color: C.gold, fontSize: 10, fontFamily: T.sansB, letterSpacing: 3, marginBottom: 8, marginTop: 4 },
+  pointsNote: { color: C.mut, fontSize: 12, lineHeight: 18, marginBottom: 10, fontFamily: T.sans },
+  loadingRow: { flexDirection: "row", alignItems: "center", padding: 16, backgroundColor: C.card, borderRadius: 12, borderWidth: 1, borderColor: C.line, marginBottom: 10 },
   errorText: { color: C.mut, fontSize: 13, textAlign: "center", marginBottom: 10 },
 
   rescueRow: {
-    backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line,
-    padding: 14, marginBottom: 10,
+    backgroundColor: C.card, borderRadius: 12, borderWidth: 1, borderColor: C.line,
+    padding: 16, marginBottom: 10,
   },
   wingmanPick: {
     alignSelf: "flex-start", borderRadius: 6, borderWidth: 1,

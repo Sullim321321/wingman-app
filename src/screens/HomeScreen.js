@@ -1,5 +1,5 @@
 // HomeScreen — Quiet Luxury / Editorial
-// Warm espresso bg + parchment Next Up card + champagne gold accents
+// Obsidian v3 — exact match to pre-seed deck visual language
 // Playfair Display serif greeting + DM Sans body
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
-import { C, T } from "../theme";
+import { C, T, TS } from "../theme";
 import { Btn, tap, SerifText, g, OfflineBanner } from "../components";
 import { getCachedTrips, getCachedPoints } from "../offlineCache";
 import { getTrips, deleteTrip, getFlightStatus, getFlightStatusPublic, getPrediction, getGroundIntel, getMe, getLoyaltyAccounts, getTripBriefing, getNextTripWindow, getPoints } from "../api";
@@ -300,55 +300,48 @@ function TripCard({ trip, onDelete, navigation }) {
       .catch(() => {});
   }, [firstFlight?.origin, firstFlight?.destination]);
 
+  // Build date range string like deck: "MAY 18 – MAY 24"
+  const lastFlight = legs.filter(l => l.type === "flight").slice(-1)[0];
+  const depDateFmt = firstFlight?.departs_at
+    ? new Date(firstFlight.departs_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase()
+    : null;
+  const arrDateFmt = lastFlight?.departs_at && lastFlight !== firstFlight
+    ? new Date(lastFlight.departs_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase()
+    : null;
+  const dateRange = depDateFmt && arrDateFmt ? `${depDateFmt} – ${arrDateFmt}` : depDateFmt;
+
+  // Destination icon emoji (simple fallback for now)
+  const destIcons = { "Bali": "🌴", "Swiss": "⛰️", "Kyoto": "🟯", "Tokyo": "🟯", "Paris": "🗻", "London": "🏰", "New York": "🏙️", "NYC": "🏙️" };
+  const iconKey = Object.keys(destIcons).find(k => trip.title?.includes(k));
+  const thumbIcon = iconKey ? destIcons[iconKey] : "✈️";
+
   return (
-    <Pressable onPress={() => navigation.navigate("TripDetail", { trip })} style={{ marginBottom: 12 }}>
+    <Pressable
+      onPress={() => navigation.navigate("TripDetail", { trip })}
+      onLongPress={() => Alert.alert("Delete trip?", trip.title, [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: () => onDelete(trip.id) }
+      ])}
+      style={{ marginBottom: 10 }}
+    >
       <View style={s.tripCard}>
-        <View style={g.rowBetween}>
-          <View style={{ flex: 1 }}>
-            <Text style={s.dest}>{trip.title}</Text>
-            {depDate && <Text style={s.when}>{depDate}</Text>}
-          </View>
-          <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-            {risk != null && <RiskBadge risk={risk} />}
-            {risk == null && (
-              <View style={s.pillLive}>
-                <View style={s.pillDot} />
-                <Text style={s.pillLiveT}>MONITORING</Text>
-              </View>
-            )}
-            <Pressable onPress={() => Alert.alert("Delete trip?", trip.title, [
-              { text: "Cancel", style: "cancel" },
-              { text: "Delete", style: "destructive", onPress: () => onDelete(trip.id) }
-            ])}>
-              <Text style={{ color: C.mut, fontSize: 18, lineHeight: 22 }}>×</Text>
-            </Pressable>
-          </View>
+        {/* Thumbnail — deck shows line-art illustration */}
+        <View style={s.tripThumb}>
+          <Text style={s.tripThumbT}>{thumbIcon}</Text>
         </View>
-
-        {legs.map((leg, i) => {
-          if (leg.type === "flight") return <FlightLeg key={i} leg={leg} />;
-          // Hotel / transfer
-          const ic = leg.type === "hotel" ? "H" : "T";
-          const title = leg.carrier || leg.destination || "Booking";
-          const sub = formatDate(leg.departs_at || leg.check_in);
-          return (
-            <View key={i} style={s.leg}>
-              <View style={s.legIconWrap}>
-                <Text style={[s.legIc, { fontSize: 11 }]}>{ic}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={s.legT}>{title}</Text>
-                {sub ? <Text style={s.legS}>{sub}</Text> : null}
-              </View>
-              <StatusBadge status="Booked" />
-            </View>
-          );
-        })}
-
-        {legs.length === 0 && (
-          <Text style={{ color: C.mut, fontSize: 13, fontFamily: T.sans, marginTop: 8 }}>No legs added yet</Text>
-        )}
-        <Text style={s.tapHint}>Tap for details  ›</Text>
+        {/* Info block */}
+        <View style={s.tripInfo}>
+          {dateRange && <Text style={s.tripDateRange}>{dateRange}</Text>}
+          <Text style={s.dest}>{trip.title}</Text>
+          {firstFlight?.destination && (
+            <Text style={s.when}>{firstFlight.destination}</Text>
+          )}
+        </View>
+        {/* Right: risk badge or chevron */}
+        <View style={{ alignItems: "flex-end", gap: 6 }}>
+          {risk != null && risk >= 30 && <RiskBadge risk={risk} />}
+          <Text style={{ color: C.mut, fontSize: 18, lineHeight: 22 }}>›</Text>
+        </View>
       </View>
     </Pressable>
   );
@@ -783,49 +776,48 @@ export default function HomeScreen({ navigation }) {
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
 
-  // Header
-  appH:      { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 },
+  // Header — exact deck layout
+  appH:      { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 28 },
   logoRow:   { flexDirection: "row", alignItems: "center", gap: 10 },
-  wMark:     { width: 30, height: 30, borderRadius: 8, borderWidth: 1, borderColor: C.gold + "60", alignItems: "center", justifyContent: "center" },
-  wMarkText: { color: C.gold, fontSize: 16 },
-  logo:      { color: C.ink, fontSize: 12, fontFamily: T.sansB, letterSpacing: T.trackWide },
-  avatar:    { width: 32, height: 32, borderRadius: 16, overflow: "hidden" },
-  avatarInner: { width: 32, height: 32, borderRadius: 16, backgroundColor: C.card2, borderWidth: 1, borderColor: C.line, alignItems: "center", justifyContent: "center" },
-  avatarT:   { color: C.gold, fontFamily: T.sansB, fontSize: 13 },
+  wMark:     { width: 34, height: 34, alignItems: "center", justifyContent: "center" },
+  wMarkText: { color: C.gold, fontSize: TS.headerMark },
+  logo:      { color: C.ink, fontSize: TS.headerBrand, fontFamily: T.sansB, letterSpacing: T.trackXWide },
+  avatar:    { width: 34, height: 34, borderRadius: 17, overflow: "hidden" },
+  avatarInner: { width: 34, height: 34, borderRadius: 17, backgroundColor: "transparent", borderWidth: 1.5, borderColor: C.ink + "80", alignItems: "center", justifyContent: "center" },
+  avatarT:   { color: C.ink, fontFamily: T.sansB, fontSize: 13 },
 
-  // Greeting
-  greetWrap: { marginBottom: 24 },
-  greetH:    { color: C.ink, fontSize: 30, letterSpacing: T.trackTight, marginBottom: 4 },
-  greetS:    { color: C.mut, fontSize: 14, fontFamily: T.sans, lineHeight: 20 },
+  // Greeting — exact deck scale
+  greetWrap: { marginBottom: 28 },
+  greetH:    { color: C.ink, fontSize: TS.greetingH, letterSpacing: T.trackTight, marginBottom: 6 },
+  greetS:    { color: C.mut, fontSize: TS.greetingSub, fontFamily: T.sans, lineHeight: 20 },
 
-  // ── Parchment Next Up card ──────────────────────────────────────────────────
+  // ── Parchment Next Up card — exact deck spec ───────────────────────────────
   parchCard: {
     backgroundColor: C.parch,
-    borderRadius: 20,
+    borderRadius: 16,
     padding: 20,
-    borderWidth: 1,
-    borderColor: C.parch2,
+    borderWidth: 0,
     marginBottom: 4,
   },
-  parchIcon:      { width: 28, height: 28, borderRadius: 14, borderWidth: 1, borderColor: C.inkD + "30", alignItems: "center", justifyContent: "center" },
-  parchLabel:     { color: C.mutD, fontSize: 10, fontFamily: T.sansB, letterSpacing: T.trackWide },
+  parchIcon:      { width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: C.inkD + "25", alignItems: "center", justifyContent: "center" },
+  parchLabel:     { color: C.mutD, fontSize: TS.sectionLabel, fontFamily: T.sansB, letterSpacing: T.trackWide },
   liveDot:        { width: 6, height: 6, borderRadius: 3, backgroundColor: C.teal },
   parchCountdown: { color: C.inkD, fontSize: 13, fontFamily: T.sansB, letterSpacing: 0.3 },
 
-  // Route
-  parchRouteRow:  { flexDirection: "row", alignItems: "center", marginTop: 4, marginBottom: 2 },
-  parchAirport:   { color: C.inkD, fontSize: 38, letterSpacing: -1 },
-  parchArrowWrap: { flex: 1, flexDirection: "row", alignItems: "center", paddingHorizontal: 8, gap: 4 },
-  parchArrowLine: { flex: 1, height: 0.5, backgroundColor: C.inkD + "30" },
-  parchArrowIc:   { color: C.mutD, fontSize: 16, fontFamily: T.sans },
+  // Route — large serif title like deck
+  parchRouteRow:  { flexDirection: "row", alignItems: "center", marginTop: 8, marginBottom: 4 },
+  parchAirport:   { color: C.inkD, fontSize: TS.nextUpTitle, letterSpacing: T.trackTight },
+  parchArrowWrap: { flex: 1, flexDirection: "row", alignItems: "center", paddingHorizontal: 10, gap: 4 },
+  parchArrowLine: { flex: 1, height: 0.5, backgroundColor: C.inkD + "25" },
+  parchArrowIc:   { color: C.mutD, fontSize: 14, fontFamily: T.sans },
 
   // Meta
-  parchMeta:    { color: C.mutD, fontSize: 13, fontFamily: T.sans },
-  parchMetaDot: { color: C.mutD + "80", fontSize: 13 },
+  parchMeta:    { color: C.mutD, fontSize: TS.nextUpSub, fontFamily: T.sans },
+  parchMetaDot: { color: C.mutD + "80", fontSize: TS.nextUpSub },
 
   // Bottom row
-  parchHint:  { color: C.mutD, fontSize: 11, fontFamily: T.sans, opacity: 0.7 },
-  parchArrow: { color: C.inkD, fontSize: 12, fontFamily: T.sansM, letterSpacing: 0.3 },
+  parchHint:  { color: C.mutD, fontSize: TS.nextUpMeta, fontFamily: T.sans, opacity: 0.7 },
+  parchArrow: { color: C.inkD, fontSize: TS.nextUpMeta, fontFamily: T.sansM, letterSpacing: 0.3 },
 
   // Ground Intelligence (on parchment)
   groundWrap:    { marginTop: 14, paddingTop: 14, borderTopWidth: 0.5, borderTopColor: C.inkD + "20" },
@@ -836,16 +828,23 @@ const s = StyleSheet.create({
   groundTime:    { color: C.mutD, fontSize: 13, fontFamily: T.sansB },
   groundVerdict: { borderRadius: 8, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8, marginTop: 4 },
 
-  // ── Trip cards ──────────────────────────────────────────────────────────────
+  // ── Trip cards — exact deck dark card spec ─────────────────────────────────
   tripCard: {
     backgroundColor: C.card,
-    borderRadius: 18,
-    padding: 18,
+    borderRadius: 12,
+    padding: 16,
     borderWidth: 1,
     borderColor: C.line,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
   },
-  dest:      { color: C.ink, fontSize: 20, fontFamily: T.sansB, letterSpacing: -0.3 },
-  when:      { color: C.mut, fontSize: 12, fontFamily: T.sans, marginTop: 3 },
+  tripThumb: { width: 56, height: 56, borderRadius: 8, backgroundColor: C.card2, borderWidth: 1, borderColor: C.line, alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  tripThumbT: { fontSize: 22, color: C.gold + "80" },
+  tripInfo:  { flex: 1 },
+  dest:      { color: C.ink, fontSize: TS.tripName, fontFamily: T.sansM, letterSpacing: 0 },
+  when:      { color: C.mut, fontSize: TS.tripSub, fontFamily: T.sans, marginTop: 2 },
+  tripDateRange: { color: C.gold, fontSize: TS.tripDate, fontFamily: T.sansB, letterSpacing: T.trackMed, marginBottom: 3 },
   pillLive:  { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: C.gold + "10", borderColor: C.gold + "30", borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 },
   pillDot:   { width: 5, height: 5, borderRadius: 3, backgroundColor: C.gold },
   pillLiveT: { color: C.gold, fontSize: 9, fontFamily: T.sansB, letterSpacing: T.trackMed },

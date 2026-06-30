@@ -772,8 +772,8 @@ export default function TripDetailScreen({ route, navigation }) {
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
   header: { borderRadius: 20, padding: 18, borderWidth: 1, borderColor: C.line, marginBottom: 4 },
-  tripTitle: { color: C.ink, fontSize: 24, fontFamily: T.sansB },
-  tripDate: { color: C.mut, fontSize: 14, marginTop: 4 },
+  tripTitle: { color: C.ink, fontSize: 26, fontFamily: T.sansB, letterSpacing: -0.4 },
+  tripDate: { color: C.mut, fontSize: 13, fontFamily: T.sans, marginTop: 4 },
   pillRow: { flexDirection: "row", gap: 8, marginTop: 12, flexWrap: "wrap" },
   pillLive: { backgroundColor: "rgba(34,211,166,0.14)", borderColor: "rgba(34,211,166,0.3)", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
   pillLiveT: { color: C.teal, fontSize: 11, fontFamily: T.sansB },
@@ -797,12 +797,12 @@ const s = StyleSheet.create({
   hotelAlertBanner: { marginTop: 10, backgroundColor: "rgba(201,169,110,0.08)", borderRadius: 10, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", padding: 10 },
   hotelAlertText: { color: C.gold, fontSize: 12, lineHeight: 17 },
 
-  // Leg cards
-  legCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 16, marginBottom: 10 },
-  routeRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
-  airport: { color: C.ink, fontSize: 22, fontWeight: "800", letterSpacing: 0.5 },
-  arrow: { color: C.mut, fontSize: 16 },
-  flightNum: { color: C.mut, fontSize: 13 },
+  // Leg cards — exact deck spec
+  legCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 12, padding: 16, marginBottom: 10 },
+  routeRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 6 },
+  airport: { color: C.ink, fontSize: 28, fontFamily: T.serifB, letterSpacing: -0.4 },
+  arrow: { color: C.mut, fontSize: 18 },
+  flightNum: { color: C.mut, fontSize: 13, fontFamily: T.sans },
   infoRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   infoIc: { fontSize: 14 },
   infoT: { color: C.ink, fontSize: 13, fontWeight: "500" },

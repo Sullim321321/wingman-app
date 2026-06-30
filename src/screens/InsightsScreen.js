@@ -102,19 +102,22 @@ export default function InsightsScreen({ navigation }) {
         <BackBar nav={navigation} label="Insights" />
 
         {/* Hero ROI card — warm gold-tinted gradient, editorial serif value */}
-        <LinearGradient colors={["rgba(201,169,110,0.14)", "rgba(201,169,110,0.04)"]} style={s.roiCard}>
-          <Text style={s.roiEyebrow}>TOTAL VALUE PROTECTED</Text>
+        <LinearGradient colors={["rgba(201,169,110,0.16)", "rgba(201,169,110,0.04)"]} style={s.roiCard}>
+          <View style={s.roiEyebrowRow}>
+            <Text style={s.roiEyebrow}>TOTAL VALUE PROTECTED</Text>
+            <Text style={s.roiYear}>{YEAR}</Text>
+          </View>
           <Text style={s.roiValue}>
             {totalSaved > 0 ? `$${totalSaved.toLocaleString()}` : "—"}
           </Text>
           <Text style={s.roiSub}>
             {totalSaved > 0
               ? `Across ${disruptionsHandled} disruption${disruptionsHandled !== 1 ? "s" : ""} handled by Wingman`
-              : "Complete your first trip to see your ROI"}
+              : "Your first disruption handled will appear here."}
           </Text>
           {totalSaved > 0 && (
             <Pressable style={s.shareBtn} onPress={handleShare}>
-              <Text style={s.shareBtnT}>Share ↗</Text>
+              <Text style={s.shareBtnT}>Share your ROI  ↗</Text>
             </Pressable>
           )}
         </LinearGradient>
@@ -208,20 +211,21 @@ export default function InsightsScreen({ navigation }) {
 
         {/* Wingman Wrapped entry */}
         <Pressable style={s.wrappedCard} onPress={() => navigation.navigate("Wrapped")}>
-          <LinearGradient colors={["#1A1209", "#2C1F0A"]} style={s.wrappedGrad}>
+          <LinearGradient colors={["#241808", "#1A1209"]} style={s.wrappedGrad}>
             <Text style={s.wrappedEye}>{YEAR} WRAPPED</Text>
-            <Text style={s.wrappedTitle}>Your year in travel ›</Text>
-            <Text style={s.wrappedSub}>Trips, flights, value protected — all in one place.</Text>
+            <Text style={s.wrappedTitle}>Your year in travel</Text>
+            <Text style={s.wrappedSub}>Every trip, flight, and disruption handled — all in one place.</Text>
+            <Text style={s.wrappedCta}>View →</Text>
           </LinearGradient>
         </Pressable>
 
         {/* Empty state */}
         {events.length === 0 && totalSaved === 0 && (
           <View style={s.empty}>
-            <Text style={s.emptyIcon}>◎</Text>
-            <Text style={s.emptyH}>Your ROI dashboard will appear here</Text>
+            <Text style={s.emptyIcon}>◈</Text>
+            <Text style={s.emptyH}>Nothing to report yet.</Text>
             <Text style={s.emptySub}>
-              Once Wingman handles its first disruption, you will see exactly how much time and money it saved you.
+              Add a trip and Wingman begins monitoring immediately. The moment it handles a disruption, your ROI appears here.
             </Text>
           </View>
         )}
@@ -234,10 +238,12 @@ const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
 
   roiCard: { borderRadius: 20, padding: 28, borderWidth: 1, borderColor: "rgba(201,169,110,0.3)", marginBottom: 20 },
-  roiEyebrow: { color: C.gold, fontSize: 11, fontFamily: T.sansB, letterSpacing: 2.5, marginBottom: 10 },
+  roiEyebrowRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
+  roiEyebrow: { color: C.gold, fontSize: 11, fontFamily: T.sansB, letterSpacing: 2.5 },
+  roiYear: { color: C.mut, fontSize: 11, fontFamily: T.sansM, letterSpacing: 0.5 },
   roiValue: { color: C.ink, fontSize: 56, fontFamily: "PlayfairDisplay_700Bold", lineHeight: 64, marginBottom: 8 },
   roiSub: { color: C.mut, fontSize: 14, lineHeight: 20 },
-  shareBtn: { marginTop: 16, alignSelf: "flex-start", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: C.gold + "50", backgroundColor: C.gold + "12" },
+  shareBtn: { marginTop: 18, alignSelf: "flex-start", paddingHorizontal: 16, paddingVertical: 9, borderRadius: 12, borderWidth: 1, borderColor: C.gold + "50", backgroundColor: C.gold + "12" },
   shareBtnT: { color: C.gold, fontSize: 12, fontFamily: T.sansB, letterSpacing: 0.5 },
 
   periodRow: { flexDirection: "row", gap: 8, marginBottom: 20 },
@@ -280,10 +286,11 @@ const s = StyleSheet.create({
   outcomeTime: { color: C.mut, fontSize: 11, marginTop: 4 },
 
   wrappedCard: { borderRadius: 20, overflow: "hidden", marginBottom: 14 },
-  wrappedGrad:  { padding: 24, borderRadius: 20, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)" },
-  wrappedEye:   { color: C.gold, fontSize: 11, fontFamily: T.sansB, letterSpacing: 2, marginBottom: 8 },
-  wrappedTitle: { color: C.ink, fontSize: 22, fontFamily: "PlayfairDisplay_700Bold", marginBottom: 6 },
-  wrappedSub:   { color: C.mut, fontSize: 13, lineHeight: 19 },
+  wrappedGrad:  { padding: 24, borderRadius: 20, borderWidth: 1, borderColor: "rgba(201,169,110,0.25)" },
+  wrappedEye:   { color: C.gold, fontSize: 11, fontFamily: T.sansB, letterSpacing: 2.5, marginBottom: 10 },
+  wrappedTitle: { color: C.ink, fontSize: 24, fontFamily: "PlayfairDisplay_700Bold", marginBottom: 6, letterSpacing: -0.3 },
+  wrappedSub:   { color: C.mut, fontSize: 13, lineHeight: 19, marginBottom: 14 },
+  wrappedCta:   { color: C.gold, fontSize: 13, fontFamily: T.sansM, letterSpacing: 0.3 },
 
   empty: { alignItems: "center", paddingVertical: 40 },
   emptyIcon: { fontSize: 36, color: C.gold, marginBottom: 16 },

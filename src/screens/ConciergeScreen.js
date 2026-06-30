@@ -12,7 +12,7 @@ import { C, T } from "../theme";
 import { SerifText } from "../components";
 import { sendConciergeMessage, getTrips, getConciergeThread, saveConciergeThread } from "../api";
 
-const WELCOME = "Good day — I'm your Wingman. I can answer questions about your trips, check disruption risk, and help you plan. What do you need?";
+const WELCOME = "Good day. I'm watching your trips, tracking disruption risk, and ready to act the moment something changes. What can I do for you?";
 
 function buildTripContext(trips) {
   if (!trips || trips.length === 0) return null;
@@ -282,8 +282,8 @@ export default function ConciergeScreen({ route }) {
 
 const s = StyleSheet.create({
   app:    { flex: 1, backgroundColor: C.bg },
-  header: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 10 },
-  headerMark: { width: 32, height: 32, borderRadius: 8, borderWidth: 1, borderColor: C.gold + "50", alignItems: "center", justifyContent: "center" },
+  header: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 },
+  headerMark: { width: 34, height: 34, borderRadius: 9, borderWidth: 1, borderColor: C.gold + "55", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(201,169,110,0.06)" },
   headerT:    { color: C.ink, fontSize: 11, fontFamily: T.sansB, letterSpacing: T.trackWide },
   headerSub:  { color: C.gold, fontSize: 10, fontFamily: T.sansM, letterSpacing: 0.5, marginTop: 2 },
 
@@ -305,10 +305,10 @@ const s = StyleSheet.create({
   },
   aiBubble: {
     alignSelf: "flex-start",
-    backgroundColor: C.card,
+    backgroundColor: "rgba(34,30,26,0.95)",
     borderRadius: 18, borderBottomLeftRadius: 4,
     padding: 16,
-    borderWidth: 1, borderColor: C.line,
+    borderWidth: 1, borderColor: "rgba(201,169,110,0.12)",
   },
   bubbleT:     { color: C.ink, fontSize: 15, fontFamily: T.sans, lineHeight: 24 },
   userBubbleT: { color: C.ink },
@@ -328,12 +328,12 @@ const s = StyleSheet.create({
   inputRow: {
     flexDirection: "row", alignItems: "flex-end", gap: 10,
     paddingHorizontal: 16, paddingBottom: 20, paddingTop: 12,
-    borderTopWidth: 0.5, borderTopColor: C.line,
+    borderTopWidth: 0.5, borderTopColor: "rgba(201,169,110,0.12)",
     backgroundColor: C.bg,
   },
   textInput: {
     flex: 1, backgroundColor: C.card, borderRadius: 14, borderWidth: 1,
-    borderColor: C.line, paddingHorizontal: 16, paddingVertical: 14,
+    borderColor: "rgba(201,169,110,0.18)", paddingHorizontal: 16, paddingVertical: 14,
     color: C.ink, fontSize: 15, fontFamily: T.sans, maxHeight: 120, lineHeight: 22,
   },
   sendBtn:  { marginBottom: 2 },

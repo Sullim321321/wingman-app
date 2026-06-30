@@ -152,14 +152,17 @@ export default function ActivityScreen({ navigation }) {
         ) : events.length === 0 ? (
           <View style={s.emptyCard}>
             <View style={s.emptyIcon}>
-              <Text style={{ color: C.gold, fontSize: 16, fontFamily: T.sansB }}>+</Text>
+              <Text style={{ color: C.gold, fontSize: 18, fontFamily: T.sansB }}>◈</Text>
             </View>
-            <SerifText style={s.emptyT}>Nothing yet.</SerifText>
+            <SerifText style={s.emptyT}>No trips yet.</SerifText>
             <Text style={s.emptySub}>
-              Add a trip with upcoming flights and Wingman will monitor them every 15 minutes — delays, cancellations, and gate changes will appear here.
+              Add a trip and Wingman begins monitoring immediately — delays, cancellations, and gate changes surface here the moment they happen.
             </Text>
             <Pressable style={s.emptyBtn} onPress={() => navigation.navigate("AddTrip")}>
-              <Text style={s.emptyBtnT}>+ Add a trip</Text>
+              <Text style={s.emptyBtnT}>Add a trip</Text>
+            </Pressable>
+            <Pressable style={s.emptyBtnGhost} onPress={() => navigation.navigate("Connections")}>
+              <Text style={s.emptyBtnGhostT}>Import from email →</Text>
             </Pressable>
           </View>
         ) : (
@@ -246,4 +249,6 @@ const s = StyleSheet.create({
   emptySub:  { color: C.mut, fontSize: 14, fontFamily: T.sans, textAlign: "center", lineHeight: 21, marginBottom: 24 },
   emptyBtn:  { backgroundColor: C.gold, borderRadius: 12, paddingHorizontal: 22, paddingVertical: 12 },
   emptyBtnT: { color: C.inkD, fontSize: 14, fontFamily: T.sansB, letterSpacing: 0.3 },
+  emptyBtnGhost: { marginTop: 12, paddingVertical: 8, paddingHorizontal: 16 },
+  emptyBtnGhostT: { color: C.gold, fontSize: 13, fontFamily: T.sansM, letterSpacing: 0.2 },
 });

@@ -148,13 +148,23 @@ export default function ConnectionsScreen({ navigation }) {
     try {
       const result = await scanEmailBody(pasteText.trim(), "paste");
       if (result.trips_created > 0) {
+        setPasteText("");
+        setShowPaste(false);
         Alert.alert(
-          `${result.trips_created} trip${result.trips_created > 1 ? "s" : ""} imported`,
-          "Pull to refresh on the Trips tab to see them.",
-          [{ text: "Done", onPress: () => { setPasteText(""); setShowPaste(false); } }]
+          result.trips_created === 1 ? "Trip imported" : `${result.trips_created} trips imported`,
+          result.trips_created === 1
+            ? "Wingman has extracted your itinerary and is now monitoring it for disruptions."
+            : `Wingman found ${result.trips_created} trips in that email and is monitoring all of them.`,
+          [
+            { text: "View Trips", onPress: () => navigation.navigate("Trips") },
+            { text: "Done", style: "cancel" },
+          ]
         );
       } else {
-        Alert.alert("No trips found", "Wingman couldn't find a flight or hotel confirmation in that text. Try pasting the full booking confirmation email.");
+        Alert.alert(
+          "No trips found",
+          "Wingman couldn't find a flight or hotel confirmation in that text.\n\nTip: paste the full booking confirmation email — including the subject line and all booking details."
+        );
       }
     } catch (e) {
       Alert.alert("Error", e.message);
@@ -339,40 +349,37 @@ export default function ConnectionsScreen({ navigation }) {
               </Pressable>
             }
           />
-          {/* Paste */}
+          {/* Paste — always visible, prominent */}
           <ConnRow
             iconKey="paste"
             title="Paste a confirmation email"
             sub="Copy a booking confirmation and paste it here — Wingman extracts the trip instantly"
-            right={
-              <Pressable style={s.connectBtn} onPress={() => setShowPaste(v => !v)}>
-                <Text style={s.connectBtnT}>{showPaste ? "Cancel" : "Paste"}</Text>
-              </Pressable>
-            }
             last
           />
         </View>
-        {showPaste && (
-          <View style={s.pasteWrap}>
-            <TextInput
-              style={s.pasteInput}
-              placeholder="Paste your booking confirmation here…"
-              placeholderTextColor={C.mut}
-              value={pasteText}
-              onChangeText={setPasteText}
-              multiline
-              numberOfLines={8}
-              textAlignVertical="top"
-              autoCorrect={false}
-              spellCheck={false}
-            />
-            <Btn
-              title={pasteLoading ? "Scanning…" : "Import trip"}
-              onPress={submitPaste}
-              style={{ marginTop: 10 }}
-            />
-          </View>
-        )}
+        <View style={s.pasteWrap}>
+          <TextInput
+            style={s.pasteInput}
+            placeholder={`Paste your booking confirmation here…\n\ne.g. \"Your booking is confirmed: AA 412, JFK → LAX, Jan 15, 10:35 AM\"`}
+            placeholderTextColor={C.mut}
+            value={pasteText}
+            onChangeText={setPasteText}
+            multiline
+            numberOfLines={8}
+            textAlignVertical="top"
+            autoCorrect={false}
+            spellCheck={false}
+          />
+          <Btn
+            title={pasteLoading ? "Scanning…" : "Import trip"}
+            onPress={submitPaste}
+            disabled={!pasteText.trim() || pasteLoading}
+            style={{ marginTop: 12 }}
+          />
+          {pasteText.trim().length === 0 && (
+            <Text style={s.pasteHint}>Works with any airline, hotel, or OTA confirmation email (Expedia, Booking.com, etc.)</Text>
+          )}
+        </View>
 
         {/* ── What Wingman reads ────────────────────────────────────────────── */}
         <Text style={g.sectionT}>WHAT WINGMAN READS</Text>
@@ -426,13 +433,14 @@ const s = StyleSheet.create({
   soonT: { color: C.mut, fontSize: 10, fontFamily: T.sansB, letterSpacing: T.trackMed },
   pasteWrap: {
     backgroundColor: C.card, borderRadius: 16, borderWidth: 1,
-    borderColor: C.line, padding: 16, marginBottom: 14,
+    borderColor: "rgba(201,169,110,0.25)", padding: 16, marginBottom: 14,
   },
   pasteInput: {
     color: C.ink, fontSize: 14, fontFamily: T.sans, lineHeight: 22,
-    minHeight: 140, backgroundColor: C.card2,
-    borderRadius: 12, padding: 14, borderWidth: 1, borderColor: C.line,
+    minHeight: 160, backgroundColor: C.card2,
+    borderRadius: 12, padding: 14, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)",
   },
+  pasteHint: { color: C.mut, fontSize: 12, fontFamily: T.sans, lineHeight: 17, marginTop: 10, textAlign: "center" },
   featIcon: {
     width: 22, height: 22, borderRadius: 6,
     backgroundColor: C.gold + "10", borderWidth: 1, borderColor: C.gold + "25",

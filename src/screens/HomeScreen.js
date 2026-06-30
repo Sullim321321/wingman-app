@@ -5,7 +5,7 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
-  ActivityIndicator, RefreshControl, Alert, Animated, Easing, TextInput,
+  ActivityIndicator, RefreshControl, Alert, Animated, Easing, TextInput, Image,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
@@ -14,6 +14,7 @@ import { Btn, tap, SerifText, g, OfflineBanner } from "../components";
 import { getCachedTrips, getCachedPoints } from "../offlineCache";
 import { getTrips, deleteTrip, getFlightStatus, getFlightStatusPublic, getPrediction, getGroundIntel, getMe, getLoyaltyAccounts, getTripBriefing, getNextTripWindow, getPoints } from "../api";
 import { scheduleDisruption } from "../notify";
+import { getEtching } from "../etchings";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -183,14 +184,19 @@ function NextUpCard({ flight, navigation }) {
           )}
         </View>
 
-        {/* Route: large serif airport codes */}
+        {/* Destination etching illustration — absolute right side of card */}
+        {getEtching(flight.destination) && (
+          <Image
+            source={getEtching(flight.destination)}
+            style={s.parchEtching}
+            resizeMode="cover"
+          />
+        )}
+
+        {/* Route: 'JFK to LAX' — exact deck serif format */}
         <View style={s.parchRouteRow}>
           <SerifText bold style={s.parchAirport}>{flight.origin || "—"}</SerifText>
-          <View style={s.parchArrowWrap}>
-            <View style={s.parchArrowLine} />
-            <Text style={s.parchArrowIc}>›</Text>
-            <View style={s.parchArrowLine} />
-          </View>
+          <Text style={s.parchTo}>{" to "}</Text>
           <SerifText bold style={s.parchAirport}>{flight.destination || "—"}</SerifText>
         </View>
 
@@ -779,8 +785,8 @@ const s = StyleSheet.create({
   // Header — exact deck layout
   appH:      { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 28 },
   logoRow:   { flexDirection: "row", alignItems: "center", gap: 10 },
-  wMark:     { width: 34, height: 34, alignItems: "center", justifyContent: "center" },
-  wMarkText: { color: C.gold, fontSize: TS.headerMark },
+  wMark:     { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
+  wMarkText: { color: C.gold, fontSize: 32, fontFamily: T.serifI },  // Italic serif W — exact deck monogram
   logo:      { color: C.ink, fontSize: TS.headerBrand, fontFamily: T.sansB, letterSpacing: T.trackXWide },
   avatar:    { width: 34, height: 34, borderRadius: 17, overflow: "hidden" },
   avatarInner: { width: 34, height: 34, borderRadius: 17, backgroundColor: "transparent", borderWidth: 1.5, borderColor: C.ink + "80", alignItems: "center", justifyContent: "center" },
@@ -804,12 +810,15 @@ const s = StyleSheet.create({
   liveDot:        { width: 6, height: 6, borderRadius: 3, backgroundColor: C.teal },
   parchCountdown: { color: C.inkD, fontSize: 13, fontFamily: T.sansB, letterSpacing: 0.3 },
 
-  // Route — large serif title like deck
-  parchRouteRow:  { flexDirection: "row", alignItems: "center", marginTop: 8, marginBottom: 4 },
-  parchAirport:   { color: C.inkD, fontSize: TS.nextUpTitle, letterSpacing: T.trackTight },
+  // Route — deck format: 'JFK to LAX' in serif (not arrow)
+  parchRouteRow:  { flexDirection: "row", alignItems: "center", marginTop: 8, marginBottom: 4, flexWrap: "wrap", gap: 6 },
+  parchAirport:   { color: C.inkD, fontSize: TS.nextUpTitle, fontFamily: T.serifB, letterSpacing: T.trackTight },
+  parchTo:        { color: C.mutD, fontSize: TS.nextUpTitle - 4, fontFamily: T.serifI, letterSpacing: 0 },  // lowercase 'to' in italic serif
   parchArrowWrap: { flex: 1, flexDirection: "row", alignItems: "center", paddingHorizontal: 10, gap: 4 },
   parchArrowLine: { flex: 1, height: 0.5, backgroundColor: C.inkD + "25" },
   parchArrowIc:   { color: C.mutD, fontSize: 14, fontFamily: T.sans },
+  // Etching illustration placeholder (right side of parchment card)
+  parchEtching:   { position: "absolute", right: 0, top: 0, bottom: 0, width: 110, opacity: 0.18, borderRadius: 16, overflow: "hidden" },
 
   // Meta
   parchMeta:    { color: C.mutD, fontSize: TS.nextUpSub, fontFamily: T.sans },

@@ -1,14 +1,14 @@
-// Wingman Design System — Obsidian v3
+// Wingman Design System — Obsidian v3.1
 // Exact match to pre-seed deck visual language (Jun 2026)
-// True black bg · pure white ink · champagne gold accent (restrained)
-// Parchment Next Up card · Playfair Display + DM Sans
+// Warm espresso bg · pure white ink · champagne gold accent (restrained)
+// Parchment Next Up card · Playfair Display serif + DM Sans
 
 export const C = {
   // ─── Backgrounds ────────────────────────────────────────────────────────────
-  bg:    "#0A0906",   // True warm black — exact deck background
-  card:  "#1C1915",   // Elevated dark card surface
-  card2: "#252119",   // Secondary card / input background
-  card3: "#2A261F",   // Tertiary — skeleton shimmer base
+  bg:    "#1A1714",   // Warm espresso — exact deck background colour
+  card:  "#221E1A",   // Elevated dark card surface
+  card2: "#2A2520",   // Secondary card / input background
+  card3: "#302B25",   // Tertiary — skeleton shimmer base
   parch: "#F5EDD8",   // Parchment cream — Next Up card (inverted light)
   parch2:"#EDE4CC",   // Slightly deeper parchment for inner elements
 
@@ -63,6 +63,8 @@ export const T = {
   trackMed:   2.0,   // Status badges, date ranges
   trackTight: -0.4,  // Serif headlines
   trackXWide: 4.0,   // Header "WINGMAN" brand label
+  // Header monogram
+  headerW:    "W",   // Serif italic W monogram (rendered in serifI font)
 };
 
 // Elevation system
@@ -96,7 +98,7 @@ export const TS = {
   greetingH:   28,
   greetingSub: 14,
   sectionLabel:10,
-  nextUpTitle: 24,
+  nextUpTitle: 28,   // Serif 'JFK to LAX' — larger for Playfair Display
   nextUpSub:   13,
   nextUpRoute: 13,
   nextUpMeta:  12,

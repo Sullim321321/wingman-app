@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { C, T } from "../theme";
-import { Btn, BackBar, useCountUp, success, g } from "../components";
+import { Btn, BackBar, SerifText, useCountUp, success, g } from "../components";
 import {
   getPrediction, getTrips,
   getRescueOptions, acceptRescue, rejectRescue,
@@ -356,21 +356,19 @@ export default function AlertScreen({ navigation, route }) {
       <ScrollView contentContainerStyle={g.scroll}>
         <BackBar nav={navigation} label="Disruption · live" />
 
-        {/* ── Hero card ───────────────────────────────────────────────────── */}
-        <LinearGradient colors={["#2A1A10", "#1C1410"]} style={s.heroCard}>
-          <Text style={{ fontSize: 30 }}>{heroEmoji}</Text>
-          <Text style={s.heroH}>{heroTitle}</Text>
-          <Text style={s.heroRoute}>{dep} → {arr} · {flightLabel}</Text>
+        {/* ── Hero — deck style: plain bg, serif headline ───────────────────────────────────── */}
+        <View style={s.heroCard}>
+          <View style={s.heroDisruptBadge}>
+            <Text style={s.heroDisruptIc}>⚠️</Text>
+            <Text style={s.heroDisruptLabel}>DISRUPTION DETECTED</Text>
+          </View>
+          <SerifText style={s.heroH}>{heroTitle}</SerifText>
+          <Text style={s.heroRoute}>{dep} → {arr}</Text>
+          <Text style={s.heroRouteSub}>{flightLabel}</Text>
           <Text style={s.heroP}>{detail}</Text>
-          <View style={s.riskBar}>
-            <View style={[s.riskFill, { width: `${risk}%` }]} />
-          </View>
-          <View style={g.rowBetween}>
+          <View style={[g.rowBetween, { marginTop: 14 }]}>
             <Text style={[s.riskLbl, status === "live" && { color: C.teal }]}>{statusText}</Text>
-            <Text style={[s.riskLbl, { color: C.coral, fontWeight: "800", fontSize: 14 }]}>{risk}%</Text>
           </View>
-
-          {/* Downstream value at risk */}
           {downstreamValue > 0 && (
             <View style={s.downstreamBanner}>
               <Text style={s.downstreamText}>
@@ -378,7 +376,7 @@ export default function AlertScreen({ navigation, route }) {
               </Text>
             </View>
           )}
-        </LinearGradient>
+        </View>
 
         <Text
           style={s.whyLink}
@@ -483,12 +481,25 @@ export default function AlertScreen({ navigation, route }) {
             </View>
           )}
           <Text style={s.sum}>{confirmSummary}</Text>
-          <Btn
-            title={accepting ? "Handling it…" : "✓  Yes — handle it all"}
-            kind="accent"
+          {/* Parchment approve buttons — exact deck style */}
+          <Pressable
+            style={[s.approveBtn, { backgroundColor: C.parch }]}
             onPress={handleAccept}
             disabled={accepting}
-          />
+          >
+            <View style={s.approveBtnInner}>
+              <View style={s.approveBtnIcon}><Text style={{ fontSize: 14 }}>💵</Text></View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.approveBtnT}>{accepting ? "Handling it…" : "Approve Rebooking"}</Text>
+                {selectedOption?.cost_usd != null && (
+                  <Text style={s.approveBtnS}>
+                    {selectedOption.cost_usd === 0 ? "No charge" : `+${formatMoney(selectedOption.cost_usd)}`}
+                  </Text>
+                )}
+              </View>
+              <Text style={s.approveBtnChev}>›</Text>
+            </View>
+          </Pressable>
           <Pressable onPress={handleDecline} style={s.declineBtn}>
             <Text style={s.declineText}>Decline — I'll handle it myself</Text>
           </Pressable>
@@ -504,13 +515,25 @@ const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
 
   // Hero — exact deck disruption card
-  heroCard: { borderRadius: 16, padding: 20, borderWidth: 1, borderColor: "rgba(255,77,109,0.25)", backgroundColor: "#120808" },
-  heroH: { color: C.ink, fontSize: 22, fontFamily: T.sansB, marginTop: 10, marginBottom: 6, letterSpacing: -0.5 },
-  heroRoute: { color: C.coral, fontSize: 14, fontFamily: T.sansB, marginBottom: 10, letterSpacing: 1.5 },
-  heroP: { color: "rgba(255,255,255,0.7)", fontSize: 14, lineHeight: 22 },
+  // Hero — deck style: plain bg, no red card
+  heroCard: { borderRadius: 0, paddingVertical: 20, paddingHorizontal: 0, borderWidth: 0, backgroundColor: "transparent", marginBottom: 8 },
+  heroDisruptBadge: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 14 },
+  heroDisruptIc: { fontSize: 14 },
+  heroDisruptLabel: { color: C.coral, fontSize: 11, fontFamily: T.sansB, letterSpacing: 3.5 },
+  heroH: { color: C.ink, fontSize: 26, fontFamily: T.serif, marginBottom: 8, letterSpacing: -0.4, lineHeight: 34 },
+  heroRoute: { color: C.mut, fontSize: 15, fontFamily: T.sansM, marginBottom: 4, letterSpacing: 0.5 },
+  heroRouteSub: { color: C.mut, fontSize: 13, fontFamily: T.sans, marginBottom: 12, opacity: 0.7 },
+  heroP: { color: C.ink, fontSize: 14, lineHeight: 22, opacity: 0.75 },
   riskBar: { height: 6, borderRadius: 99, backgroundColor: "rgba(255,77,109,0.15)", marginTop: 16, overflow: "hidden" },
   riskFill: { height: "100%", borderRadius: 99, backgroundColor: C.coral },
   riskLbl: { color: C.mut, fontSize: 12, marginTop: 8, fontFamily: T.sans },
+  // Parchment approve buttons — exact deck style
+  approveBtn: { borderRadius: 14, marginBottom: 10, overflow: "hidden" },
+  approveBtnInner: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },
+  approveBtnIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(0,0,0,0.12)", alignItems: "center", justifyContent: "center" },
+  approveBtnT: { color: C.inkD, fontSize: 15, fontFamily: T.sansB },
+  approveBtnS: { color: C.mutD, fontSize: 13, fontFamily: T.sans, marginTop: 2 },
+  approveBtnChev: { color: C.mutD, fontSize: 20, fontFamily: T.sans },
   whyLink: { color: C.gold, fontSize: 14, fontFamily: T.sansM, textAlign: "center", marginVertical: 16 },
   downstreamBanner: {
     marginTop: 14, backgroundColor: "rgba(255,140,0,0.1)", borderRadius: 10,

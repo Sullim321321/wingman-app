@@ -9,7 +9,7 @@ import {
 import * as Calendar from "expo-calendar";
 import { C, T } from "../theme";
 import { BackBar, Btn, SerifText, g } from "../components";
-import { getMe, getGmailConnectUrl, triggerGmailScan, scanEmailBody, syncCalendar } from "../api";
+import { getMe, getGmailConnectUrl, triggerGmailScan, disconnectGmail, scanEmailBody, syncCalendar } from "../api";
 
 // ─── Hairline icon labels for each channel ────────────────────────────────────
 const CHANNEL_ICONS = {
@@ -128,6 +128,28 @@ export default function ConnectionsScreen({ navigation }) {
     } finally {
       setConnecting(false);
     }
+  };
+
+  const handleDisconnectGmail = async () => {
+    Alert.alert(
+      "Disconnect Gmail",
+      "Wingman will stop scanning your inbox. Your imported trips will remain. Continue?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Disconnect",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await disconnectGmail();
+              setGmailConnected(false);
+            } catch (e) {
+              Alert.alert("Error", e.message);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const rescan = async () => {
@@ -279,11 +301,14 @@ export default function ConnectionsScreen({ navigation }) {
               loading ? (
                 <ActivityIndicator color={C.gold} size="small" />
               ) : gmailConnected ? (
-                <View style={{ flexDirection: "row", gap: 8 }}>
+                <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
                   <Pressable style={s.rescanBtn} onPress={rescan} disabled={scanning}>
                     {scanning
                       ? <ActivityIndicator color={C.gold} size="small" />
                       : <Text style={s.rescanT}>Re-scan</Text>}
+                  </Pressable>
+                  <Pressable style={s.disconnectBtn} onPress={handleDisconnectGmail}>
+                    <Text style={s.disconnectT}>✕</Text>
                   </Pressable>
                   <ConnBadge on />
                 </View>
@@ -490,6 +515,13 @@ const s = StyleSheet.create({
     borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6,
   },
   rescanT: { color: C.ink, fontSize: 12, fontFamily: T.sansM },
+  disconnectBtn: {
+    paddingHorizontal: 8, paddingVertical: 6,
+    borderRadius: 8, borderWidth: 1,
+    borderColor: "rgba(201,169,110,0.25)",
+    backgroundColor: "rgba(201,169,110,0.06)",
+  },
+  disconnectT: { color: C.mut, fontSize: 12, fontFamily: T.sansM },
   soonBadge: {
     backgroundColor: C.card2, borderWidth: 1, borderColor: C.line,
     borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5,

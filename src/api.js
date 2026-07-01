@@ -71,6 +71,8 @@ export const updateProfile = (data) =>
 export const getGmailConnectUrl = () => req("/auth/gmail/connect");
 export const triggerGmailScan = () =>
   req("/auth/gmail/scan", { method: "POST" });
+export const disconnectGmail = () =>
+  req("/auth/gmail", { method: "DELETE" });
 
 // Trips
 export const getTrips = () => req("/trips");

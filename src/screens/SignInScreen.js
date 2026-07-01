@@ -183,7 +183,7 @@ export default function SignInScreen() {
     setErr(""); setErrType(""); setBusy(true);
     try {
       const r = await verifyCode(email.trim().toLowerCase(), code.trim());
-      await signIn(r.token, r.email);
+      await signIn(r.token, r.email, r.refreshToken);
     } catch (e) {
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
@@ -229,7 +229,7 @@ export default function SignInScreen() {
     setErr(""); setErrType(""); setBusy(true);
     try {
       const r = await verifySmsCode(phone.trim(), code.trim());
-      await signIn(r.token, r.email);
+      await signIn(r.token, r.email, r.refreshToken);
     } catch (e) {
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);

@@ -240,7 +240,10 @@ export default function ConciergeScreen({ route }) {
     }
   };
 
-  const upcomingTrips = trips.filter(t => t.status === "upcoming" || t.status === "active").slice(0, 5);
+  // Only show trips with real names in the tab row — hide Unknown Trip placeholders
+  const upcomingTrips = trips
+    .filter(t => (t.status === "upcoming" || t.status === "active") && t.title && t.title !== "Unknown Trip" && t.title !== "Unknown")
+    .slice(0, 5);
   const hasUserMessages = messages.some(m => m.role === "user");
   const lastAiReply = [...messages].reverse().find(m => m.role === "assistant" && m.content !== WELCOME)?.content || null;
   const chips = !hasUserMessages
@@ -360,9 +363,16 @@ export default function ConciergeScreen({ route }) {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={s.headerT}>CONCIERGE</Text>
-          {trips.length > 0 && (
-            <Text style={s.headerSub}>Watching {trips.length} trip{trips.length !== 1 ? "s" : ""}</Text>
-          )}
+          {(() => {
+            const next = findNextFlight(trips);
+            if (next?.tripTitle && next.tripTitle !== "Unknown Trip") {
+              const daysUntil = Math.ceil((new Date(next.departs_at).getTime() - Date.now()) / 86400000);
+              const label = daysUntil === 0 ? "Today" : daysUntil === 1 ? "Tomorrow" : `In ${daysUntil} days`;
+              return <Text style={s.headerSub}>{next.tripTitle} · {label}</Text>;
+            }
+            if (trips.length > 0) return <Text style={s.headerSub}>Watching {trips.length} trip{trips.length !== 1 ? "s" : ""}</Text>;
+            return null;
+          })()}
         </View>
         <Pressable
           style={s.clearBtn}
@@ -373,14 +383,8 @@ export default function ConciergeScreen({ route }) {
         </Pressable>
       </View>
 
-      {upcomingTrips.length > 0 && (
+      {upcomingTrips.length > 1 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.threadRow}>
-          <Pressable
-            style={[s.threadChip, activeTripId === null && s.threadChipActive]}
-            onPress={() => setActiveTripId(null)}
-          >
-            <Text style={[s.threadChipT, activeTripId === null && s.threadChipTActive]}>General</Text>
-          </Pressable>
           {upcomingTrips.map(t => (
             <Pressable
               key={t.id}

@@ -75,6 +75,7 @@ import LoungeCardsScreen from "./src/screens/LoungeCardsScreen";
 import DisruptionScreen from "./src/screens/DisruptionScreen";
 import JourneySimulatorScreen from "./src/screens/JourneySimulatorScreen";
 import TravelProfileScreen from "./src/screens/TravelProfileScreen";
+import PassengerProfileScreen from "./src/screens/PassengerProfileScreen";
 
 export const navRef = createNavigationContainerRef();
 const Stack = createNativeStackNavigator();
@@ -323,7 +324,8 @@ function Root() {
             <Stack.Screen name="FlightBook"   component={FlightBookScreen} />
             <Stack.Screen name="FlightConfirm" component={FlightConfirmScreen} options={{ gestureEnabled: false }} />
             <Stack.Screen name="DataSources"  component={DataSourcesScreen} />
-            <Stack.Screen name="Autonomy"     component={AutonomySettingsScreen} />
+            <Stack.Screen name="Autonomy"          component={AutonomySettingsScreen} />
+            <Stack.Screen name="PassengerProfile"   component={PassengerProfileScreen} />
             <Stack.Screen name="InsightsFull" component={InsightsScreen} />
             <Stack.Screen name="Wrapped"      component={WingmanWrappedScreen} />
             <Stack.Screen name="Compensation"     component={CompensationScreen} />

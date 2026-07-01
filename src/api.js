@@ -369,3 +369,20 @@ export const getDisruptionAlternatives = (tripId, legId) =>
 // ── Transit Check ───────────────────────────────────────────────────────────
 export const checkTransitPayment = (city, lat, lng) =>
   req("/journey/transit-check", { method: "POST", body: JSON.stringify({ city, lat, lng }) });
+
+// ── Cascade Actions — real endpoint execution ────────────────────────────────
+export const executeCascadeAction = (tripId, action, body = {}) =>
+  req(`/trips/${tripId}/cascade/${action}`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+
+// ── Passenger Profile — required for silent autonomy ────────────────────────
+export const getPassengerProfile = () =>
+  req("/profile/passenger");
+
+export const savePassengerProfile = (body) =>
+  req("/profile/passenger", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });

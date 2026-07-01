@@ -22,10 +22,10 @@ const MODES = [
     desc: "Wingman acts instantly when the rescue cost is below your limit. You approve anything above.",
   },
   {
-    id: "full_autonomy",
+    id: "fully_auto",
     icon: "◆",
     title: "Full autonomy",
-    desc: "Wingman executes the best option automatically. You receive a summary after.",
+    desc: "Wingman executes the best option automatically. You receive a summary after. Requires a saved traveler profile.",
   },
 ];
 
@@ -133,6 +133,20 @@ export default function AutonomySettingsScreen({ navigation }) {
             </Pressable>
           ))}
         </View>
+
+        {/* Traveler profile prompt — required for fully_auto */}
+        {autonomyMode === "fully_auto" && (
+          <Pressable
+            style={s.profilePrompt}
+            onPress={() => navigation.navigate("PassengerProfile")}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={s.profilePromptT}>Traveler profile required</Text>
+              <Text style={s.profilePromptSub}>Wingman needs your name, DOB, and gender to rebook on your behalf. Passport is optional.</Text>
+            </View>
+            <Text style={{ color: C.gold, fontSize: 18 }}>›</Text>
+          </Pressable>
+        )}
 
         {/* Threshold slider — only show for auto mode */}
         {autonomyMode === "auto_under_threshold" && (
@@ -258,4 +272,8 @@ const s = StyleSheet.create({
   switchRow: { flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 14 },
   switchTitle: { color: C.ink, fontSize: 15, fontFamily: T.sansB },
   switchSub: { color: C.mut, fontSize: 12, lineHeight: 18, marginTop: 3 },
+
+  profilePrompt: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: C.card, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: C.gold + "40", marginBottom: 16 },
+  profilePromptT: { color: C.ink, fontSize: 14, fontFamily: T.sansB, marginBottom: 2 },
+  profilePromptSub: { color: C.mut, fontSize: 12, fontFamily: T.sans, lineHeight: 17 },
 });

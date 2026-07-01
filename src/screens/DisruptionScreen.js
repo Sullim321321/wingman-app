@@ -9,7 +9,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { C, T } from "../theme";
 import { SerifText, tap } from "../components";
-import { getDisruptionAlternatives, acceptRescue } from "../api";
+import { getDisruptionAlternatives, acceptRescue, executeCascadeAction } from "../api";
 
 function SectionHeader({ title, color }) {
   return (
@@ -82,20 +82,29 @@ function EC261Card({ ec261 }) {
   );
 }
 
-function CascadeActionCard({ action, onPress }) {
+function CascadeActionCard({ action, onPress, executing, done }) {
   const icons = {
     hotel_delay:      "🏨",
     restaurant_delay: "🍽",
     lounge_access:    "🛋",
   };
   return (
-    <Pressable style={s.cascadeCard} onPress={onPress}>
+    <Pressable
+      style={[s.cascadeCard, done && s.cascadeCardDone]}
+      onPress={onPress}
+      disabled={executing || done}
+    >
       <Text style={s.cascadeIcon}>{icons[action.type] || "›"}</Text>
       <View style={{ flex: 1 }}>
         <Text style={s.cascadeLabel}>{action.label}</Text>
         <Text style={s.cascadeSub}>{action.description}</Text>
       </View>
-      <Text style={{ color: C.gold, fontSize: 18 }}>›</Text>
+      {executing
+        ? <ActivityIndicator size="small" color={C.gold} />
+        : done
+          ? <Text style={{ color: C.teal, fontSize: 14, fontFamily: T.sansB }}>Sent ✓</Text>
+          : <Text style={{ color: C.gold, fontSize: 18 }}>›</Text>
+      }
     </Pressable>
   );
 }
@@ -106,6 +115,8 @@ export default function DisruptionScreen({ route, navigation }) {
   const [data, setData]             = useState(null);
   const [selectedAlt, setSelectedAlt] = useState(null);
   const [booking, setBooking]       = useState(false);
+  const [cascadeExecuting, setCascadeExecuting] = useState({});
+  const [cascadeDone, setCascadeDone]           = useState({});
 
   useEffect(() => {
     if (!tripId || !legId) { setLoading(false); return; }
@@ -136,6 +147,43 @@ export default function DisruptionScreen({ route, navigation }) {
 
   const handleConcierge = (prefill) => {
     navigation.navigate("Concierge", { prefill });
+  };
+
+  const handleCascadeAction = async (action, index) => {
+    // hotel_delay and restaurant_delay hit real backend endpoints via Twilio SMS.
+    // lounge_access and unknown types fall back gracefully to the concierge chat.
+    const REAL_ENDPOINTS = {
+      hotel_delay:      "hotel-notify",
+      restaurant_delay: "restaurant-reschedule",
+    };
+    const endpoint = REAL_ENDPOINTS[action.type];
+
+    if (endpoint && tripId) {
+      setCascadeExecuting(prev => ({ ...prev, [index]: true }));
+      try {
+        const result = await executeCascadeAction(tripId, endpoint, {
+          delay_minutes: data?.flight?.delay_minutes,
+          ident: ident || data?.flight?.ident,
+        });
+        if (result?.ok || result?.sent) {
+          setCascadeDone(prev => ({ ...prev, [index]: true }));
+          const successTitle = action.type === "hotel_delay"
+            ? "Hotel notified ✓"
+            : "Reservation updated ✓";
+          Alert.alert(successTitle, result.message || "Done — we've sent the notification on your behalf.");
+        } else {
+          // Endpoint responded but didn't confirm send — fall back to concierge
+          handleConcierge(`My flight was ${isCancelled ? "cancelled" : "delayed"}. ${action.label} — can you help?`);
+        }
+      } catch {
+        // If Twilio isn't configured yet, fall back gracefully to concierge chat
+        handleConcierge(`My flight was ${isCancelled ? "cancelled" : "delayed"}. ${action.label} — can you help?`);
+      } finally {
+        setCascadeExecuting(prev => ({ ...prev, [index]: false }));
+      }
+    } else {
+      handleConcierge(`My flight was ${isCancelled ? "cancelled" : "delayed"}. ${action.label} — can you help?`);
+    }
   };
 
   if (loading) {
@@ -229,7 +277,7 @@ export default function DisruptionScreen({ route, navigation }) {
           </>
         )}
 
-        {/* Cascade actions */}
+        {/* Cascade actions — now wired to real endpoints */}
         {cascadeActions.length > 0 && (
           <>
             <SectionHeader title="ALSO AFFECTED" />
@@ -237,7 +285,9 @@ export default function DisruptionScreen({ route, navigation }) {
               <CascadeActionCard
                 key={i}
                 action={action}
-                onPress={() => handleConcierge(`My flight was ${isCancelled ? "cancelled" : "delayed"}. ${action.label} — can you help?`)}
+                executing={!!cascadeExecuting[i]}
+                done={!!cascadeDone[i]}
+                onPress={() => handleCascadeAction(action, i)}
               />
             ))}
           </>
@@ -293,6 +343,7 @@ const s = StyleSheet.create({
   ec261Btn:     { alignSelf: "flex-start", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: C.gold + "60" },
   ec261BtnT:    { color: C.gold, fontSize: 13, fontFamily: T.sansM },
   cascadeCard:  { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: C.card, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: C.line, marginBottom: 8 },
+  cascadeCardDone: { borderColor: C.teal + "40", backgroundColor: C.teal + "08" },
   cascadeIcon:  { fontSize: 22 },
   cascadeLabel: { color: C.ink, fontSize: 13, fontFamily: T.sansM, marginBottom: 2 },
   cascadeSub:   { color: C.mut, fontSize: 11, fontFamily: T.sans, lineHeight: 16 },

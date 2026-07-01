@@ -382,6 +382,7 @@ export default function SettingsScreen({ navigation }) {
         <Text style={g.sectionT}>AUTONOMY & DATA</Text>
         <View style={g.group}>
           <SetRow ic="◈" iconColor={C.gold} t="Autonomy settings" sub="Delegation policy, approval thresholds, payment prefs" right={<Chip color={C.gold}>Edit ›</Chip>} onPress={() => navigation.navigate("Autonomy")} />
+          <SetRow ic="🛂" iconColor={C.gold} t="Traveler ID" sub="Name, DOB, passport — required for autonomous rebooking" right={<Chip color={C.gold}>Edit ›</Chip>} onPress={() => navigation.navigate("PassengerProfile")} />
           <View style={{ borderBottomWidth: 0 }}>
             <SetRow ic="◎" iconColor={C.gold} t="Data sources" sub="Gmail, Calendar, Messages — ambient ingestion" right={<Chip color={C.gold}>Manage ›</Chip>} onPress={() => navigation.navigate("DataSources")} />
           </View>

@@ -278,6 +278,8 @@ export const saveConciergeThread = (messages, tripId = null) =>
     method: "POST",
     body: JSON.stringify({ messages, trip_id: tripId }),
   });
+export const clearConciergeThread = (tripId = null) =>
+  req("/concierge/thread" + (tripId ? "?trip_id=" + tripId : ""), { method: "DELETE" });
 
 // ─── TRIP SHARING ─────────────────────────────────────────────────────────────
 export const shareTripLink = (tripId) =>

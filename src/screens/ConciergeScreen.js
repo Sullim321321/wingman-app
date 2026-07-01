@@ -1,10 +1,10 @@
 // ConciergeScreen — AI Travel Concierge with persistent thread memory
 // Warm espresso palette + champagne gold + DM Sans
-
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   SafeAreaView, View, Text, TextInput, Pressable, FlatList,
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView,
+  Alert, Linking,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
@@ -12,13 +12,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { C, T } from "../theme";
 import { SerifText } from "../components";
-import { sendConciergeMessage, getTrips, getConciergeThread, saveConciergeThread } from "../api";
+import { sendConciergeMessage, getTrips, getConciergeThread, saveConciergeThread, clearConciergeThread } from "../api";
 import { LOCATION_OPT_IN_KEY } from "./SettingsScreen";
 
 const WELCOME = "Good day. I'm watching your trips, tracking disruption risk, and ready to act the moment something changes. What can I do for you?";
 
-// ─── Context helpers ──────────────────────────────────────────────────────────
-
+// Context helpers
 function buildTripContext(trips) {
   if (!trips || trips.length === 0) return null;
   const lines = trips.slice(0, 5).map(trip => {
@@ -52,7 +51,6 @@ function findNextFlight(trips) {
   return best;
 }
 
-// Initial chips before any conversation
 function buildInitialChips(trips) {
   const next = findNextFlight(trips);
   const chips = [];
@@ -76,55 +74,43 @@ function buildInitialChips(trips) {
   return chips.slice(0, 4);
 }
 
-// Contextual follow-up chips derived from the last AI reply
 function buildFollowUpChips(lastReply, trips) {
   if (!lastReply) return [];
-  const r = lastReply.toLowerCase();
   const chips = [];
-
-  // Flight / disruption context
-  if (r.includes("delay") || r.includes("cancel") || r.includes("disruption")) {
-    chips.push("What are my rebooking options?");
-    chips.push("Can you rebook me automatically?");
+  const r = lastReply.toLowerCase();
+  if (r.includes("bus") || r.includes("metro") || r.includes("train") || r.includes("tram") || r.includes("tube") || r.includes("transit")) {
+    chips.push("How do I pay for the bus?");
+    chips.push("Does Apple Pay work here?");
   }
-  // Weather context
-  if (r.includes("weather") || r.includes("storm") || r.includes("fog") || r.includes("wind")) {
+  if (r.includes("flight") || r.includes("gate") || r.includes("delay") || r.includes("cancel") || r.includes("depart")) {
+    chips.push("What are my rebooking options?");
+    chips.push("Can I get an upgrade?");
+  }
+  if (r.includes("weather") || r.includes("rain") || r.includes("storm") || r.includes("fog") || r.includes("wind")) {
     chips.push("How likely is a delay?");
     chips.push("What's the forecast for my arrival?");
   }
-  // Hotel / accommodation context
   if (r.includes("hotel") || r.includes("check-in") || r.includes("room") || r.includes("accommodation")) {
     chips.push("Can you upgrade my room?");
     chips.push("What's the cancellation policy?");
   }
-  // Lounge / airport context
   if (r.includes("lounge") || r.includes("airport") || r.includes("terminal") || r.includes("gate")) {
     chips.push("Which lounges can I access?");
     chips.push("How far is my gate?");
   }
-  // Dining / restaurant context
   if (r.includes("restaurant") || r.includes("dinner") || r.includes("lunch") || r.includes("eat") || r.includes("dining")) {
     chips.push("Book a table for tonight?");
     chips.push("Any Michelin-starred options?");
   }
-  // Points / loyalty context
   if (r.includes("points") || r.includes("miles") || r.includes("loyalty") || r.includes("status")) {
     chips.push("How many points do I have?");
     chips.push("Best way to earn more?");
   }
-  // Destination / city context
   if (r.includes("city") || r.includes("neighbourhood") || r.includes("neighborhood") || r.includes("area") || r.includes("visit")) {
     chips.push("What's on this week?");
     chips.push("Best areas to stay?");
   }
-
-  // Always add a few universal fallbacks to fill to 3–4 chips
-  const fallbacks = [
-    "Tell me more.",
-    "Any disruption risks?",
-    "What else should I know?",
-    "Upgrade options on my next flight?",
-  ];
+  const fallbacks = ["Tell me more.", "Any disruption risks?", "What else should I know?", "Upgrade options on my next flight?"];
   for (const f of fallbacks) {
     if (chips.length >= 4) break;
     if (!chips.includes(f)) chips.push(f);
@@ -132,12 +118,9 @@ function buildFollowUpChips(lastReply, trips) {
   return chips.slice(0, 4);
 }
 
-// ─── Main screen ──────────────────────────────────────────────────────────────
-
 export default function ConciergeScreen({ route }) {
   const prefill     = route?.params?.prefill || null;
   const routeTripId = route?.params?.tripId ? Number(route.params.tripId) : null;
-
   const [trips, setTrips]               = useState([]);
   const [tripsLoaded, setTripsLoaded]   = useState(false);
   const [activeTripId, setActiveTripId] = useState(routeTripId);
@@ -146,12 +129,10 @@ export default function ConciergeScreen({ route }) {
   const [loading, setLoading]           = useState(false);
   const [threadLoading, setThreadLoading] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
-
   const listRef      = useRef(null);
   const prefillSent  = useRef(false);
   const saveTimer    = useRef(null);
 
-  // ── Load trips + location on focus ──────────────────────────────────────────
   useFocusEffect(useCallback(() => {
     getTrips()
       .then(data => { setTrips(data.trips || []); setTripsLoaded(true); })
@@ -165,13 +146,11 @@ export default function ConciergeScreen({ route }) {
     }).catch(() => {});
   }, []));
 
-  // ── Load thread when trip context changes ────────────────────────────────────
   useEffect(() => {
     if (!tripsLoaded) return;
     loadThread(activeTripId);
   }, [activeTripId, tripsLoaded]);
 
-  // ── Auto-send prefill ────────────────────────────────────────────────────────
   useEffect(() => {
     if (prefill && !prefillSent.current && tripsLoaded) {
       prefillSent.current = true;
@@ -179,19 +158,11 @@ export default function ConciergeScreen({ route }) {
     }
   }, [prefill, tripsLoaded]);
 
-  // ── Scroll to bottom reliably on every new message ───────────────────────────
-  // Using both onContentSizeChange and a timeout to handle layout timing
   function scrollToBottom(animated = true) {
-    setTimeout(() => {
-      listRef.current?.scrollToEnd({ animated });
-    }, 80);
+    setTimeout(() => { listRef.current?.scrollToEnd({ animated }); }, 80);
   }
+  useEffect(() => { if (messages.length > 0) scrollToBottom(); }, [messages]);
 
-  useEffect(() => {
-    if (messages.length > 0) scrollToBottom();
-  }, [messages]);
-
-  // ── Thread load ──────────────────────────────────────────────────────────────
   async function loadThread(tripId) {
     setThreadLoading(true);
     try {
@@ -209,15 +180,32 @@ export default function ConciergeScreen({ route }) {
     }
   }
 
+  function confirmClearThread() {
+    Alert.alert(
+      "Clear Conversation",
+      "This will permanently delete this conversation history. Wingman will start fresh.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Clear",
+          style: "destructive",
+          onPress: async () => {
+            try { await clearConciergeThread(activeTripId); } catch {}
+            setMessages([{ role: "assistant", content: WELCOME }]);
+          },
+        },
+      ]
+    );
+  }
+
   function scheduleSave(msgs, tripId) {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      const toSave = msgs.filter((m, i) => i > 0); // skip welcome
+      const toSave = msgs.filter((m, i) => i > 0);
       saveConciergeThread(toSave, tripId).catch(() => {});
     }, 1500);
   }
 
-  // ── Send message ─────────────────────────────────────────────────────────────
   const send = async (text) => {
     const msg = (text || input).trim();
     if (!msg || loading) return;
@@ -234,7 +222,14 @@ export default function ConciergeScreen({ route }) {
         ? `[User's trips:\n${tripContext}]\n\n${msg}`
         : msg;
       const data = await sendConciergeMessage(enrichedMsg, history.slice(0, -1), userLocation);
-      const aiMsg = { role: "assistant", content: data.reply, places: data.places || null, weather: data.weather || null };
+      const aiMsg = {
+        role: "assistant",
+        content: data.reply,
+        places: data.places || null,
+        weather: data.weather || null,
+        transit: data.transit || null,
+        action: data.action || null,
+      };
       const updated = [...newMessages, aiMsg];
       setMessages(updated);
       scheduleSave(updated.slice(1), activeTripId);
@@ -245,19 +240,12 @@ export default function ConciergeScreen({ route }) {
     }
   };
 
-  // ── Derived state ─────────────────────────────────────────────────────────────
   const upcomingTrips = trips.filter(t => t.status === "upcoming" || t.status === "active").slice(0, 5);
   const hasUserMessages = messages.some(m => m.role === "user");
-
-  // Find last AI reply for contextual chips
   const lastAiReply = [...messages].reverse().find(m => m.role === "assistant" && m.content !== WELCOME)?.content || null;
-
-  // Show initial chips before any user message; contextual chips after AI replies
   const chips = !hasUserMessages
     ? buildInitialChips(trips)
     : (!loading && lastAiReply ? buildFollowUpChips(lastAiReply, trips) : []);
-
-  // ── Render ────────────────────────────────────────────────────────────────────
 
   const renderItem = ({ item }) => {
     const isUser = item.role === "user";
@@ -270,17 +258,69 @@ export default function ConciergeScreen({ route }) {
           </View>
         )}
         <Text style={[s.bubbleT, isUser && s.userBubbleT]}>{item.content}</Text>
-        {/* Places cards — shown only on AI messages that have Places grounding */}
+
+        {/* Transit route card */}
+        {!isUser && item.transit && (
+          <View style={s.transitCard}>
+            <View style={s.transitHeader}>
+              <Text style={s.transitIcon}>🚇</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={s.transitTitle}>Transit Route</Text>
+                <Text style={s.transitMeta}>
+                  {item.transit.total_duration}
+                  {item.transit.total_distance ? ` · ${item.transit.total_distance}` : ""}
+                  {item.transit.departure_time ? ` · Departs ${item.transit.departure_time}` : ""}
+                </Text>
+              </View>
+            </View>
+            {(item.transit.steps || []).slice(0, 5).map((step, i) => (
+              <View key={i} style={s.transitStep}>
+                <Text style={s.transitStepMode}>{step.mode === "TRANSIT" ? "🚌" : step.mode === "WALKING" ? "🚶" : "•"}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.transitStepText}>{step.instruction}</Text>
+                  {step.transit && (
+                    <Text style={s.transitStepDetail}>
+                      {step.transit.vehicle ? `${step.transit.vehicle} ` : ""}{step.transit.line || ""}
+                      {step.transit.departure_stop ? ` from ${step.transit.departure_stop}` : ""}
+                      {step.transit.arrival_stop ? ` → ${step.transit.arrival_stop}` : ""}
+                      {step.transit.num_stops ? ` (${step.transit.num_stops} stops)` : ""}
+                    </Text>
+                  )}
+                  {step.duration && <Text style={s.transitStepDuration}>{step.duration}</Text>}
+                </View>
+              </View>
+            ))}
+            {item.transit.payment && (
+              <View style={s.transitPayment}>
+                <Text style={s.transitPaymentTitle}>HOW TO PAY</Text>
+                <Text style={s.transitPaymentTip}>{item.transit.payment.tip}</Text>
+                <Pressable
+                  style={s.transitTicketBtn}
+                  onPress={() => Linking.openURL(item.transit.payment.ticket_url)}
+                >
+                  <Text style={s.transitTicketBtnT}>Buy Tickets →</Text>
+                </Pressable>
+              </View>
+            )}
+            <Pressable
+              style={s.transitMapsBtn}
+              onPress={() => Linking.openURL(item.transit.maps_url)}
+            >
+              <LinearGradient colors={[C.gold, C.goldD || "#b8924a"]} style={s.transitMapsBtnGrad}>
+                <Text style={s.transitMapsBtnT}>Open in Maps</Text>
+              </LinearGradient>
+            </Pressable>
+          </View>
+        )}
+
+        {/* Places cards */}
         {!isUser && item.places && item.places.length > 0 && (
           <View style={s.placesWrap}>
             {item.places.slice(0, 3).map((p, i) => (
               <Pressable
                 key={i}
                 style={s.placeCard}
-                onPress={() => {
-                  const { Linking } = require('react-native');
-                  Linking.openURL(p.maps_url);
-                }}
+                onPress={() => Linking.openURL(p.maps_url)}
               >
                 <View style={s.placeCardRow}>
                   <Text style={s.placeName}>{p.name}</Text>
@@ -296,13 +336,24 @@ export default function ConciergeScreen({ route }) {
             ))}
           </View>
         )}
+
+        {/* Action button */}
+        {!isUser && item.action && item.action.url && (
+          <Pressable
+            style={s.actionBtn}
+            onPress={() => Linking.openURL(item.action.url)}
+          >
+            <LinearGradient colors={[C.gold, C.goldD || "#b8924a"]} style={s.actionBtnGrad}>
+              <Text style={s.actionBtnT}>{item.action.label || "Open"}</Text>
+            </LinearGradient>
+          </Pressable>
+        )}
       </View>
     );
   };
 
   return (
     <SafeAreaView style={s.app}>
-      {/* Header */}
       <View style={s.header}>
         <View style={s.headerMark}>
           <SerifText bold style={{ color: C.gold, fontSize: 16 }}>W</SerifText>
@@ -313,9 +364,15 @@ export default function ConciergeScreen({ route }) {
             <Text style={s.headerSub}>Watching {trips.length} trip{trips.length !== 1 ? "s" : ""}</Text>
           )}
         </View>
+        <Pressable
+          style={s.clearBtn}
+          onPress={confirmClearThread}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Text style={s.clearBtnT}>✕ Clear</Text>
+        </Pressable>
       </View>
 
-      {/* Thread selector */}
       {upcomingTrips.length > 0 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.threadRow}>
           <Pressable
@@ -353,7 +410,6 @@ export default function ConciergeScreen({ route }) {
             keyExtractor={(_, i) => String(i)}
             contentContainerStyle={s.list}
             showsVerticalScrollIndicator={false}
-            // Scroll to bottom whenever content height changes (new message arrives)
             onContentSizeChange={() => scrollToBottom(true)}
             onLayout={() => scrollToBottom(false)}
             ListFooterComponent={
@@ -367,7 +423,6 @@ export default function ConciergeScreen({ route }) {
                     <ActivityIndicator color={C.gold} size="small" style={{ marginTop: 4 }} />
                   </View>
                 )}
-                {/* Contextual chips — shown after every AI reply, below the last bubble */}
                 {chips.length > 0 && !loading && (
                   <View style={s.chipsInline}>
                     {chips.map(q => (
@@ -382,7 +437,6 @@ export default function ConciergeScreen({ route }) {
           />
         )}
 
-        {/* Input row */}
         <View style={s.inputRow}>
           <TextInput
             style={s.textInput}
@@ -394,12 +448,9 @@ export default function ConciergeScreen({ route }) {
             maxLength={500}
             returnKeyType="send"
             onSubmitEditing={() => send()}
-            // iOS predictive text — these props are correct for a chat input
             autoCorrect={true}
             spellCheck={true}
             autoCapitalize="sentences"
-            // Do NOT set autoComplete="off" — it suppresses the QuickType bar
-            // textContentType="none" is correct; do not set dataDetectorTypes on TextInput
             textContentType="none"
             keyboardType="default"
             enablesReturnKeyAutomatically={false}
@@ -410,7 +461,7 @@ export default function ConciergeScreen({ route }) {
             onPress={() => send()}
             disabled={!input.trim() || loading}
           >
-            <LinearGradient colors={[C.gold, C.goldD]} style={s.sendGrad}>
+            <LinearGradient colors={[C.gold, C.goldD || "#b8924a"]} style={s.sendGrad}>
               <Text style={{ color: C.inkD, fontSize: 16, fontFamily: T.sansB }}>↑</Text>
             </LinearGradient>
           </Pressable>
@@ -420,23 +471,20 @@ export default function ConciergeScreen({ route }) {
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
 const s = StyleSheet.create({
   app:    { flex: 1, backgroundColor: C.bg },
   header: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 },
   headerMark: { width: 34, height: 34, borderRadius: 9, borderWidth: 1, borderColor: C.gold + "55", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(201,169,110,0.06)" },
   headerT:    { color: C.ink, fontSize: 11, fontFamily: T.sansB, letterSpacing: T.trackWide },
   headerSub:  { color: C.gold, fontSize: 10, fontFamily: T.sansM, letterSpacing: 0.5, marginTop: 2 },
-
+  clearBtn:   { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: "rgba(201,169,110,0.25)", backgroundColor: "rgba(201,169,110,0.06)" },
+  clearBtnT:  { color: C.mut, fontSize: 11, fontFamily: T.sansM, letterSpacing: 0.5 },
   threadRow: { paddingHorizontal: 16, paddingBottom: 10, gap: 8, flexDirection: "row" },
   threadChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 16, borderWidth: 1, borderColor: C.line, backgroundColor: C.card },
   threadChipActive: { borderColor: C.gold, backgroundColor: C.gold + "18" },
   threadChipT: { color: C.mut, fontSize: 12, fontFamily: T.sansM },
   threadChipTActive: { color: C.gold },
-
   list: { paddingHorizontal: 16, paddingBottom: 8, paddingTop: 4 },
-
   bubble:     { marginBottom: 14, maxWidth: "86%" },
   userBubble: {
     alignSelf: "flex-end",
@@ -454,12 +502,9 @@ const s = StyleSheet.create({
   },
   bubbleT:     { color: C.ink, fontSize: 15, fontFamily: T.sans, lineHeight: 24 },
   userBubbleT: { color: C.ink },
-
   aiLabel:  { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 },
   aiDot:    { width: 6, height: 6, borderRadius: 3, backgroundColor: C.gold },
   aiLabelT: { color: C.gold, fontSize: 9, fontFamily: T.sansB, letterSpacing: T.trackWide },
-
-  // Chips rendered inline inside the FlatList footer, below the last message
   chipsInline: {
     flexDirection: "row", flexWrap: "wrap", gap: 8,
     marginTop: 4, marginBottom: 16, paddingHorizontal: 0,
@@ -470,7 +515,6 @@ const s = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 9,
   },
   quickChipT: { color: C.gold, fontSize: 13, fontFamily: T.sansM, letterSpacing: 0.1 },
-
   inputRow: {
     flexDirection: "row", alignItems: "flex-end", gap: 10,
     paddingHorizontal: 16, paddingBottom: 20, paddingTop: 12,
@@ -484,8 +528,6 @@ const s = StyleSheet.create({
   },
   sendBtn:  { marginBottom: 2 },
   sendGrad: { width: 46, height: 46, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-
-  // Places grounding cards
   placesWrap: { marginTop: 12, gap: 8 },
   placeCard: {
     backgroundColor: "rgba(201,169,110,0.07)",
@@ -499,4 +541,34 @@ const s = StyleSheet.create({
   placeOpen:   { color: "#7ecb8f", fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.5 },
   placeClosed: { color: "#e07070", fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.5 },
   placeMapLink: { color: C.gold, fontSize: 12, fontFamily: T.sansM },
+  actionBtn: { marginTop: 14, borderRadius: 12, overflow: "hidden" },
+  actionBtnGrad: { paddingVertical: 13, paddingHorizontal: 18, alignItems: "center" },
+  actionBtnT: { color: C.inkD, fontSize: 14, fontFamily: T.sansB, letterSpacing: 0.5 },
+  transitCard: {
+    marginTop: 14,
+    backgroundColor: "rgba(13,11,8,0.98)",
+    borderWidth: 1, borderColor: "rgba(201,169,110,0.3)",
+    borderRadius: 14, padding: 14, gap: 10,
+  },
+  transitHeader: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  transitIcon:   { fontSize: 20, marginTop: 2 },
+  transitTitle:  { color: C.ink, fontSize: 14, fontFamily: T.sansB },
+  transitMeta:   { color: C.gold, fontSize: 12, fontFamily: T.sansM, marginTop: 2 },
+  transitStep:   { flexDirection: "row", gap: 8, paddingVertical: 4, borderTopWidth: 0.5, borderTopColor: "rgba(201,169,110,0.1)" },
+  transitStepMode: { fontSize: 14, width: 22, textAlign: "center", marginTop: 2 },
+  transitStepText: { color: C.ink, fontSize: 13, fontFamily: T.sans, lineHeight: 20 },
+  transitStepDetail: { color: C.gold, fontSize: 12, fontFamily: T.sansM, marginTop: 2 },
+  transitStepDuration: { color: C.mut, fontSize: 11, fontFamily: T.sans, marginTop: 1 },
+  transitPayment: {
+    backgroundColor: "rgba(201,169,110,0.07)",
+    borderRadius: 10, padding: 12, gap: 6,
+    borderWidth: 1, borderColor: "rgba(201,169,110,0.2)",
+  },
+  transitPaymentTitle: { color: C.gold, fontSize: 11, fontFamily: T.sansB, letterSpacing: T.trackWide },
+  transitPaymentTip:   { color: C.ink, fontSize: 13, fontFamily: T.sans, lineHeight: 20 },
+  transitTicketBtn: { alignSelf: "flex-start", paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, borderWidth: 1, borderColor: C.gold, marginTop: 4 },
+  transitTicketBtnT: { color: C.gold, fontSize: 12, fontFamily: T.sansM },
+  transitMapsBtn: { borderRadius: 10, overflow: "hidden", marginTop: 4 },
+  transitMapsBtnGrad: { paddingVertical: 11, paddingHorizontal: 16, alignItems: "center" },
+  transitMapsBtnT: { color: C.inkD, fontSize: 13, fontFamily: T.sansB, letterSpacing: 0.5 },
 });

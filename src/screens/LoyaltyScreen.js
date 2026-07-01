@@ -194,6 +194,10 @@ function ConnectModal({ visible, onClose, onConnect, editProgram, editData }) {
   const [nightsYtd, setNightsYtd] = useState("");
   const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loginField, setLoginField] = useState("");
+  const [passwordField, setPasswordField] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [awSyncing, setAwSyncing] = useState(false);
 
   useEffect(() => {
     if (editProgram) {
@@ -210,18 +214,22 @@ function ConnectModal({ visible, onClose, onConnect, editProgram, editData }) {
     setProgram(null);
     setMemberNumber(""); setMemberName(""); setEliteStatus("");
     setPointsBalance(""); setNightsYtd(""); setShowStatusPicker(false);
+    setLoginField(""); setPasswordField(""); setShowPassword(false); setAwSyncing(false);
   };
 
   const handleSubmit = async () => {
     if (!program) return;
     setLoading(true);
     try {
+      if (loginField && passwordField) setAwSyncing(true);
       await onConnect(program, {
         member_number: memberNumber || undefined,
         member_name: memberName || undefined,
         elite_status: eliteStatus || undefined,
         points_balance: pointsBalance ? parseInt(pointsBalance.replace(/,/g, "")) : undefined,
         nights_ytd: nightsYtd ? parseInt(nightsYtd) : undefined,
+        login: loginField || undefined,
+        password: passwordField || undefined,
       }, isEdit);
       reset();
       onClose();
@@ -342,9 +350,55 @@ function ConnectModal({ visible, onClose, onConnect, editProgram, editData }) {
                 </>
               )}
 
+              {/* Loyalty credentials for auto-sync via AwardWallet */}
+              {!isEdit && (
+                <>
+                  <View style={ps.credentialsDivider}>
+                    <View style={ps.credentialsDividerLine} />
+                    <Text style={ps.credentialsDividerText}>AUTO-SYNC (optional)</Text>
+                    <View style={ps.credentialsDividerLine} />
+                  </View>
+                  <Text style={ps.credentialsNote}>
+                    Enter your {PROGRAMS[program]?.name} login to let Wingman automatically sync your balance, nights, and elite status.
+                  </Text>
+                  <Text style={ps.fieldLabel}>{PROGRAMS[program]?.loginLabel || "EMAIL OR MEMBER NUMBER"}</Text>
+                  <TextInput
+                    style={ps.input}
+                    value={loginField}
+                    onChangeText={setLoginField}
+                    placeholder="e.g. you@email.com"
+                    placeholderTextColor={C.mut}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    autoComplete="email"
+                  />
+                  <Text style={ps.fieldLabel}>PASSWORD</Text>
+                  <View style={ps.passwordRow}>
+                    <TextInput
+                      style={[ps.input, { flex: 1, marginBottom: 0 }]}
+                      value={passwordField}
+                      onChangeText={setPasswordField}
+                      placeholder="Your loyalty account password"
+                      placeholderTextColor={C.mut}
+                      secureTextEntry={!showPassword}
+                      autoCapitalize="none"
+                      autoComplete="password"
+                    />
+                    <TouchableOpacity style={ps.passwordToggle} onPress={() => setShowPassword(!showPassword)}>
+                      <Text style={{ color: C.mut, fontSize: 13 }}>{showPassword ? "HIDE" : "SHOW"}</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {awSyncing && (
+                    <View style={ps.awSyncingBanner}>
+                      <ActivityIndicator size="small" color={C.gold} />
+                      <Text style={ps.awSyncingText}>Syncing your account data…</Text>
+                    </View>
+                  )}
+                </>
+              )}
               <View style={ps.privacyNote}>
                 <Text style={ps.privacyNoteText}>
-                  🔒 Your loyalty data stays on Wingman's servers and is never sold or shared with third parties.
+                  🔒 Your credentials are encrypted and stored securely. Wingman never sells or shares your data.
                 </Text>
               </View>
 
@@ -599,6 +653,14 @@ const ps = StyleSheet.create({
   statusPickerText: { color: C.ink, fontSize: 14 },
   privacyNote: { backgroundColor: "rgba(201,169,110,0.06)", borderRadius: 10, padding: 12, marginTop: 20, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)" },
   privacyNoteText: { color: C.mut, fontSize: 12, lineHeight: 18 },
+  credentialsDivider: { flexDirection: "row", alignItems: "center", marginTop: 20, marginBottom: 8 },
+  credentialsDividerLine: { flex: 1, height: 1, backgroundColor: "rgba(255,255,255,0.1)" },
+  credentialsDividerText: { color: C.mut, fontSize: 10, letterSpacing: 1.5, marginHorizontal: 10 },
+  credentialsNote: { color: C.mut, fontSize: 12, lineHeight: 18, marginBottom: 14 },
+  passwordRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 14 },
+  passwordToggle: { paddingHorizontal: 10, paddingVertical: 14, backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 8 },
+  awSyncingBanner: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "rgba(212,175,55,0.1)", borderRadius: 8, padding: 10, marginBottom: 10 },
+  awSyncingText: { color: C.gold, fontSize: 13 },
   connectBtn: { backgroundColor: C.gold, borderRadius: 14, padding: 16, alignItems: "center", marginTop: 24 },
   connectBtnDisabled: { opacity: 0.4 },
   connectBtnText: { color: "#000000", fontSize: 15, fontFamily: T.sansB },

@@ -71,6 +71,9 @@ import DestinationScreen from "./src/screens/DestinationScreen";
 import AirportDiningScreen from "./src/screens/AirportDiningScreen";
 import AirportNavigationScreen from "./src/screens/AirportNavigationScreen";
 import LoungeCardsScreen from "./src/screens/LoungeCardsScreen";
+import DisruptionScreen from "./src/screens/DisruptionScreen";
+import JourneySimulatorScreen from "./src/screens/JourneySimulatorScreen";
+import TravelProfileScreen from "./src/screens/TravelProfileScreen";
 
 export const navRef = createNavigationContainerRef();
 const Stack = createNativeStackNavigator();
@@ -311,6 +314,9 @@ function Root() {
             <Stack.Screen name="AirportDining"      component={AirportDiningScreen} />
             <Stack.Screen name="AirportNavigation"  component={AirportNavigationScreen} />
             <Stack.Screen name="LoungeCards"          component={LoungeCardsScreen} />
+            <Stack.Screen name="DisruptionScreen"     component={DisruptionScreen} />
+            <Stack.Screen name="JourneySimulator"     component={JourneySimulatorScreen} />
+            <Stack.Screen name="TravelProfile"        component={TravelProfileScreen} />
             <Stack.Screen name="Main"         component={Tabs} />
           </>
         ) : (

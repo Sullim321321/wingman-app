@@ -12,7 +12,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { C, T, TS } from "../theme";
 import { Btn, tap, SerifText, g, OfflineBanner } from "../components";
 import { getCachedTrips, getCachedPoints } from "../offlineCache";
-import { getTrips, deleteTrip, getFlightStatus, getFlightStatusPublic, getPrediction, getGroundIntel, getMe, getLoyaltyAccounts, getTripBriefing, getNextTripWindow, getPoints, getWeather } from "../api";
+import { getTrips, deleteTrip, getFlightStatus, getFlightStatusPublic, getPrediction, getGroundIntel, getMe, getLoyaltyAccounts, getTripBriefing, getNextTripWindow, getPoints, getWeather, getHomeState, getDisruptionAlternatives, simulateJourney } from "../api";
 import * as Location from "expo-location";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { scheduleDisruption } from "../notify";
@@ -509,6 +509,9 @@ export default function HomeScreen({ navigation }) {
   const [nextTripWindow, setNextTripWindow] = useState(null);
   const [pointsData, setPointsData]         = useState(null);
   const [weather, setWeather]               = useState(null);
+  const [homeState, setHomeState]           = useState(null);  // contextual travel state
+  const [journeyData, setJourneyData]       = useState(null);  // journey simulation result
+  const [disruptionData, setDisruptionData] = useState(null);  // disruption alternatives
 
   useEffect(() => {
     // Fetch geolocated weather if user has opted in
@@ -521,6 +524,23 @@ export default function HomeScreen({ navigation }) {
         const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
         const w = await getWeather(loc.coords.latitude, loc.coords.longitude);
         if (w?.ok) setWeather(w);
+      } catch {}
+    })();
+    // Fetch contextual home state (location-aware)
+    (async () => {
+      try {
+        const optIn = await AsyncStorage.getItem("wingman_location_opt_in");
+        let lat = null, lng = null;
+        if (optIn === "true") {
+          const { status } = await Location.getForegroundPermissionsAsync();
+          if (status === "granted") {
+            const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+            lat = loc.coords.latitude;
+            lng = loc.coords.longitude;
+          }
+        }
+        const hs = await getHomeState(lat, lng);
+        if (hs?.ok) setHomeState(hs);
       } catch {}
     })();
     getMe().then(u => { if (u?.first_name) setFirstName(u.first_name); }).catch(() => {});
@@ -638,6 +658,116 @@ export default function HomeScreen({ navigation }) {
               </Text>
             </View>
 
+            {/* ── Contextual Travel State Card ──────────────────────────────── */}
+            {homeState && homeState.state !== "no_trip" && homeState.active_leg && (() => {
+              const hs = homeState;
+              const leg = hs.active_leg;
+              const trip = hs.active_trip;
+              const isDisrupted = leg.status === "Cancelled" || (leg.delay_minutes || 0) >= 45;
+              const isAtRisk = journeyData?.at_risk;
+              const stateColors = {
+                at_airport:    { border: C.gold + "60",  bg: C.gold + "0A",  label: "AT THE AIRPORT" },
+                pre_departure: { border: C.line,          bg: "transparent",  label: "UPCOMING FLIGHT" },
+                in_transit:    { border: "#5B8CFF" + "60", bg: "#5B8CFF0A",  label: "IN THE AIR" },
+                at_destination:{ border: C.teal + "60",  bg: C.teal + "0A",  label: "AT DESTINATION" },
+              };
+              const sc = stateColors[hs.state] || stateColors.pre_departure;
+              const urgentBorder = isDisrupted ? C.coral + "60" : isAtRisk ? C.amber + "60" : sc.border;
+              const urgentBg     = isDisrupted ? C.coral + "0A" : isAtRisk ? C.amber + "0A" : sc.bg;
+              return (
+                <Pressable
+                  style={[s.stateCard, { borderColor: urgentBorder, backgroundColor: urgentBg }]}
+                  onPress={() => navigation.navigate("TripDetail", { tripId: leg.trip_id })}
+                >
+                  {/* State label */}
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                    <Text style={[s.stateLabel, { color: isDisrupted ? C.coral : isAtRisk ? C.amber : C.gold }]}>
+                      {isDisrupted ? "⚠  DISRUPTION" : isAtRisk ? "⏱  TIGHT TIMING" : sc.label}
+                    </Text>
+                    {leg.status ? <StatusBadge status={leg.status} /> : null}
+                  </View>
+                  {/* Route */}
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <SerifText bold style={{ color: C.ink, fontSize: 24 }}>{leg.origin}</SerifText>
+                    <Text style={{ color: C.mut, fontSize: 14 }}>→</Text>
+                    <SerifText bold style={{ color: C.ink, fontSize: 24 }}>{leg.destination}</SerifText>
+                    {leg.ident ? <Text style={{ color: C.mut, fontSize: 12, fontFamily: "DM Sans", marginLeft: 4 }}>{leg.ident}</Text> : null}
+                  </View>
+                  {/* Flight meta row */}
+                  <View style={{ flexDirection: "row", gap: 16, marginBottom: 10 }}>
+                    {leg.departs_at && (
+                      <View>
+                        <Text style={s.stateMeta}>DEPARTS</Text>
+                        <Text style={s.stateValue}>{new Date(leg.departs_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</Text>
+                      </View>
+                    )}
+                    {leg.gate && (
+                      <View>
+                        <Text style={s.stateMeta}>GATE</Text>
+                        <Text style={s.stateValue}>{leg.gate}</Text>
+                      </View>
+                    )}
+                    {leg.terminal && (
+                      <View>
+                        <Text style={s.stateMeta}>TERMINAL</Text>
+                        <Text style={s.stateValue}>{leg.terminal}</Text>
+                      </View>
+                    )}
+                    {(leg.delay_minutes || 0) > 0 && (
+                      <View>
+                        <Text style={[s.stateMeta, { color: C.amber }]}>DELAY</Text>
+                        <Text style={[s.stateValue, { color: C.amber }]}>+{leg.delay_minutes}m</Text>
+                      </View>
+                    )}
+                  </View>
+                  {/* Journey buffer bar (if journeyData loaded) */}
+                  {journeyData && journeyData.buffer_minutes != null && (
+                    <View style={[s.bufferBar, { borderColor: journeyData.at_risk ? C.amber + "40" : C.teal + "30" }]}>
+                      <Text style={[s.bufferVerdict, { color: journeyData.at_risk ? C.amber : C.teal }]}>
+                        {journeyData.verdict === "will_miss" ? "⚠  You may miss this flight"
+                          : journeyData.verdict === "tight"    ? `⏱  Tight — ${journeyData.buffer_minutes}m buffer`
+                          : journeyData.verdict === "on_track" ? `✓  On track — ${journeyData.buffer_minutes}m to spare`
+                          : `✓  Plenty of time — ${journeyData.buffer_minutes}m buffer`}
+                      </Text>
+                      {journeyData.traffic_eta && (
+                        <Text style={s.bufferSub}>
+                          Drive: {journeyData.traffic_eta.duration_mins}m  ·  Security: ~{journeyData.security_mins}m  ·  Gate: {journeyData.gate_walk_mins}m
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                  {/* Disruption alternatives CTA */}
+                  {isDisrupted && (
+                    <Pressable
+                      style={s.disruptionCTA}
+                      onPress={() => navigation.navigate("DisruptionScreen", { tripId: leg.trip_id, legId: leg.id, ident: leg.ident })}
+                    >
+                      <Text style={s.disruptionCTAT}>See options & your rights  →</Text>
+                    </Pressable>
+                  )}
+                  {/* Suggestion chips */}
+                  {(hs.suggestions || []).length > 0 && (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
+                      <View style={{ flexDirection: "row", gap: 8 }}>
+                        {hs.suggestions.map((sug, i) => (
+                          <Pressable
+                            key={i}
+                            style={s.sugChip}
+                            onPress={() => {
+                              tap();
+                              if (sug.route === "Concierge") navigation.navigate("Concierge", { prefill: sug.prefill });
+                              else navigation.navigate(sug.route);
+                            }}
+                          >
+                            <Text style={s.sugChipT}>{sug.icon}  {sug.label}</Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    </ScrollView>
+                  )}
+                </Pressable>
+              );
+            })()}
             {/* ── Day-of-flight mission briefing ────────────────────────── */}
             {briefing && briefing.flight && (
               <>
@@ -972,6 +1102,18 @@ const s = StyleSheet.create({
   pointsTileNext: { fontSize: 11, fontFamily: T.sansM },
   pointsTileBar:  { width: 100, height: 3, backgroundColor: C.line, borderRadius: 2, overflow: "hidden" },
   pointsTileBarFill: { height: 3, borderRadius: 2 },
+  // ── Contextual State Card ────────────────────────────────────────────────────
+  stateCard:      { backgroundColor: "transparent", borderRadius: 20, padding: 18, borderWidth: 1, marginBottom: 12, overflow: "hidden" },
+  stateLabel:     { fontSize: 10, fontFamily: "DM Sans", fontWeight: "700", letterSpacing: 1.4 },
+  stateMeta:      { color: "#8A8070", fontSize: 9, fontFamily: "DM Sans", fontWeight: "700", letterSpacing: 1.2, marginBottom: 2 },
+  stateValue:     { color: "#1A1612", fontSize: 15, fontFamily: "DM Sans", fontWeight: "600" },
+  bufferBar:      { borderRadius: 10, borderWidth: 1, padding: 10, marginTop: 6 },
+  bufferVerdict:  { fontSize: 12, fontFamily: "DM Sans", fontWeight: "600" },
+  bufferSub:      { color: "#8A8070", fontSize: 11, fontFamily: "DM Sans", marginTop: 3 },
+  disruptionCTA:  { backgroundColor: "#D95F5F18", borderRadius: 10, padding: 10, marginTop: 10, borderWidth: 1, borderColor: "#D95F5F40" },
+  disruptionCTAT: { color: "#D95F5F", fontSize: 13, fontFamily: "DM Sans", fontWeight: "600", textAlign: "center" },
+  sugChip:        { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: "#3A3020", backgroundColor: "#1A1612" },
+  sugChipT:       { color: "#C9A96E", fontSize: 12, fontFamily: "DM Sans", fontWeight: "500" },
   windowTitle:    { color: C.ink, fontSize: 14, fontFamily: T.sansB },
   windowBody:     { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 19 },
   weatherChip:    { alignItems: "flex-end", marginLeft: 12, paddingTop: 4 },

@@ -334,3 +334,30 @@ export const getAirportNavigation = (iata, gate = null) =>
   req(`/airports/${encodeURIComponent(iata)}/navigate${gate ? `?gate=${encodeURIComponent(gate)}` : ""}`);
 export const getCityTransport = (iata) =>
   req(`/airports/${encodeURIComponent(iata)}/city-transport`);
+
+// ── Travel Profile ──────────────────────────────────────────────────────────
+export const getTravelProfile = () => req("/me/travel-profile");
+export const updateTravelProfile = (data) =>
+  req("/me/travel-profile", { method: "PATCH", body: JSON.stringify(data) });
+
+// ── Home State (contextual) ─────────────────────────────────────────────────
+export const getHomeState = (lat, lng) => {
+  const params = lat && lng ? `?lat=${lat}&lng=${lng}` : "";
+  return req("/me/home-state" + params);
+};
+
+// ── Journey Simulation ──────────────────────────────────────────────────────
+export const simulateJourney = (tripId, legId, lat, lng) => {
+  const params = new URLSearchParams({ tripId, legId });
+  if (lat) params.set("lat", lat);
+  if (lng) params.set("lng", lng);
+  return req("/journey/simulate?" + params.toString());
+};
+
+// ── Disruption Alternatives ─────────────────────────────────────────────────
+export const getDisruptionAlternatives = (tripId, legId) =>
+  req(`/disruption/alternatives?tripId=${tripId}&legId=${legId}`);
+
+// ── Transit Check ───────────────────────────────────────────────────────────
+export const checkTransitPayment = (city, lat, lng) =>
+  req("/journey/transit-check", { method: "POST", body: JSON.stringify({ city, lat, lng }) });

@@ -234,7 +234,8 @@ export default function ConciergeScreen({ route }) {
         ? `[User's trips:\n${tripContext}]\n\n${msg}`
         : msg;
       const data = await sendConciergeMessage(enrichedMsg, history.slice(0, -1), userLocation);
-      const updated = [...newMessages, { role: "assistant", content: data.reply }];
+      const aiMsg = { role: "assistant", content: data.reply, places: data.places || null, weather: data.weather || null };
+      const updated = [...newMessages, aiMsg];
       setMessages(updated);
       scheduleSave(updated.slice(1), activeTripId);
     } catch {
@@ -269,6 +270,32 @@ export default function ConciergeScreen({ route }) {
           </View>
         )}
         <Text style={[s.bubbleT, isUser && s.userBubbleT]}>{item.content}</Text>
+        {/* Places cards — shown only on AI messages that have Places grounding */}
+        {!isUser && item.places && item.places.length > 0 && (
+          <View style={s.placesWrap}>
+            {item.places.slice(0, 3).map((p, i) => (
+              <Pressable
+                key={i}
+                style={s.placeCard}
+                onPress={() => {
+                  const { Linking } = require('react-native');
+                  Linking.openURL(p.maps_url);
+                }}
+              >
+                <View style={s.placeCardRow}>
+                  <Text style={s.placeName}>{p.name}</Text>
+                  {p.open_now === true && <Text style={s.placeOpen}>Open</Text>}
+                  {p.open_now === false && <Text style={s.placeClosed}>Closed</Text>}
+                </View>
+                {p.address ? <Text style={s.placeAddr}>{p.address}</Text> : null}
+                <View style={s.placeCardRow}>
+                  {p.rating ? <Text style={s.placeRating}>{p.rating}★  {p.user_ratings_total > 0 ? `(${p.user_ratings_total})` : ''}</Text> : null}
+                  <Text style={s.placeMapLink}>Open in Maps →</Text>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        )}
       </View>
     );
   };
@@ -457,4 +484,19 @@ const s = StyleSheet.create({
   },
   sendBtn:  { marginBottom: 2 },
   sendGrad: { width: 46, height: 46, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+
+  // Places grounding cards
+  placesWrap: { marginTop: 12, gap: 8 },
+  placeCard: {
+    backgroundColor: "rgba(201,169,110,0.07)",
+    borderWidth: 1, borderColor: "rgba(201,169,110,0.25)",
+    borderRadius: 12, padding: 12, gap: 4,
+  },
+  placeCardRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  placeName:   { color: C.ink, fontSize: 14, fontFamily: T.sansB, flex: 1, marginRight: 8 },
+  placeAddr:   { color: C.mut, fontSize: 12, fontFamily: T.sans },
+  placeRating: { color: C.gold, fontSize: 12, fontFamily: T.sansM },
+  placeOpen:   { color: "#7ecb8f", fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.5 },
+  placeClosed: { color: "#e07070", fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.5 },
+  placeMapLink: { color: C.gold, fontSize: 12, fontFamily: T.sansM },
 });

@@ -540,7 +540,18 @@ export default function HomeScreen({ navigation }) {
           }
         }
         const hs = await getHomeState(lat, lng);
-        if (hs?.ok) setHomeState(hs);
+        if (hs?.ok) {
+          setHomeState(hs);
+          // If at airport or pre-departure within 3h, fetch journey simulation
+          if ((hs.state === "at_airport" || hs.state === "pre_departure") &&
+              hs.active_leg?.id && hs.active_leg?.trip_id &&
+              (hs.hours_to_depart == null || hs.hours_to_depart <= 3)) {
+            try {
+              const jd = await simulateJourney(hs.active_leg.trip_id, hs.active_leg.id, lat, lng);
+              if (jd?.ok) setJourneyData(jd);
+            } catch {}
+          }
+        }
       } catch {}
     })();
     getMe().then(u => { if (u?.first_name) setFirstName(u.first_name); }).catch(() => {});
@@ -736,6 +747,15 @@ export default function HomeScreen({ navigation }) {
                       )}
                     </View>
                   )}
+                  {/* Journey timing button — at_airport or pre_departure */}
+                  {!isDisrupted && (hs.state === "at_airport" || hs.state === "pre_departure") && leg.trip_id && (
+                    <Pressable
+                      style={s.journeyTimingBtn}
+                      onPress={() => navigation.navigate("JourneySimulator", { tripId: leg.trip_id, legId: leg.id, flightIdent: leg.ident })}
+                    >
+                      <Text style={s.journeyTimingBtnT}>⏱  Check journey timing  →</Text>
+                    </Pressable>
+                  )}
                   {/* Disruption alternatives CTA */}
                   {isDisrupted && (
                     <Pressable
@@ -756,6 +776,7 @@ export default function HomeScreen({ navigation }) {
                             onPress={() => {
                               tap();
                               if (sug.route === "Concierge") navigation.navigate("Concierge", { prefill: sug.prefill });
+                              else if (sug.params) navigation.navigate(sug.route, sug.params);
                               else navigation.navigate(sug.route);
                             }}
                           >
@@ -1114,6 +1135,8 @@ const s = StyleSheet.create({
   disruptionCTAT: { color: "#D95F5F", fontSize: 13, fontFamily: "DM Sans", fontWeight: "600", textAlign: "center" },
   sugChip:        { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: "#3A3020", backgroundColor: "#1A1612" },
   sugChipT:       { color: "#C9A96E", fontSize: 12, fontFamily: "DM Sans", fontWeight: "500" },
+  journeyTimingBtn:  { backgroundColor: "#D4902A12", borderRadius: 10, padding: 10, marginTop: 8, borderWidth: 1, borderColor: "#D4902A40" },
+  journeyTimingBtnT: { color: "#D4902A", fontSize: 12, fontFamily: "DM Sans", fontWeight: "600", textAlign: "center" },
   windowTitle:    { color: C.ink, fontSize: 14, fontFamily: T.sansB },
   windowBody:     { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 19 },
   weatherChip:    { alignItems: "flex-end", marginLeft: 12, paddingTop: 4 },

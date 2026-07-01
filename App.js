@@ -177,6 +177,14 @@ function Root() {
       primary:    TC.gold,
       notification: TC.gold,
     },
+    // react-navigation v7 requires fonts.regular/medium/bold/heavy
+    // Without this, NavigationContainer crashes: "Cannot read property 'regular' of undefined"
+    fonts: {
+      regular: { fontFamily: T.sans,  fontWeight: "400" },
+      medium:  { fontFamily: T.sansM, fontWeight: "500" },
+      bold:    { fontFamily: T.sansB, fontWeight: "700" },
+      heavy:   { fontFamily: T.sansB, fontWeight: "700" },
+    },
   };
   const [onboarded, setOnboarded]     = useState(null);
   const [profileDone, setProfileDone] = useState(null);

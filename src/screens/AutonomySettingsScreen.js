@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import {
-  SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
+  ScrollView, View, Text, Pressable, StyleSheet,
   Switch, Alert, ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 // Slider replaced with Segmented to avoid native dependency
 import { C, T } from "../theme";
 import { BackBar, Btn, g, tap } from "../components";

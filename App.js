@@ -53,6 +53,7 @@ import AddTripScreen from "./src/screens/AddTripScreen";
 import TripDetailScreen from "./src/screens/TripDetailScreen";
 import TasteSetupScreen from "./src/screens/TasteSetupScreen";
 import SubscriptionScreen from "./src/screens/SubscriptionScreen";
+import PrivacyPolicyScreen from "./src/screens/PrivacyPolicyScreen";
 import LoyaltyScreen from "./src/screens/LoyaltyScreen";
 import HomeAddressScreen from "./src/screens/HomeAddressScreen";
 import FlightSearchScreen from "./src/screens/FlightSearchScreen";

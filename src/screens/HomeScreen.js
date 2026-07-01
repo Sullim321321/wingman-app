@@ -12,7 +12,9 @@ import { useFocusEffect } from "@react-navigation/native";
 import { C, T, TS } from "../theme";
 import { Btn, tap, SerifText, g, OfflineBanner } from "../components";
 import { getCachedTrips, getCachedPoints } from "../offlineCache";
-import { getTrips, deleteTrip, getFlightStatus, getFlightStatusPublic, getPrediction, getGroundIntel, getMe, getLoyaltyAccounts, getTripBriefing, getNextTripWindow, getPoints } from "../api";
+import { getTrips, deleteTrip, getFlightStatus, getFlightStatusPublic, getPrediction, getGroundIntel, getMe, getLoyaltyAccounts, getTripBriefing, getNextTripWindow, getPoints, getWeather } from "../api";
+import * as Location from "expo-location";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { scheduleDisruption } from "../notify";
 import { getEtching } from "../etchings";
 
@@ -506,8 +508,21 @@ export default function HomeScreen({ navigation }) {
   const [expiringPoints, setExpiringPoints] = useState(null);
   const [nextTripWindow, setNextTripWindow] = useState(null);
   const [pointsData, setPointsData]         = useState(null);
+  const [weather, setWeather]               = useState(null);
 
   useEffect(() => {
+    // Fetch geolocated weather if user has opted in
+    (async () => {
+      try {
+        const optIn = await AsyncStorage.getItem("wingman_location_opt_in");
+        if (optIn !== "true") return;
+        const { status } = await Location.getForegroundPermissionsAsync();
+        if (status !== "granted") return;
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        const w = await getWeather(loc.coords.latitude, loc.coords.longitude);
+        if (w?.ok) setWeather(w);
+      } catch {}
+    })();
     getMe().then(u => { if (u?.first_name) setFirstName(u.first_name); }).catch(() => {});
     getPoints().then(d => { if (d?.balance !== undefined) setPointsData(d); }).catch(() => {});
     // Check for expiring loyalty points
@@ -607,7 +622,15 @@ export default function HomeScreen({ navigation }) {
           <>
             {/* ── Serif greeting ─────────────────────────────────────────── */}
             <View style={s.greetWrap}>
-              <SerifText style={s.greetH}>{greeting()}{firstName ? `, ${firstName}.` : "."}</SerifText>
+              <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
+                <SerifText style={[s.greetH, { flex: 1 }]}>{greeting()}{firstName ? `, ${firstName}.` : "."}</SerifText>
+                {weather && (
+                  <View style={s.weatherChip}>
+                    <Text style={s.weatherTemp}>{Math.round(weather.temp_c ?? weather.temp)}°</Text>
+                    <Text style={s.weatherDesc}>{weather.description || weather.conditions || ""}</Text>
+                  </View>
+                )}
+              </View>
               <Text style={s.greetS}>
                 {nextFlight
                   ? `Next flight: ${nextFlight.origin} to ${nextFlight.destination}.`
@@ -951,4 +974,7 @@ const s = StyleSheet.create({
   pointsTileBarFill: { height: 3, borderRadius: 2 },
   windowTitle:    { color: C.ink, fontSize: 14, fontFamily: T.sansB },
   windowBody:     { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 19 },
+  weatherChip:    { alignItems: "flex-end", marginLeft: 12, paddingTop: 4 },
+  weatherTemp:    { color: C.gold, fontSize: 22, fontFamily: T.serifB, lineHeight: 26 },
+  weatherDesc:    { color: C.mut, fontSize: 10, fontFamily: T.sans, letterSpacing: 0.8, textTransform: "uppercase", textAlign: "right", marginTop: 2 },
 });

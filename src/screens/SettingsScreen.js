@@ -6,6 +6,7 @@ import { SafeAreaView, ScrollView, View, Text, Switch, StyleSheet, ActivityIndic
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
 import { C, T } from "../theme";
+import { useTheme } from "../ThemeContext";
 import { BackBar, Segmented, SetRow, Chip, Btn, g } from "../components";
 import { useAuth } from "../auth";
 import { getPolicy, updatePolicy, updateLocale, getHotelAffinity, removeHotelAffinity } from "../api";
@@ -128,6 +129,7 @@ function HotelAffinitySection() {
 
 export default function SettingsScreen({ navigation }) {
   const { email, signOut } = useAuth();
+  const { appearance, setAppearance } = useTheme();
 
   // Alert toggles
   const [weather, setWeather] = useState(true);
@@ -242,6 +244,39 @@ export default function SettingsScreen({ navigation }) {
               Wingman never moves money or books above your limit without an explicit "yes."
             </Text>
           </Text>
+        </View>
+
+        <Text style={g.sectionT}>APPEARANCE</Text>
+        <View style={g.group}>
+          <View style={{ borderBottomWidth: 0 }}>
+            <SetRow
+              ic="◑"
+              iconColor={C.gold}
+              t="Colour scheme"
+              sub="System follows your iPhone setting"
+              right={
+                <View style={{ flexDirection: "row", gap: 6 }}>
+                  {["system", "dark", "light"].map(opt => (
+                    <TouchableOpacity
+                      key={opt}
+                      onPress={() => setAppearance(opt)}
+                      style={[
+                        s.themeBtn,
+                        appearance === opt && s.themeBtnActive,
+                      ]}
+                    >
+                      <Text style={[
+                        s.themeBtnT,
+                        appearance === opt && s.themeBtnTActive,
+                      ]}>
+                        {opt === "system" ? "Auto" : opt === "dark" ? "Dark" : "Light"}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              }
+            />
+          </View>
         </View>
 
         <Text style={g.sectionT}>LOCATION</Text>
@@ -444,5 +479,26 @@ const s = StyleSheet.create({
     color: C.mut,
     fontSize: 14,
     fontFamily: T.sans,
+  },
+  themeBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: C.line,
+    backgroundColor: C.card2,
+  },
+  themeBtnActive: {
+    borderColor: C.gold,
+    backgroundColor: `${C.gold}18`,
+  },
+  themeBtnT: {
+    color: C.mut,
+    fontSize: 11,
+    fontFamily: T.sansM,
+    letterSpacing: 0.5,
+  },
+  themeBtnTActive: {
+    color: C.gold,
   },
 });

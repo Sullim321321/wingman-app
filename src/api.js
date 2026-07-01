@@ -108,6 +108,10 @@ export const getDestinationIntel = ({ iata, city, trip_id } = {}) => {
 export const refreshTrip = (id) =>
   req("/trips/" + id + "/refresh", { method: "POST" });
 
+// Weather widget
+export const getWeather = (lat, lng) =>
+  req(`/weather?lat=${lat}&lng=${lng}`);
+
 // Concierge
 export const sendConciergeMessage = (message, history = [], location = null) =>
   req("/concierge", { method: "POST", body: JSON.stringify({ message, history, ...(location ? { location } : {}) }) });

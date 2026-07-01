@@ -27,6 +27,7 @@ import {
 } from "@expo-google-fonts/dm-sans";
 
 import { C, T } from "./src/theme";
+import { ThemeProvider, useTheme } from "./src/ThemeContext";
 import { setupNotificationHandler, registerForPush } from "./src/notify";
 import { AuthProvider, useAuth } from "./src/auth";
 import ErrorBoundary from "./src/ErrorBoundary";
@@ -75,17 +76,7 @@ export const navRef = createNavigationContainerRef();
 const Stack = createNativeStackNavigator();
 const Tab   = createBottomTabNavigator();
 
-const navTheme = {
-  ...DarkTheme,
-  colors: {
-    ...DarkTheme.colors,
-    background: C.bg,
-    card:       C.bg,
-    text:       C.ink,
-    border:     C.line,
-    primary:    C.gold,
-  },
-};
+// navTheme is now computed inside Root() using useTheme()
 
 // ─── Tab bar icon — hairline Unicode symbols ──────────────────────────────────
 // Deck-matching thin line icons
@@ -120,16 +111,17 @@ function TabIcon({ name, focused }) {
 // ─── Tab navigator ────────────────────────────────────────────────────────────
 
 function Tabs() {
+  const { C: TC, isDark } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        sceneContainerStyle: { backgroundColor: C.bg },
-        tabBarActiveTintColor:   C.gold,
-        tabBarInactiveTintColor: C.mut,
+        sceneContainerStyle: { backgroundColor: TC.bg },
+        tabBarActiveTintColor:   TC.gold,
+        tabBarInactiveTintColor: TC.mut,
         tabBarStyle: {
-          backgroundColor: C.bg,
-          borderTopColor:  C.line,
+          backgroundColor: TC.bg,
+          borderTopColor:  TC.line,
           borderTopWidth:  0.5,
           height: 88,
           paddingTop: 10,
@@ -168,6 +160,19 @@ function withTimeout(promise, ms = 3000, fallback = null) {
 
 function Root() {
   const { token, ready } = useAuth();
+  const { C: TC, isDark } = useTheme();
+  const navTheme = {
+    ...(isDark ? DarkTheme : { dark: false, colors: {} }),
+    colors: {
+      ...(isDark ? DarkTheme.colors : {}),
+      background: TC.bg,
+      card:       TC.bg,
+      text:       TC.ink,
+      border:     TC.line,
+      primary:    TC.gold,
+      notification: TC.gold,
+    },
+  };
   const [onboarded, setOnboarded]     = useState(null);
   const [profileDone, setProfileDone] = useState(null);
 
@@ -250,18 +255,21 @@ function Root() {
 
   if (!ready || onboarded === null || (token && profileDone === null)) {
     return (
-      <View style={{ flex: 1, backgroundColor: C.bg, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator color={C.gold} />
+      <View style={{ flex: 1, backgroundColor: TC.bg, alignItems: "center", justifyContent: "center" }}>
+        <StatusBar style={isDark ? "light" : "dark"} />
+        <ActivityIndicator color={TC.gold} />
       </View>
     );
   }
 
   return (
-    <NavigationContainer ref={navRef} theme={navTheme}>
+    <>
+    <StatusBar style={isDark ? "light" : "dark"} />
+    <NavigationContainer ref={navRef} theme={navTheme} key={isDark ? "dark" : "light"}>
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: C.bg },
+          contentStyle: { backgroundColor: TC.bg },
           animation: "slide_from_right",
         }}
       >
@@ -313,6 +321,7 @@ function Root() {
         )}
       </Stack.Navigator>
     </NavigationContainer>
+    </>
   );
 }
 
@@ -341,6 +350,7 @@ export default function App() {
   if (!fontsLoaded && !fontError && !fontTimeout) {
     return (
       <View style={{ flex: 1, backgroundColor: C.bg, alignItems: "center", justifyContent: "center" }}>
+        <StatusBar style="light" />
         <ActivityIndicator color={C.gold} />
       </View>
     );
@@ -349,12 +359,13 @@ export default function App() {
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
-        <StatusBar style="light" />
-        <AuthProvider>
-          <ErrorBoundary>
-            <Root />
-          </ErrorBoundary>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <ErrorBoundary>
+              <Root />
+            </ErrorBoundary>
+          </AuthProvider>
+        </ThemeProvider>
       </SafeAreaProvider>
     </ErrorBoundary>
   );

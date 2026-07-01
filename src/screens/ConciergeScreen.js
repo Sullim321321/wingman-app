@@ -17,6 +17,8 @@ import { LOCATION_OPT_IN_KEY } from "./SettingsScreen";
 
 const WELCOME = "Good day. I'm watching your trips, tracking disruption risk, and ready to act the moment something changes. What can I do for you?";
 
+// ─── Context helpers ──────────────────────────────────────────────────────────
+
 function buildTripContext(trips) {
   if (!trips || trips.length === 0) return null;
   const lines = trips.slice(0, 5).map(trip => {
@@ -50,7 +52,8 @@ function findNextFlight(trips) {
   return best;
 }
 
-function buildQuickChips(trips) {
+// Initial chips before any conversation
+function buildInitialChips(trips) {
   const next = findNextFlight(trips);
   const chips = [];
   if (next?.origin && next?.destination) {
@@ -58,7 +61,14 @@ function buildQuickChips(trips) {
     if (next.carrier && next.flight_number) chips.push(`Is ${next.carrier}${next.flight_number} on time?`);
   }
   if (trips.length > 0) chips.push("What's my next trip?");
-  const fallbacks = ["Any disruption risks?", "Dinner recommendations?", "Best airport lounge here?", "What should I know before I fly?"];
+  const fallbacks = [
+    "Any disruption risks?",
+    "Dinner recommendations?",
+    "Best airport lounge here?",
+    "What should I know before I fly?",
+    "Upgrade options on my next flight?",
+    "How do I earn more points?",
+  ];
   for (const f of fallbacks) {
     if (chips.length >= 4) break;
     if (!chips.includes(f)) chips.push(f);
@@ -66,28 +76,86 @@ function buildQuickChips(trips) {
   return chips.slice(0, 4);
 }
 
+// Contextual follow-up chips derived from the last AI reply
+function buildFollowUpChips(lastReply, trips) {
+  if (!lastReply) return [];
+  const r = lastReply.toLowerCase();
+  const chips = [];
+
+  // Flight / disruption context
+  if (r.includes("delay") || r.includes("cancel") || r.includes("disruption")) {
+    chips.push("What are my rebooking options?");
+    chips.push("Can you rebook me automatically?");
+  }
+  // Weather context
+  if (r.includes("weather") || r.includes("storm") || r.includes("fog") || r.includes("wind")) {
+    chips.push("How likely is a delay?");
+    chips.push("What's the forecast for my arrival?");
+  }
+  // Hotel / accommodation context
+  if (r.includes("hotel") || r.includes("check-in") || r.includes("room") || r.includes("accommodation")) {
+    chips.push("Can you upgrade my room?");
+    chips.push("What's the cancellation policy?");
+  }
+  // Lounge / airport context
+  if (r.includes("lounge") || r.includes("airport") || r.includes("terminal") || r.includes("gate")) {
+    chips.push("Which lounges can I access?");
+    chips.push("How far is my gate?");
+  }
+  // Dining / restaurant context
+  if (r.includes("restaurant") || r.includes("dinner") || r.includes("lunch") || r.includes("eat") || r.includes("dining")) {
+    chips.push("Book a table for tonight?");
+    chips.push("Any Michelin-starred options?");
+  }
+  // Points / loyalty context
+  if (r.includes("points") || r.includes("miles") || r.includes("loyalty") || r.includes("status")) {
+    chips.push("How many points do I have?");
+    chips.push("Best way to earn more?");
+  }
+  // Destination / city context
+  if (r.includes("city") || r.includes("neighbourhood") || r.includes("neighborhood") || r.includes("area") || r.includes("visit")) {
+    chips.push("What's on this week?");
+    chips.push("Best areas to stay?");
+  }
+
+  // Always add a few universal fallbacks to fill to 3–4 chips
+  const fallbacks = [
+    "Tell me more.",
+    "Any disruption risks?",
+    "What else should I know?",
+    "Upgrade options on my next flight?",
+  ];
+  for (const f of fallbacks) {
+    if (chips.length >= 4) break;
+    if (!chips.includes(f)) chips.push(f);
+  }
+  return chips.slice(0, 4);
+}
+
+// ─── Main screen ──────────────────────────────────────────────────────────────
+
 export default function ConciergeScreen({ route }) {
-  const prefill    = route?.params?.prefill || null;
+  const prefill     = route?.params?.prefill || null;
   const routeTripId = route?.params?.tripId ? Number(route.params.tripId) : null;
 
-  const [trips, setTrips]           = useState([]);
-  const [tripsLoaded, setTripsLoaded] = useState(false);
-  const [activeTripId, setActiveTripId] = useState(routeTripId); // null = general thread
-  const [messages, setMessages]     = useState([{ role: "assistant", content: WELCOME }]);
-  const [input, setInput]   = useState("");
-  const [loading, setLoading] = useState(false);
+  const [trips, setTrips]               = useState([]);
+  const [tripsLoaded, setTripsLoaded]   = useState(false);
+  const [activeTripId, setActiveTripId] = useState(routeTripId);
+  const [messages, setMessages]         = useState([{ role: "assistant", content: WELCOME }]);
+  const [input, setInput]               = useState("");
+  const [loading, setLoading]           = useState(false);
   const [threadLoading, setThreadLoading] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
-  const listRef     = useRef(null);
-  const prefillSent = useRef(false);
-  const saveTimer   = useRef(null);
 
-  // Load trips on focus; also refresh location opt-in
+  const listRef      = useRef(null);
+  const prefillSent  = useRef(false);
+  const saveTimer    = useRef(null);
+
+  // ── Load trips + location on focus ──────────────────────────────────────────
   useFocusEffect(useCallback(() => {
     getTrips()
       .then(data => { setTrips(data.trips || []); setTripsLoaded(true); })
       .catch(() => setTripsLoaded(true));
-    // Silently fetch location if user has opted in
     AsyncStorage.getItem(LOCATION_OPT_IN_KEY).then(async (v) => {
       if (v !== "true") { setUserLocation(null); return; }
       try {
@@ -97,13 +165,13 @@ export default function ConciergeScreen({ route }) {
     }).catch(() => {});
   }, []));
 
-  // Load thread when activeTripId changes or trips load
+  // ── Load thread when trip context changes ────────────────────────────────────
   useEffect(() => {
     if (!tripsLoaded) return;
     loadThread(activeTripId);
   }, [activeTripId, tripsLoaded]);
 
-  // Auto-send prefill after thread loads
+  // ── Auto-send prefill ────────────────────────────────────────────────────────
   useEffect(() => {
     if (prefill && !prefillSent.current && tripsLoaded) {
       prefillSent.current = true;
@@ -111,13 +179,19 @@ export default function ConciergeScreen({ route }) {
     }
   }, [prefill, tripsLoaded]);
 
-  // Scroll to bottom on new messages
+  // ── Scroll to bottom reliably on every new message ───────────────────────────
+  // Using both onContentSizeChange and a timeout to handle layout timing
+  function scrollToBottom(animated = true) {
+    setTimeout(() => {
+      listRef.current?.scrollToEnd({ animated });
+    }, 80);
+  }
+
   useEffect(() => {
-    if (messages.length > 1) {
-      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
-    }
+    if (messages.length > 0) scrollToBottom();
   }, [messages]);
 
+  // ── Thread load ──────────────────────────────────────────────────────────────
   async function loadThread(tripId) {
     setThreadLoading(true);
     try {
@@ -138,11 +212,12 @@ export default function ConciergeScreen({ route }) {
   function scheduleSave(msgs, tripId) {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      const toSave = msgs.filter(m => m.role !== "assistant" || msgs.indexOf(m) > 0);
+      const toSave = msgs.filter((m, i) => i > 0); // skip welcome
       saveConciergeThread(toSave, tripId).catch(() => {});
     }, 1500);
   }
 
+  // ── Send message ─────────────────────────────────────────────────────────────
   const send = async (text) => {
     const msg = (text || input).trim();
     if (!msg || loading) return;
@@ -155,11 +230,13 @@ export default function ConciergeScreen({ route }) {
       const history = newMessages.slice(1).map(m => ({ role: m.role, content: m.content }));
       const tripContext = buildTripContext(trips);
       const isFirstUserMsg = newMessages.filter(m => m.role === "user").length === 1;
-      const enrichedMsg = (isFirstUserMsg && tripContext) ? `[User's trips:\n${tripContext}]\n\n${msg}` : msg;
+      const enrichedMsg = (isFirstUserMsg && tripContext)
+        ? `[User's trips:\n${tripContext}]\n\n${msg}`
+        : msg;
       const data = await sendConciergeMessage(enrichedMsg, history.slice(0, -1), userLocation);
       const updated = [...newMessages, { role: "assistant", content: data.reply }];
       setMessages(updated);
-      scheduleSave(updated.slice(1), activeTripId); // don't save the welcome message
+      scheduleSave(updated.slice(1), activeTripId);
     } catch {
       setMessages(prev => [...prev, { role: "assistant", content: "Sorry, I couldn't connect right now. Try again in a moment." }]);
     } finally {
@@ -167,8 +244,19 @@ export default function ConciergeScreen({ route }) {
     }
   };
 
-  const quickChips = buildQuickChips(trips);
+  // ── Derived state ─────────────────────────────────────────────────────────────
   const upcomingTrips = trips.filter(t => t.status === "upcoming" || t.status === "active").slice(0, 5);
+  const hasUserMessages = messages.some(m => m.role === "user");
+
+  // Find last AI reply for contextual chips
+  const lastAiReply = [...messages].reverse().find(m => m.role === "assistant" && m.content !== WELCOME)?.content || null;
+
+  // Show initial chips before any user message; contextual chips after AI replies
+  const chips = !hasUserMessages
+    ? buildInitialChips(trips)
+    : (!loading && lastAiReply ? buildFollowUpChips(lastAiReply, trips) : []);
+
+  // ── Render ────────────────────────────────────────────────────────────────────
 
   const renderItem = ({ item }) => {
     const isUser = item.role === "user";
@@ -200,7 +288,7 @@ export default function ConciergeScreen({ route }) {
         </View>
       </View>
 
-      {/* Thread selector — General + per-trip threads */}
+      {/* Thread selector */}
       {upcomingTrips.length > 0 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.threadRow}>
           <Pressable
@@ -238,27 +326,33 @@ export default function ConciergeScreen({ route }) {
             keyExtractor={(_, i) => String(i)}
             contentContainerStyle={s.list}
             showsVerticalScrollIndicator={false}
-            ListFooterComponent={loading ? (
-              <View style={[s.bubble, s.aiBubble]}>
-                <View style={s.aiLabel}>
-                  <View style={s.aiDot} />
-                  <Text style={s.aiLabelT}>WINGMAN</Text>
-                </View>
-                <ActivityIndicator color={C.gold} size="small" style={{ marginTop: 4 }} />
-              </View>
-            ) : null}
+            // Scroll to bottom whenever content height changes (new message arrives)
+            onContentSizeChange={() => scrollToBottom(true)}
+            onLayout={() => scrollToBottom(false)}
+            ListFooterComponent={
+              <>
+                {loading && (
+                  <View style={[s.bubble, s.aiBubble]}>
+                    <View style={s.aiLabel}>
+                      <View style={s.aiDot} />
+                      <Text style={s.aiLabelT}>WINGMAN</Text>
+                    </View>
+                    <ActivityIndicator color={C.gold} size="small" style={{ marginTop: 4 }} />
+                  </View>
+                )}
+                {/* Contextual chips — shown after every AI reply, below the last bubble */}
+                {chips.length > 0 && !loading && (
+                  <View style={s.chipsInline}>
+                    {chips.map(q => (
+                      <Pressable key={q} style={s.quickChip} onPress={() => send(q)}>
+                        <Text style={s.quickChipT}>{q}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
+              </>
+            }
           />
-        )}
-
-        {/* Quick chips — shown until first user message */}
-        {messages.length <= 1 && !threadLoading && (
-          <View style={s.quickRow}>
-            {quickChips.map(q => (
-              <Pressable key={q} style={s.quickChip} onPress={() => send(q)}>
-                <Text style={s.quickChipT}>{q}</Text>
-              </Pressable>
-            ))}
-          </View>
         )}
 
         {/* Input row */}
@@ -273,13 +367,14 @@ export default function ConciergeScreen({ route }) {
             maxLength={500}
             returnKeyType="send"
             onSubmitEditing={() => send()}
+            // iOS predictive text — these props are correct for a chat input
             autoCorrect={true}
             spellCheck={true}
             autoCapitalize="sentences"
-            autoComplete="off"
-            keyboardType="default"
+            // Do NOT set autoComplete="off" — it suppresses the QuickType bar
+            // textContentType="none" is correct; do not set dataDetectorTypes on TextInput
             textContentType="none"
-            dataDetectorTypes="none"
+            keyboardType="default"
             enablesReturnKeyAutomatically={false}
             blurOnSubmit={false}
           />
@@ -297,6 +392,8 @@ export default function ConciergeScreen({ route }) {
     </SafeAreaView>
   );
 }
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
   app:    { flex: 1, backgroundColor: C.bg },
@@ -335,7 +432,11 @@ const s = StyleSheet.create({
   aiDot:    { width: 6, height: 6, borderRadius: 3, backgroundColor: C.gold },
   aiLabelT: { color: C.gold, fontSize: 9, fontFamily: T.sansB, letterSpacing: T.trackWide },
 
-  quickRow:  { flexDirection: "row", flexWrap: "wrap", gap: 8, paddingHorizontal: 16, paddingBottom: 14 },
+  // Chips rendered inline inside the FlatList footer, below the last message
+  chipsInline: {
+    flexDirection: "row", flexWrap: "wrap", gap: 8,
+    marginTop: 4, marginBottom: 16, paddingHorizontal: 0,
+  },
   quickChip: {
     backgroundColor: "rgba(201,169,110,0.08)", borderWidth: 1,
     borderColor: "rgba(201,169,110,0.3)", borderRadius: 18,

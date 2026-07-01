@@ -7,12 +7,11 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import { C, T } from "../theme";
 import { BackBar, Btn, g } from "../components";
-import { getProfile } from "../api";
 import * as SecureStore from "expo-secure-store";
 import { API_BASE } from "../config";
 
 // ---------------------------------------------------------------------------
-// Program metadata (mirrors backend LOYALTY_PROGRAMS)
+// Program metadata
 // ---------------------------------------------------------------------------
 const PROGRAMS = {
   marriott:  { name: "Marriott Bonvoy",         icon: "🏨", kind: "hotel",      color: "#B8860B" },
@@ -25,6 +24,20 @@ const PROGRAMS = {
   british:   { name: "British Airways Avios",    icon: "🇬🇧", kind: "airline",   color: "#075AAA" },
   emirates:  { name: "Emirates Skywards",        icon: "🇦🇪", kind: "airline",   color: "#D4AF37" },
   amex_mr:   { name: "Amex Membership Rewards",  icon: "💳", kind: "credit_card",color: "#007BC1" },
+};
+
+// Status tiers per program for the picker
+const STATUS_TIERS = {
+  marriott:  ["Member", "Silver Elite", "Gold Elite", "Platinum Elite", "Titanium Elite", "Ambassador Elite"],
+  hilton:    ["Member", "Silver", "Gold", "Diamond"],
+  united:    ["Member", "Silver", "Gold", "Platinum", "1K", "Global Services"],
+  delta:     ["Member", "Silver Medallion", "Gold Medallion", "Platinum Medallion", "Diamond Medallion"],
+  american:  ["Member", "Gold", "Platinum", "Platinum Pro", "Executive Platinum", "Concierge Key"],
+  hyatt:     ["Member", "Discoverist", "Explorist", "Globalist"],
+  ihg:       ["Member", "Silver Elite", "Gold Elite", "Platinum Elite", "Diamond Elite"],
+  british:   ["Member", "Bronze", "Silver", "Gold"],
+  emirates:  ["Blue", "Silver", "Gold", "Platinum"],
+  amex_mr:   ["Member", "Gold", "Platinum", "Centurion"],
 };
 
 const KIND_LABEL = { hotel: "Hotel", airline: "Airline", credit_card: "Card" };
@@ -49,10 +62,14 @@ function relTime(iso) {
 function statusColor(status) {
   if (!status) return C.mut;
   const s = status.toLowerCase();
-  if (s.includes("platinum") || s.includes("diamond") || s.includes("1k") || s.includes("global")) return "#D4AF37";
-  if (s.includes("gold") || s.includes("premier gold")) return "#F59E0B";
-  if (s.includes("silver") || s.includes("plus")) return "#94A3B8";
-  return C.teal;
+  if (s.includes("ambassador") || s.includes("centurion") || s.includes("concierge key") ||
+      s.includes("global services") || s.includes("1k") || s.includes("diamond") ||
+      s.includes("titanium") || s.includes("globalist") || s.includes("platinum")) {
+    return "#D4AF37"; // Gold — top tier
+  }
+  if (s.includes("gold") || s.includes("premier gold") || s.includes("explorist")) return "#F59E0B";
+  if (s.includes("silver") || s.includes("discoverist") || s.includes("bronze")) return "#94A3B8";
+  return C.mut;
 }
 
 // ---------------------------------------------------------------------------
@@ -63,17 +80,18 @@ function ProgressBar({ value, max, color }) {
   const pct = Math.min(100, Math.round((value / max) * 100));
   return (
     <View style={ps.barTrack}>
-      <View style={[ps.barFill, { width: `${pct}%`, backgroundColor: color || C.teal }]} />
+      <View style={[ps.barFill, { width: `${pct}%`, backgroundColor: color || C.gold }]} />
     </View>
   );
 }
 
-function AccountCard({ acct, onSync, onDisconnect }) {
+function AccountCard({ acct, onSync, onEdit, onDisconnect }) {
   const prog = PROGRAMS[acct.program] || {};
   const syncing = acct._syncing;
   const pointsLabel = prog.kind === "airline" ? "miles" : "points";
   const segLabel = prog.kind === "airline" ? "segments" : "nights";
   const segValue = prog.kind === "airline" ? acct.segments_ytd : acct.nights_ytd;
+  const hasBalance = acct.points_balance && acct.points_balance > 0;
 
   return (
     <View style={ps.card}>
@@ -83,23 +101,37 @@ function AccountCard({ acct, onSync, onDisconnect }) {
         <View style={{ flex: 1 }}>
           <Text style={ps.progName}>{prog.name || acct.program}</Text>
           {acct.member_name && <Text style={ps.memberName}>{acct.member_name}</Text>}
+          {acct.account_number && !acct.member_name && (
+            <Text style={ps.memberName}>#{acct.account_number}</Text>
+          )}
         </View>
         {acct.elite_status && (
           <View style={[ps.statusBadge, { borderColor: statusColor(acct.elite_status) }]}>
             <Text style={[ps.statusText, { color: statusColor(acct.elite_status) }]}>
-              {acct.elite_status}
+              {acct.elite_status.toUpperCase()}
             </Text>
           </View>
         )}
       </View>
 
-      {/* Balance */}
+      {/* Balance — show dashes with "Add balance" prompt if not yet synced */}
       <View style={ps.balanceRow}>
         <View style={ps.balanceBlock}>
-          <Text style={ps.balanceNum}>{fmt(acct.points_balance)}</Text>
-          <Text style={ps.balanceLabel}>{pointsLabel}</Text>
+          {hasBalance ? (
+            <>
+              <Text style={ps.balanceNum}>{fmt(acct.points_balance)}</Text>
+              <Text style={ps.balanceLabel}>{pointsLabel}</Text>
+            </>
+          ) : (
+            <>
+              <Text style={[ps.balanceNum, { color: C.mut, fontSize: 18 }]}>—</Text>
+              <TouchableOpacity onPress={() => onEdit(acct.program)}>
+                <Text style={ps.addBalanceHint}>Add balance →</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
-        {segValue != null && (
+        {segValue != null && segValue > 0 && (
           <View style={[ps.balanceBlock, { alignItems: "flex-end" }]}>
             <Text style={ps.balanceNum}>{fmt(segValue)}</Text>
             <Text style={ps.balanceLabel}>{segLabel} YTD</Text>
@@ -134,16 +166,14 @@ function AccountCard({ acct, onSync, onDisconnect }) {
       {/* Footer */}
       <View style={ps.cardFooter}>
         <Text style={ps.syncTime}>
-          {acct.last_synced ? `Synced ${relTime(acct.last_synced)}` : "Never synced"}
+          {acct.last_synced ? `Updated ${relTime(acct.last_synced)}` : "Add your balance"}
         </Text>
         <View style={ps.cardActions}>
-          <TouchableOpacity onPress={() => onSync(acct.program)} style={ps.actionBtn} disabled={syncing}>
-            {syncing
-              ? <ActivityIndicator size="small" color={C.teal} />
-              : <Text style={ps.actionBtnText}>↻ Sync</Text>}
+          <TouchableOpacity onPress={() => onEdit(acct.program)} style={ps.actionBtn} disabled={syncing}>
+            <Text style={ps.actionBtnText}>Edit</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => onDisconnect(acct.program)} style={[ps.actionBtn, ps.actionBtnDanger]}>
-            <Text style={[ps.actionBtnText, { color: C.coral }]}>Remove</Text>
+            <Text style={[ps.actionBtnText, { color: "#C97B6E" }]}>Remove</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -151,19 +181,48 @@ function AccountCard({ acct, onSync, onDisconnect }) {
   );
 }
 
-function ConnectModal({ visible, onClose, onConnect }) {
+// ---------------------------------------------------------------------------
+// Connect / Edit Modal — manual entry (no password required)
+// ---------------------------------------------------------------------------
+function ConnectModal({ visible, onClose, onConnect, editProgram, editData }) {
+  const isEdit = !!editProgram;
   const [program, setProgram] = useState(null);
-  const [login, setLogin] = useState("");
-  const [password, setPassword] = useState("");
+  const [memberNumber, setMemberNumber] = useState("");
+  const [memberName, setMemberName] = useState("");
+  const [eliteStatus, setEliteStatus] = useState("");
+  const [pointsBalance, setPointsBalance] = useState("");
+  const [nightsYtd, setNightsYtd] = useState("");
+  const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const reset = () => { setProgram(null); setLogin(""); setPassword(""); };
+  useEffect(() => {
+    if (editProgram) {
+      setProgram(editProgram);
+      setMemberNumber(editData?.account_number || "");
+      setMemberName(editData?.member_name || "");
+      setEliteStatus(editData?.elite_status || "");
+      setPointsBalance(editData?.points_balance ? String(editData.points_balance) : "");
+      setNightsYtd(editData?.nights_ytd ? String(editData.nights_ytd) : "");
+    }
+  }, [editProgram, editData]);
 
-  const handleConnect = async () => {
-    if (!program || !login || !password) return;
+  const reset = () => {
+    setProgram(null);
+    setMemberNumber(""); setMemberName(""); setEliteStatus("");
+    setPointsBalance(""); setNightsYtd(""); setShowStatusPicker(false);
+  };
+
+  const handleSubmit = async () => {
+    if (!program) return;
     setLoading(true);
     try {
-      await onConnect(program, login, password);
+      await onConnect(program, {
+        member_number: memberNumber || undefined,
+        member_name: memberName || undefined,
+        elite_status: eliteStatus || undefined,
+        points_balance: pointsBalance ? parseInt(pointsBalance.replace(/,/g, "")) : undefined,
+        nights_ytd: nightsYtd ? parseInt(nightsYtd) : undefined,
+      }, isEdit);
       reset();
       onClose();
     } catch (e) {
@@ -173,17 +232,19 @@ function ConnectModal({ visible, onClose, onConnect }) {
     }
   };
 
+  const tiers = program ? (STATUS_TIERS[program] || []) : [];
+
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { reset(); onClose(); }}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
       <SafeAreaView style={ps.modal}>
         <View style={ps.modalHeader}>
-          <Text style={ps.modalTitle}>Connect Loyalty Account</Text>
+          <Text style={ps.modalTitle}>{isEdit ? "Update Account" : "Connect Loyalty Account"}</Text>
           <TouchableOpacity onPress={() => { reset(); onClose(); }}>
             <Text style={ps.modalClose}>✕</Text>
           </TouchableOpacity>
         </View>
-        <ScrollView contentContainerStyle={ps.modalScroll}>
+        <ScrollView contentContainerStyle={ps.modalScroll} keyboardShouldPersistTaps="handled">
           {!program ? (
             <>
               <Text style={ps.modalSub}>Select a program to connect:</Text>
@@ -204,45 +265,97 @@ function ConnectModal({ visible, onClose, onConnect }) {
             </>
           ) : (
             <>
-              <TouchableOpacity onPress={() => setProgram(null)} style={ps.backLink}>
-                <Text style={ps.backLinkText}>‹ Back</Text>
-              </TouchableOpacity>
+              {!isEdit && (
+                <TouchableOpacity onPress={() => setProgram(null)} style={ps.backLink}>
+                  <Text style={ps.backLinkText}>‹ Back</Text>
+                </TouchableOpacity>
+              )}
               <View style={ps.selectedProg}>
                 <Text style={ps.selectedProgIcon}>{PROGRAMS[program]?.icon}</Text>
                 <Text style={ps.selectedProgName}>{PROGRAMS[program]?.name}</Text>
               </View>
-              <Text style={ps.fieldLabel}>Username / Member Number</Text>
+
+              {/* Status tier */}
+              <Text style={ps.fieldLabel}>ELITE STATUS</Text>
+              <TouchableOpacity
+                style={[ps.input, ps.statusSelector]}
+                onPress={() => setShowStatusPicker(!showStatusPicker)}
+              >
+                <Text style={eliteStatus ? ps.statusSelectorText : ps.statusSelectorPlaceholder}>
+                  {eliteStatus || "Select your status tier"}
+                </Text>
+                <Text style={{ color: C.gold }}>▾</Text>
+              </TouchableOpacity>
+              {showStatusPicker && (
+                <View style={ps.statusPickerList}>
+                  {tiers.map(tier => (
+                    <TouchableOpacity
+                      key={tier}
+                      style={[ps.statusPickerItem, eliteStatus === tier && ps.statusPickerItemActive]}
+                      onPress={() => { setEliteStatus(tier); setShowStatusPicker(false); }}
+                    >
+                      <Text style={[ps.statusPickerText, eliteStatus === tier && { color: statusColor(tier) }]}>
+                        {tier}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              {/* Member number */}
+              <Text style={ps.fieldLabel}>MEMBER NUMBER (optional)</Text>
               <TextInput
                 style={ps.input}
-                value={login}
-                onChangeText={setLogin}
-                placeholder="Email or member number"
+                value={memberNumber}
+                onChangeText={setMemberNumber}
+                placeholder="e.g. 123456789"
                 placeholderTextColor={C.mut}
                 autoCapitalize="none"
-                keyboardType="email-address"
+                keyboardType="default"
               />
-              <Text style={ps.fieldLabel}>Password</Text>
+
+              {/* Points balance */}
+              <Text style={ps.fieldLabel}>
+                {PROGRAMS[program]?.kind === "airline" ? "MILES BALANCE (optional)" : "POINTS BALANCE (optional)"}
+              </Text>
               <TextInput
                 style={ps.input}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Password"
+                value={pointsBalance}
+                onChangeText={setPointsBalance}
+                placeholder="e.g. 125000"
                 placeholderTextColor={C.mut}
-                secureTextEntry
+                keyboardType="numeric"
               />
-              <View style={ps.securityNote}>
-                <Text style={ps.securityNoteText}>
-                  🔒 Your credentials are encrypted in transit and used only to sync your balance via AwardWallet. Wingman never stores your password.
+
+              {/* Nights YTD (hotels only) */}
+              {PROGRAMS[program]?.kind === "hotel" && (
+                <>
+                  <Text style={ps.fieldLabel}>NIGHTS THIS YEAR (optional)</Text>
+                  <TextInput
+                    style={ps.input}
+                    value={nightsYtd}
+                    onChangeText={setNightsYtd}
+                    placeholder="e.g. 73"
+                    placeholderTextColor={C.mut}
+                    keyboardType="numeric"
+                  />
+                </>
+              )}
+
+              <View style={ps.privacyNote}>
+                <Text style={ps.privacyNoteText}>
+                  🔒 Your loyalty data stays on Wingman's servers and is never sold or shared with third parties.
                 </Text>
               </View>
+
               <TouchableOpacity
-                style={[ps.connectBtn, (!login || !password) && ps.connectBtnDisabled]}
-                onPress={handleConnect}
-                disabled={loading || !login || !password}
+                style={[ps.connectBtn, !program && ps.connectBtnDisabled]}
+                onPress={handleSubmit}
+                disabled={loading || !program}
               >
                 {loading
-                  ? <ActivityIndicator color="#fff" />
-                  : <Text style={ps.connectBtnText}>Connect {PROGRAMS[program]?.name}</Text>}
+                  ? <ActivityIndicator color="#000" />
+                  : <Text style={ps.connectBtnText}>{isEdit ? "Save Changes" : `Add ${PROGRAMS[program]?.name}`}</Text>}
               </TouchableOpacity>
             </>
           )}
@@ -261,6 +374,8 @@ export default function LoyaltyScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [editProgram, setEditProgram] = useState(null);
+  const [editData, setEditData] = useState(null);
   const [token, setToken] = useState(null);
 
   // Get auth token
@@ -286,31 +401,35 @@ export default function LoyaltyScreen({ navigation }) {
 
   useFocusEffect(useCallback(() => { fetchAccounts(); }, [fetchAccounts]));
 
-  const handleConnect = async (program, login, password) => {
-    const resp = await fetch(`${API_BASE}/loyalty/connect`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ program, login, password }),
-    });
-    const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error || "Connection failed");
+  // Connect new or update existing
+  const handleConnect = async (program, fields, isEdit) => {
+    if (isEdit) {
+      // PATCH to update existing account
+      const resp = await fetch(`${API_BASE}/loyalty/${program}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(fields),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || "Update failed");
+    } else {
+      // POST to connect new account
+      const resp = await fetch(`${API_BASE}/loyalty/connect`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ program, ...fields }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || "Connection failed");
+    }
     await fetchAccounts();
   };
 
-  const handleSync = async (program) => {
-    setAccounts(prev => prev.map(a => a.program === program ? { ...a, _syncing: true } : a));
-    try {
-      await fetch(`${API_BASE}/loyalty/sync`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ program }),
-      });
-      await new Promise(r => setTimeout(r, 3000)); // give backend time to sync
-      await fetchAccounts();
-    } catch (e) {
-      Alert.alert("Sync failed", e.message);
-    }
-    setAccounts(prev => prev.map(a => ({ ...a, _syncing: false })));
+  const handleEdit = (program) => {
+    const acct = accounts.find(a => a.program === program);
+    setEditProgram(program);
+    setEditData(acct);
+    setModalVisible(true);
   };
 
   const handleDisconnect = (program) => {
@@ -333,6 +452,12 @@ export default function LoyaltyScreen({ navigation }) {
     );
   };
 
+  const openAddModal = () => {
+    setEditProgram(null);
+    setEditData(null);
+    setModalVisible(true);
+  };
+
   // Total points summary
   const totalByKind = accounts.reduce((acc, a) => {
     const kind = PROGRAMS[a.program]?.kind || "other";
@@ -344,14 +469,14 @@ export default function LoyaltyScreen({ navigation }) {
     <SafeAreaView style={ps.app}>
       <ScrollView
         contentContainerStyle={g.scroll}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchAccounts(); }} tintColor={C.teal} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchAccounts(); }} tintColor={C.gold} />}
       >
         <BackBar nav={navigation} label="Loyalty Programs" />
 
         {/* Summary strip */}
         {accounts.length > 0 && (
           <View style={ps.summaryStrip}>
-            {Object.entries(totalByKind).map(([kind, total]) => (
+            {Object.entries(totalByKind).filter(([, v]) => v > 0).map(([kind, total]) => (
               <View key={kind} style={ps.summaryItem}>
                 <Text style={ps.summaryNum}>{fmt(total)}</Text>
                 <Text style={ps.summaryLabel}>{KIND_LABEL[kind] || kind} pts</Text>
@@ -366,38 +491,40 @@ export default function LoyaltyScreen({ navigation }) {
 
         {/* Connected accounts */}
         {loading ? (
-          <ActivityIndicator color={C.teal} style={{ marginTop: 40 }} />
+          <ActivityIndicator color={C.gold} style={{ marginTop: 40 }} />
         ) : accounts.length === 0 ? (
           <View style={ps.empty}>
             <Text style={ps.emptyIcon}>🏆</Text>
             <Text style={ps.emptyTitle}>No loyalty accounts yet</Text>
-            <Text style={ps.emptySub}>Connect your frequent flyer and hotel programs. Wingman will track your balance, elite status, and progress to the next tier — and factor it into every recommendation.</Text>
+            <Text style={ps.emptySub}>Add your frequent flyer and hotel programs. Wingman will factor your status into every recommendation — hotel upgrades, seat suggestions, and lounge access.</Text>
           </View>
         ) : (
           accounts.map(acct => (
             <AccountCard
               key={acct.program}
               acct={acct}
-              onSync={handleSync}
+              onEdit={handleEdit}
               onDisconnect={handleDisconnect}
             />
           ))
         )}
 
         {/* Add account button */}
-        <TouchableOpacity style={ps.addBtn} onPress={() => setModalVisible(true)}>
-          <Text style={ps.addBtnText}>+ Connect a Program</Text>
+        <TouchableOpacity style={ps.addBtn} onPress={openAddModal}>
+          <Text style={ps.addBtnText}>+ Add a Program</Text>
         </TouchableOpacity>
 
         <Text style={ps.footer}>
-          Balances sync every 6 hours via AwardWallet. Wingman uses your loyalty status to optimise hotel and flight recommendations.
+          Add your status and balance manually, or connect Gmail to auto-import from loyalty emails.
         </Text>
       </ScrollView>
 
       <ConnectModal
         visible={modalVisible}
-        onClose={() => setModalVisible(false)}
+        onClose={() => { setModalVisible(false); setEditProgram(null); setEditData(null); }}
         onConnect={handleConnect}
+        editProgram={editProgram}
+        editData={editData}
       />
     </SafeAreaView>
   );
@@ -412,29 +539,30 @@ const ps = StyleSheet.create({
   summaryItem: { alignItems: "center" },
   summaryNum: { color: C.ink, fontSize: 22, fontFamily: T.sansB },
   summaryLabel: { color: C.mut, fontSize: 10, marginTop: 3, fontFamily: T.sans, letterSpacing: 1 },
-  card: { backgroundColor: C.card, borderRadius: 12, marginHorizontal: 16, marginBottom: 14, padding: 16, borderWidth: 1, borderColor: C.line },
+  card: { backgroundColor: C.card, borderRadius: 16, marginHorizontal: 16, marginBottom: 14, padding: 18, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)" },
   cardHeader: { flexDirection: "row", alignItems: "center", marginBottom: 14 },
   icon: { fontSize: 28, marginRight: 12 },
   progName: { color: C.ink, fontSize: 16, fontFamily: T.sansB },
   memberName: { color: C.mut, fontSize: 12, marginTop: 2, fontFamily: T.sans },
-  statusBadge: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
-  statusText: { fontSize: 10, fontFamily: T.sansB, letterSpacing: 1 },
+  statusBadge: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  statusText: { fontSize: 10, fontFamily: T.sansB, letterSpacing: 1.5 },
   balanceRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 14 },
   balanceBlock: {},
   balanceNum: { color: C.ink, fontSize: 28, fontFamily: T.sansB, letterSpacing: -0.5 },
   balanceLabel: { color: C.mut, fontSize: 11, marginTop: 3, fontFamily: T.sans },
+  addBalanceHint: { color: C.gold, fontSize: 12, fontFamily: T.sansM, marginTop: 4 },
   progressSection: { marginBottom: 12 },
   progressHeader: { flexDirection: "row", justifyContent: "space-between", marginBottom: 6 },
   progressLabel: { color: C.mut, fontSize: 11, fontFamily: T.sans },
   barTrack: { height: 3, backgroundColor: C.line, borderRadius: 2 },
   barFill: { height: 3, borderRadius: 2 },
-  expiryRow: { backgroundColor: C.amber + "12", borderRadius: 8, padding: 10, marginBottom: 10, borderWidth: 1, borderColor: C.amber + "30" },
-  expiryText: { color: C.amber, fontSize: 12, fontFamily: T.sans },
+  expiryRow: { backgroundColor: "rgba(201,169,110,0.08)", borderRadius: 8, padding: 10, marginBottom: 10, borderWidth: 1, borderColor: "rgba(201,169,110,0.25)" },
+  expiryText: { color: C.gold, fontSize: 12, fontFamily: T.sans },
   cardFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderTopWidth: 0.5, borderTopColor: C.line, paddingTop: 12, marginTop: 6 },
   syncTime: { color: C.mut, fontSize: 11, fontFamily: T.sans },
   cardActions: { flexDirection: "row", gap: 8 },
   actionBtn: { borderWidth: 1, borderColor: C.line, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
-  actionBtnDanger: { borderColor: C.coral + "44" },
+  actionBtnDanger: { borderColor: "rgba(201,107,110,0.3)" },
   actionBtnText: { color: C.gold, fontSize: 12, fontFamily: T.sansM },
   empty: { alignItems: "center", paddingHorizontal: 32, paddingVertical: 40 },
   emptyIcon: { fontSize: 48, marginBottom: 16 },
@@ -448,23 +576,30 @@ const ps = StyleSheet.create({
   modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 20, borderBottomWidth: 1, borderBottomColor: C.line },
   modalTitle: { color: C.ink, fontSize: 18, fontFamily: T.sansB },
   modalClose: { color: C.mut, fontSize: 20 },
-  modalScroll: { padding: 20 },
+  modalScroll: { padding: 20, paddingBottom: 60 },
   modalSub: { color: C.mut, fontSize: 14, marginBottom: 20 },
   kindHeader: { color: C.mut, fontSize: 11, fontFamily: T.sansB, letterSpacing: 1, marginTop: 16, marginBottom: 8 },
-  progRow: { flexDirection: "row", alignItems: "center", backgroundColor: C.card, borderRadius: 12, padding: 14, marginBottom: 8 },
+  progRow: { flexDirection: "row", alignItems: "center", backgroundColor: C.card, borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: C.line },
   progRowIcon: { fontSize: 22, marginRight: 12 },
   progRowName: { flex: 1, color: C.ink, fontSize: 15 },
   progRowArrow: { color: C.mut, fontSize: 18 },
   backLink: { marginBottom: 16 },
-  backLinkText: { color: C.teal, fontSize: 15 },
+  backLinkText: { color: C.gold, fontSize: 15 },
   selectedProg: { flexDirection: "row", alignItems: "center", marginBottom: 24 },
   selectedProgIcon: { fontSize: 32, marginRight: 12 },
   selectedProgName: { color: C.ink, fontSize: 18, fontFamily: T.sansB },
-  fieldLabel: { color: C.mut, fontSize: 12, fontFamily: T.sansM, letterSpacing: 0.5, marginBottom: 6, marginTop: 16 },
+  fieldLabel: { color: C.mut, fontSize: 11, fontFamily: T.sansB, letterSpacing: 1.5, marginBottom: 8, marginTop: 20 },
   input: { backgroundColor: C.card, borderRadius: 12, padding: 14, color: C.ink, fontSize: 15, borderWidth: 1, borderColor: C.line },
-  securityNote: { backgroundColor: "#0F2A1A", borderRadius: 10, padding: 12, marginTop: 16 },
-  securityNoteText: { color: "#4ADE80", fontSize: 12, lineHeight: 18 },
-  connectBtn: { backgroundColor: C.teal, borderRadius: 14, padding: 16, alignItems: "center", marginTop: 24 },
+  statusSelector: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  statusSelectorText: { color: C.ink, fontSize: 15 },
+  statusSelectorPlaceholder: { color: C.mut, fontSize: 15 },
+  statusPickerList: { backgroundColor: C.card, borderRadius: 12, borderWidth: 1, borderColor: C.line, marginTop: 4, overflow: "hidden" },
+  statusPickerItem: { padding: 14, borderBottomWidth: 0.5, borderBottomColor: C.line },
+  statusPickerItemActive: { backgroundColor: "rgba(201,169,110,0.08)" },
+  statusPickerText: { color: C.ink, fontSize: 14 },
+  privacyNote: { backgroundColor: "rgba(201,169,110,0.06)", borderRadius: 10, padding: 12, marginTop: 20, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)" },
+  privacyNoteText: { color: C.mut, fontSize: 12, lineHeight: 18 },
+  connectBtn: { backgroundColor: C.gold, borderRadius: 14, padding: 16, alignItems: "center", marginTop: 24 },
   connectBtnDisabled: { opacity: 0.4 },
-  connectBtnText: { color: "#0A0E1C", fontSize: 15, fontFamily: T.sansB },
+  connectBtnText: { color: "#000000", fontSize: 15, fontFamily: T.sansB },
 });

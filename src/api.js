@@ -303,6 +303,12 @@ export const acceptCompanionInvite = (token) =>
   req("/companions/accept/" + token, { method: "POST" });
 // ─── LOYALTY ACCOUNTS ─────────────────────────────────────────────────────────
 export const getLoyaltyAccounts = () => req("/loyalty");
+export const connectLoyaltyAccount = (program, fields) =>
+  req("/loyalty/connect", { method: "POST", body: JSON.stringify({ program, ...fields }) });
+export const updateLoyaltyAccount = (program, fields) =>
+  req("/loyalty/" + program, { method: "PATCH", body: JSON.stringify(fields) });
+export const removeLoyaltyAccount = (program) =>
+  req("/loyalty/" + program, { method: "DELETE" });
 // ─── GROUND TRANSPORT ────────────────────────────────────────────────────────
 export const getGroundTransport = (iata, destination = null) =>
   req(`/ground-transport/${encodeURIComponent(iata)}${destination ? `?destination=${encodeURIComponent(destination)}` : ""}`);

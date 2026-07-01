@@ -269,7 +269,26 @@ function Root() {
   return (
     <>
     <StatusBar style={isDark ? "light" : "dark"} />
-    <NavigationContainer ref={navRef} theme={navTheme} key={isDark ? "dark" : "light"}>
+    <NavigationContainer
+        ref={navRef}
+        theme={navTheme}
+        key={isDark ? "dark" : "light"}
+        linking={{
+          prefixes: [Linking.createURL("/"), "wingman://"],
+          config: {
+            screens: {
+              MainTabs: {
+                screens: {
+                  Home: "home",
+                  Concierge: "concierge",
+                },
+              },
+              Connections: "connections",
+              TripDetail: "trip/:tripId",
+            },
+          },
+        }}
+      >
       <Stack.Navigator
         screenOptions={{
           headerShown: false,

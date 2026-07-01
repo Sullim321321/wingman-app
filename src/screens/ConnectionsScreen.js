@@ -9,7 +9,7 @@ import {
 import * as Calendar from "expo-calendar";
 import { C, T } from "../theme";
 import { BackBar, Btn, SerifText, g } from "../components";
-import { getMe, getGmailConnectUrl, triggerGmailScan, scanEmailBody } from "../api";
+import { getMe, getGmailConnectUrl, triggerGmailScan, scanEmailBody, syncCalendar } from "../api";
 
 // ─── Hairline icon labels for each channel ────────────────────────────────────
 const CHANNEL_ICONS = {
@@ -173,13 +173,51 @@ export default function ConnectionsScreen({ navigation }) {
     }
   };
 
+  // ── Helper: read calendar events and sync travel signals to backend ──────
+  const readAndSyncCalendar = async () => {
+    try {
+      const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
+      const now = new Date();
+      const future = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000); // 90 days ahead
+      const past   = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); // 30 days back
+      const calIds = calendars.map(c => c.id);
+      const events = await Calendar.getEventsAsync(calIds, past, future);
+      // Filter to travel-relevant events before sending
+      const travelRe = /flight|hotel|check.?in|check.?out|airport|depart|arrive|booking|reservation|itinerary|transit|train|cruise|trip|travel/i;
+      const travelEvents = events
+        .filter(ev => travelRe.test(`${ev.title || ""} ${ev.notes || ""} ${ev.location || ""}`))
+        .map(ev => ({
+          title:     ev.title,
+          notes:     ev.notes,
+          location:  ev.location,
+          startDate: ev.startDate,
+          endDate:   ev.endDate,
+        }));
+      if (travelEvents.length > 0) {
+        const result = await syncCalendar(travelEvents);
+        return result.signals_created || 0;
+      }
+      return 0;
+    } catch (e) {
+      console.warn("[calendar sync]", e.message);
+      return 0;
+    }
+  };
+
   const connectAppleCalendar = async () => {
     setCalGranting(true);
     try {
       const { status } = await Calendar.requestCalendarPermissionsAsync();
       if (status === "granted") {
         setAppleCalGranted(true);
-        Alert.alert("Apple Calendar connected", "Wingman will now read your calendar to detect travel events and pre-fill trip dates.");
+        // Immediately read and sync travel events
+        const count = await readAndSyncCalendar();
+        Alert.alert(
+          "Apple Calendar connected",
+          count > 0
+            ? `Wingman found ${count} travel event${count !== 1 ? "s" : ""} in your calendar and is now monitoring them.`
+            : "Wingman is now watching your calendar. Travel events will appear automatically as you add them."
+        );
       } else {
         Alert.alert("Permission denied", "Enable Calendar access in Settings → Privacy & Security → Calendars → Wingman.");
       }
@@ -313,18 +351,44 @@ export default function ConnectionsScreen({ navigation }) {
           <ConnRow
             iconKey="whatsapp"
             title="WhatsApp"
-            sub="Read group-chat trip plans and share disruption alerts — arriving in v2"
-            right={<View style={s.soonBadge}><Text style={s.soonT}>SOON</Text></View>}
-            disabled
+            sub="Share a booking confirmation from WhatsApp directly to Wingman"
+            onPress={() => {
+              Alert.alert(
+                "Import from WhatsApp",
+                "To import a trip from WhatsApp:\n\n1. Open the booking confirmation message\n2. Tap and hold the message \u2192 Share\n3. Choose Wingman from the share sheet\n\nOr forward the text to:\nimport@wingmantravel.app",
+                [
+                  {
+                    text: "Open WhatsApp",
+                    onPress: () => Linking.openURL("whatsapp://").catch(() =>
+                      Alert.alert("WhatsApp not installed", "Install WhatsApp to use this feature.")
+                    )
+                  },
+                  { text: "Got it", style: "cancel" },
+                ]
+              );
+            }}
+            right={<View style={s.connectBtn}><Text style={s.connectBtnT}>How to</Text></View>}
           />
 
           {/* iMessage */}
           <ConnRow
             iconKey="imessage"
             title="iMessage"
-            sub="Detect delay texts and forward itineraries — arriving in v2"
-            right={<View style={s.soonBadge}><Text style={s.soonT}>SOON</Text></View>}
-            disabled
+            sub="Forward a booking confirmation or flight text from iMessage to Wingman"
+            onPress={() => {
+              Alert.alert(
+                "Import from iMessage",
+                "To import a trip from iMessage:\n\n1. Open the booking confirmation message\n2. Tap and hold the message \u2192 More\n3. Forward to import@wingmantravel.app\n\nWingman will extract your trip automatically.",
+                [
+                  {
+                    text: "Open Messages",
+                    onPress: () => Linking.openURL("sms:").catch(() => {})
+                  },
+                  { text: "Got it", style: "cancel" },
+                ]
+              );
+            }}
+            right={<View style={s.connectBtn}><Text style={s.connectBtnT}>How to</Text></View>}
             last
           />
         </View>

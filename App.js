@@ -97,12 +97,12 @@ const TAB_ICONS = {
   Insights:  { active: "◈", inactive: "◇" },
 };
 
-// Tab labels — wide-tracked all-caps
+// Tab labels — wide-tracked all-caps (kept short to prevent bleed)
 const TAB_LABELS = {
   Home:      "HOME",
   Trips:     "TRIPS",
   Alerts:    "ALERTS",
-  Concierge: "CONCIERGE",
+  Concierge: "CHAT",
   Insights:  "INSIGHTS",
 };
 
@@ -138,8 +138,9 @@ function Tabs() {
         tabBarLabelStyle: {
           fontSize:      9,
           fontFamily:    T.sansB,
-          letterSpacing: T.trackWide,
+          letterSpacing: 1.2,
           marginTop:     2,
+          numberOfLines: 1,
         },
         tabBarLabel: TAB_LABELS[route.name] || route.name.toUpperCase(),
         tabBarIcon: ({ focused }) => <TabIcon name={route.name} focused={focused} />,

@@ -63,6 +63,7 @@ import DataSourcesScreen from "./src/screens/DataSourcesScreen";
 import AutonomySettingsScreen from "./src/screens/AutonomySettingsScreen";
 import InsightsScreen from "./src/screens/InsightsScreen";
 import ProfileSetupScreen from "./src/screens/ProfileSetupScreen";
+import WelcomeScreen from "./src/screens/WelcomeScreen";
 import WingmanWrappedScreen from "./src/screens/WingmanWrappedScreen";
 import CompensationScreen from "./src/screens/CompensationScreen";
 import UpgradeBidScreen from "./src/screens/UpgradeBidScreen";
@@ -321,6 +322,7 @@ function Root() {
             <Stack.Screen name="Detour"       component={DetourScreen} />
             <Stack.Screen name="PlanDone"     component={PlanDoneScreen}     options={{ gestureEnabled: false }} />
             <Stack.Screen name="Settings"     component={SettingsScreen} />
+            <Stack.Screen name="Welcome"      component={WelcomeScreen} />
             <Stack.Screen name="Connections"  component={ConnectionsScreen} />
             <Stack.Screen name="Signal"       component={SignalScreen} />
             <Stack.Screen name="AddTrip"      component={AddTripScreen} />

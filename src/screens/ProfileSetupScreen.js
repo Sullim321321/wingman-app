@@ -38,8 +38,9 @@ export default function ProfileSetupScreen({ navigation }) {
     }).catch(e => console.warn("[ProfileSetup] updateProfile:", e.message));
     updateLocale({ locale: "en", currency: "USD" })
       .catch(e => console.warn("[ProfileSetup] updateLocale:", e.message));
-    // Reset the stack so the user lands on Tabs and can't swipe back to setup
-    navigation.reset({ index: 0, routes: [{ name: "Tabs" }] });
+    // Navigate to Welcome screen so new users can add their first trip
+    // (Welcome marks itself seen and then resets to Tabs)
+    navigation.replace("Welcome", { firstName: firstName.trim() });
   };
 
   return (

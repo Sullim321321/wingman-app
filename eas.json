@@ -15,7 +15,6 @@
     },
     "production": {
       "autoIncrement": true,
-      "autoSubmit": true,
       "cache": {
         "disabled": true
       },

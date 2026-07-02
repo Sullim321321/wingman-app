@@ -395,3 +395,15 @@ export const savePassengerProfile = (body) =>
 export const renameUnknownTrips = () =>
   req("/trips/rename-unknown", { method: "POST" });
 
+// ── Cascade Downstream Notifications ─────────────────────────────────────────
+export const notifyHotel = (tripId, legId, delayMinutes, hotelPhone) =>
+  req(`/trips/${tripId}/cascade/hotel-notify`, {
+    method: "POST",
+    body: JSON.stringify({ leg_id: legId, delay_minutes: delayMinutes, hotel_phone: hotelPhone }),
+  });
+
+export const notifyRestaurant = (tripId, legId, delayMinutes, restaurantPhone) =>
+  req(`/trips/${tripId}/cascade/restaurant-reschedule`, {
+    method: "POST",
+    body: JSON.stringify({ leg_id: legId, delay_minutes: delayMinutes, restaurant_phone: restaurantPhone }),
+  });

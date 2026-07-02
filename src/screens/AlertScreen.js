@@ -9,6 +9,7 @@ import { Btn, BackBar, SerifText, useCountUp, success, g } from "../components";
 import {
   getPrediction, getTrips,
   getRescueOptions, acceptRescue, rejectRescue,
+  notifyHotel, notifyRestaurant,
 } from "../api";
 import { getCachedAlerts } from "../offlineCache";
 
@@ -179,6 +180,10 @@ export default function AlertScreen({ navigation, route }) {
   // Accept/reject state
   const [accepting, setAccepting] = useState(false);
 
+  // Downstream notification state — tracks per-leg sending/done
+  const [notifySending, setNotifySending] = useState({});
+  const [notifyDone, setNotifyDone] = useState({});
+
   useEffect(() => {
     let alive = true;
 
@@ -280,6 +285,22 @@ export default function AlertScreen({ navigation, route }) {
       ? `Approve: redeem ${formatPoints(selectedOption.cost_points)} · book ${selectedOption.flight} ${dep}→${arr} · cancel ${flightLabel}`
       : `Approve: rebook ${selectedOption.flight} ${dep}→${arr} · ${selectedOption.cost_usd === 0 ? "no charge" : formatMoney(selectedOption.cost_usd)} · cancel ${flightLabel}`
     : `Confirm: book alternative · cancel ${flightLabel} · update hotel`;
+
+  // ── Downstream notification handler ──────────────────────────────────────
+  const handleNotify = async (leg, delayMins) => {
+    if (!tripId) return;
+    setNotifySending(prev => ({ ...prev, [leg.id]: true }));
+    try {
+      const isHotel = leg.type === "hotel" || leg.type === "accommodation";
+      const fn = isHotel ? notifyHotel : notifyRestaurant;
+      const result = await fn(tripId, leg.id, delayMins || paramDelay, null);
+      setNotifyDone(prev => ({ ...prev, [leg.id]: result?.message_drafted || "Notification sent." }));
+    } catch (e) {
+      setNotifyDone(prev => ({ ...prev, [leg.id]: "Could not send — copy the message from Concierge." }));
+    } finally {
+      setNotifySending(prev => ({ ...prev, [leg.id]: false }));
+    }
+  };
 
   const handleAccept = async () => {
     if (!selectedOption) return;
@@ -473,6 +494,52 @@ export default function AlertScreen({ navigation, route }) {
           </>
         )}
 
+        {/* ── Also Affected — downstream notification buttons ───────────────────────── */}
+        {rescueData?.downstream_legs_detail?.length > 0 && (
+          <>
+            <Text style={g.sectionT}>ALSO AFFECTED</Text>
+            <Text style={s.rescueNote}>
+              Wingman will draft and send a notification to each affected reservation on your behalf.
+            </Text>
+            {rescueData.downstream_legs_detail.map((leg) => {
+              const isDone = !!notifyDone[leg.id];
+              const isSending = !!notifySending[leg.id];
+              const legLabel = leg.type === "hotel" || leg.type === "accommodation"
+                ? "Hotel"
+                : leg.type === "restaurant" || leg.type === "dining"
+                  ? "Restaurant"
+                  : "Reservation";
+              const legName = leg.name || leg.destination || legLabel;
+              const legTime = leg.departs_at
+                ? new Date(leg.departs_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+                : null;
+              return (
+                <View key={leg.id} style={s.notifyCard}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.notifyCardLabel}>{legLabel.toUpperCase()}</Text>
+                    <Text style={s.notifyCardName}>{legName}</Text>
+                    {legTime && <Text style={s.notifyCardMeta}>Check-in / arrival: {legTime}</Text>}
+                    {isDone && (
+                      <Text style={s.notifyCardDraft} numberOfLines={3}>
+                        {notifyDone[leg.id]}
+                      </Text>
+                    )}
+                  </View>
+                  <Pressable
+                    style={[s.notifyBtn, isDone && s.notifyBtnDone]}
+                    onPress={() => !isDone && handleNotify(leg, paramDelay)}
+                    disabled={isSending || isDone}
+                  >
+                    <Text style={[s.notifyBtnText, isDone && { color: C.gold }]}>
+                      {isSending ? "Sending…" : isDone ? "Notified ✓" : "Notify"}
+                    </Text>
+                  </Pressable>
+                </View>
+              );
+            })}
+          </>
+        )}
+
         {/* ── Confirm strip ───────────────────────────────────────────────── */}
         <View style={s.sticky}>
           {selectedOption && (
@@ -628,6 +695,24 @@ const s = StyleSheet.create({
   sum: { color: C.mut, fontSize: 13, textAlign: "center", marginBottom: 12, lineHeight: 19 },
   declineBtn: { marginTop: 10, paddingVertical: 12, alignItems: "center" },
   declineText: { color: C.mut, fontSize: 13, fontFamily: T.sansM },
+
+  // Downstream notify cards
+  notifyCard: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    backgroundColor: C.card, borderRadius: 12, borderWidth: 1, borderColor: C.line,
+    padding: 14, marginBottom: 10,
+  },
+  notifyCardLabel: { color: C.gold, fontSize: 9, fontFamily: T.sansB, letterSpacing: 1.5, marginBottom: 2 },
+  notifyCardName: { color: C.ink, fontSize: 14, fontFamily: T.sansB },
+  notifyCardMeta: { color: C.mut, fontSize: 12, marginTop: 2 },
+  notifyCardDraft: { color: C.mut, fontSize: 11, lineHeight: 16, marginTop: 6, fontStyle: "italic" },
+  notifyBtn: {
+    borderRadius: 10, borderWidth: 1, borderColor: "rgba(201,169,110,0.4)",
+    backgroundColor: "rgba(201,169,110,0.08)",
+    paddingHorizontal: 14, paddingVertical: 8,
+  },
+  notifyBtnDone: { borderColor: "rgba(100,200,140,0.4)", backgroundColor: "rgba(100,200,140,0.08)" },
+  notifyBtnText: { color: C.gold, fontSize: 13, fontFamily: T.sansB },
 
   // Empty state
   emptyWrap: { alignItems: "center", paddingTop: 60, paddingHorizontal: 32 },

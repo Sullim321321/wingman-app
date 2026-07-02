@@ -159,10 +159,6 @@ export const getTsaWait = (airport) => {
 export const searchAwards = ({ origin, destination, date, cabin = 'economy' }) =>
   req(`/awards/search?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&date=${encodeURIComponent(date)}&cabin=${encodeURIComponent(cabin)}`);
 
-// Gmail scan with pasted email body
-export const scanEmailBody = (emailBody, source = 'manual') =>
-  req('/auth/gmail/scan', { method: 'POST', body: JSON.stringify({ emailBody, source }) });
-
 // Duffel flight search + booking
 export const searchFlights = (body) =>
   req("/flights/search", { method: "POST", body: JSON.stringify(body) });

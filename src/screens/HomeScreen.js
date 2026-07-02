@@ -1002,18 +1002,26 @@ export default function HomeScreen({ navigation }) {
             )}
 
             {/* ── Trip list or empty state ────────────────────────────────── */}
-            {trips.length === 0 ? (
-              <EmptyState navigation={navigation} />
-            ) : (
-              <>
-                <Text style={g.sectionT}>YOUR TRIPS</Text>
-                {trips.map(trip => (
-                  <TripCard key={trip.id} trip={trip} onDelete={handleDelete} navigation={navigation} />
-                ))}
-                <Btn title="+ Add a trip" onPress={() => navigation.navigate("AddTrip")} style={{ marginTop: 4 }} />
-                <Btn title="Import from email" kind="ghost" onPress={() => navigation.navigate("Connections")} style={{ marginTop: 8 }} />
-              </>
-            )}
+            {(() => {
+              const CARRIER_ONLY = /^(United Airlines|Delta Air Lines|American Airlines|British Airways|Lufthansa|Air France|Emirates|Qantas|Southwest Airlines|JetBlue|Alaska Airlines|Spirit Airlines|Frontier Airlines|Ryanair|easyJet|Wizz Air|Turkish Airlines|Singapore Airlines|Cathay Pacific|Air Canada|KLM|Iberia|Virgin Atlantic|Air New Zealand|Etihad Airways) Flight$/i;
+              const visibleTrips = trips.filter(t => {
+                if (!t.title || t.title === "Unknown Trip" || t.title === "Unknown") return false;
+                if (CARRIER_ONLY.test(t.title.trim())) return false;
+                if ((t.legs || []).length === 0) return false;
+                return true;
+              });
+              if (visibleTrips.length === 0) return <EmptyState navigation={navigation} />;
+              return (
+                <>
+                  <Text style={g.sectionT}>YOUR TRIPS</Text>
+                  {visibleTrips.map(trip => (
+                    <TripCard key={trip.id} trip={trip} onDelete={handleDelete} navigation={navigation} />
+                  ))}
+                  <Btn title="+ Add a trip" onPress={() => navigation.navigate("AddTrip")} style={{ marginTop: 4 }} />
+                  <Btn title="Import from email" kind="ghost" onPress={() => navigation.navigate("Connections")} style={{ marginTop: 8 }} />
+                </>
+              );
+            })()}
 
             {/* ── Live monitoring row ─────────────────────────────────────── */}
             <Text style={g.sectionT}>LIVE MONITORING</Text>

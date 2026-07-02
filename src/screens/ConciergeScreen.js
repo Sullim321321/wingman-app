@@ -243,9 +243,16 @@ export default function ConciergeScreen({ route }) {
     }
   };
 
-  // Only show trips with real names in the tab row — hide Unknown Trip placeholders
+  // Only show trips with real names and at least one leg in the tab row
+  const CARRIER_ONLY_RE = /^(United Airlines|Delta Air Lines|American Airlines|British Airways|Lufthansa|Air France|Emirates|Qantas|Southwest Airlines|JetBlue|Alaska Airlines|Spirit Airlines|Frontier Airlines|Ryanair|easyJet|Wizz Air|Turkish Airlines|Singapore Airlines|Cathay Pacific|Air Canada|KLM|Iberia|Virgin Atlantic|Air New Zealand|Etihad Airways) Flight$/i;
   const upcomingTrips = trips
-    .filter(t => (t.status === "upcoming" || t.status === "active") && t.title && t.title !== "Unknown Trip" && t.title !== "Unknown")
+    .filter(t => {
+      if (!t.title || t.title === "Unknown Trip" || t.title === "Unknown") return false;
+      if (CARRIER_ONLY_RE.test(t.title.trim())) return false;
+      const legs = t.legs || [];
+      if (legs.length === 0) return false; // no legs — skip
+      return true;
+    })
     .slice(0, 5);
   const hasUserMessages = messages.some(m => m.role === "user");
   const lastAiReply = [...messages].reverse().find(m => m.role === "assistant" && m.content !== WELCOME)?.content || null;
@@ -390,15 +397,29 @@ export default function ConciergeScreen({ route }) {
 
       {upcomingTrips.length > 1 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.threadRow}>
-          {upcomingTrips.map(t => (
-            <Pressable
-              key={t.id}
-              style={[s.threadChip, activeTripId === t.id && s.threadChipActive]}
-              onPress={() => setActiveTripId(t.id)}
-            >
-              <Text style={[s.threadChipT, activeTripId === t.id && s.threadChipTActive]} numberOfLines={1}>{t.title}</Text>
-            </Pressable>
-          ))}
+          {upcomingTrips.map(t => {
+            const firstFlight = (t.legs || []).find(l => l.type === "flight");
+            const route = firstFlight?.origin && firstFlight?.destination
+              ? `${firstFlight.origin} → ${firstFlight.destination}`
+              : null;
+            const depDate = firstFlight?.departs_at
+              ? new Date(firstFlight.departs_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+              : null;
+            return (
+              <Pressable
+                key={t.id}
+                style={[s.threadChip, activeTripId === t.id && s.threadChipActive]}
+                onPress={() => setActiveTripId(t.id)}
+              >
+                <Text style={[s.threadChipT, activeTripId === t.id && s.threadChipTActive]} numberOfLines={1}>{t.title}</Text>
+                {(route || depDate) && (
+                  <Text style={[s.threadChipSub, activeTripId === t.id && s.threadChipSubActive]} numberOfLines={1}>
+                    {route || depDate}
+                  </Text>
+                )}
+              </Pressable>
+            );
+          })}
         </ScrollView>
       )}
 
@@ -493,6 +514,8 @@ const s = StyleSheet.create({
   threadChipActive: { borderColor: C.gold, backgroundColor: C.gold + "18" },
   threadChipT: { color: C.mut, fontSize: 12, fontFamily: T.sansM },
   threadChipTActive: { color: C.gold },
+  threadChipSub: { color: C.mut, fontSize: 10, fontFamily: T.sans, marginTop: 2, opacity: 0.7 },
+  threadChipSubActive: { color: C.gold, opacity: 0.8 },
   list: { paddingHorizontal: 16, paddingBottom: 8, paddingTop: 4 },
   bubble:     { marginBottom: 14, maxWidth: "86%" },
   userBubble: {

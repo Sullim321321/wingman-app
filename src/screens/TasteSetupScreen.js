@@ -1,11 +1,11 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, TouchableOpacity,
   StyleSheet, Animated, Dimensions,
 } from "react-native";
 import { C, T } from "../theme";
 import { Btn, tap } from "../components";
-import { updateProfile } from "../api";
+import { updateProfile, getMe } from "../api";
 
 const { width } = Dimensions.get("window");
 
@@ -244,7 +244,20 @@ export default function TasteSetupScreen({ navigation, route }) {
   const [seatPrefs, setSeatPrefs] = useState([]);
   const [foodPrefs, setFoodPrefs] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(!!fromSettings);
   const slideAnim = useRef(new Animated.Value(0)).current;
+
+  // When opened from Settings, pre-load existing saved preferences
+  useEffect(() => {
+    if (!fromSettings) return;
+    getMe().then(data => {
+      const prefs = data?.preferences || {};
+      if (prefs.editorial_sources?.length) setSources(prefs.editorial_sources);
+      if (prefs.hotel_prefs?.length) setHotelPrefs(prefs.hotel_prefs);
+      if (prefs.seat_prefs?.length) setSeatPrefs(prefs.seat_prefs);
+      if (prefs.food_prefs?.length) setFoodPrefs(prefs.food_prefs);
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, [fromSettings]);
 
   function toggleItem(list, setList, id) {
     setList(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -283,6 +296,16 @@ export default function TasteSetupScreen({ navigation, route }) {
   }
 
   const isLast = step === 4;
+
+  if (loading) {
+    return (
+      <SafeAreaView style={s.safe}>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <Text style={{ color: C.mut, fontFamily: T.sans, fontSize: 14 }}>Loading your preferences…</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={s.safe}>

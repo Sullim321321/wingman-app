@@ -903,6 +903,18 @@ export default function HomeScreen({ navigation }) {
                     >
                       <Text style={s.briefingCTAT}>Ask Wingman →</Text>
                     </Pressable>
+                    {briefing.flight.origin && (
+                      <Pressable
+                        style={s.briefingGroundBtn}
+                        onPress={() => navigation.navigate("AirportNavigation", {
+                          iata: briefing.flight.origin,
+                          gate: briefing.live_status?.gate || null,
+                          flightInfo: `${briefing.flight.carrier}${briefing.flight.flight_number}`,
+                        })}
+                      >
+                        <Text style={s.briefingGroundBtnT}>Lounges & gates</Text>
+                      </Pressable>
+                    )}
                     {briefing.flight.destination && (
                       <Pressable
                         style={s.briefingGroundBtn}
@@ -911,7 +923,7 @@ export default function HomeScreen({ navigation }) {
                           city: briefing.flight.destination,
                         })}
                       >
-                        <Text style={s.briefingGroundBtnT}>🚆 Ground transport</Text>
+                        <Text style={s.briefingGroundBtnT}>Ground transport</Text>
                       </Pressable>
                     )}
                   </View>

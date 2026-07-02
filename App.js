@@ -127,12 +127,13 @@ function Tabs() {
         tabBarActiveTintColor:   TC.gold,
         tabBarInactiveTintColor: TC.mut,
         tabBarStyle: {
-          backgroundColor: TC.bg,
+          backgroundColor: TC.glassTab || TC.bg,
           borderTopColor:  TC.line,
-          borderTopWidth:  0.5,
+          borderTopWidth:  StyleSheet.hairlineWidth,
           height: 88,
           paddingTop: 10,
           paddingBottom: 8,
+          elevation: 0,
         },
         tabBarLabelStyle: {
           fontSize:      9,

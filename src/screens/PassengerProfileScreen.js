@@ -17,6 +17,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { C, T } from "../theme";
 import { getPassengerProfile, savePassengerProfile } from "../api";
 
+// expo-image-picker is added in the next build — graceful fallback if not yet available
+let ImagePicker = null;
+try { ImagePicker = require("expo-image-picker"); } catch {}
+
 // ── Helpers ───────────────────────────────────────────────────
 const GENDERS = ["Male", "Female", "Non-binary", "Prefer not to say"];
 
@@ -116,14 +120,16 @@ export default function PassengerProfileScreen({ navigation }) {
 
   useEffect(() => {
     getPassengerProfile()
-      .then(p => {
+      .then(res => {
+        // Server returns { passenger_profile: { given_name, family_name, ... } }
+        const p = res?.passenger_profile || res;
         if (!p) return;
-        setFirstName(p.first_name || "");
-        setLastName(p.last_name || "");
-        setDob(p.dob || "");
+        setFirstName(p.given_name || p.first_name || "");
+        setLastName(p.family_name || p.last_name || "");
+        setDob(p.born_on || p.dob || "");
         setGender(p.gender || "");
         setPhone(p.phone || "");
-        if (p.passport_masked) {
+        if (p.has_passport || p.passport_masked) {
           setPassportMasked(true);
           setHasPassport(true);
         }
@@ -256,6 +262,50 @@ export default function PassengerProfileScreen({ navigation }) {
         {/* Section: Passport (optional) */}
         <Text style={s.sectionLabel}>PASSPORT  <Text style={s.optionalTag}>OPTIONAL</Text></Text>
         <View style={s.card}>
+          {/* Scan ID button */}
+          <Pressable
+            style={s.scanBtn}
+            onPress={async () => {
+              if (!ImagePicker) {
+                Alert.alert(
+                  "Coming soon",
+                  "Passport scanning will be available in the next app update. For now, enter your details manually below."
+                );
+                return;
+              }
+              const { status } = await ImagePicker.requestCameraPermissionsAsync();
+              if (status !== "granted") {
+                Alert.alert("Camera access needed", "Please allow camera access in Settings to scan your passport.");
+                return;
+              }
+              const result = await ImagePicker.launchCameraAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                quality: 0.9,
+                allowsEditing: false,
+              });
+              if (!result.canceled && result.assets?.[0]) {
+                Alert.alert(
+                  "Passport photo captured",
+                  "Wingman will extract your details from the photo. This feature is being processed — please verify the fields below after they populate."
+                );
+                // OCR extraction will be wired in the next server update
+              }
+            }}
+          >
+            <Text style={s.scanBtnIcon}>  </Text>
+            <View style={{ flex: 1 }}>
+              <Text style={s.scanBtnT}>Scan ID / Passport</Text>
+              <Text style={s.scanBtnSub}>Take a photo to auto-fill your details</Text>
+            </View>
+            <Text style={s.scanBtnArrow}>›</Text>
+          </Pressable>
+
+          <View style={s.scanDivider}>
+            <View style={s.scanDividerLine} />
+            <Text style={s.scanDividerT}>OR ENTER MANUALLY</Text>
+            <View style={s.scanDividerLine} />
+          </View>
+
           <Pressable
             style={s.passportToggleRow}
             onPress={() => { setHasPassport(!hasPassport); setPassportMasked(false); }}
@@ -384,4 +434,14 @@ const s = StyleSheet.create({
   saveBtnT:        { color: C.bg, fontSize: 15, fontFamily: T.sansB },
 
   footNote: { color: C.mut, fontSize: 11, fontFamily: T.sans, lineHeight: 17, textAlign: "center", marginBottom: 8 },
+
+  // Scan ID button
+  scanBtn:      { flexDirection: "row", alignItems: "center", padding: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: C.line, backgroundColor: C.gold + "0A" },
+  scanBtnIcon:  { fontSize: 22, width: 32, textAlign: "center" },
+  scanBtnT:     { color: C.gold, fontSize: 14, fontFamily: T.sansM, marginBottom: 2 },
+  scanBtnSub:   { color: C.mut, fontSize: 12, fontFamily: T.sans },
+  scanBtnArrow: { color: C.gold, fontSize: 20, fontFamily: T.sansM },
+  scanDivider:  { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14, paddingVertical: 10 },
+  scanDividerLine: { flex: 1, height: 0.5, backgroundColor: C.line },
+  scanDividerT: { color: C.mut, fontSize: 9, fontFamily: T.sansB, letterSpacing: 1.2 },
 });

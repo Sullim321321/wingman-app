@@ -1,4 +1,4 @@
-// ConnectionsScreen — Wingman
+// ConnectionsScreen.js — multi-account Gmail/Calendar support
 // Warm espresso palette + champagne gold + DM Sans
 
 import React, { useState, useEffect, useRef } from "react";
@@ -8,10 +8,12 @@ import {
 } from "react-native";
 import * as Calendar from "expo-calendar";
 import { C, T } from "../theme";
-import { BackBar, Btn, SerifText, g } from "../components";
-import { getMe, getGmailConnectUrl, triggerGmailScan, disconnectGmail, scanEmailBody, syncCalendar } from "../api";
+import { BackBar, Btn, g } from "../components";
+import {
+  getMe, getGmailConnectUrl, triggerGmailScan,
+  disconnectGmail, disconnectGmailAccount, scanEmailBody, syncCalendar,
+} from "../api";
 
-// ─── Hairline icon labels for each channel ────────────────────────────────────
 const CHANNEL_ICONS = {
   gmail:     { char: "@",  bg: C.gold + "12" },
   calendar:  { char: "#",  bg: C.gold + "12" },
@@ -25,7 +27,6 @@ const CHANNEL_ICONS = {
 
 const FORWARD_EMAIL = "import@wingmantravel.app";
 
-// ─── Feature bullet ───────────────────────────────────────────────────────────
 function Feat({ ic, t, color }) {
   return (
     <View style={g.feat}>
@@ -37,7 +38,6 @@ function Feat({ ic, t, color }) {
   );
 }
 
-// ─── Connection row ───────────────────────────────────────────────────────────
 function ConnRow({ iconKey, title, sub, right, onPress, disabled, last }) {
   const icon = CHANNEL_ICONS[iconKey] || { char: "·", bg: C.card2 };
   return (
@@ -58,9 +58,35 @@ function ConnRow({ iconKey, title, sub, right, onPress, disabled, last }) {
   );
 }
 
-// ─── Main screen ──────────────────────────────────────────────────────────────
+// ── Connected account row (for each Google account) ──────────────────────────
+function AccountRow({ account, onDisconnect, onRescan, scanning, last }) {
+  const label = account.label || account.account_email || "Google Account";
+  return (
+    <View style={[s.accountRow, last && { borderBottomWidth: 0 }]}>
+      <View style={[s.iconBox, { backgroundColor: C.gold + "12" }]}>
+        <Text style={{ fontSize: 14, color: C.gold, fontFamily: T.sansB }}>@</Text>
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={s.rowT} numberOfLines={1}>{label}</Text>
+        <Text style={s.rowS}>Connected — scanning for bookings</Text>
+      </View>
+      <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+        <Pressable style={s.rescanBtn} onPress={onRescan} disabled={scanning}>
+          {scanning
+            ? <ActivityIndicator color={C.gold} size="small" />
+            : <Text style={s.rescanT}>Re-scan</Text>}
+        </Pressable>
+        <Pressable style={s.disconnectBtn} onPress={onDisconnect}>
+          <Text style={s.disconnectT}>✕</Text>
+        </Pressable>
+        <View style={s.connectedBadge}><Text style={s.connectedT}>ON</Text></View>
+      </View>
+    </View>
+  );
+}
+
 export default function ConnectionsScreen({ navigation }) {
-  const [gmailConnected,    setGmailConnected]    = useState(false);
+  const [connectedAccounts, setConnectedAccounts] = useState([]);
   const [appleCalGranted,   setAppleCalGranted]   = useState(false);
   const [loading,           setLoading]           = useState(true);
   const [connecting,        setConnecting]        = useState(false);
@@ -70,14 +96,15 @@ export default function ConnectionsScreen({ navigation }) {
   const [pasteText,         setPasteText]         = useState("");
   const [pasteLoading,      setPasteLoading]      = useState(false);
 
-  // Track whether we're waiting for the user to return from Gmail OAuth in Safari
   const awaitingGmailReturn = useRef(false);
+
+  const gmailConnected = connectedAccounts.length > 0;
 
   useEffect(() => {
     const init = async () => {
       try {
         const data = await getMe();
-        setGmailConnected(data.gmail_connected || false);
+        setConnectedAccounts(data.connected_accounts || (data.gmail_connected ? [{ id: 0, account_email: data.email, label: null }] : []));
       } catch {}
       try {
         const { status } = await Calendar.getCalendarPermissionsAsync();
@@ -88,17 +115,16 @@ export default function ConnectionsScreen({ navigation }) {
     init();
   }, []);
 
-  // When the app returns to foreground, re-check Gmail status if we sent the
-  // user to Safari to complete OAuth. This replaces the unreliable 3-second timeout.
+  // Re-check when returning from Gmail OAuth
   useEffect(() => {
     const sub = AppState.addEventListener("change", async (nextState) => {
       if (nextState === "active" && awaitingGmailReturn.current) {
         awaitingGmailReturn.current = false;
         try {
           const me = await getMe();
-          const connected = me.gmail_connected || false;
-          setGmailConnected(connected);
-          if (connected) {
+          const accounts = me.connected_accounts || (me.gmail_connected ? [{ id: 0, account_email: me.email, label: null }] : []);
+          setConnectedAccounts(accounts);
+          if (accounts.length > 0) {
             Alert.alert(
               "Gmail connected",
               "Wingman is scanning your inbox for travel bookings. Pull to refresh on the Trips tab in a moment."
@@ -130,10 +156,11 @@ export default function ConnectionsScreen({ navigation }) {
     }
   };
 
-  const handleDisconnectGmail = async () => {
+  const handleDisconnectAccount = (account) => {
+    const label = account.label || account.account_email || "this account";
     Alert.alert(
-      "Disconnect Gmail",
-      "Wingman will stop scanning your inbox. Your imported trips will remain. Continue?",
+      "Disconnect account",
+      `Remove ${label} from Wingman? Your imported trips will remain.`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -141,8 +168,12 @@ export default function ConnectionsScreen({ navigation }) {
           style: "destructive",
           onPress: async () => {
             try {
-              await disconnectGmail();
-              setGmailConnected(false);
+              if (account.id && account.id !== 0) {
+                await disconnectGmailAccount(account.id);
+              } else {
+                await disconnectGmail();
+              }
+              setConnectedAccounts(prev => prev.filter(a => a.id !== account.id));
             } catch (e) {
               Alert.alert("Error", e.message);
             }
@@ -156,7 +187,7 @@ export default function ConnectionsScreen({ navigation }) {
     setScanning(true);
     try {
       await triggerGmailScan();
-      Alert.alert("Scan started", "Wingman is re-scanning your inbox. Pull to refresh on the Trips tab in about 30 seconds.");
+      Alert.alert("Scan started", "Wingman is re-scanning all connected inboxes. Pull to refresh on the Trips tab in about 30 seconds.");
     } catch (e) {
       Alert.alert("Error", e.message);
     } finally {
@@ -195,16 +226,14 @@ export default function ConnectionsScreen({ navigation }) {
     }
   };
 
-  // ── Helper: read calendar events and sync travel signals to backend ──────
   const readAndSyncCalendar = async () => {
     try {
       const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
       const now = new Date();
-      const future = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000); // 90 days ahead
-      const past   = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); // 30 days back
+      const future = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+      const past   = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       const calIds = calendars.map(c => c.id);
       const events = await Calendar.getEventsAsync(calIds, past, future);
-      // Filter to travel-relevant events before sending
       const travelRe = /flight|hotel|check.?in|check.?out|airport|depart|arrive|booking|reservation|itinerary|transit|train|cruise|trip|travel/i;
       const travelEvents = events
         .filter(ev => travelRe.test(`${ev.title || ""} ${ev.notes || ""} ${ev.location || ""}`))
@@ -232,7 +261,6 @@ export default function ConnectionsScreen({ navigation }) {
       const { status } = await Calendar.requestCalendarPermissionsAsync();
       if (status === "granted") {
         setAppleCalGranted(true);
-        // Immediately read and sync travel events
         const count = await readAndSyncCalendar();
         Alert.alert(
           "Apple Calendar connected",
@@ -251,13 +279,11 @@ export default function ConnectionsScreen({ navigation }) {
   };
 
   const connectGoogleCalendar = async () => {
-    // Google Calendar is accessed via the same Gmail OAuth scope (calendar.readonly).
-    // For now, direct users to connect Gmail which covers both inbox + calendar.
     Alert.alert(
       "Google Calendar",
-      "Connect Gmail above to give Wingman access to both your Gmail and Google Calendar — it uses the same sign-in.",
+      "Connect a Google account above to give Wingman access to both Gmail and Google Calendar — it uses the same sign-in.",
       [
-        { text: "Connect Gmail", onPress: connectGmail },
+        { text: "Connect Google account", onPress: connectGmail },
         { text: "Cancel", style: "cancel" },
       ]
     );
@@ -288,39 +314,52 @@ export default function ConnectionsScreen({ navigation }) {
         </Text>
 
         <View style={g.group}>
-          {/* Gmail */}
-          <ConnRow
-            iconKey="gmail"
-            title="Gmail"
-            sub={
-              loading ? "Checking..." :
-              gmailConnected ? "Connected — scanning for bookings" :
-              "Import flight and hotel confirmations automatically"
-            }
-            right={
-              loading ? (
-                <ActivityIndicator color={C.gold} size="small" />
-              ) : gmailConnected ? (
-                <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-                  <Pressable style={s.rescanBtn} onPress={rescan} disabled={scanning}>
-                    {scanning
-                      ? <ActivityIndicator color={C.gold} size="small" />
-                      : <Text style={s.rescanT}>Re-scan</Text>}
-                  </Pressable>
-                  <Pressable style={s.disconnectBtn} onPress={handleDisconnectGmail}>
-                    <Text style={s.disconnectT}>✕</Text>
-                  </Pressable>
-                  <ConnBadge on />
+          {/* Connected Google accounts */}
+          {loading ? (
+            <View style={[s.row, { justifyContent: "center" }]}>
+              <ActivityIndicator color={C.gold} size="small" />
+            </View>
+          ) : connectedAccounts.length > 0 ? (
+            <>
+              {connectedAccounts.map((account, idx) => (
+                <AccountRow
+                  key={account.id || idx}
+                  account={account}
+                  onDisconnect={() => handleDisconnectAccount(account)}
+                  onRescan={rescan}
+                  scanning={scanning}
+                  last={idx === connectedAccounts.length - 1 && !true /* never last — add button follows */}
+                />
+              ))}
+              {/* Add another Google account */}
+              <Pressable style={s.addAccountRow} onPress={connectGmail} disabled={connecting}>
+                <View style={[s.iconBox, { backgroundColor: C.gold + "08" }]}>
+                  <Text style={{ fontSize: 16, color: C.gold, fontFamily: T.sansB }}>+</Text>
                 </View>
-              ) : (
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.rowT, { color: C.gold }]}>Add another Google account</Text>
+                  <Text style={s.rowS}>Connect your work or personal Gmail separately</Text>
+                </View>
+                {connecting
+                  ? <ActivityIndicator color={C.gold} size="small" />
+                  : <Text style={{ color: C.gold, fontSize: 18, fontFamily: T.sansM }}>›</Text>}
+              </Pressable>
+            </>
+          ) : (
+            /* No accounts connected yet */
+            <ConnRow
+              iconKey="gmail"
+              title="Gmail / Google Calendar"
+              sub="Import flight and hotel confirmations automatically"
+              right={
                 <Pressable style={s.connectBtn} onPress={connectGmail} disabled={connecting}>
                   {connecting
                     ? <ActivityIndicator color={C.inkD} size="small" />
                     : <Text style={s.connectBtnT}>Connect</Text>}
                 </Pressable>
-              )
-            }
-          />
+              }
+            />
+          )}
 
           {/* Apple Calendar */}
           <ConnRow
@@ -344,25 +383,19 @@ export default function ConnectionsScreen({ navigation }) {
             }
           />
 
-          {/* Google Calendar */}
-          <ConnRow
-            iconKey="gcal"
-            title="Google Calendar"
-            sub={
-              gmailConnected
-                ? "Connected via Gmail — reading travel events"
-                : "Connect via Gmail to read your Google Calendar"
-            }
-            right={
-              gmailConnected ? (
-                <ConnBadge on />
-              ) : (
+          {/* Google Calendar — shown only when no Google account connected */}
+          {!gmailConnected && (
+            <ConnRow
+              iconKey="gcal"
+              title="Google Calendar"
+              sub="Connect via Gmail to read your Google Calendar"
+              right={
                 <Pressable style={s.connectBtn} onPress={connectGoogleCalendar}>
                   <Text style={s.connectBtnT}>Connect</Text>
                 </Pressable>
-              )
-            }
-          />
+              }
+            />
+          )}
 
           {/* Uber */}
           <ConnRow
@@ -380,7 +413,7 @@ export default function ConnectionsScreen({ navigation }) {
             onPress={() => {
               Alert.alert(
                 "Import from WhatsApp",
-                "To import a trip from WhatsApp:\n\n1. Open the booking confirmation message\n2. Tap and hold the message \u2192 Share\n3. Choose Wingman from the share sheet\n\nOr forward the text to:\nimport@wingmantravel.app",
+                "To import a trip from WhatsApp:\n\n1. Open the booking confirmation message\n2. Tap and hold the message → Share\n3. Choose Wingman from the share sheet\n\nOr forward the text to:\nimport@wingmantravel.app",
                 [
                   {
                     text: "Open WhatsApp",
@@ -403,7 +436,7 @@ export default function ConnectionsScreen({ navigation }) {
             onPress={() => {
               Alert.alert(
                 "Import from iMessage",
-                "To import a trip from iMessage:\n\n1. Open the booking confirmation message\n2. Tap and hold the message \u2192 More\n3. Forward to import@wingmantravel.app\n\nWingman will extract your trip automatically.",
+                "To import a trip from iMessage:\n\n1. Open the booking confirmation message\n2. Tap and hold the message → More\n3. Forward to import@wingmantravel.app\n\nWingman will extract your trip automatically.",
                 [
                   {
                     text: "Open Messages",
@@ -421,7 +454,6 @@ export default function ConnectionsScreen({ navigation }) {
         {/* ── Manual import ─────────────────────────────────────────────────── */}
         <Text style={g.sectionT}>MANUAL IMPORT</Text>
         <View style={g.group}>
-          {/* Forward-to-import */}
           <ConnRow
             iconKey="forward"
             title="Forward a booking email"
@@ -438,7 +470,6 @@ export default function ConnectionsScreen({ navigation }) {
               </Pressable>
             }
           />
-          {/* Paste — always visible, prominent */}
           <ConnRow
             iconKey="paste"
             title="Paste a confirmation email"
@@ -449,7 +480,7 @@ export default function ConnectionsScreen({ navigation }) {
         <View style={s.pasteWrap}>
           <TextInput
             style={s.pasteInput}
-            placeholder={`Paste your booking confirmation here…\n\ne.g. \"Your booking is confirmed: AA 412, JFK → LAX, Jan 15, 10:35 AM\"`}
+            placeholder={`Paste your booking confirmation here…\n\ne.g. "Your booking is confirmed: AA 412, JFK → LAX, Jan 15, 10:35 AM"`}
             placeholderTextColor={C.mut}
             value={pasteText}
             onChangeText={setPasteText}
@@ -486,7 +517,6 @@ export default function ConnectionsScreen({ navigation }) {
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
   app:         { flex: 1, backgroundColor: C.bg },
   ambientNote: { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 20, marginBottom: 14 },
@@ -495,52 +525,56 @@ const s = StyleSheet.create({
     paddingVertical: 14, paddingHorizontal: 16,
     borderBottomWidth: 0.5, borderBottomColor: C.line,
   },
+  accountRow: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    paddingVertical: 14, paddingHorizontal: 16,
+    borderBottomWidth: 0.5, borderBottomColor: C.line,
+  },
+  addAccountRow: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    paddingVertical: 13, paddingHorizontal: 16,
+    borderTopWidth: 0.5, borderTopColor: C.line,
+  },
   iconBox: {
     width: 36, height: 36, borderRadius: 10,
     borderWidth: 1, borderColor: C.line,
     alignItems: "center", justifyContent: "center",
   },
-  rowT: { color: C.ink, fontSize: 14, fontFamily: T.sansM },
-  rowS: { color: C.mut, fontSize: 12, fontFamily: T.sans, marginTop: 2, lineHeight: 17 },
-  connectBtn:  { backgroundColor: C.gold, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
-  connectBtnT: { color: C.inkD, fontSize: 12, fontFamily: T.sansB, letterSpacing: 0.3 },
-  connectedBadge: {
-    backgroundColor: C.gold + "15", borderWidth: 1,
-    borderColor: C.gold + "40", borderRadius: 8,
+  rowT: { color: C.ink, fontSize: 14, fontFamily: T.sansM, marginBottom: 2 },
+  rowS: { color: C.mut, fontSize: 12, fontFamily: T.sans, lineHeight: 17 },
+  connectBtn: {
+    backgroundColor: C.gold, borderRadius: 8,
+    paddingHorizontal: 12, paddingVertical: 6,
+  },
+  connectBtnT: { color: C.inkD, fontSize: 12, fontFamily: T.sansB },
+  rescanBtn: {
+    borderWidth: 1, borderColor: C.gold + "60", borderRadius: 8,
     paddingHorizontal: 10, paddingVertical: 5,
   },
-  connectedT: { color: C.gold, fontSize: 10, fontFamily: T.sansB, letterSpacing: T.trackMed },
-  rescanBtn: {
-    backgroundColor: C.card2, borderWidth: 1, borderColor: C.line,
-    borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6,
-  },
-  rescanT: { color: C.ink, fontSize: 12, fontFamily: T.sansM },
+  rescanT: { color: C.gold, fontSize: 11, fontFamily: T.sansM },
   disconnectBtn: {
-    paddingHorizontal: 8, paddingVertical: 6,
-    borderRadius: 8, borderWidth: 1,
-    borderColor: "rgba(201,169,110,0.25)",
-    backgroundColor: "rgba(201,169,110,0.06)",
-  },
-  disconnectT: { color: C.mut, fontSize: 12, fontFamily: T.sansM },
-  soonBadge: {
-    backgroundColor: C.card2, borderWidth: 1, borderColor: C.line,
-    borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5,
-  },
-  soonT: { color: C.mut, fontSize: 10, fontFamily: T.sansB, letterSpacing: T.trackMed },
-  pasteWrap: {
-    backgroundColor: C.card, borderRadius: 16, borderWidth: 1,
-    borderColor: "rgba(201,169,110,0.25)", padding: 16, marginBottom: 14,
-  },
-  pasteInput: {
-    color: C.ink, fontSize: 14, fontFamily: T.sans, lineHeight: 22,
-    minHeight: 160, backgroundColor: C.card2,
-    borderRadius: 12, padding: 14, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)",
-  },
-  pasteHint: { color: C.mut, fontSize: 12, fontFamily: T.sans, lineHeight: 17, marginTop: 10, textAlign: "center" },
-  featIcon: {
-    width: 22, height: 22, borderRadius: 6,
-    backgroundColor: C.gold + "10", borderWidth: 1, borderColor: C.gold + "25",
+    width: 28, height: 28, borderRadius: 14,
+    borderWidth: 1, borderColor: C.line,
     alignItems: "center", justifyContent: "center",
   },
-  note: { color: C.mut, fontSize: 12, fontFamily: T.sans, textAlign: "center", marginTop: 10 },
+  disconnectT: { color: C.mut, fontSize: 13 },
+  connectedBadge: {
+    backgroundColor: C.gold + "20", borderRadius: 6,
+    paddingHorizontal: 7, paddingVertical: 3,
+  },
+  connectedT: { color: C.gold, fontSize: 10, fontFamily: T.sansB },
+  pasteWrap: { marginHorizontal: 0, marginBottom: 12 },
+  pasteInput: {
+    backgroundColor: C.card, borderRadius: 14,
+    borderWidth: 0.5, borderColor: C.line,
+    color: C.ink, fontFamily: T.sans, fontSize: 13,
+    padding: 14, minHeight: 120, lineHeight: 20,
+  },
+  pasteHint: { color: C.mut, fontSize: 11, fontFamily: T.sans, textAlign: "center", marginTop: 8, lineHeight: 16 },
+  note: { color: C.mut, fontSize: 11, fontFamily: T.sans, textAlign: "center", marginBottom: 24, lineHeight: 17 },
+  featIcon: {
+    width: 24, height: 24, borderRadius: 6,
+    backgroundColor: C.card2,
+    alignItems: "center", justifyContent: "center",
+  },
 });

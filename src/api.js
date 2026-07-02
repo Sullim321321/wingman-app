@@ -386,3 +386,8 @@ export const savePassengerProfile = (body) =>
     method: "POST",
     body: JSON.stringify(body),
   });
+
+// ── Trip title cleanup — rename Unknown Trip records using existing leg data ──
+export const renameUnknownTrips = () =>
+  req("/trips/rename-unknown", { method: "POST" });
+

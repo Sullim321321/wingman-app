@@ -12,7 +12,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { C, T, TS } from "../theme";
 import { Btn, tap, SerifText, g, OfflineBanner } from "../components";
 import { getCachedTrips, getCachedPoints } from "../offlineCache";
-import { getTrips, deleteTrip, getFlightStatus, getFlightStatusPublic, getPrediction, getGroundIntel, getMe, getLoyaltyAccounts, getTripBriefing, getNextTripWindow, getPoints, getWeather, getHomeState, getDisruptionAlternatives, simulateJourney } from "../api";
+import { getTrips, deleteTrip, getFlightStatus, getFlightStatusPublic, getPrediction, getGroundIntel, getMe, getLoyaltyAccounts, getTripBriefing, getNextTripWindow, getPoints, getWeather, getHomeState, getDisruptionAlternatives, simulateJourney, renameUnknownTrips } from "../api";
 import * as Location from "expo-location";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { scheduleDisruption } from "../notify";
@@ -555,6 +555,8 @@ export default function HomeScreen({ navigation }) {
       } catch {}
     })();
     getMe().then(u => { if (u?.first_name) setFirstName(u.first_name); }).catch(() => {});
+    // Silently rename any Unknown Trip records using existing leg data
+    renameUnknownTrips().catch(() => {});
     getPoints().then(d => { if (d?.balance !== undefined) setPointsData(d); }).catch(() => {});
     // Check for expiring loyalty points
     getNextTripWindow().then(data => {
@@ -651,23 +653,81 @@ export default function HomeScreen({ navigation }) {
           <ActivityIndicator color={C.gold} style={{ marginTop: 60 }} />
         ) : (
           <>
-            {/* ── Serif greeting ─────────────────────────────────────────── */}
-            <View style={s.greetWrap}>
-              <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
-                <SerifText style={[s.greetH, { flex: 1 }]}>{greeting()}{firstName ? `, ${firstName}.` : "."}</SerifText>
-                {weather && (
-                  <View style={s.weatherChip}>
-                    <Text style={s.weatherTemp}>{Math.round(weather.temp_c ?? weather.temp)}°</Text>
-                    <Text style={s.weatherDesc}>{weather.description || weather.conditions || ""}</Text>
+            {/* ── Intelligence Briefing — Charlie's Angels opening ──────── */}
+            {(() => {
+              const hs = homeState;
+              const leg = hs?.active_leg;
+              const trip = hs?.active_trip;
+              const hotel = hs?.hotel;
+              const w = hs?.weather || weather;
+              const weatherCity = w?.city || trip?.destination_city || null;
+              const weatherStr = w ? `${w.temp}°${weatherCity ? ` in ${weatherCity}` : ""}` : null;
+              const hoursAway = hs?.hours_to_depart;
+
+              // Build the headline brief line
+              let briefLine = null;
+              if (hs?.state === "in_transit" && leg) {
+                const landMins = leg.arrives_at ? Math.round((new Date(leg.arrives_at).getTime() - Date.now()) / 60000) : null;
+                briefLine = landMins && landMins > 0
+                  ? `${leg.ident || "Your flight"} is airborne. Landing in ${landMins >= 60 ? `${Math.floor(landMins/60)}h ${landMins%60}m` : `${landMins}m`}.`
+                  : `${leg.ident || "Your flight"} is in the air.`;
+              } else if (hs?.state === "at_airport" && leg) {
+                briefLine = `You're at ${leg.origin}. ${leg.gate ? `Gate ${leg.gate}. ` : ""}${hoursAway != null ? `${Math.round(hoursAway * 60)}m to departure.` : ""}`;
+              } else if (hs?.state === "at_destination" && trip) {
+                briefLine = `You're in ${trip.destination_city || leg?.destination || "your destination"}.${weatherStr ? ` ${weatherStr}.` : ""}`;
+              } else if (hs?.state === "pre_departure" && leg) {
+                const dStr = hoursAway != null
+                  ? (hoursAway >= 48 ? `in ${Math.round(hoursAway / 24)} days` : hoursAway >= 1 ? `in ${Math.round(hoursAway)}h` : `in ${Math.round(hoursAway * 60)}m`)
+                  : null;
+                briefLine = `Next up: ${leg.origin} → ${leg.destination}${dStr ? ` ${dStr}` : ""}.`;
+              } else if (nextFlight) {
+                briefLine = `Next flight: ${nextFlight.origin} → ${nextFlight.destination}.`;
+              }
+
+              // Build the sub-line context
+              const subParts = [];
+              if (hs?.state === "at_destination" && hotel) {
+                const checkinTime = hotel.checkin_at ? new Date(hotel.checkin_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : null;
+                subParts.push(`${hotel.name}${checkinTime ? ` · check-in ${checkinTime}` : ""}`);
+              } else if (hs?.state === "in_transit" && leg?.destination) {
+                subParts.push(`Arriving ${leg.destination}`);
+                if (hotel) subParts.push(`${hotel.name} tonight`);
+              } else if ((hs?.state === "pre_departure" || hs?.state === "at_airport") && weatherStr) {
+                subParts.push(weatherStr);
+              } else if (weatherStr) {
+                subParts.push(weatherStr);
+              }
+              if (!briefLine && !subParts.length) {
+                subParts.push("Nothing on the radar.");
+              }
+
+              return (
+                <View style={s.greetWrap}>
+                  <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
+                    <SerifText style={[s.greetH, { flex: 1, marginRight: 8 }]}>
+                      {greeting()}{firstName ? `, ${firstName}.` : "."}
+                    </SerifText>
+                    {/* Weather chip — only when no location context in brief */}
+                    {weatherStr && hs?.state !== "at_destination" && hs?.state !== "in_transit" && (
+                      <View style={s.weatherChip}>
+                        <Text style={s.weatherTemp}>{w.temp}°</Text>
+                        {weatherCity && <Text style={s.weatherDesc}>{weatherCity}</Text>}
+                      </View>
+                    )}
                   </View>
-                )}
-              </View>
-              <Text style={s.greetS}>
-                {nextFlight
-                  ? `Next flight: ${nextFlight.origin} to ${nextFlight.destination}.`
-                  : "You're all set for today."}
-              </Text>
-            </View>
+                  {briefLine ? (
+                    <Text style={s.greetS}>{briefLine}</Text>
+                  ) : (
+                    <Text style={s.greetS}>You're clear. Nothing on the radar.</Text>
+                  )}
+                  {subParts.length > 0 && (
+                    <Text style={[s.greetS, { marginTop: 4, color: C.gold, opacity: 0.8 }]}>
+                      {subParts.join("  ·  ")}
+                    </Text>
+                  )}
+                </View>
+              );
+            })()}
 
             {/* ── Contextual Travel State Card ──────────────────────────────── */}
             {homeState && homeState.state !== "no_trip" && homeState.active_leg && (() => {

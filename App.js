@@ -85,12 +85,13 @@ const Tab   = createBottomTabNavigator();
 
 // ─── Tab bar icon — hairline Unicode symbols ──────────────────────────────────
 // Deck-matching thin line icons
+// \uFE0E = text presentation selector — prevents OS emoji substitution
 const TAB_ICONS = {
-  Home:      { active: "⌂", inactive: "⌂" },
-  Trips:     { active: "☒", inactive: "☐" },
-  Alerts:    { active: "◎", inactive: "○" },
-  Concierge: { active: "✦", inactive: "✧" },
-  Insights:  { active: "◈", inactive: "◇" },
+  Home:      { active: "\u2302\uFE0E", inactive: "\u2302\uFE0E" },
+  Trips:     { active: "\u2708\uFE0E", inactive: "\u2708\uFE0E" },
+  Alerts:    { active: "\u25CE\uFE0E", inactive: "\u25CB\uFE0E" },
+  Concierge: { active: "\u2726\uFE0E", inactive: "\u2727\uFE0E" },
+  Insights:  { active: "\u25C6\uFE0E", inactive: "\u25C7\uFE0E" },
 };
 
 // Tab labels — wide-tracked all-caps (kept short to prevent bleed)

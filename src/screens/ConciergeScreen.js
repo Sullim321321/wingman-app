@@ -167,7 +167,10 @@ export default function ConciergeScreen({ route }) {
     setThreadLoading(true);
     try {
       const data = await getConciergeThread(tripId);
-      const saved = data.messages || [];
+      // Filter out blank messages (null/empty content with no rich cards) to prevent blank bubbles
+      const saved = (data.messages || []).filter(m =>
+        m && (m.content || m.transit || m.places || m.action)
+      );
       if (saved.length > 0) {
         setMessages([{ role: "assistant", content: WELCOME }, ...saved]);
       } else {
@@ -252,6 +255,8 @@ export default function ConciergeScreen({ route }) {
 
   const renderItem = ({ item }) => {
     const isUser = item.role === "user";
+    // Skip blank bubbles — no content and no rich cards
+    if (!item.content && !item.transit && !item.places && !item.action) return null;
     return (
       <View style={[s.bubble, isUser ? s.userBubble : s.aiBubble]}>
         {!isUser && (

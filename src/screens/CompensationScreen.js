@@ -312,7 +312,7 @@ export default function CompensationScreen({ navigation, route }) {
               <Pressable style={s.ctaBtn} onPress={handleFileClaim} disabled={submitting}>
                 <LinearGradient colors={GRAD.gold} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.ctaBtnGrad}>
                   {submitting
-                    ? <ActivityIndicator color=C.inkD size="small" />
+                    ? <ActivityIndicator color={C.inkD} size="small" />
                     : <Text style={s.ctaBtnT}>File claim now</Text>}
                 </LinearGradient>
               </Pressable>

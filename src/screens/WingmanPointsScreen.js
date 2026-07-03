@@ -80,7 +80,7 @@ function RedeemModal({ perk, balance, onConfirm, onCancel, redeeming }) {
               disabled={!canAfford || redeeming}
             >
               {redeeming
-                ? <ActivityIndicator color=C.inkD size="small" />
+                ? <ActivityIndicator color={C.inkD} size="small" />
                 : <Text style={m.confirmBtnT}>Redeem →</Text>}
             </Pressable>
           </View>

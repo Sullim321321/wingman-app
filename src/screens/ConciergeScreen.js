@@ -15,7 +15,26 @@ import { SerifText } from "../components";
 import { sendConciergeMessage, getTrips, getConciergeThread, saveConciergeThread, clearConciergeThread } from "../api";
 import { LOCATION_OPT_IN_KEY } from "./SettingsScreen";
 
-const WELCOME = "Good day. I'm watching your trips, tracking disruption risk, and ready to act the moment something changes. What can I do for you?";
+// WELCOME is now dynamically generated based on trip context — see buildWelcome()
+const WELCOME_DEFAULT = "Good day. I'm watching your trips, tracking disruption risk, and ready to act the moment something changes. What can I do for you?";
+
+function buildWelcome(trips) {
+  const next = findNextFlight(trips);
+  if (!next) return WELCOME_DEFAULT;
+  const diff = new Date(next.departs_at).getTime() - Date.now();
+  if (diff <= 0) return WELCOME_DEFAULT;
+  const hours = Math.floor(diff / 3600000);
+  const days  = Math.floor(diff / 86400000);
+  let timeStr;
+  if (hours < 1)        timeStr = `in ${Math.round(diff / 60000)}m`;
+  else if (hours < 24)  timeStr = `in ${hours}h`;
+  else if (days === 1)  timeStr = "tomorrow";
+  else                  timeStr = `in ${days} days`;
+  const route = (next.origin && next.destination) ? `${next.origin} → ${next.destination}` : null;
+  const ident = (next.carrier && next.flight_number) ? `${next.carrier}${next.flight_number}` : null;
+  const parts = [route, ident].filter(Boolean).join(" · ");
+  return `Good day. Your next flight${parts ? ` (${parts})` : ""} departs ${timeStr}. I'm monitoring it now — what can I do for you?`;
+}
 
 // Context helpers
 function buildTripContext(trips) {
@@ -124,7 +143,7 @@ export default function ConciergeScreen({ route }) {
   const [trips, setTrips]               = useState([]);
   const [tripsLoaded, setTripsLoaded]   = useState(false);
   const [activeTripId, setActiveTripId] = useState(routeTripId);
-  const [messages, setMessages]         = useState([{ role: "assistant", content: WELCOME }]);
+  const [messages, setMessages]         = useState([{ role: "assistant", content: WELCOME_DEFAULT }]);
   const [input, setInput]               = useState("");
   const [loading, setLoading]           = useState(false);
   const [threadLoading, setThreadLoading] = useState(false);
@@ -135,7 +154,18 @@ export default function ConciergeScreen({ route }) {
 
   useFocusEffect(useCallback(() => {
     getTrips()
-      .then(data => { setTrips(data.trips || []); setTripsLoaded(true); })
+      .then(data => {
+        const loaded = data.trips || [];
+        setTrips(loaded);
+        setTripsLoaded(true);
+        // Update the welcome message with trip context (only if thread hasn't been loaded yet)
+        setMessages(prev => {
+          if (prev.length === 1 && prev[0].role === "assistant") {
+            return [{ role: "assistant", content: buildWelcome(loaded) }];
+          }
+          return prev;
+        });
+      })
       .catch(() => setTripsLoaded(true));
     AsyncStorage.getItem(LOCATION_OPT_IN_KEY).then(async (v) => {
       if (v !== "true") { setUserLocation(null); return; }
@@ -172,12 +202,12 @@ export default function ConciergeScreen({ route }) {
         m && (m.content || m.transit || m.places || m.action)
       );
       if (saved.length > 0) {
-        setMessages([{ role: "assistant", content: WELCOME }, ...saved]);
+        setMessages([{ role: "assistant", content: buildWelcome(trips) }, ...saved]);
       } else {
-        setMessages([{ role: "assistant", content: WELCOME }]);
+        setMessages([{ role: "assistant", content: buildWelcome(trips) }]);
       }
     } catch {
-      setMessages([{ role: "assistant", content: WELCOME }]);
+      setMessages([{ role: "assistant", content: buildWelcome(trips) }]);
     } finally {
       setThreadLoading(false);
     }

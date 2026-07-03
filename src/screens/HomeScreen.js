@@ -304,6 +304,16 @@ function TripCard({ trip, onDelete, navigation }) {
   const legs = trip.legs || [];
   const firstFlight = legs.find(l => l.type === "flight");
   const depDate = formatDate(firstFlight?.departs_at);
+  // Countdown pill — show days away for upcoming trips
+  const cdPill = firstFlight?.departs_at ? (() => {
+    const diff = new Date(firstFlight.departs_at).getTime() - Date.now();
+    if (diff <= 0) return null;
+    const days = Math.floor(diff / 86400000);
+    if (days === 0) return "TODAY";
+    if (days === 1) return "TOMORROW";
+    if (days <= 30) return `${days}D`;
+    return null;
+  })() : null;
 
   useEffect(() => {
     if (!firstFlight?.origin || !firstFlight?.destination) return;
@@ -345,7 +355,7 @@ function TripCard({ trip, onDelete, navigation }) {
 
   return (
     <Pressable
-      onPress={() => navigation.navigate("TripDetail", { trip })}
+      onPress={() => { tap(); navigation.navigate("TripDetail", { trip }); }}
       onLongPress={() => Alert.alert("Delete trip?", trip.title, [
         { text: "Cancel", style: "cancel" },
         { text: "Delete", style: "destructive", onPress: () => onDelete(trip.id) }
@@ -374,8 +384,13 @@ function TripCard({ trip, onDelete, navigation }) {
             <Text style={s.when}>{hotelName || destCity || firstFlight.destination}</Text>
           )}
         </View>
-        {/* Right: risk badge or chevron */}
+        {/* Right: countdown pill + risk badge + chevron */}
         <View style={{ alignItems: "flex-end", gap: 6 }}>
+          {cdPill && (
+            <View style={{ backgroundColor: C.gold + "18", borderColor: C.gold + "40", borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 }}>
+              <Text style={{ color: C.gold, fontSize: 10, fontFamily: T.sansB, letterSpacing: T.trackMed }}>{cdPill}</Text>
+            </View>
+          )}
           {risk != null && risk >= 30 && <RiskBadge risk={risk} />}
           <Text style={{ color: C.mut, fontSize: 18, lineHeight: 22 }}>›</Text>
         </View>
@@ -651,11 +666,14 @@ export default function HomeScreen({ navigation }) {
           </View>
           {/* WINGMAN wordmark — absolutely centered */}
           <Text style={s.logo}>WINGMAN</Text>
-          {/* Avatar / settings */}
-          <Pressable style={s.avatar} onPress={() => navigation.navigate("Settings")}>
+          {/* Avatar / settings — with live-monitoring dot when active */}
+          <Pressable style={s.avatar} onPress={() => { tap(); navigation.navigate("Settings"); }}>
             <View style={s.avatarInner}>
               <Text style={s.avatarT}>{firstName ? firstName[0].toUpperCase() : "W"}</Text>
             </View>
+            {homeState?.state && homeState.state !== "no_trip" && (
+              <View style={s.avatarDot} />
+            )}
           </Pressable>
         </View>
 
@@ -709,6 +727,15 @@ export default function HomeScreen({ navigation }) {
               }
               if (!briefLine && !subParts.length) {
                 subParts.push("Nothing on the radar.");
+              }
+              // If no homeState but there's a next flight, add a contextual sub-line
+              if (!hs?.state && nextFlight?.departs_at) {
+                const daysAway = Math.ceil((new Date(nextFlight.departs_at).getTime() - Date.now()) / 86400000);
+                if (daysAway > 0 && daysAway <= 14) {
+                  const label = daysAway === 1 ? "tomorrow" : `in ${daysAway} days`;
+                  subParts.length = 0; // replace generic sub-line
+                  subParts.push(`${nextFlight.origin} → ${nextFlight.destination} ${label}`);
+                }
               }
 
               return (
@@ -859,6 +886,26 @@ export default function HomeScreen({ navigation }) {
                 </Pressable>
               );
             })()}
+            {/* ── Contextual quick-action chips (no active trip) ──────── */}
+            {!homeState?.state && trips.length === 0 && (
+              <View style={{ flexDirection: "row", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+                {[
+                  { label: "Add a trip",        icon: "+", route: "AddTrip",      params: undefined },
+                  { label: "Import from email", icon: "@", route: "Connections",  params: undefined },
+                  { label: "Travel profile",    icon: "✈", route: "TravelProfile",params: undefined },
+                ].map(a => (
+                  <Pressable
+                    key={a.label}
+                    style={s.qaChip}
+                    onPress={() => { tap(); navigation.navigate(a.route, a.params); }}
+                  >
+                    <Text style={s.qaChipIcon}>{a.icon}</Text>
+                    <Text style={s.qaChipT}>{a.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+
             {/* ── Day-of-flight mission briefing ────────────────────────── */}
             {briefing && briefing.flight && (
               <>
@@ -1074,9 +1121,10 @@ const s = StyleSheet.create({
   wMark:     { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
   wMarkText: { color: C.gold, fontSize: 32, fontFamily: T.serifI },  // Italic serif W — exact deck monogram
   logo:      { position: "absolute", left: 0, right: 0, textAlign: "center", color: C.gold, fontSize: TS.headerBrand, fontFamily: T.sansB, letterSpacing: T.trackXWide },
-  avatar:    { width: 34, height: 34, borderRadius: 17, overflow: "hidden" },
+  avatar:    { width: 34, height: 34, borderRadius: 17, overflow: "visible" },
   avatarInner: { width: 34, height: 34, borderRadius: 17, backgroundColor: "transparent", borderWidth: 1.5, borderColor: C.ink + "80", alignItems: "center", justifyContent: "center" },
   avatarT:   { color: C.ink, fontFamily: T.sansB, fontSize: 13 },
+  avatarDot:  { position: "absolute", top: 0, right: 0, width: 9, height: 9, borderRadius: 5, backgroundColor: C.teal, borderWidth: 1.5, borderColor: C.bg },
 
   // Greeting — exact deck scale
   greetWrap: { marginBottom: 28 },
@@ -1237,4 +1285,8 @@ const s = StyleSheet.create({
   weatherChip:    { alignItems: "flex-end", marginLeft: 12, paddingTop: 4 },
   weatherTemp:    { color: C.gold, fontSize: 22, fontFamily: T.serifB, lineHeight: 26 },
   weatherDesc:    { color: C.mut, fontSize: 10, fontFamily: T.sans, letterSpacing: 0.8, textTransform: "uppercase", textAlign: "right", marginTop: 2 },
+  // Quick-action chips (empty state, no active trip)
+  qaChip:         { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20, borderWidth: 1, borderColor: C.gold + "35", backgroundColor: C.gold + "0A" },
+  qaChipIcon:     { color: C.gold, fontSize: 13, fontFamily: T.sansB },
+  qaChipT:        { color: C.gold, fontSize: 12, fontFamily: T.sansM, letterSpacing: 0.2 },
 });

@@ -117,8 +117,18 @@ function TripCard({ trip, onDelete, navigation }) {
             <Text style={s.when}>{hotelName || destCity || firstFlight?.destination}</Text>
           )}
         </View>
-        {/* Right: risk badge or chevron */}
+        {/* Right: countdown pill + risk badge + chevron */}
         <View style={{ alignItems: "flex-end", gap: 6 }}>
+          {(() => {
+            if (!firstFlight?.departs_at) return null;
+            const diff = new Date(firstFlight.departs_at).getTime() - Date.now();
+            if (diff <= 0) return null;
+            const days = Math.floor(diff / 86400000);
+            if (days === 0) return <View style={s.cdPill}><Text style={s.cdPillT}>TODAY</Text></View>;
+            if (days === 1) return <View style={s.cdPill}><Text style={s.cdPillT}>TOMORROW</Text></View>;
+            if (days <= 30) return <View style={s.cdPill}><Text style={s.cdPillT}>{days}D</Text></View>;
+            return null;
+          })()}
           {risk != null && risk >= 30 && <RiskBadge risk={risk} />}
           <Text style={{ color: C.mut, fontSize: 18, lineHeight: 22 }}>›</Text>
         </View>
@@ -137,8 +147,24 @@ function EmptyState({ navigation }) {
       </View>
       <SerifText bold style={s.emptyTitle}>No trips yet</SerifText>
       <Text style={s.emptySub}>
-        Add a trip and Wingman monitors it for delays, cancellations, and gate changes — and surfaces rescue options if anything goes wrong.
+        Add a trip and Wingman monitors it 24/7 — delays, cancellations, gate changes, and rescue options the moment anything goes wrong.
       </Text>
+      {/* What Wingman watches — value preview */}
+      <View style={s.watchCard}>
+        {[
+          { icon: "!", color: C.coral,  label: "Delays & cancellations" },
+          { icon: "✓", color: C.teal,   label: "Automatic rebooking options" },
+          { icon: "❖", color: C.gold,   label: "Pre-departure briefings" },
+          { icon: "~", color: C.amber,  label: "Disruption risk predictions" },
+        ].map((item, i) => (
+          <View key={i} style={[s.watchRow, i > 0 && { borderTopWidth: 1, borderTopColor: C.line }]}>
+            <View style={[s.watchBadge, { backgroundColor: item.color + "18" }]}>
+              <Text style={{ color: item.color, fontSize: 12, fontFamily: T.sansB }}>{item.icon}</Text>
+            </View>
+            <Text style={s.watchLabel}>{item.label}</Text>
+          </View>
+        ))}
+      </View>
       <Pressable style={s.emptyPrimary} onPress={() => { tap(); navigation.navigate("AddTrip"); }}>
         <Text style={s.emptyPrimaryT}>+ Add a trip</Text>
       </Pressable>
@@ -293,6 +319,9 @@ const s = StyleSheet.create({
     letterSpacing: T.trackMed, marginBottom: 3,
   },
 
+  // Countdown pill
+  cdPill:  { backgroundColor: C.gold + "18", borderColor: C.gold + "40", borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 },
+  cdPillT: { color: C.gold, fontSize: 10, fontFamily: T.sansB, letterSpacing: T.trackMed },
   // Empty state
   emptyWrap: {
     alignItems: "center", padding: 44,
@@ -321,4 +350,9 @@ const s = StyleSheet.create({
     width: "100%", alignItems: "center",
   },
   emptyGhostT: { color: C.ink, fontSize: 15, fontFamily: T.sansM, letterSpacing: 0.2 },
+  // Watch card (empty state preview)
+  watchCard:  { width: "100%", borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: C.card2, overflow: "hidden", marginBottom: 24 },
+  watchRow:   { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 11 },
+  watchBadge: { width: 28, height: 28, borderRadius: 8, alignItems: "center", justifyContent: "center" },
+  watchLabel: { color: C.ink, fontSize: 13, fontFamily: T.sansM, flex: 1 },
 });

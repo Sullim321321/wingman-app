@@ -179,6 +179,30 @@ export default function InsightsScreen({ navigation }) {
           />
         </View>
 
+        {/* Benchmark comparison card */}
+        <View style={s.benchCard}>
+          <Text style={s.benchTitle}>HOW YOU COMPARE</Text>
+          {[
+            { label: "Disruption cost (unmanaged)",  benchmark: "$890",   yours: totalSaved > 0 ? `$${Math.round(totalSaved / Math.max(disruptionsHandled, 1)).toLocaleString()}` : null, better: true },
+            { label: "Typical rebooking time (DIY)",  benchmark: "2h 20m", yours: avgTimeSaved != null ? `${avgTimeSaved}m` : null, better: avgTimeSaved != null && avgTimeSaved < 140 },
+            { label: "Rescue accept rate (industry)", benchmark: "38%",    yours: rescueAcceptRate != null ? `${rescueAcceptRate}%` : null, better: rescueAcceptRate != null && rescueAcceptRate > 38 },
+          ].map((row, i) => (
+            <View key={i} style={[s.benchRow, i > 0 && { borderTopWidth: 1, borderTopColor: C.line }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={s.benchLabel}>{row.label}</Text>
+                <Text style={s.benchBenchmark}>Industry avg: {row.benchmark}</Text>
+              </View>
+              {row.yours ? (
+                <View style={[s.benchBadge, { backgroundColor: row.better ? C.teal + "18" : C.amber + "18", borderColor: row.better ? C.teal + "40" : C.amber + "40" }]}>
+                  <Text style={[s.benchBadgeT, { color: row.better ? C.teal : C.amber }]}>{row.yours}</Text>
+                </View>
+              ) : (
+                <Text style={s.benchNA}>—</Text>
+              )}
+            </View>
+          ))}
+        </View>
+
         {/* Learning loop callout */}
         <View style={s.learnCard}>
           <Text style={s.learnIcon}>◈</Text>
@@ -296,4 +320,13 @@ const s = StyleSheet.create({
   emptyIcon: { fontSize: 36, color: C.gold, marginBottom: 16 },
   emptyH: { color: C.ink, fontSize: 18, fontFamily: T.serifB, textAlign: "center", marginBottom: 10 },
   emptySub: { color: C.mut, fontSize: 14, lineHeight: 21, textAlign: "center" },
+  // Benchmark card
+  benchCard:      { backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, overflow: "hidden", marginBottom: 20 },
+  benchTitle:     { color: C.mut, fontSize: 10, fontFamily: T.sansB, letterSpacing: 1.5, padding: 16, paddingBottom: 10 },
+  benchRow:       { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 12 },
+  benchLabel:     { color: C.ink, fontSize: 13, fontFamily: T.sansM, marginBottom: 2 },
+  benchBenchmark: { color: C.mut, fontSize: 11, fontFamily: T.sans },
+  benchBadge:     { borderRadius: 8, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 4 },
+  benchBadgeT:    { fontSize: 12, fontFamily: T.sansB },
+  benchNA:        { color: C.mut, fontSize: 13, fontFamily: T.sans },
 });

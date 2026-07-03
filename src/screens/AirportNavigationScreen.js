@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
-  View, Text, ScrollView, Pressable, StyleSheet,
+  SafeAreaView, View, Text, ScrollView, Pressable, StyleSheet,
   ActivityIndicator, RefreshControl, Linking,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -327,7 +327,7 @@ export default function AirportNavigationScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -355,7 +355,7 @@ function LoungeCard({ lounge, highlighted }) {
           </View>
         ))}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -246,6 +246,28 @@ export default function SettingsScreen({ navigation }) {
           </Text>
         </View>
 
+        {/* Quick profile shortcuts — surfaced prominently so users find them */}
+        <View style={s.profileShortcuts}>
+          <Text style={s.profileShortcutsLabel}>QUICK SETUP</Text>
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            {[
+              { label: "Travel profile",  sub: "Seat, cabin, airports", ic: "✈", route: "TravelProfile" },
+              { label: "Home airport",    sub: "Pre-fill ground transport", ic: "H", route: "HomeAddress" },
+              { label: "Loyalty cards",   sub: "Points & lounges", ic: "L", route: "Loyalty" },
+            ].map(item => (
+              <TouchableOpacity
+                key={item.route}
+                style={s.profileShortcutCard}
+                onPress={() => navigation.navigate(item.route)}
+              >
+                <Text style={s.profileShortcutIc}>{item.ic}</Text>
+                <Text style={s.profileShortcutLabel}>{item.label}</Text>
+                <Text style={s.profileShortcutSub}>{item.sub}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
         <Text style={g.sectionT}>APPEARANCE</Text>
         <View style={g.group}>
           <View style={{ borderBottomWidth: 0 }}>
@@ -503,4 +525,14 @@ const s = StyleSheet.create({
   themeBtnTActive: {
     color: C.gold,
   },
+  // Quick profile shortcuts
+  profileShortcuts: { marginBottom: 20 },
+  profileShortcutsLabel: { color: C.mut, fontSize: 10, fontFamily: T.sansB, letterSpacing: 1.5, marginBottom: 10, textTransform: "uppercase" },
+  profileShortcutCard: {
+    flex: 1, backgroundColor: C.card, borderRadius: 14, borderWidth: 1,
+    borderColor: C.gold + "30", padding: 14, alignItems: "flex-start",
+  },
+  profileShortcutIc:    { color: C.gold, fontSize: 18, marginBottom: 8 },
+  profileShortcutLabel: { color: C.ink, fontSize: 12, fontFamily: T.sansB, marginBottom: 3 },
+  profileShortcutSub:   { color: C.mut, fontSize: 10, fontFamily: T.sans, lineHeight: 14 },
 });

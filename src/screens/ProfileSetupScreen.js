@@ -21,6 +21,7 @@ const CABIN_OPTIONS = [
 export default function ProfileSetupScreen({ navigation }) {
   const [firstName, setFirstName] = useState("");
   const [cabin, setCabin]         = useState("economy");
+  const [homeAirport, setHomeAirport] = useState("");
   const [busy, setBusy]           = useState(false);
 
   const finish = async () => {
@@ -29,11 +30,13 @@ export default function ProfileSetupScreen({ navigation }) {
     // Mark profile done locally first — never block navigation on a network error.
     try { await SecureStore.setItemAsync(KEY_PROFILE_DONE, "1"); } catch (_) {}
     // Fire API saves in background (don't await — a failure here is non-fatal)
+    const homeCode = homeAirport.trim().toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4);
     updateProfile({
       first_name: firstName.trim(),
       preferences: {
         cabin_preference: cabin,
         taste_setup_complete: true,
+        ...(homeCode ? { home_airport: homeCode } : {}),
       },
     }).catch(e => console.warn("[ProfileSetup] updateProfile:", e.message));
     updateLocale({ locale: "en", currency: "USD" })
@@ -72,6 +75,21 @@ export default function ProfileSetupScreen({ navigation }) {
             autoFocus
             value={firstName}
             onChangeText={setFirstName}
+            returnKeyType="done"
+          />
+
+          {/* Home airport */}
+          <Text style={[s.label, { marginTop: 24 }]}>HOME AIRPORT</Text>
+          <Text style={s.hint}>Wingman uses this to pre-fill ground transport and lounge searches.</Text>
+          <TextInput
+            style={[s.input, { marginBottom: 4 }]}
+            placeholder="IATA code — e.g. JFK, LHR, SYD"
+            placeholderTextColor={C.mut}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            maxLength={4}
+            value={homeAirport}
+            onChangeText={v => setHomeAirport(v.toUpperCase().replace(/[^A-Z]/g, ""))}
             returnKeyType="done"
           />
 

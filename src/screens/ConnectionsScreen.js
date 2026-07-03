@@ -10,7 +10,7 @@ import * as Calendar from "expo-calendar";
 import { C, T } from "../theme";
 import { BackBar, Btn, g } from "../components";
 import {
-  getMe, getGmailConnectUrl, triggerGmailScan,
+  getMe, getGmailConnectUrl, triggerGmailScan, rescanInbox,
   disconnectGmail, disconnectGmailAccount, scanEmailBody, syncCalendar,
 } from "../api";
 
@@ -59,8 +59,9 @@ function ConnRow({ iconKey, title, sub, right, onPress, disabled, last }) {
 }
 
 // ── Connected account row (for each Google account) ──────────────────────────
-function AccountRow({ account, onDisconnect, onRescan, scanning, last }) {
+function AccountRow({ account, onDisconnect, onRescan, scanning, last, rescanResult }) {
   const label = account.label || account.account_email || "Google Account";
+  const hasResult = rescanResult && (rescanResult.legs_added > 0 || rescanResult.trips_created > 0);
   return (
     <View style={[s.accountRow, last && { borderBottomWidth: 0 }]}>
       <View style={[s.iconBox, { backgroundColor: C.gold + "12" }]}>
@@ -68,7 +69,20 @@ function AccountRow({ account, onDisconnect, onRescan, scanning, last }) {
       </View>
       <View style={{ flex: 1 }}>
         <Text style={s.rowT} numberOfLines={1}>{label}</Text>
-        <Text style={s.rowS}>Connected — scanning for bookings</Text>
+        {scanning
+          ? <Text style={[s.rowS, { color: C.gold }]}>Scanning inbox…</Text>
+          : hasResult
+            ? <Text style={[s.rowS, { color: C.teal }]}>
+                {rescanResult.trips_created > 0
+                  ? `+${rescanResult.trips_created} trip${rescanResult.trips_created !== 1 ? 's' : ''}, `
+                  : ''}
+                {rescanResult.legs_added > 0
+                  ? `+${rescanResult.legs_added} booking${rescanResult.legs_added !== 1 ? 's' : ''} found`
+                  : 'Up to date'}
+              </Text>
+            : rescanResult
+              ? <Text style={[s.rowS, { color: C.mut }]}>Up to date</Text>
+              : <Text style={s.rowS}>Connected — tap Re-scan to import bookings</Text>}
       </View>
       <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
         <Pressable style={s.rescanBtn} onPress={onRescan} disabled={scanning}>
@@ -183,13 +197,43 @@ export default function ConnectionsScreen({ navigation }) {
     );
   };
 
+  const [rescanResult, setRescanResult] = useState(null);
+
   const rescan = async () => {
     setScanning(true);
+    setRescanResult(null);
     try {
-      await triggerGmailScan();
-      Alert.alert("Scan started", "Wingman is re-scanning all connected inboxes. Pull to refresh on the Trips tab in about 30 seconds.");
+      const result = await rescanInbox();
+      setRescanResult(result);
+      // Build a human-readable breakdown
+      const breakdown = result.breakdown_by_type || {};
+      const parts = Object.entries(breakdown)
+        .map(([type, count]) => `${count} ${type}${count !== 1 ? 's' : ''}`)
+        .join(", ");
+      Alert.alert(
+        result.trips_created > 0 || result.legs_added > 0 ? "Inbox scanned" : "Up to date",
+        result.message + (parts ? `\n\nNew bookings: ${parts}` : ""),
+        [
+          result.trips_created > 0 || result.legs_added > 0
+            ? { text: "View Trips", onPress: () => navigation.navigate("Trips") }
+            : null,
+          { text: "Done", style: "cancel" },
+        ].filter(Boolean)
+      );
     } catch (e) {
-      Alert.alert("Error", e.message);
+      // Fall back to the fire-and-forget scan if the new endpoint isn't live yet
+      if (e.message?.includes("404") || e.message?.includes("not found")) {
+        try {
+          await triggerGmailScan();
+          Alert.alert("Scan started", "Wingman is re-scanning your inbox. Check the Trips tab in about 30 seconds.");
+        } catch (e2) {
+          Alert.alert("Error", e2.message);
+        }
+      } else if (e.message?.includes("429")) {
+        Alert.alert("Please wait", e.message);
+      } else {
+        Alert.alert("Error", e.message);
+      }
     } finally {
       setScanning(false);
     }
@@ -328,6 +372,7 @@ export default function ConnectionsScreen({ navigation }) {
                   onDisconnect={() => handleDisconnectAccount(account)}
                   onRescan={rescan}
                   scanning={scanning}
+                  rescanResult={rescanResult}
                   last={idx === connectedAccounts.length - 1 && !true /* never last — add button follows */}
                 />
               ))}

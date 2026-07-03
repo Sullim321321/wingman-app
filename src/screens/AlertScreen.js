@@ -142,7 +142,7 @@ function RescueRow({ opt, selected, onSelect, rank }) {
 
           {/* Downstream protection */}
           {opt.downstream_protection && opt.downstream_value_protected > 0 && (
-            <Text style={[s.rescueMeta, { color: "C.teal", marginTop: 4 }]}>
+            <Text style={[s.rescueMeta, { color: C.teal, marginTop: 4 }]}>
               ✓ Protects {formatMoney(opt.downstream_value_protected)} in downstream legs
             </Text>
           )}
@@ -158,7 +158,7 @@ function RescueRow({ opt, selected, onSelect, rank }) {
               )}
             </>
           ) : (
-            <Text style={[s.rescuePrice, { color: opt.cost_usd === 0 ? "C.teal" : C.ink }]}>
+            <Text style={[s.rescuePrice, { color: opt.cost_usd === 0 ? C.teal : C.ink }]}>
               {opt.cost_usd === 0 ? "Free" : formatMoney(opt.cost_usd)}
             </Text>
           )}

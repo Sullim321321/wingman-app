@@ -1135,6 +1135,30 @@ export default function HomeScreen({ navigation }) {
               );
             })()}
 
+            {/* ── Next booking window alert ───────────────────────────────── */}
+            {nextTripWindow && (() => {
+              const { days_until, destination, window_type } = nextTripWindow;
+              const label = window_type === "holiday" ? "Holiday window" : window_type === "event" ? "Event window" : "Booking window";
+              return (
+                <Pressable
+                  style={[s.expiryCard, { borderColor: C.teal + "40", backgroundColor: C.teal + "0A" }]}
+                  onPress={() => navigation.navigate("Concierge", { prefill: `Help me plan a trip to ${destination || "my next destination"} — I have ${days_until} days to book.` })}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                    <Text style={[s.expiryTitle, { color: C.teal }]}>✦ {label}</Text>
+                    <Text style={{ color: C.teal, fontSize: 11, fontFamily: T.sansB }}>{days_until}D AWAY</Text>
+                  </View>
+                  <Text style={s.expiryBody}>
+                    {destination ? `${destination} — ` : ""}Book now for the best fares before this window closes.
+                  </Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
+                    <Text style={{ color: C.mut, fontSize: 11, fontFamily: T.sans }}>Ask Wingman to help plan</Text>
+                    <Text style={{ color: C.teal, fontSize: 13 }}>›</Text>
+                  </View>
+                </Pressable>
+              );
+            })()}
+
             {/* ── Next Up parchment card ──────────────────────────────────── */}
             {nextFlight && (
               <>

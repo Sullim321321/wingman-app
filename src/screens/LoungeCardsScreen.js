@@ -113,7 +113,7 @@ const CARD_CATALOG = [
         id: "priority_pass",
         name: "Priority Pass",
         issuer: "Collinson Group",
-        color: "C.teal",
+        color: "#2A9D8F",
         icon: "✓",
         lounges: ["1,400+ lounges in 148 countries"],
         annual_fee: "$99–$429/yr",

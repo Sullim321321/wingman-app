@@ -6,7 +6,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { C, T } from "../theme";
 import { Btn, BackBar, g } from "../components";
-import { getFlightStatus, getPrediction, refreshTrip, getTripRisk, recordTripOutcome, shareTripLink, getDestinationIntel, inviteCompanion, getCompanions } from "../api";
+import { getFlightStatus, getPrediction, refreshTrip, getTripRisk, recordTripOutcome, shareTripLink, getDestinationIntel, inviteCompanion, getCompanions, getTrips } from "../api";
 import { API_BASE } from "../config";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -472,8 +472,27 @@ function OutcomeCard({ tripId, onSubmitted }) {
 // ─── Main screen ────────────────────────────────────────────────────────────
 
 export default function TripDetailScreen({ route, navigation }) {
-  const { trip: initialTrip } = route.params;
+  // Accept either a full trip object (from TripsScreen) or just a tripId (from Concierge / deep-links)
+  const initialTrip = route.params?.trip || null;
+  const paramTripId = route.params?.tripId || null;
   const [trip, setTrip] = useState(initialTrip);
+  const [loadingTrip, setLoadingTrip] = useState(!initialTrip && !!paramTripId);
+
+  // If only tripId was passed, fetch the full trip object
+  useEffect(() => {
+    if (initialTrip || !paramTripId) return;
+    setLoadingTrip(true);
+    getTrips()
+      .then(data => {
+        const found = (data?.trips || []).find(t => t.id === Number(paramTripId) || t.id === paramTripId);
+        if (found) setTrip(found);
+        else navigation.goBack(); // trip not found — go back gracefully
+      })
+      .catch(() => navigation.goBack())
+      .finally(() => setLoadingTrip(false));
+  }, [paramTripId]);
+
+  // All hooks must be declared before any conditional return (Rules of Hooks)
   const [refreshing, setRefreshing] = useState(false);
 
   // Risk scoring state
@@ -490,6 +509,36 @@ export default function TripDetailScreen({ route, navigation }) {
   const [companions, setCompanions] = useState([]);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviting, setInviting] = useState(false);
+
+  // Load risk data on mount (only when trip is available)
+  useEffect(() => {
+    if (!trip?.id) return;
+    const flightLegsLocal = (trip.legs || []).filter(l => l.type === "flight");
+    if (flightLegsLocal.length < 2) return;
+    setRiskLoading(true);
+    getTripRisk(trip.id)
+      .then(d => setRiskData(d))
+      .catch(() => {})
+      .finally(() => setRiskLoading(false));
+  }, [trip?.id]);
+
+  // Load destination intel and companions on mount
+  useEffect(() => {
+    if (!trip?.id) return;
+    getDestinationIntel(trip.id).then(d => { if (d?.intel) setDestIntel(d); }).catch(e => {
+      if (e.code === "pro_required") setDestIntel({ pro_required: true });
+    });
+    getCompanions(trip.id).then(d => { if (d?.companions) setCompanions(d.companions); }).catch(() => {});
+  }, [trip?.id]);
+
+  // Loading state — shown while fetching trip by ID
+  if (loadingTrip || !trip) {
+    return (
+      <SafeAreaView style={s.app}>
+        <ActivityIndicator size="large" color={C.gold} style={{ flex: 1 }} />
+      </SafeAreaView>
+    );
+  }
 
   const legs = trip.legs || [];
   const flightLegs = legs.filter(l => l.type === "flight");
@@ -509,25 +558,6 @@ export default function TripDetailScreen({ route, navigation }) {
   const isCompleted = lastLegEnd
     ? new Date(lastLegEnd).getTime() < Date.now() - 24 * 3600000
     : false;
-
-  // Load risk data on mount
-  useEffect(() => {
-    if (!trip.id || flightLegs.length < 2) return;
-    setRiskLoading(true);
-    getTripRisk(trip.id)
-      .then(d => setRiskData(d))
-      .catch(() => {})
-      .finally(() => setRiskLoading(false));
-  }, [trip.id]);
-
-  // Load destination intel and companions on mount
-  useEffect(() => {
-    if (!trip.id) return;
-    getDestinationIntel(trip.id).then(d => { if (d?.intel) setDestIntel(d); }).catch(e => {
-      if (e.code === "pro_required") setDestIntel({ pro_required: true });
-    });
-    getCompanions(trip.id).then(d => { if (d?.companions) setCompanions(d.companions); }).catch(() => {});
-  }, [trip.id]);
 
   const handleInviteCompanion = async () => {
     if (!inviteEmail.trim()) return;

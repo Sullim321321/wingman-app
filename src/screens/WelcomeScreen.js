@@ -50,6 +50,13 @@ export default function WelcomeScreen({ navigation, route }) {
     navigation.replace("AddTrip");
   };
 
+  const goPaste = async () => {
+    tap();
+    await markSeen();
+    // Connections screen has a paste-email section — navigate there with paste tab pre-selected
+    navigation.replace("Connections", { tab: "paste" });
+  };
+
   const goSkip = async () => {
     tap();
     await markSeen();
@@ -85,7 +92,7 @@ export default function WelcomeScreen({ navigation, route }) {
 
         <FadeIn delay={250}>
           <Text style={s.sub}>
-            Wingman is ready. Add your first trip and I'll start watching it — delays, gate changes, cancellations, and rescue options if anything goes wrong.
+            Your travel intelligence is active. Connect Gmail to import all your bookings instantly — or add a trip manually.
           </Text>
         </FadeIn>
 
@@ -107,13 +114,25 @@ export default function WelcomeScreen({ navigation, route }) {
               </LinearGradient>
             </Pressable>
 
-            {/* Manual add — secondary */}
+            {/* Paste confirmation — tertiary */}
+            <Pressable style={s.ctaSecondary} onPress={goPaste}>
+              <View style={s.ctaIcon}>
+                <Text style={[s.ctaIconText, { color: C.teal }]}>⎘</Text>
+              </View>
+              <View style={s.ctaText}>
+                <Text style={s.ctaSecondaryTitle}>Paste a confirmation email</Text>
+                <Text style={s.ctaSecondarySub}>Copy & paste any booking — Wingman reads it</Text>
+              </View>
+              <Text style={[s.ctaArrow, { color: C.mut }]}>→</Text>
+            </Pressable>
+
+            {/* Manual add — quaternary */}
             <Pressable style={s.ctaSecondary} onPress={goAddTrip}>
               <View style={s.ctaIcon}>
                 <Text style={[s.ctaIconText, { color: C.gold }]}>+</Text>
               </View>
               <View style={s.ctaText}>
-                <Text style={s.ctaSecondaryTitle}>Add a trip manually</Text>
+                <Text style={s.ctaSecondaryTitle}>Add a flight manually</Text>
                 <Text style={s.ctaSecondarySub}>Enter a flight number or confirmation code</Text>
               </View>
               <Text style={[s.ctaArrow, { color: C.mut }]}>→</Text>

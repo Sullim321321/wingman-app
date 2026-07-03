@@ -99,14 +99,15 @@ function AccountRow({ account, onDisconnect, onRescan, scanning, last, rescanRes
   );
 }
 
-export default function ConnectionsScreen({ navigation }) {
+export default function ConnectionsScreen({ navigation, route }) {
   const [connectedAccounts, setConnectedAccounts] = useState([]);
   const [appleCalGranted,   setAppleCalGranted]   = useState(false);
   const [loading,           setLoading]           = useState(true);
   const [connecting,        setConnecting]        = useState(false);
   const [scanning,          setScanning]          = useState(false);
   const [calGranting,       setCalGranting]       = useState(false);
-  const [showPaste,         setShowPaste]         = useState(false);
+  // Auto-open paste section if navigated here with tab="paste" (e.g. from WelcomeScreen)
+  const [showPaste,         setShowPaste]         = useState(route?.params?.tab === "paste");
   const [pasteText,         setPasteText]         = useState("");
   const [pasteLoading,      setPasteLoading]      = useState(false);
 

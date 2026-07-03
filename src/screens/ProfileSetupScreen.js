@@ -6,8 +6,41 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { C, T } from "../theme";
 import { Btn } from "../components";
-import { updateProfile, updateLocale } from "../api";
+import { updateProfile, updateLocale, createTrip } from "../api";
 import * as SecureStore from "expo-secure-store";
+
+const KEY_DEMO_INJECTED = "wingman_demo_injected";
+
+// Build a realistic demo trip ~14 days from now so Home is never empty on first launch.
+// The trip is real in the backend — it gets monitored and briefed like any other trip.
+async function injectDemoTrip() {
+  try {
+    const already = await SecureStore.getItemAsync(KEY_DEMO_INJECTED);
+    if (already) return; // only inject once
+    // Depart 14 days from now at 08:30 local, arrive +5h30m
+    const dep = new Date(Date.now() + 14 * 86400000);
+    dep.setHours(8, 30, 0, 0);
+    const arr = new Date(dep.getTime() + 5.5 * 3600000);
+    const fmt = (d) => d.toISOString().replace("Z", "+00:00");
+    await createTrip({
+      title: "New York → London",
+      mode: "demo",
+      legs: [{
+        type:          "flight",
+        carrier:       "BA",
+        flight_number: "178",
+        origin:        "JFK",
+        destination:   "LHR",
+        departs_at:    fmt(dep),
+        arrives_at:    fmt(arr),
+        cabin:         "economy",
+      }],
+    });
+    await SecureStore.setItemAsync(KEY_DEMO_INJECTED, "1");
+  } catch (_) {
+    // Non-fatal — if the API is down, user just sees empty Home
+  }
+}
 
 const KEY_PROFILE_DONE = "wingman_profile_done";
 
@@ -41,6 +74,8 @@ export default function ProfileSetupScreen({ navigation }) {
     }).catch(e => console.warn("[ProfileSetup] updateProfile:", e.message));
     updateLocale({ locale: "en", currency: "USD" })
       .catch(e => console.warn("[ProfileSetup] updateLocale:", e.message));
+    // Inject a demo trip in the background so Home is never empty on first launch
+    injectDemoTrip();
     // Navigate to Welcome screen so new users can add their first trip
     // (Welcome marks itself seen and then resets to Tabs)
     navigation.replace("Welcome", { firstName: firstName.trim() });

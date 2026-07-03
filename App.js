@@ -36,6 +36,7 @@ import ErrorBoundary from "./src/ErrorBoundary";
 import HomeScreen from "./src/screens/HomeScreen";
 import ConciergeScreen from "./src/screens/ConciergeScreen";
 import ActivityScreen from "./src/screens/ActivityScreen";
+import TripsScreen from "./src/screens/TripsScreen";
 import AlertScreen from "./src/screens/AlertScreen";
 import ReasonScreen from "./src/screens/ReasonScreen";
 import TrackScreen from "./src/screens/TrackScreen";
@@ -147,8 +148,8 @@ function Tabs() {
       })}
     >
       <Tab.Screen name="Home"      component={HomeScreen} />
-      <Tab.Screen name="Trips"     component={ActivityScreen} />
-      <Tab.Screen name="Alerts"    component={AlertScreen} />
+      <Tab.Screen name="Trips"     component={TripsScreen} />
+      <Tab.Screen name="Alerts"    component={ActivityScreen} />
       <Tab.Screen name="Concierge" component={ConciergeScreen} />
       <Tab.Screen name="Insights"  component={InsightsScreen} />
     </Tab.Navigator>

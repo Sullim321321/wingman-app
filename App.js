@@ -95,20 +95,18 @@ const Tab   = createBottomTabNavigator();
 // Deck-matching thin line icons
 // \uFE0E = text presentation selector — prevents OS emoji substitution
 const TAB_ICONS = {
-  Home:      { active: "\u2302\uFE0E", inactive: "\u2302\uFE0E" },
-  Trips:     { active: "\u2708\uFE0E", inactive: "\u2708\uFE0E" },
-  Alerts:    { active: "\u25CE\uFE0E", inactive: "\u25CB\uFE0E" },
-  Concierge: { active: "\u2726\uFE0E", inactive: "\u2727\uFE0E" },
-  Insights:  { active: "\u25C6\uFE0E", inactive: "\u25C7\uFE0E" },
+  Home:         { active: "\u2302\uFE0E", inactive: "\u2302\uFE0E" },
+  Trips:        { active: "\u2708\uFE0E", inactive: "\u2708\uFE0E" },
+  Intelligence: { active: "\u25CE\uFE0E", inactive: "\u25CB\uFE0E" },
+  Insights:     { active: "\u25C6\uFE0E", inactive: "\u25C7\uFE0E" },
 };
 
 // Tab labels — wide-tracked all-caps (kept short to prevent bleed)
 const TAB_LABELS = {
-  Home:      "HOME",
-  Trips:     "TRIPS",
-  Alerts:    "ALERTS",
-  Concierge: "CONCIERGE",
-  Insights:  "INSIGHTS",
+  Home:         "HOME",
+  Trips:        "TRIPS",
+  Intelligence: "INTEL",
+  Insights:     "INSIGHTS",
 };
 
 function TabIcon({ name, focused }) {
@@ -153,11 +151,10 @@ function Tabs() {
         tabBarIcon: ({ focused }) => <TabIcon name={route.name} focused={focused} />,
       })}
     >
-      <Tab.Screen name="Home"      component={HomeScreen} />
-      <Tab.Screen name="Trips"     component={TripsScreen} />
-      <Tab.Screen name="Alerts"    component={ActivityScreen} />
-      <Tab.Screen name="Concierge" component={ConciergeScreen} />
-      <Tab.Screen name="Insights"  component={InsightsScreen} />
+      <Tab.Screen name="Home"         component={HomeScreen} />
+      <Tab.Screen name="Trips"        component={TripsScreen} />
+      <Tab.Screen name="Intelligence" component={ActivityScreen} />
+      <Tab.Screen name="Insights"     component={InsightsScreen} />
     </Tab.Navigator>
   );
 }

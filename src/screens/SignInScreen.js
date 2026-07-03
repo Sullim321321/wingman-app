@@ -265,7 +265,7 @@ export default function SignInScreen() {
 
   return (
     <SafeAreaView style={s.app}>
-      <LinearGradient colors={["#0F0D0A", "#1A1610", "#0F0D0A"]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={[C.inkD, "#1A1610", C.inkD]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
       <View style={s.glowTop} />
       <KeyboardAvoidingView style={s.wrap} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <Animated.View style={[s.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
@@ -481,7 +481,7 @@ const s = StyleSheet.create({
   content:    { alignItems: "center" },
   markWrap:   { marginBottom: 24 },
   markGrad:   { width: 68, height: 68, borderRadius: 21, alignItems: "center", justifyContent: "center", shadowColor: C.gold, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.45, shadowRadius: 18 },
-  markIcon:   { color: "#0F0D0A", fontSize: 26, fontFamily: T.sansB },
+  markIcon:   { color: C.inkD, fontSize: 26, fontFamily: T.sansB },
   h:          { color: C.ink, fontSize: 28, marginBottom: 6 },
   sub:        { color: C.mut, fontSize: 14, fontFamily: T.sans, marginBottom: 24 },
   errBox:     { width: "100%", backgroundColor: C.coral + "18", borderRadius: 14, borderWidth: 1, borderColor: C.coral + "40", padding: 14, marginBottom: 14 },

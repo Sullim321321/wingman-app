@@ -167,12 +167,12 @@ export default function CompensationScreen({ navigation, route }) {
   if (!loading && submitted) {
     return (
       <SafeAreaView style={s.root}>
-        <LinearGradient colors={["#0F0D0A", "#1A1610", "#0F0D0A"]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={[C.inkD, "#1A1610", C.inkD]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
         <BackBar nav={navigation} label="Compensation" />
         <View style={s.successWrap}>
           <View style={s.successIcon}>
             <LinearGradient colors={GRAD.gold} style={s.successIconGrad}>
-              <Text style={{ fontSize: 28, color: "#0F0D0A" }}>✓</Text>
+              <Text style={{ fontSize: 28, color: C.inkD }}>✓</Text>
             </LinearGradient>
           </View>
           <SerifText bold style={s.successTitle}>Claim filed</SerifText>
@@ -201,7 +201,7 @@ export default function CompensationScreen({ navigation, route }) {
   if (loading) {
     return (
       <SafeAreaView style={s.root}>
-        <LinearGradient colors={["#0F0D0A", "#1A1610", "#0F0D0A"]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={[C.inkD, "#1A1610", C.inkD]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
         <BackBar nav={navigation} label="Compensation" />
         <View style={s.loadingWrap}>
           <ActivityIndicator color={C.gold} size="small" />
@@ -214,7 +214,7 @@ export default function CompensationScreen({ navigation, route }) {
   // ── Main content ──────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={s.root}>
-      <LinearGradient colors={["#0F0D0A", "#1A1610", "#0F0D0A"]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={[C.inkD, "#1A1610", C.inkD]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
       <BackBar nav={navigation} label="Compensation" />
 
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
@@ -312,7 +312,7 @@ export default function CompensationScreen({ navigation, route }) {
               <Pressable style={s.ctaBtn} onPress={handleFileClaim} disabled={submitting}>
                 <LinearGradient colors={GRAD.gold} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.ctaBtnGrad}>
                   {submitting
-                    ? <ActivityIndicator color="#0F0D0A" size="small" />
+                    ? <ActivityIndicator color=C.inkD size="small" />
                     : <Text style={s.ctaBtnT}>File claim now</Text>}
                 </LinearGradient>
               </Pressable>
@@ -382,7 +382,7 @@ const s = StyleSheet.create({
   amountWrap: { marginBottom: 16, borderRadius: 22, overflow: "hidden", shadowColor: C.gold, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.35, shadowRadius: 24 },
   amountGrad: { paddingHorizontal: 24, paddingVertical: 28, alignItems: "center" },
   amountLabel:{ color: "rgba(15,13,10,0.6)", fontSize: 10, fontFamily: T.sansB, letterSpacing: 1.5, marginBottom: 8 },
-  amountValue:{ color: "#0F0D0A", fontSize: 56, fontFamily: T.sansB, lineHeight: 60 },
+  amountValue:{ color: C.inkD, fontSize: 56, fontFamily: T.sansB, lineHeight: 60 },
   amountSub:  { color: "rgba(15,13,10,0.65)", fontSize: 12, fontFamily: T.sans, marginTop: 8, textAlign: "center" },
 
   // Flight card
@@ -428,7 +428,7 @@ const s = StyleSheet.create({
   ctaSub:   { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 20, marginBottom: 18 },
   ctaBtn:   { borderRadius: 16, overflow: "hidden", marginBottom: 12, shadowColor: C.gold, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12 },
   ctaBtnGrad: { paddingVertical: 16, alignItems: "center" },
-  ctaBtnT:  { color: "#0F0D0A", fontSize: 16, fontFamily: T.sansB },
+  ctaBtnT:  { color: C.inkD, fontSize: 16, fontFamily: T.sansB },
   ctaGhost: { alignItems: "center", paddingVertical: 10 },
   ctaGhostT:{ color: C.mut, fontSize: 13, fontFamily: T.sansM },
 

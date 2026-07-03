@@ -13,7 +13,7 @@ export default function FlightConfirmScreen({ navigation, route }) {
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
       <ScrollView style={g.scroll}>
         <View style={s.hero}>
-          <Text style={s.heroIcon}>✈️</Text>
+          <Text style={s.heroIcon}>✦</Text>
           <Text style={s.heroTitle}>Booking Confirmed</Text>
           <Text style={s.heroSub}>Your flight has been booked successfully.</Text>
         </View>

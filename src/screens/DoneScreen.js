@@ -23,10 +23,10 @@ export default function DoneScreen({ navigation, route }) {
   const itineraryRows = [];
   if (option) {
     if (option.type === "flight" || option.label?.toLowerCase().includes("flight")) {
-      itineraryRows.push({ ic: "🛫", t: option.label || `${dep} → ${arr} · ${flightLabel}` });
+      itineraryRows.push({ ic: "✦", t: option.label || `${dep} → ${arr} · ${flightLabel}` });
     }
     if (option.label?.toLowerCase().includes("hotel") || option.hotel) {
-      itineraryRows.push({ ic: "🏨", t: option.hotel || "Hotel confirmed · arrival noted" });
+      itineraryRows.push({ ic: "◈", t: option.hotel || "Hotel confirmed · arrival noted" });
     }
     if (option.type === "award" || option.label?.toLowerCase().includes("points")) {
       itineraryRows.push({ ic: "⭐", t: option.label || "Award redemption confirmed" });

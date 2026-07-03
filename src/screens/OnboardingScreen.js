@@ -120,7 +120,7 @@ function SlideConcierge() {
           </View>
           <View style={s.bubbleRight}>
             <LinearGradient colors={GRAD.gold} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.bubbleGrad}>
-              <Text style={[s.bubbleText, { color: "#0F0D0A" }]}>
+              <Text style={[s.bubbleText, { color: C.inkD }]}>
                 UA 412 is cancelled. AA 1847 departs JFK at 4:20 PM with 2 seats in your fare class. Want me to rebook you?
               </Text>
             </LinearGradient>
@@ -130,7 +130,7 @@ function SlideConcierge() {
           </View>
           <View style={s.bubbleRight}>
             <LinearGradient colors={GRAD.gold} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.bubbleGrad}>
-              <Text style={[s.bubbleText, { color: "#0F0D0A" }]}>Done. Confirmation sent to your email. ✓</Text>
+              <Text style={[s.bubbleText, { color: C.inkD }]}>Done. Confirmation sent to your email. ✓</Text>
             </LinearGradient>
           </View>
         </SafeBlur>
@@ -223,7 +223,7 @@ function SlideSignUp({ onDone }) {
           <LinearGradient colors={[C.gold + "14", "transparent"]} style={s.permGlow} />
           <View style={s.permIconWrap}>
             <LinearGradient colors={GRAD.gold} style={s.permIconBg}>
-              <Text style={[s.permIconText, { color: "#0F0D0A" }]}>
+              <Text style={[s.permIconText, { color: C.inkD }]}>
                 {step === "code" ? "✉" : "✦"}
               </Text>
             </LinearGradient>
@@ -433,7 +433,7 @@ export default function OnboardingScreen({ navigation }) {
   if (showPush) {
     return (
       <SafeAreaView style={s.app}>
-        <LinearGradient colors={["#0F0D0A", "#1A1610", "#0F0D0A"]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={[C.inkD, "#1A1610", C.inkD]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
           <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }} keyboardShouldPersistTaps="handled">
             <PushPermissionSlide onDone={handlePushDone} />
@@ -445,7 +445,7 @@ export default function OnboardingScreen({ navigation }) {
 
   return (
     <SafeAreaView style={s.app}>
-      <LinearGradient colors={["#0F0D0A", "#1A1610", "#0F0D0A"]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={[C.inkD, "#1A1610", C.inkD]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
       {!isSignUpSlide && (
         <View style={[s.topBar, { paddingTop: insets.top }]}>
           <Pressable style={s.skipIntroBtn} onPress={() => { tap(); goToPage(TOTAL - 1); }}>
@@ -530,7 +530,7 @@ const s = StyleSheet.create({
   permTitle:  { color: C.ink, fontSize: 26, marginBottom: 10, textAlign: "center", letterSpacing: -0.4 },
   permBody:   { color: C.mut, fontSize: 14, fontFamily: T.sans, textAlign: "center", lineHeight: 22, marginBottom: 24 },
   authOptions:{ gap: 14, width: "100%" },
-  appleBtn:   { flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "#FFFFFF", borderRadius: 14, paddingVertical: 16, gap: 8 },
+  appleBtn:   { flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: C.ink, borderRadius: 14, paddingVertical: 16, gap: 8 },
   appleBtnIcon: { fontSize: 18, color: "#000" },
   appleBtnT:  { color: "#000", fontSize: 16, fontFamily: T.sansB },
   dividerRow: { flexDirection: "row", alignItems: "center", gap: 10 },
@@ -549,7 +549,7 @@ const s = StyleSheet.create({
   pushIconWrap: { width: 160, height: 160, alignItems: "center", justifyContent: "center", marginBottom: 24 },
   pushGlow:     { position: "absolute", width: 160, height: 160, borderRadius: 80, backgroundColor: C.gold + "10" },
   pushMark:     { width: 80, height: 80, borderRadius: 24, alignItems: "center", justifyContent: "center", shadowColor: C.gold, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 18 },
-  pushMarkIcon: { fontSize: 28, color: "#0F0D0A", fontFamily: T.sansB },
+  pushMarkIcon: { fontSize: 28, color: C.inkD, fontFamily: T.sansB },
   pushPreviewCard: { width: "100%", borderRadius: 20, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", overflow: "hidden", marginTop: 8 },
   pushRow:    { flexDirection: "row", alignItems: "center", gap: 12, padding: 14 },
   pushIconBadge: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },

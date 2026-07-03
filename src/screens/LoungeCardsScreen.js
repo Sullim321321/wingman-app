@@ -58,7 +58,7 @@ const CARD_CATALOG = [
         id: "capital_one_venture_x",
         name: "Capital One Venture X",
         issuer: "Capital One",
-        color: "#C9A96E",
+        color: C.gold,
         icon: "✦",
         lounges: ["Capital One Lounge", "Priority Pass (unlimited)", "Plaza Premium"],
         annual_fee: "$395",
@@ -207,7 +207,7 @@ export default function LoungeCardsScreen() {
 
   return (
     <SafeAreaView style={s.app}>
-      <LinearGradient colors={["#0F0D0A", "#1A1610", "#0F0D0A"]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={[C.inkD, "#1A1610", C.inkD]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
       {/* Header */}
       <View style={s.header}>
         <Pressable style={s.backBtn} onPress={() => { tap(); navigation.goBack(); }}>
@@ -285,7 +285,7 @@ const s = StyleSheet.create({
   infoText:   { flex: 1, color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 19 },
   selectedBadge: { alignItems: "center", marginBottom: 16 },
   selectedBadgeGrad: { borderRadius: 20, paddingHorizontal: 16, paddingVertical: 6 },
-  selectedBadgeT: { color: "#0F0D0A", fontSize: 13, fontFamily: T.sansB },
+  selectedBadgeT: { color: C.inkD, fontSize: 13, fontFamily: T.sansB },
   section:    { marginBottom: 24 },
   sectionTitle: { color: C.mut, fontSize: 10, fontFamily: T.sansB, letterSpacing: 1.2, marginBottom: 10, marginLeft: 4 },
   group:      { borderRadius: 18, borderWidth: 1, borderColor: C.line, overflow: "hidden", backgroundColor: C.card },
@@ -300,6 +300,6 @@ const s = StyleSheet.create({
   cardLounges:{ color: C.mut, fontSize: 11, fontFamily: T.sans, marginTop: 3, fontStyle: "italic" },
   checkBox:   { width: 24, height: 24, borderRadius: 7, borderWidth: 1.5, borderColor: C.line, alignItems: "center", justifyContent: "center" },
   checkBoxOn: { backgroundColor: C.gold, borderColor: C.gold },
-  checkMark:  { color: "#0F0D0A", fontSize: 13, fontFamily: T.sansB },
+  checkMark:  { color: C.inkD, fontSize: 13, fontFamily: T.sansB },
   footerNote: { color: C.mut, fontSize: 11, fontFamily: T.sans, textAlign: "center", lineHeight: 17, paddingHorizontal: 20, marginTop: 4 },
 });

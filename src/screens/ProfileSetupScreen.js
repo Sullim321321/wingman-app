@@ -53,7 +53,7 @@ export default function ProfileSetupScreen({ navigation }) {
 
           {/* Header */}
           <LinearGradient colors={[C.gold, C.goldD || "#b8942a"]} style={s.mark}>
-            <Text style={{ fontSize: 22, color: "#0F0D0A", fontFamily: T.sansB }}>✦</Text>
+            <Text style={{ fontSize: 22, color: C.inkD, fontFamily: T.sansB }}>✦</Text>
           </LinearGradient>
           <Text style={s.h}>How do you fly?</Text>
           <Text style={s.sub}>

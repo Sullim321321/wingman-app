@@ -59,7 +59,7 @@ export default function WelcomeScreen({ navigation, route }) {
   return (
     <SafeAreaView style={s.root}>
       <LinearGradient
-        colors={["#0F0D0A", "#1A1610", "#0F0D0A"]}
+        colors={[C.inkD, "#1A1610", C.inkD]}
         locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
       />
@@ -126,7 +126,7 @@ export default function WelcomeScreen({ navigation, route }) {
         <FadeIn delay={500}>
           <View style={s.watchCard}>
             {[
-              { icon: "⚠", color: C.coral,  label: "Delays & cancellations" },
+              { icon: "!", color: C.coral,  label: "Delays & cancellations" },
               { icon: "✓", color: C.teal,   label: "Automatic rebooking options" },
               { icon: "✦", color: C.gold,   label: "Pre-departure briefings" },
             ].map((item, i) => (
@@ -160,7 +160,7 @@ const s = StyleSheet.create({
   markWrap: { alignItems: "center", justifyContent: "center", width: 120, height: 120, marginBottom: 24 },
   glow:     { position: "absolute", width: 120, height: 120, borderRadius: 60, backgroundColor: C.gold + "12" },
   mark:     { width: 72, height: 72, borderRadius: 22, alignItems: "center", justifyContent: "center", shadowColor: C.gold, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.5, shadowRadius: 24 },
-  markText: { fontSize: 28, color: "#0F0D0A", fontFamily: T.sansB },
+  markText: { fontSize: 28, color: C.inkD, fontFamily: T.sansB },
 
   // Heading
   heading: { color: C.ink, fontSize: 34, textAlign: "center", marginBottom: 12, letterSpacing: -0.5, lineHeight: 42 },
@@ -171,7 +171,7 @@ const s = StyleSheet.create({
 
   ctaPrimary: { width: "100%", borderRadius: 18, overflow: "hidden", shadowColor: C.gold, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 16 },
   ctaPrimaryGrad: { flexDirection: "row", alignItems: "center", paddingHorizontal: 18, paddingVertical: 18, gap: 14 },
-  ctaPrimaryTitle: { color: "#0F0D0A", fontSize: 16, fontFamily: T.sansB },
+  ctaPrimaryTitle: { color: C.inkD, fontSize: 16, fontFamily: T.sansB },
   ctaPrimarySub:   { color: "rgba(15,13,10,0.65)", fontSize: 12, fontFamily: T.sans, marginTop: 2 },
 
   ctaSecondary: { width: "100%", flexDirection: "row", alignItems: "center", borderRadius: 18, borderWidth: 1, borderColor: C.line, backgroundColor: C.card, paddingHorizontal: 18, paddingVertical: 18, gap: 14 },
@@ -179,9 +179,9 @@ const s = StyleSheet.create({
   ctaSecondarySub:   { color: C.mut, fontSize: 12, fontFamily: T.sans, marginTop: 2 },
 
   ctaIcon: { width: 38, height: 38, borderRadius: 10, backgroundColor: "rgba(255,255,255,0.12)", alignItems: "center", justifyContent: "center" },
-  ctaIconText: { fontSize: 18, color: "#0F0D0A", fontFamily: T.sansB },
+  ctaIconText: { fontSize: 18, color: C.inkD, fontFamily: T.sansB },
   ctaText:  { flex: 1 },
-  ctaArrow: { fontSize: 18, color: "#0F0D0A", fontFamily: T.sansM },
+  ctaArrow: { fontSize: 18, color: C.inkD, fontFamily: T.sansM },
 
   // Watch card
   watchCard: { width: "100%", borderRadius: 16, borderWidth: 1, borderColor: C.line, backgroundColor: C.card, overflow: "hidden", marginBottom: 20 },

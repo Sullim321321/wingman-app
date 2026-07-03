@@ -42,7 +42,7 @@ const REDEEMABLE_PERKS = [
   { id: "upgrade_boost",    cost: 400, label: "Upgrade Bid Boost",  icon: "🚀", desc: "2× points on your next upgrade bid — doubles your chances.", color: C.gold },
   { id: "free_month",       cost: 500, label: "1 Month Free",       icon: "✦",  desc: "One full month of Wingman Premium at no charge.", color: "#FF9F43" },
   { id: "lounge_day_pass",  cost: 600, label: "Lounge Day Pass",    icon: "◈",  desc: "One-day Priority Pass lounge access at any participating airport.", color: "C.teal" },
-  { id: "concierge_call",   cost: 800, label: "Concierge Call",     icon: "◆",  desc: "30-minute call with a Wingman travel expert — your personal fixer.", color: "#C9A96E" },
+  { id: "concierge_call",   cost: 800, label: "Concierge Call",     icon: "◆",  desc: "30-minute call with a Wingman travel expert — your personal fixer.", color: C.gold },
 ];
 
 function RedeemModal({ perk, balance, onConfirm, onCancel, redeeming }) {
@@ -51,7 +51,7 @@ function RedeemModal({ perk, balance, onConfirm, onCancel, redeeming }) {
     <Modal transparent animationType="fade" visible>
       <View style={m.overlay}>
         <View style={m.sheet}>
-          <LinearGradient colors={["#1A1610", "#0F0D0A"]} style={StyleSheet.absoluteFill} />
+          <LinearGradient colors={["#1A1610", C.inkD]} style={StyleSheet.absoluteFill} />
           <View style={[m.perkIcon, { backgroundColor: perk.color + "20", borderColor: perk.color + "40" }]}>
             <Text style={[m.perkIconT, { color: perk.color }]}>{perk.icon}</Text>
           </View>
@@ -80,7 +80,7 @@ function RedeemModal({ perk, balance, onConfirm, onCancel, redeeming }) {
               disabled={!canAfford || redeeming}
             >
               {redeeming
-                ? <ActivityIndicator color="#0F0D0A" size="small" />
+                ? <ActivityIndicator color=C.inkD size="small" />
                 : <Text style={m.confirmBtnT}>Redeem →</Text>}
             </Pressable>
           </View>
@@ -153,7 +153,7 @@ export default function WingmanPointsScreen({ navigation }) {
 
   return (
     <SafeAreaView style={s.app}>
-      <LinearGradient colors={["#0F0D0A", "#1A1610", "#0F0D0A"]} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={[C.inkD, "#1A1610", C.inkD]} style={StyleSheet.absoluteFill} />
 
       {/* Header */}
       <View style={s.header}>
@@ -361,7 +361,7 @@ const m = StyleSheet.create({
   costRow:  { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 20 },
   costLabel:{ color: C.mut, fontSize: 14, fontFamily: T.sans },
   costBadge:{ borderRadius: 10, paddingHorizontal: 14, paddingVertical: 6 },
-  costBadgeT:{ color: "#0F0D0A", fontSize: 14, fontFamily: T.sansB },
+  costBadgeT:{ color: C.inkD, fontSize: 14, fontFamily: T.sansB },
   insufficientBanner: { backgroundColor: C.coral + "18", borderRadius: 12, padding: 12, marginBottom: 16, width: "100%" },
   insufficientT: { color: C.coral, fontSize: 13, fontFamily: T.sansM, textAlign: "center" },
   btnRow:   { flexDirection: "row", gap: 12, width: "100%" },
@@ -369,5 +369,5 @@ const m = StyleSheet.create({
   cancelBtnT:{ color: C.mut, fontSize: 15, fontFamily: T.sansM },
   confirmBtn:{ flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: "center", overflow: "hidden", backgroundColor: C.gold },
   confirmBtnDisabled: { backgroundColor: C.card2 },
-  confirmBtnT:{ color: "#0F0D0A", fontSize: 15, fontFamily: T.sansB },
+  confirmBtnT:{ color: C.inkD, fontSize: 15, fontFamily: T.sansB },
 });

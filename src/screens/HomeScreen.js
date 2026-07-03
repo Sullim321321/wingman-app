@@ -1229,7 +1229,7 @@ const s = StyleSheet.create({
   disruptionCTA:  { backgroundColor: "#D95F5F18", borderRadius: 10, padding: 10, marginTop: 10, borderWidth: 1, borderColor: "#D95F5F40" },
   disruptionCTAT: { color: "#D95F5F", fontSize: 13, fontFamily: T.sans, fontWeight: "600", textAlign: "center" },
   sugChip:        { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: "#3A3020", backgroundColor: "#1A1612" },
-  sugChipT:       { color: "#C9A96E", fontSize: 12, fontFamily: T.sans, fontFamily: T.sansM },
+  sugChipT:       { color: C.gold, fontSize: 12, fontFamily: T.sans, fontFamily: T.sansM },
   journeyTimingBtn:  { backgroundColor: "#D4902A12", borderRadius: 10, padding: 10, marginTop: 8, borderWidth: 1, borderColor: "#D4902A40" },
   journeyTimingBtnT: { color: "#D4902A", fontSize: 12, fontFamily: T.sans, fontWeight: "600", textAlign: "center" },
   windowTitle:    { color: C.ink, fontSize: 14, fontFamily: T.sansB },

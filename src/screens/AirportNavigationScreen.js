@@ -68,7 +68,7 @@ export default function AirportNavigationScreen() {
   };
 
   return (
-    <View style={s.container}>
+    <SafeAreaView style={s.container}>
       {/* Header */}
       <View style={[s.header, { paddingTop: insets.top + 12 }]}>
         <Pressable style={s.backBtn} onPress={() => navigation.goBack()}>
@@ -83,7 +83,7 @@ export default function AirportNavigationScreen() {
           ) : null}
         </View>
         <Pressable style={s.mapBtn} onPress={openMaps}>
-          <Text style={s.mapBtnT}>🗺️</Text>
+          <Text style={s.mapBtnT}>↗</Text>
         </Pressable>
       </View>
 
@@ -120,7 +120,7 @@ export default function AirportNavigationScreen() {
         {/* Error */}
         {!loading && error && (
           <View style={s.center}>
-            <Text style={s.errorIcon}>✈️</Text>
+            <Text style={s.errorIcon}>✦</Text>
             <Text style={s.errorText}>{error}</Text>
             <Pressable style={s.retryBtn} onPress={() => load()}>
               <Text style={s.retryBtnT}>Try Again</Text>
@@ -199,14 +199,14 @@ export default function AirportNavigationScreen() {
                 <Text style={s.actionLabel}>Transport</Text>
               </Pressable>
               <Pressable style={s.actionBtn} onPress={openMaps}>
-                <Text style={s.actionIcon}>🗺️</Text>
+                <Text style={s.actionIcon}>↗</Text>
                 <Text style={s.actionLabel}>Map</Text>
               </Pressable>
               <Pressable
                 style={s.actionBtn}
                 onPress={() => navigation.navigate("AirportDining", { iata, flightInfo })}
               >
-                <Text style={s.actionIcon}>🍽️</Text>
+                <Text style={s.actionIcon}>◈</Text>
                 <Text style={s.actionLabel}>Dining</Text>
               </Pressable>
             </View>
@@ -286,7 +286,7 @@ export default function AirportNavigationScreen() {
             {data.inter_terminal_bus && (
               <View style={s.transportCard}>
                 <View style={s.transportHeader}>
-                  <Text style={s.transportIcon}>🚌</Text>
+                  <Text style={s.transportIcon}>≡</Text>
                   <View style={s.transportMeta}>
                     <Text style={s.transportName}>Inter-Terminal Bus</Text>
                     <View style={[s.transportBadge, { backgroundColor: "rgba(78,205,196,0.15)" }]}>
@@ -306,7 +306,7 @@ export default function AirportNavigationScreen() {
             {/* No transport data */}
             {!data.airtrain && !data.inter_terminal_bus && (
               <View style={s.center}>
-                <Text style={s.errorIcon}>🚌</Text>
+                <Text style={s.errorIcon}>≡</Text>
                 <Text style={s.errorText}>Check your airline's app for the latest terminal shuttle information.</Text>
               </View>
             )}
@@ -355,7 +355,7 @@ function LoungeCard({ lounge, highlighted }) {
           </View>
         ))}
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -363,16 +363,16 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
   scroll: { flex: 1 },
   // Header
-  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 0, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: C.border },
+  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 0, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: C.line },
   backBtn: { width: 36, height: 36, justifyContent: "center" },
   backBtnT: { color: C.gold, fontSize: 28, lineHeight: 32 },
   headerCenter: { flex: 1, alignItems: "center" },
-  headerTitle: { color: C.text, fontSize: 17, fontFamily: T.sansB },
+  headerTitle: { color: C.ink, fontSize: 11, fontFamily: T.sansB, letterSpacing: 2, textTransform: "uppercase" },
   headerSub: { color: C.mut, fontSize: 13, marginTop: 2 },
   mapBtn: { width: 36, height: 36, justifyContent: "center", alignItems: "center" },
   mapBtnT: { fontSize: 20 },
   // Tab bar
-  tabBar: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: C.border },
+  tabBar: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: C.line },
   tab: { flex: 1, paddingVertical: 12, alignItems: "center" },
   tabActive: { borderBottomWidth: 2, borderBottomColor: C.gold },
   tabT: { color: C.mut, fontSize: 14, fontFamily: T.sansM },
@@ -385,17 +385,17 @@ const s = StyleSheet.create({
   retryBtn: { marginTop: 20, backgroundColor: C.card, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 },
   retryBtnT: { color: C.gold, fontSize: 15, fontFamily: T.sansM },
   // Stats banner
-  statsBanner: { flexDirection: "row", margin: 16, backgroundColor: C.card, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: C.border },
+  statsBanner: { flexDirection: "row", margin: 16, backgroundColor: C.card, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: C.line },
   statItem: { flex: 1, alignItems: "center" },
   statValue: { color: C.gold, fontSize: 28, fontFamily: T.sansB },
   statLabel: { color: C.mut, fontSize: 10, fontFamily: T.sansB, letterSpacing: 0.8, marginTop: 4, textAlign: "center" },
-  statDivider: { width: 1, backgroundColor: C.border },
+  statDivider: { width: 1, backgroundColor: C.line },
   // Gate card
   gateCard: { marginHorizontal: 16, marginBottom: 12, backgroundColor: "rgba(201,169,110,0.08)", borderRadius: 14, padding: 16, borderWidth: 1, borderColor: "rgba(201,169,110,0.3)" },
   gateDisplay: { flexDirection: "row", alignItems: "center", gap: 16, marginTop: 8 },
   gateNumber: { color: C.gold, fontSize: 48, fontFamily: T.sansB, lineHeight: 56 },
   gateInfo: { flex: 1 },
-  gateInfoText: { color: C.text, fontSize: 14, fontFamily: T.sansM },
+  gateInfoText: { color: C.ink, fontSize: 14, fontFamily: T.sansM },
   gateInfoSub: { color: C.mut, fontSize: 12, marginTop: 4 },
   // Section
   section: { marginBottom: 8 },
@@ -405,24 +405,24 @@ const s = StyleSheet.create({
   accessBadgeT: { color: C.green, fontSize: 11, fontFamily: T.sansB },
   // Terminal grid
   terminalGrid: { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 16, gap: 8 },
-  terminalBox: { backgroundColor: C.card2, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 1, borderColor: C.border },
-  terminalBoxT: { color: C.text, fontSize: 14, fontFamily: T.sansM },
+  terminalBox: { backgroundColor: C.card2, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 1, borderColor: C.line },
+  terminalBoxT: { color: C.ink, fontSize: 14, fontFamily: T.sansM },
   // Security
-  securityCard: { marginHorizontal: 16, marginBottom: 12, backgroundColor: C.card, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: C.border },
+  securityCard: { marginHorizontal: 16, marginBottom: 12, backgroundColor: C.card, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: C.line },
   // Tips
   tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 8, backgroundColor: "rgba(255,193,7,0.06)", borderRadius: 8, padding: 10, marginTop: 8 },
   tipIcon: { fontSize: 14, marginTop: 1 },
   tipText: { flex: 1, color: "#FFC107", fontSize: 13, lineHeight: 19 },
   // Quick actions
   actionsRow: { flexDirection: "row", marginHorizontal: 16, marginTop: 8, marginBottom: 12, gap: 10 },
-  actionBtn: { flex: 1, backgroundColor: C.card, borderRadius: 12, paddingVertical: 14, alignItems: "center", borderWidth: 1, borderColor: C.border },
+  actionBtn: { flex: 1, backgroundColor: C.card, borderRadius: 12, paddingVertical: 14, alignItems: "center", borderWidth: 1, borderColor: C.line },
   actionIcon: { fontSize: 22, marginBottom: 4 },
   actionLabel: { color: C.mut, fontSize: 11, fontFamily: T.sansM },
   // Lounge card
-  loungeCard: { marginHorizontal: 16, marginBottom: 10, backgroundColor: C.card, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: C.border },
+  loungeCard: { marginHorizontal: 16, marginBottom: 10, backgroundColor: C.card, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: C.line },
   loungeCardHighlighted: { backgroundColor: "rgba(201,169,110,0.06)", borderColor: "rgba(201,169,110,0.3)" },
   loungeHeader: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 },
-  loungeName: { color: C.text, fontSize: 15, fontFamily: T.sansB, flex: 1, marginRight: 8 },
+  loungeName: { color: C.ink, fontSize: 15, fontFamily: T.sansB, flex: 1, marginRight: 8 },
   loungeterminalBadge: { backgroundColor: "rgba(201,169,110,0.15)", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
   loungeTerminalT: { color: C.gold, fontSize: 11, fontFamily: T.sansB },
   loungeHoursRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 },
@@ -432,18 +432,18 @@ const s = StyleSheet.create({
   loungeAccessTag: { borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1 },
   loungeAccessTagT: { fontSize: 11, fontFamily: T.sansM },
   // Transport card
-  transportCard: { marginHorizontal: 16, marginBottom: 12, backgroundColor: C.card, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: C.border },
+  transportCard: { marginHorizontal: 16, marginBottom: 12, backgroundColor: C.card, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: C.line },
   transportHeader: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 4 },
   transportIcon: { fontSize: 28 },
   transportMeta: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  transportName: { color: C.text, fontSize: 16, fontFamily: T.sansB },
+  transportName: { color: C.ink, fontSize: 16, fontFamily: T.sansB },
   transportBadge: { backgroundColor: "rgba(201,169,110,0.15)", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
   transportBadgeT: { color: C.gold, fontSize: 11, fontFamily: T.sansB },
   // City transport CTA
-  cityTransportCta: { marginHorizontal: 16, marginTop: 8, marginBottom: 12, backgroundColor: C.card2, borderRadius: 14, padding: 16, flexDirection: "row", alignItems: "center", gap: 14, borderWidth: 1, borderColor: C.border },
+  cityTransportCta: { marginHorizontal: 16, marginTop: 8, marginBottom: 12, backgroundColor: C.card2, borderRadius: 14, padding: 16, flexDirection: "row", alignItems: "center", gap: 14, borderWidth: 1, borderColor: C.line },
   cityTransportCtaIcon: { fontSize: 32 },
   cityTransportCtaMeta: { flex: 1 },
-  cityTransportCtaTitle: { color: C.text, fontSize: 16, fontFamily: T.sansB },
+  cityTransportCtaTitle: { color: C.ink, fontSize: 16, fontFamily: T.sansB },
   cityTransportCtaSub: { color: C.gold, fontSize: 13, marginTop: 2 },
   // Wingman tip
   wingmanTip: { marginHorizontal: 16, marginTop: 4, marginBottom: 8, backgroundColor: "rgba(201,169,110,0.06)", borderRadius: 12, padding: 14, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)" },

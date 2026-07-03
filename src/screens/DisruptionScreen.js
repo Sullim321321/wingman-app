@@ -84,8 +84,8 @@ function EC261Card({ ec261 }) {
 
 function CascadeActionCard({ action, onPress, executing, done }) {
   const icons = {
-    hotel_delay:      "🏨",
-    restaurant_delay: "🍽",
+    hotel_delay:      "◈",
+    restaurant_delay: "◈",
     lounge_access:    "🛋",
   };
   return (

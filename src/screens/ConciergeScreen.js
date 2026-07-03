@@ -290,7 +290,7 @@ export default function ConciergeScreen({ route }) {
             </View>
             {(item.transit.steps || []).slice(0, 5).map((step, i) => (
               <View key={i} style={s.transitStep}>
-                <Text style={s.transitStepMode}>{step.mode === "TRANSIT" ? "🚌" : step.mode === "WALKING" ? "🚶" : "•"}</Text>
+                <Text style={s.transitStepMode}>{step.mode === "TRANSIT" ? "≡" : step.mode === "WALKING" ? "→" : "•"}</Text>
                 <View style={{ flex: 1 }}>
                   <Text style={s.transitStepText}>{step.instruction}</Text>
                   {step.transit && (

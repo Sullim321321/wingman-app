@@ -18,7 +18,7 @@ const C = {
 };
 
 const DIETARY_FILTERS = [
-  { key: "all",         label: "All",           emoji: "🍽️" },
+  { key: "all",         label: "All",           emoji: "◈" },
   { key: "vegetarian",  label: "Vegetarian",    emoji: "🥗" },
   { key: "vegan",       label: "Vegan",         emoji: "🌱" },
   { key: "halal",       label: "Halal",         emoji: "☪️" },
@@ -73,7 +73,7 @@ export default function AirportDiningScreen() {
   const terminals = data ? ["all", ...new Set((data.picks || []).map(p => p.terminal).filter(Boolean))] : ["all"];
 
   return (
-    <View style={s.container}>
+    <SafeAreaView style={s.container}>
       {/* Header */}
       <View style={[s.header, { paddingTop: insets.top + 12 }]}>
         <Pressable style={s.backBtn} onPress={() => navigation.goBack()}>
@@ -149,7 +149,7 @@ export default function AirportDiningScreen() {
         {/* Error */}
         {!loading && error && (
           <View style={s.center}>
-            <Text style={s.errorIcon}>🍽️</Text>
+            <Text style={s.errorIcon}>◈</Text>
             <Text style={s.errorText}>{error}</Text>
             <Pressable style={s.retryBtn} onPress={() => load()}>
               <Text style={s.retryBtnT}>Try Again</Text>
@@ -253,7 +253,7 @@ export default function AirportDiningScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -261,30 +261,30 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bg },
   scroll: { flex: 1 },
   // Header
-  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 0, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: C.border },
+  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 0, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: C.line },
   backBtn: { width: 36, height: 36, justifyContent: "center" },
   backBtnT: { color: C.gold, fontSize: 28, lineHeight: 32 },
   headerCenter: { flex: 1, alignItems: "center" },
-  headerTitle: { color: C.text, fontSize: 17, fontFamily: T.sansB },
+  headerTitle: { color: C.ink, fontSize: 11, fontFamily: T.sansB, letterSpacing: 2, textTransform: "uppercase" },
   headerSub: { color: C.mut, fontSize: 13, marginTop: 2 },
   // Overview
   overviewBanner: { margin: 16, backgroundColor: "rgba(201,169,110,0.08)", borderRadius: 14, padding: 16, borderWidth: 1, borderColor: "rgba(201,169,110,0.25)" },
   overviewLabel: { color: C.gold, fontSize: 10, fontFamily: T.sansB, letterSpacing: 1.5, marginBottom: 8 },
-  overviewText: { color: C.text, fontSize: 14, lineHeight: 21 },
+  overviewText: { color: C.ink, fontSize: 14, lineHeight: 21 },
   prefRow: { flexDirection: "row", marginTop: 10, flexWrap: "wrap" },
   prefLabel: { color: C.mut, fontSize: 12 },
   prefValue: { color: C.teal, fontSize: 12, fontFamily: T.sansM },
   // Terminal chips
   terminalScroll: { marginBottom: 4 },
   terminalRow: { paddingHorizontal: 16, gap: 8, paddingVertical: 4 },
-  terminalChip: { borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7, backgroundColor: C.card, borderWidth: 1, borderColor: C.border },
+  terminalChip: { borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
   terminalChipActive: { backgroundColor: "rgba(201,169,110,0.15)", borderColor: C.gold },
   terminalChipT: { color: C.mut, fontSize: 13, fontFamily: T.sansM },
   terminalChipTActive: { color: C.gold },
   // Dietary filter chips
   filterScroll: { marginBottom: 8 },
   filterRow: { paddingHorizontal: 16, gap: 8, paddingVertical: 4 },
-  filterChip: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7, backgroundColor: C.card, borderWidth: 1, borderColor: C.border },
+  filterChip: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
   filterChipActive: { backgroundColor: "rgba(78,205,196,0.12)", borderColor: C.teal },
   filterEmoji: { fontSize: 14 },
   filterLabel: { color: C.mut, fontSize: 13, fontFamily: T.sansM },
@@ -297,7 +297,7 @@ const s = StyleSheet.create({
   retryBtn: { marginTop: 20, backgroundColor: C.card, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 },
   retryBtnT: { color: C.gold, fontSize: 15, fontFamily: T.sansM },
   // Pick card
-  pickCard: { marginHorizontal: 16, marginBottom: 12, backgroundColor: C.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: C.border },
+  pickCard: { marginHorizontal: 16, marginBottom: 12, backgroundColor: C.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: C.line },
   pickHeader: { marginBottom: 10 },
   pickMeta: { flex: 1 },
   pickBadgeRow: { flexDirection: "row", gap: 6, marginBottom: 8, flexWrap: "wrap" },
@@ -307,17 +307,17 @@ const s = StyleSheet.create({
   gateBadgeT: { color: C.mut, fontSize: 11 },
   priceBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
   priceBadgeT: { fontSize: 11, fontFamily: T.sansB },
-  pickName: { color: C.text, fontSize: 17, fontFamily: T.sansB, marginBottom: 3 },
+  pickName: { color: C.ink, fontSize: 17, fontFamily: T.sansB, marginBottom: 3 },
   pickCuisine: { color: C.mut, fontSize: 13 },
   // Best for
   bestForRow: { flexDirection: "row", alignItems: "center", marginBottom: 8, backgroundColor: C.card2, borderRadius: 8, padding: 10 },
   bestForLabel: { color: C.mut, fontSize: 10, fontFamily: T.sansB, letterSpacing: 1 },
-  bestForValue: { color: C.text, fontSize: 13, flex: 1 },
+  bestForValue: { color: C.ink, fontSize: 13, flex: 1 },
   // Must order
   mustOrderRow: { flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 10 },
   mustOrderIcon: { fontSize: 14, marginTop: 1 },
   mustOrderText: { color: C.mut, fontSize: 13, flex: 1, lineHeight: 19 },
-  mustOrderHighlight: { color: C.text, fontFamily: T.sansM },
+  mustOrderHighlight: { color: C.ink, fontFamily: T.sansM },
   // Tags
   tagsRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 10 },
   tag: { backgroundColor: "rgba(78,205,196,0.1)", borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: "rgba(78,205,196,0.25)" },

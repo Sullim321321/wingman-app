@@ -1125,7 +1125,7 @@ const s = StyleSheet.create({
 
   // Wallet button
   walletBtn: { backgroundColor: "#1C1C1E", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" },
-  walletBtnT: { color: "#FFFFFF", fontSize: 12, fontFamily: T.sansM },
+  walletBtnT: { color: C.ink, fontSize: 12, fontFamily: T.sansM },
 
   // Upgrade bid button
   upgradeBidBtn: { backgroundColor: "rgba(201,169,110,0.08)", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: "rgba(201,169,110,0.3)" },

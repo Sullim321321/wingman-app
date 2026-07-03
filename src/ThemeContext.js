@@ -96,7 +96,7 @@ export function ThemeProvider({ children }) {
   }
 
   const resolvedScheme = appearance === "system"
-    ? (systemScheme === "light" ? "light" : "dark")
+    ? "dark"  // Default to dark mode — Wingman's primary aesthetic
     : appearance;
 
   const C = resolvedScheme === "light" ? LIGHT : DARK;

@@ -24,11 +24,11 @@ export default function DetourScreen({ navigation }) {
         </LinearGradient>
 
         <Text style={g.sectionT}>YOUR 24 HOURS</Text>
-        <Leg ic="✈️" t="Land CPH 11:40a" sub="drop bags, straight into the city" />
+        <Leg ic="✦" t="Land CPH 11:40a" sub="drop bags, straight into the city" />
         <Leg ic="🚲" t="Nyhavn + a canal ride" sub="bike the old town" />
-        <Leg ic="🍽️" t="Dinner: Reffen or Alouette" sub="street food or a star — your call" />
+        <Leg ic="◈" t="Dinner: Reffen or Alouette" sub="street food or a star — your call" />
         <Leg ic="🛏️" t="1 night: Coco Hotel" sub="design hotel, held for you" />
-        <Leg ic="✈️" t="Depart 2:10p Wed → Stockholm" sub="rested, in time for dinner" />
+        <Leg ic="✦" t="Depart 2:10p Wed → Stockholm" sub="rested, in time for dinner" />
 
         <Text style={g.sectionT}>PREFER SOMEWHERE ELSE?</Text>
         <View style={g.metaRow}>

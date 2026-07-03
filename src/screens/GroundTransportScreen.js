@@ -19,7 +19,7 @@ const C = {
 
 const TYPE_ICON = {
   train: "🚆", metro: "🚇", tube: "🚇", subway: "🚇",
-  bus: "🚌", taxi: "🚕", rideshare: "📱", ferry: "⛴️",
+  bus: "≡", taxi: "◈", rideshare: "◉", ferry: "⊕",
 };
 
 const TYPE_COLOR = {
@@ -107,7 +107,7 @@ export default function GroundTransportScreen() {
   if (error) {
     return (
       <View style={[s.container, { justifyContent: "center", alignItems: "center", padding: 32 }]}>
-        <Text style={{ fontSize: 40, marginBottom: 16 }}>✈️</Text>
+        <Text style={{ fontSize: 32, marginBottom: 16, color: C.gold }}>✦</Text>
         <Text style={s.mut}>Couldn't load transport options.</Text>
         <Pressable style={s.retryBtn} onPress={loadTransport}>
           <Text style={s.retryBtnT}>Try again</Text>
@@ -117,7 +117,7 @@ export default function GroundTransportScreen() {
   }
 
   return (
-    <View style={s.container}>
+    <SafeAreaView style={s.container}>
       {/* Header */}
       <View style={[s.header, { paddingTop: insets.top + 12 }]}>
         <Pressable onPress={() => navigation.goBack()} style={s.backBtn}>
@@ -271,7 +271,7 @@ export default function GroundTransportScreen() {
           <Text style={s.conciergeCtaT}>✦ Ask Wingman for local advice</Text>
         </Pressable>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -280,21 +280,21 @@ const s = StyleSheet.create({
   scroll: { flex: 1 },
 
   // Header
-  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 0, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: C.border },
+  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 0, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: C.line },
   backBtn: { width: 36, height: 36, justifyContent: "center" },
   backBtnT: { color: C.gold, fontSize: 28, lineHeight: 32 },
   headerCenter: { flex: 1, alignItems: "center" },
-  headerTitle: { color: C.text, fontSize: 17, fontFamily: T.sansB },
+  headerTitle: { color: C.ink, fontSize: 11, fontFamily: T.sansB, letterSpacing: 2, textTransform: "uppercase" },
   headerSub: { color: C.mut, fontSize: 13, marginTop: 2 },
 
   // Destination banner
-  destinationBanner: { margin: 16, marginBottom: 0, backgroundColor: C.card2, borderRadius: 10, padding: 12, borderWidth: 1, borderColor: C.border },
-  destinationBannerT: { color: C.text, fontSize: 14 },
+  destinationBanner: { margin: 16, marginBottom: 0, backgroundColor: C.card2, borderRadius: 10, padding: 12, borderWidth: 1, borderColor: C.line },
+  destinationBannerT: { color: C.ink, fontSize: 14 },
 
   // Recommendation card
   recommendCard: { margin: 16, marginBottom: 8, backgroundColor: "rgba(201,169,110,0.08)", borderRadius: 12, padding: 16, borderWidth: 1, borderColor: "rgba(201,169,110,0.3)" },
   recommendLabel: { color: C.gold, fontSize: 11, fontFamily: T.sansB, letterSpacing: 1, marginBottom: 8 },
-  recommendText: { color: C.text, fontSize: 14, lineHeight: 21 },
+  recommendText: { color: C.ink, fontSize: 14, lineHeight: 21 },
 
   // Generic note
   genericNote: { marginHorizontal: 16, marginBottom: 8, backgroundColor: C.card2, borderRadius: 10, padding: 12 },
@@ -304,7 +304,7 @@ const s = StyleSheet.create({
   sectionLabel: { color: C.mut, fontSize: 11, fontFamily: T.sansB, letterSpacing: 1.5, marginHorizontal: 20, marginTop: 16, marginBottom: 8 },
 
   // Option card
-  optionCard: { marginHorizontal: 16, marginBottom: 12, backgroundColor: C.card, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: C.border },
+  optionCard: { marginHorizontal: 16, marginBottom: 12, backgroundColor: C.card, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: C.line },
   optionHeader: { flexDirection: "row", alignItems: "center", marginBottom: 10, gap: 8 },
   typeTag: { flexDirection: "row", alignItems: "center", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, gap: 4 },
   typeIcon: { fontSize: 14 },
@@ -314,15 +314,15 @@ const s = StyleSheet.create({
   complexityBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 },
   complexityT: { fontSize: 10, fontFamily: T.sansB, letterSpacing: 0.5 },
 
-  optionName: { color: C.text, fontSize: 16, fontFamily: T.sansB, marginBottom: 4 },
+  optionName: { color: C.ink, fontSize: 16, fontFamily: T.sansB, marginBottom: 4 },
   optionDesc: { color: C.mut, fontSize: 13, lineHeight: 19, marginBottom: 12 },
 
   // Stats row
   statsRow: { flexDirection: "row", alignItems: "center", backgroundColor: C.card2, borderRadius: 10, padding: 12, marginBottom: 12 },
   stat: { flex: 1, alignItems: "center" },
   statLabel: { color: C.mut, fontSize: 10, fontFamily: T.sansB, letterSpacing: 0.8, marginBottom: 3 },
-  statValue: { color: C.text, fontSize: 14, fontFamily: T.sansB },
-  statDivider: { width: 1, height: 28, backgroundColor: C.border },
+  statValue: { color: C.ink, fontSize: 14, fontFamily: T.sansB },
+  statDivider: { width: 1, height: 28, backgroundColor: C.line },
 
   // Tip
   tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 12, backgroundColor: "rgba(255,193,7,0.06)", borderRadius: 8, padding: 10 },
@@ -331,20 +331,20 @@ const s = StyleSheet.create({
 
   // Action buttons
   optionActions: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
-  directionsBtn: { backgroundColor: C.card2, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: C.border },
+  directionsBtn: { backgroundColor: C.card2, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: C.line },
   directionsBtnT: { color: C.gold, fontSize: 13, fontFamily: T.sansM },
   ticketBtn: { backgroundColor: "rgba(78,205,196,0.1)", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: "rgba(78,205,196,0.3)" },
   ticketBtnT: { color: C.teal, fontSize: 13, fontFamily: T.sansM },
-  mapBtn: { backgroundColor: C.card2, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: C.border },
-  mapBtnT: { color: C.text, fontSize: 13, fontFamily: T.sansM },
+  mapBtn: { backgroundColor: C.card2, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: C.line },
+  mapBtnT: { color: C.ink, fontSize: 13, fontFamily: T.sansM },
 
   // Steps
   stepsContainer: { marginTop: 12 },
-  stepsDivider: { height: 1, backgroundColor: C.border, marginBottom: 12 },
+  stepsDivider: { height: 1, backgroundColor: C.line, marginBottom: 12 },
   stepRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 10 },
   stepNum: { width: 24, height: 24, borderRadius: 12, backgroundColor: C.gold, justifyContent: "center", alignItems: "center", flexShrink: 0 },
   stepNumT: { color: C.inkD, fontSize: 12, fontFamily: T.sansB },
-  stepText: { flex: 1, color: C.text, fontSize: 14, lineHeight: 20 },
+  stepText: { flex: 1, color: C.ink, fontSize: 14, lineHeight: 20 },
 
   // Concierge CTA
   conciergeCta: { margin: 16, backgroundColor: "rgba(201,169,110,0.1)", borderRadius: 14, padding: 18, alignItems: "center", borderWidth: 1, borderColor: "rgba(201,169,110,0.3)" },

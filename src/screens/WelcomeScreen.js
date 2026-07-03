@@ -1,22 +1,26 @@
-// WelcomeScreen — shown once after ProfileSetup
-// Bridges the gap between sign-up and first trip — prompts Gmail import or manual add
+// WelcomeScreen.js — Editorial v3
+// One-time bridge after ProfileSetup — prompts Gmail import or manual add
+// EB Garamond italic serif headline · prose body · minimal tappable rows
+// All navigation hooks preserved: Connections, AddTrip, Connections+paste, Tabs
+
 import React, { useEffect, useRef } from "react";
 import {
   SafeAreaView, View, Text, Pressable,
-  StyleSheet, Animated, Easing, Dimensions,
+  StyleSheet, Animated, Easing,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import * as SecureStore from "expo-secure-store";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, T, GRAD } from "../theme";
-import { SerifText, tap } from "../components";
+import { tap } from "../components";
 
-const { width } = Dimensions.get("window");
 const KEY_SEEN_WELCOME = "wingman_seen_welcome";
+
+// ─── Fade-in animation ────────────────────────────────────────────────────────
 
 function FadeIn({ delay = 0, children }) {
   const fade  = useRef(new Animated.Value(0)).current;
-  const slide = useRef(new Animated.Value(24)).current;
+  const slide = useRef(new Animated.Value(16)).current;
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fade,  { toValue: 1, duration: 700, delay, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
@@ -30,36 +34,33 @@ function FadeIn({ delay = 0, children }) {
   );
 }
 
+// ─── Main Screen ──────────────────────────────────────────────────────────────
+
 export default function WelcomeScreen({ navigation, route }) {
   const firstName = route?.params?.firstName || "";
-  const insets = useSafeAreaInsets();
+  const insets    = useSafeAreaInsets();
 
   const markSeen = async () => {
     try { await SecureStore.setItemAsync(KEY_SEEN_WELCOME, "1"); } catch (_) {}
   };
 
   const goGmail = async () => {
-    tap();
-    await markSeen();
+    tap(); await markSeen();
     navigation.replace("Connections");
   };
 
-  const goAddTrip = async () => {
-    tap();
-    await markSeen();
-    navigation.replace("AddTrip");
-  };
-
   const goPaste = async () => {
-    tap();
-    await markSeen();
-    // Connections screen has a paste-email section — navigate there with paste tab pre-selected
+    tap(); await markSeen();
     navigation.replace("Connections", { tab: "paste" });
   };
 
+  const goAddTrip = async () => {
+    tap(); await markSeen();
+    navigation.replace("AddTrip");
+  };
+
   const goSkip = async () => {
-    tap();
-    await markSeen();
+    tap(); await markSeen();
     navigation.reset({ index: 0, routes: [{ name: "Tabs" }] });
   };
 
@@ -71,96 +72,94 @@ export default function WelcomeScreen({ navigation, route }) {
         style={StyleSheet.absoluteFill}
       />
 
-      <View style={[s.inner, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }]}>
+      <View style={[s.inner, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}>
 
-        {/* Mark — gold W */}
+        {/* Masthead */}
         <FadeIn delay={0}>
-          <View style={s.markWrap}>
-            <View style={s.glow} />
-            <LinearGradient colors={GRAD.gold} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.mark}>
-              <Text style={s.markText}>W</Text>
+          <View style={s.masthead}>
+            <LinearGradient colors={GRAD.gold} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.markBg}>
+              <Text style={s.markT}>W</Text>
             </LinearGradient>
+            <Text style={s.mastLabel}>WINGMAN</Text>
           </View>
         </FadeIn>
 
-        {/* Greeting */}
-        <FadeIn delay={150}>
-          <SerifText bold style={s.heading}>
-            {firstName ? `Welcome, ${firstName}.` : "Welcome aboard."}
-          </SerifText>
+        {/* Edition line */}
+        <FadeIn delay={120}>
+          <View style={s.editionRow}>
+            <View style={[s.editionDot, { backgroundColor: C.gold }]} />
+            <Text style={s.editionT}>WELCOME EDITION</Text>
+          </View>
         </FadeIn>
 
-        <FadeIn delay={250}>
-          <Text style={s.sub}>
-            Your travel intelligence is active. Connect Gmail to import all your bookings instantly — or add a trip manually.
+        {/* Headline */}
+        <FadeIn delay={220}>
+          <Text style={s.hed}>
+            {firstName ? `Welcome, ${firstName}.` : "Welcome aboard."}
           </Text>
         </FadeIn>
 
-        {/* Primary CTAs */}
-        <FadeIn delay={380}>
-          <View style={s.ctaBlock}>
-
-            {/* Gmail import — primary */}
-            <Pressable style={s.ctaPrimary} onPress={goGmail}>
-              <LinearGradient colors={GRAD.gold} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.ctaPrimaryGrad}>
-                <View style={s.ctaIcon}>
-                  <Text style={s.ctaIconText}>✉</Text>
-                </View>
-                <View style={s.ctaText}>
-                  <Text style={s.ctaPrimaryTitle}>Import from Gmail</Text>
-                  <Text style={s.ctaPrimarySub}>Wingman finds your bookings automatically</Text>
-                </View>
-                <Text style={s.ctaArrow}>→</Text>
-              </LinearGradient>
-            </Pressable>
-
-            {/* Paste confirmation — tertiary */}
-            <Pressable style={s.ctaSecondary} onPress={goPaste}>
-              <View style={s.ctaIcon}>
-                <Text style={[s.ctaIconText, { color: C.teal }]}>⎘</Text>
-              </View>
-              <View style={s.ctaText}>
-                <Text style={s.ctaSecondaryTitle}>Paste a confirmation email</Text>
-                <Text style={s.ctaSecondarySub}>Copy & paste any booking — Wingman reads it</Text>
-              </View>
-              <Text style={[s.ctaArrow, { color: C.mut }]}>→</Text>
-            </Pressable>
-
-            {/* Manual add — quaternary */}
-            <Pressable style={s.ctaSecondary} onPress={goAddTrip}>
-              <View style={s.ctaIcon}>
-                <Text style={[s.ctaIconText, { color: C.gold }]}>+</Text>
-              </View>
-              <View style={s.ctaText}>
-                <Text style={s.ctaSecondaryTitle}>Add a flight manually</Text>
-                <Text style={s.ctaSecondarySub}>Enter a flight number or confirmation code</Text>
-              </View>
-              <Text style={[s.ctaArrow, { color: C.mut }]}>→</Text>
-            </Pressable>
-
-          </View>
+        {/* Prose briefing */}
+        <FadeIn delay={320}>
+          <Text style={s.briefing}>
+            Your travel intelligence is active. Connect Gmail and Wingman will import every booking automatically — flights, hotels, trains — and start watching them immediately. Or add a trip manually to get started.
+          </Text>
         </FadeIn>
 
-        {/* What Wingman watches — compact preview */}
-        <FadeIn delay={500}>
-          <View style={s.watchCard}>
-            {[
-              { icon: "!", color: C.coral,  label: "Delays & cancellations" },
-              { icon: "✓", color: C.teal,   label: "Automatic rebooking options" },
-              { icon: "✦", color: C.gold,   label: "Pre-departure briefings" },
-            ].map((item, i) => (
-              <View key={i} style={[s.watchRow, i > 0 && { borderTopWidth: 1, borderTopColor: C.line }]}>
-                <View style={[s.watchBadge, { backgroundColor: item.color + "18" }]}>
-                  <Text style={{ color: item.color, fontSize: 12 }}>{item.icon}</Text>
-                </View>
-                <Text style={s.watchLabel}>{item.label}</Text>
+        {/* Rule */}
+        <FadeIn delay={400}>
+          <View style={s.rule} />
+        </FadeIn>
+
+        {/* Tappable rows */}
+        <FadeIn delay={460}>
+          <View style={s.rowBlock}>
+
+            {/* Gmail */}
+            <Pressable style={s.row} onPress={goGmail}>
+              <View style={[s.rowDot, { backgroundColor: C.teal + "18", borderColor: C.teal + "30" }]}>
+                <View style={[s.rowDotInner, { backgroundColor: C.teal }]} />
               </View>
-            ))}
+              <View style={s.rowBody}>
+                <Text style={s.rowTitle}>Connect Gmail</Text>
+                <Text style={s.rowSub}>Import all bookings automatically</Text>
+              </View>
+              <Text style={s.rowArrow}>›</Text>
+            </Pressable>
+
+            <View style={s.rowDivider} />
+
+            {/* Paste confirmation */}
+            <Pressable style={s.row} onPress={goPaste}>
+              <View style={[s.rowDot, { backgroundColor: C.gold + "18", borderColor: C.gold + "30" }]}>
+                <View style={[s.rowDotInner, { backgroundColor: C.gold }]} />
+              </View>
+              <View style={s.rowBody}>
+                <Text style={s.rowTitle}>Paste a confirmation email</Text>
+                <Text style={s.rowSub}>Copy & paste any booking — Wingman reads it</Text>
+              </View>
+              <Text style={s.rowArrow}>›</Text>
+            </Pressable>
+
+            <View style={s.rowDivider} />
+
+            {/* Manual add */}
+            <Pressable style={s.row} onPress={goAddTrip}>
+              <View style={[s.rowDot, { backgroundColor: C.mut + "18", borderColor: C.mut + "20" }]}>
+                <View style={[s.rowDotInner, { backgroundColor: C.mut }]} />
+              </View>
+              <View style={s.rowBody}>
+                <Text style={s.rowTitle}>Add a flight manually</Text>
+                <Text style={s.rowSub}>Enter a flight number or confirmation code</Text>
+              </View>
+              <Text style={s.rowArrow}>›</Text>
+            </Pressable>
+
           </View>
         </FadeIn>
 
         {/* Skip */}
-        <FadeIn delay={600}>
+        <FadeIn delay={560}>
           <Pressable style={s.skipBtn} onPress={goSkip}>
             <Text style={s.skipBtnT}>I'll add trips later</Text>
           </Pressable>
@@ -171,44 +170,162 @@ export default function WelcomeScreen({ navigation, route }) {
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const s = StyleSheet.create({
   root:  { flex: 1, backgroundColor: C.bg },
-  inner: { flex: 1, alignItems: "center", paddingHorizontal: 26, justifyContent: "center", gap: 0 },
+  inner: {
+    flex: 1,
+    paddingHorizontal: 24,
+    justifyContent: "center",
+    gap: 0,
+  },
 
-  // Mark
-  markWrap: { alignItems: "center", justifyContent: "center", width: 120, height: 120, marginBottom: 24 },
-  glow:     { position: "absolute", width: 120, height: 120, borderRadius: 60, backgroundColor: C.gold + "12" },
-  mark:     { width: 72, height: 72, borderRadius: 22, alignItems: "center", justifyContent: "center", shadowColor: C.gold, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.5, shadowRadius: 24 },
-  markText: { fontSize: 28, color: C.inkD, fontFamily: T.sansB },
+  // ── Masthead ──
+  masthead: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 14,
+  },
+  markBg: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: C.gold,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+  },
+  markT: {
+    fontFamily: T.sansB,
+    fontSize: 14,
+    color: C.inkD,
+  },
+  mastLabel: {
+    fontFamily: T.sansB,
+    fontSize: 11,
+    letterSpacing: 3,
+    color: C.ink,
+    opacity: 0.5,
+  },
 
-  // Heading
-  heading: { color: C.ink, fontSize: 34, textAlign: "center", marginBottom: 12, letterSpacing: -0.5, lineHeight: 42 },
-  sub:     { color: C.mut, fontSize: 15, fontFamily: T.sans, textAlign: "center", lineHeight: 23, marginBottom: 32, paddingHorizontal: 8 },
+  // ── Edition line ──
+  editionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 18,
+  },
+  editionDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  editionT: {
+    fontFamily: T.sansM,
+    fontSize: 9,
+    letterSpacing: 2.5,
+    color: C.mut,
+    opacity: 0.6,
+  },
 
-  // CTAs
-  ctaBlock: { width: "100%", gap: 10, marginBottom: 20 },
+  // ── Headline ──
+  hed: {
+    fontFamily: T.garamondSI,
+    fontSize: 36,
+    color: C.ink,
+    letterSpacing: -0.3,
+    lineHeight: 42,
+    marginBottom: 14,
+  },
 
-  ctaPrimary: { width: "100%", borderRadius: 18, overflow: "hidden", shadowColor: C.gold, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 16 },
-  ctaPrimaryGrad: { flexDirection: "row", alignItems: "center", paddingHorizontal: 18, paddingVertical: 18, gap: 14 },
-  ctaPrimaryTitle: { color: C.inkD, fontSize: 16, fontFamily: T.sansB },
-  ctaPrimarySub:   { color: "rgba(15,13,10,0.65)", fontSize: 12, fontFamily: T.sans, marginTop: 2 },
+  // ── Briefing ──
+  briefing: {
+    fontFamily: T.garamondI,
+    fontSize: 17,
+    color: C.mut,
+    lineHeight: 28,
+    marginBottom: 24,
+  },
 
-  ctaSecondary: { width: "100%", flexDirection: "row", alignItems: "center", borderRadius: 18, borderWidth: 1, borderColor: C.line, backgroundColor: C.card, paddingHorizontal: 18, paddingVertical: 18, gap: 14 },
-  ctaSecondaryTitle: { color: C.ink, fontSize: 16, fontFamily: T.sansM },
-  ctaSecondarySub:   { color: C.mut, fontSize: 12, fontFamily: T.sans, marginTop: 2 },
+  // ── Rule ──
+  rule: {
+    height: 1,
+    backgroundColor: C.line,
+    opacity: 0.4,
+    marginBottom: 20,
+  },
 
-  ctaIcon: { width: 38, height: 38, borderRadius: 10, backgroundColor: "rgba(255,255,255,0.12)", alignItems: "center", justifyContent: "center" },
-  ctaIconText: { fontSize: 18, color: C.inkD, fontFamily: T.sansB },
-  ctaText:  { flex: 1 },
-  ctaArrow: { fontSize: 18, color: C.inkD, fontFamily: T.sansM },
+  // ── Row block ──
+  rowBlock: {
+    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 14,
+    overflow: "hidden",
+    marginBottom: 20,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    gap: 14,
+  },
+  rowDivider: {
+    height: 1,
+    backgroundColor: C.line,
+    marginLeft: 46,
+    opacity: 0.5,
+  },
+  rowDot: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  rowDotInner: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  rowBody: {
+    flex: 1,
+    gap: 2,
+  },
+  rowTitle: {
+    fontFamily: T.sansM,
+    fontSize: 14,
+    color: C.ink,
+    lineHeight: 20,
+  },
+  rowSub: {
+    fontFamily: T.sans,
+    fontSize: 12,
+    color: C.mut,
+    lineHeight: 17,
+  },
+  rowArrow: {
+    fontFamily: T.sansM,
+    fontSize: 18,
+    color: C.mut,
+    opacity: 0.5,
+  },
 
-  // Watch card
-  watchCard: { width: "100%", borderRadius: 16, borderWidth: 1, borderColor: C.line, backgroundColor: C.card, overflow: "hidden", marginBottom: 20 },
-  watchRow:  { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 12 },
-  watchBadge:{ width: 30, height: 30, borderRadius: 8, alignItems: "center", justifyContent: "center" },
-  watchLabel:{ color: C.ink, fontSize: 14, fontFamily: T.sansM, flex: 1 },
-
-  // Skip
-  skipBtn:  { padding: 12 },
-  skipBtnT: { color: C.mut, fontSize: 13, fontFamily: T.sansM, textAlign: "center" },
+  // ── Skip ──
+  skipBtn: {
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  skipBtnT: {
+    fontFamily: T.sansM,
+    fontSize: 13,
+    color: C.mut,
+    opacity: 0.6,
+  },
 });

@@ -1,78 +1,50 @@
+// ProfileSetupScreen.js — Editorial v3
+// Post-auth profile collection: first name, home airport, cabin preference
+// EB Garamond serif headline · DM Sans body · gold primary button
+// All backend hooks preserved: updateProfile, updateLocale, injectDemoTrip
+
 import React, { useState } from "react";
 import {
   SafeAreaView, View, Text, TextInput, ScrollView,
   Pressable, StyleSheet, Platform, KeyboardAvoidingView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { C, T } from "../theme";
-import { Btn } from "../components";
+import { C, T, GRAD } from "../theme";
+import { tap } from "../components";
 import { updateProfile, updateLocale, createTrip } from "../api";
 import * as SecureStore from "expo-secure-store";
 
 const KEY_DEMO_INJECTED = "wingman_demo_injected";
+const KEY_PROFILE_DONE  = "wingman_profile_done";
 
-// Build a realistic demo trip ~5 days from now so Home is never empty on first launch.
-// Includes outbound flight, hotel stay, and return flight for a rich TripCard.
+// ─── Demo trip injection ──────────────────────────────────────────────────────
+
 async function injectDemoTrip() {
   try {
     const already = await SecureStore.getItemAsync(KEY_DEMO_INJECTED);
-    if (already) return; // only inject once
+    if (already) return;
     const fmt = (d) => d.toISOString().replace("Z", "+00:00");
-    // Outbound: JFK → LHR, departs 5 days from now at 08:30, +7h flight
     const dep = new Date(Date.now() + 5 * 86400000);
     dep.setHours(8, 30, 0, 0);
     const arr = new Date(dep.getTime() + 7 * 3600000);
-    // Hotel: check-in same day as arrival at 15:00, 4-night stay
-    const hotelIn  = new Date(arr);
-    hotelIn.setHours(15, 0, 0, 0);
-    const hotelOut = new Date(hotelIn.getTime() + 4 * 86400000);
-    hotelOut.setHours(11, 0, 0, 0);
-    // Return: LHR → JFK, day after hotel checkout at 11:30, +8h flight
-    const retDep = new Date(hotelOut.getTime() + 86400000);
-    retDep.setHours(11, 30, 0, 0);
+    const hotelIn  = new Date(arr); hotelIn.setHours(15, 0, 0, 0);
+    const hotelOut = new Date(hotelIn.getTime() + 4 * 86400000); hotelOut.setHours(11, 0, 0, 0);
+    const retDep = new Date(hotelOut.getTime() + 86400000); retDep.setHours(11, 30, 0, 0);
     const retArr = new Date(retDep.getTime() + 8 * 3600000);
     await createTrip({
       title: "New York → London",
       mode: "demo",
       legs: [
-        {
-          type:          "flight",
-          carrier:       "BA",
-          flight_number: "178",
-          origin:        "JFK",
-          destination:   "LHR",
-          departs_at:    fmt(dep),
-          arrives_at:    fmt(arr),
-          cabin:         "economy",
-        },
-        {
-          type:             "hotel",
-          carrier:          "The Ned London",
-          origin:           "LHR",
-          destination:      "London",
-          destination_city: "London",
-          departs_at:       fmt(hotelIn),
-          arrives_at:       fmt(hotelOut),
-        },
-        {
-          type:          "flight",
-          carrier:       "BA",
-          flight_number: "177",
-          origin:        "LHR",
-          destination:   "JFK",
-          departs_at:    fmt(retDep),
-          arrives_at:    fmt(retArr),
-          cabin:         "economy",
-        },
+        { type: "flight", carrier: "BA", flight_number: "178", origin: "JFK", destination: "LHR", departs_at: fmt(dep), arrives_at: fmt(arr), cabin: "economy" },
+        { type: "hotel", carrier: "The Ned London", origin: "LHR", destination: "London", destination_city: "London", departs_at: fmt(hotelIn), arrives_at: fmt(hotelOut) },
+        { type: "flight", carrier: "BA", flight_number: "177", origin: "LHR", destination: "JFK", departs_at: fmt(retDep), arrives_at: fmt(retArr), cabin: "economy" },
       ],
     });
     await SecureStore.setItemAsync(KEY_DEMO_INJECTED, "1");
-  } catch (_) {
-    // Non-fatal — if the API is down, user just sees empty Home
-  }
+  } catch (_) {}
 }
 
-const KEY_PROFILE_DONE = "wingman_profile_done";
+// ─── Cabin options ────────────────────────────────────────────────────────────
 
 const CABIN_OPTIONS = [
   { id: "economy",         label: "Economy",         sub: "Best value" },
@@ -81,18 +53,18 @@ const CABIN_OPTIONS = [
   { id: "first",           label: "First Class",     sub: "The full experience" },
 ];
 
+// ─── Main Screen ──────────────────────────────────────────────────────────────
+
 export default function ProfileSetupScreen({ navigation }) {
-  const [firstName, setFirstName] = useState("");
-  const [cabin, setCabin]         = useState("economy");
+  const [firstName,   setFirstName]   = useState("");
   const [homeAirport, setHomeAirport] = useState("");
-  const [busy, setBusy]           = useState(false);
+  const [cabin,       setCabin]       = useState("economy");
+  const [busy,        setBusy]        = useState(false);
 
   const finish = async () => {
     if (busy) return;
     setBusy(true);
-    // Mark profile done locally first — never block navigation on a network error.
     try { await SecureStore.setItemAsync(KEY_PROFILE_DONE, "1"); } catch (_) {}
-    // Fire API saves in background (don't await — a failure here is non-fatal)
     const homeCode = homeAirport.trim().toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4);
     updateProfile({
       first_name: firstName.trim(),
@@ -104,32 +76,33 @@ export default function ProfileSetupScreen({ navigation }) {
     }).catch(e => console.warn("[ProfileSetup] updateProfile:", e.message));
     updateLocale({ locale: "en", currency: "USD" })
       .catch(e => console.warn("[ProfileSetup] updateLocale:", e.message));
-    // Inject a demo trip in the background so Home is never empty on first launch
     injectDemoTrip();
-    // Navigate to Welcome screen so new users can add their first trip
-    // (Welcome marks itself seen and then resets to Tabs)
     navigation.replace("Welcome", { firstName: firstName.trim() });
   };
 
   return (
     <SafeAreaView style={s.root}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
-          {/* Header */}
-          <LinearGradient colors={[C.gold, C.goldD || "#b8942a"]} style={s.mark}>
-            <Text style={{ fontSize: 22, color: C.inkD, fontFamily: T.sansB }}>✦</Text>
-          </LinearGradient>
-          <Text style={s.h}>How do you fly?</Text>
+          {/* Mark */}
+          <View style={s.markWrap}>
+            <View style={s.markGlow} />
+            <LinearGradient colors={GRAD.gold} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.mark}>
+              <Text style={s.markT}>W</Text>
+            </LinearGradient>
+          </View>
+
+          {/* Headline */}
+          <Text style={s.hed}>How do you fly?</Text>
           <Text style={s.sub}>
             Tell Wingman your preferences so it can filter the right upgrades, lounges, and rescue options for you.
           </Text>
 
+          <View style={s.rule} />
+
           {/* Name */}
-          <Text style={s.label}>YOUR NAME</Text>
+          <Text style={s.fieldLabel}>YOUR NAME</Text>
           <TextInput
             style={s.input}
             placeholder="First name"
@@ -144,10 +117,10 @@ export default function ProfileSetupScreen({ navigation }) {
           />
 
           {/* Home airport */}
-          <Text style={[s.label, { marginTop: 24 }]}>HOME AIRPORT</Text>
+          <Text style={[s.fieldLabel, { marginTop: 24 }]}>HOME AIRPORT</Text>
           <Text style={s.hint}>Wingman uses this to pre-fill ground transport and lounge searches.</Text>
           <TextInput
-            style={[s.input, { marginBottom: 4 }]}
+            style={s.input}
             placeholder="IATA code — e.g. JFK, LHR, SYD"
             placeholderTextColor={C.mut}
             autoCapitalize="characters"
@@ -158,15 +131,15 @@ export default function ProfileSetupScreen({ navigation }) {
             returnKeyType="done"
           />
 
-          {/* Cabin */}
-          <Text style={[s.label, { marginTop: 24 }]}>PREFERRED CABIN</Text>
+          {/* Cabin preference */}
+          <Text style={[s.fieldLabel, { marginTop: 24 }]}>PREFERRED CABIN</Text>
           <Text style={s.hint}>Wingman uses this to filter upgrade opportunities and lounge access.</Text>
-          <View style={s.cabinRow}>
+          <View style={s.cabinGrid}>
             {CABIN_OPTIONS.map(opt => (
               <Pressable
                 key={opt.id}
                 style={[s.cabinChip, cabin === opt.id && s.cabinChipActive]}
-                onPress={() => setCabin(opt.id)}
+                onPress={() => { tap(); setCabin(opt.id); }}
               >
                 <Text style={[s.cabinLabel, cabin === opt.id && s.cabinLabelActive]}>
                   {opt.label}
@@ -178,12 +151,17 @@ export default function ProfileSetupScreen({ navigation }) {
             ))}
           </View>
 
-          <Btn
-            title={busy ? "Setting up…" : "Let's fly  →"}
+          {/* CTA */}
+          <Pressable
+            style={[s.primaryBtn, busy && { opacity: 0.6 }]}
             onPress={busy ? undefined : finish}
-            style={{ marginTop: 32, alignSelf: "stretch" }}
-          />
-          <Text style={s.skip} onPress={finish}>Skip for now</Text>
+          >
+            <Text style={s.primaryBtnT}>{busy ? "Setting up…" : "Let's fly  →"}</Text>
+          </Pressable>
+
+          <Pressable style={s.skipLink} onPress={finish}>
+            <Text style={s.skipLinkT}>Skip for now</Text>
+          </Pressable>
 
         </ScrollView>
       </KeyboardAvoidingView>
@@ -191,31 +169,164 @@ export default function ProfileSetupScreen({ navigation }) {
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const s = StyleSheet.create({
   root:   { flex: 1, backgroundColor: C.bg },
-  scroll: { flexGrow: 1, padding: 28, paddingTop: 24 },
-  mark:   { width: 56, height: 56, borderRadius: 16, alignItems: "center", justifyContent: "center", marginBottom: 20 },
-  h:      { color: C.ink, fontSize: 28, fontFamily: T.serifB, marginBottom: 8, lineHeight: 36, letterSpacing: -0.4 },
-  sub:    { color: C.mut, fontSize: 14, lineHeight: 20, marginBottom: 28 },
-  label:  { color: C.mut, fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.8, marginBottom: 10, textTransform: "uppercase" },
-  input:  {
-    backgroundColor: C.card,
-    borderWidth: 1, borderColor: "rgba(201,169,110,0.25)",
-    borderRadius: 12, padding: 14,
-    color: C.ink, fontSize: 17,
+  scroll: { flexGrow: 1, paddingHorizontal: 26, paddingTop: 32, paddingBottom: 32 },
+
+  // ── Mark ──
+  markWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+    width: 90,
+    height: 90,
+    marginBottom: 24,
+    alignSelf: "center",
   },
-  cabinRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  markGlow: {
+    position: "absolute",
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: C.gold + "10",
+  },
+  mark: {
+    width: 60,
+    height: 60,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: C.gold,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+  },
+  markT: {
+    fontFamily: T.sansB,
+    fontSize: 22,
+    color: C.inkD,
+  },
+
+  // ── Headline ──
+  hed: {
+    fontFamily: T.garamondSI,
+    fontSize: 34,
+    color: C.ink,
+    letterSpacing: -0.3,
+    lineHeight: 40,
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  sub: {
+    fontFamily: T.garamondI,
+    fontSize: 16,
+    color: C.mut,
+    lineHeight: 26,
+    textAlign: "center",
+    marginBottom: 24,
+  },
+
+  // ── Rule ──
+  rule: {
+    height: 1,
+    backgroundColor: C.line,
+    opacity: 0.5,
+    marginBottom: 24,
+  },
+
+  // ── Field label ──
+  fieldLabel: {
+    fontFamily: T.sansM,
+    fontSize: 9,
+    letterSpacing: 2.5,
+    color: C.mut,
+    textTransform: "uppercase",
+    marginBottom: 8,
+    opacity: 0.7,
+  },
+  hint: {
+    fontFamily: T.sans,
+    fontSize: 12,
+    color: C.mut,
+    lineHeight: 18,
+    marginBottom: 10,
+    opacity: 0.7,
+  },
+
+  // ── Text input ──
+  input: {
+    fontFamily: T.garamondI,
+    fontSize: 18,
+    color: C.ink,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    backgroundColor: C.card,
+  },
+
+  // ── Cabin chips ──
+  cabinGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 8,
+  },
   cabinChip: {
-    flex: 1, minWidth: "45%",
+    width: "47%",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     backgroundColor: C.card,
-    borderWidth: 1, borderColor: C.line,
-    borderRadius: 12, padding: 14,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 14,
   },
-  cabinChipActive: { borderColor: C.gold, backgroundColor: C.gold + "12" },
-  cabinLabel:      { color: C.ink, fontSize: 14, fontFamily: T.sansM },
-  cabinLabelActive:{ color: C.gold },
-  cabinSub:        { color: C.mut, fontSize: 11, marginTop: 3 },
-  cabinSubActive:  { color: C.gold + "99" },
-  skip:   { color: C.mut, fontSize: 13, textAlign: "center", marginTop: 16, textDecorationLine: "underline" },
-  hint:   { color: C.mut, fontSize: 12, lineHeight: 17, marginBottom: 10, marginTop: -4 },
+  cabinChipActive: {
+    backgroundColor: "rgba(201,169,110,0.08)",
+    borderColor: "rgba(201,169,110,0.35)",
+  },
+  cabinLabel: {
+    fontFamily: T.sansM,
+    fontSize: 14,
+    color: C.ink,
+    marginBottom: 3,
+  },
+  cabinLabelActive: {
+    color: C.gold,
+  },
+  cabinSub: {
+    fontFamily: T.sans,
+    fontSize: 11,
+    color: C.mut,
+  },
+  cabinSubActive: {
+    color: C.gold,
+    opacity: 0.7,
+  },
+
+  // ── Buttons ──
+  primaryBtn: {
+    backgroundColor: C.gold,
+    borderRadius: 28,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginTop: 32,
+  },
+  primaryBtnT: {
+    fontFamily: T.sansB,
+    fontSize: 15,
+    color: C.inkD,
+    letterSpacing: 0.3,
+  },
+  skipLink: {
+    alignItems: "center",
+    paddingVertical: 14,
+  },
+  skipLinkT: {
+    fontFamily: T.sansM,
+    fontSize: 13,
+    color: C.mut,
+  },
 });

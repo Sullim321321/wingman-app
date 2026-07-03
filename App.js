@@ -13,7 +13,7 @@ import * as Notifications from "expo-notifications";
 import * as Linking from "expo-linking";
 import * as SecureStore from "expo-secure-store";
 
-// Google Fonts — Playfair Display + DM Sans
+// Google Fonts — Playfair Display + DM Sans + EB Garamond
 import {
   useFonts,
   PlayfairDisplay_400Regular,
@@ -25,6 +25,12 @@ import {
   DMSans_500Medium,
   DMSans_700Bold,
 } from "@expo-google-fonts/dm-sans";
+import {
+  EBGaramond_400Regular,
+  EBGaramond_400Regular_Italic,
+  EBGaramond_500Medium_Italic,
+  EBGaramond_600SemiBold_Italic,
+} from "@expo-google-fonts/eb-garamond";
 
 import { C, T } from "./src/theme";
 import { ThemeProvider, useTheme } from "./src/ThemeContext";
@@ -376,6 +382,10 @@ export default function App() {
     DMSans_400Regular,
     DMSans_500Medium,
     DMSans_700Bold,
+    EBGaramond_400Regular,
+    EBGaramond_400Regular_Italic,
+    EBGaramond_500Medium_Italic,
+    EBGaramond_600SemiBold_Italic,
   });
 
   // Safety timeout: if fonts haven't loaded after 5 s (e.g. native module stuck on iOS 26),

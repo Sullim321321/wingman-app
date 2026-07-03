@@ -55,6 +55,11 @@ export const T = {
   serif: "PlayfairDisplay_400Regular",
   serifI:"PlayfairDisplay_400Regular_Italic",
   serifB:"PlayfairDisplay_700Bold",
+  // Editorial serif — EB Garamond (used in new Home screen briefing)
+  garamond:  "EBGaramond_400Regular",
+  garamondI: "EBGaramond_400Regular_Italic",
+  garamondMI:"EBGaramond_500Medium_Italic",
+  garamondSI:"EBGaramond_600SemiBold_Italic",
   // Sans — DM Sans
   sans:  "DMSans_400Regular",
   sansM: "DMSans_500Medium",

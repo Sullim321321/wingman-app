@@ -15,7 +15,7 @@ import { getCachedTrips, getCachedPoints } from "../offlineCache";
 import { getTrips, deleteTrip, getFlightStatus, getFlightStatusPublic, getPrediction, getGroundIntel, getMe, getLoyaltyAccounts, getTripBriefing, getNextTripWindow, getPoints, getWeather, getHomeState, getDisruptionAlternatives, simulateJourney, renameUnknownTrips } from "../api";
 import * as Location from "expo-location";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { scheduleDisruption } from "../notify";
+import { scheduleDisruption, schedulePreDepartureBriefing, schedulePostTripDebrief } from "../notify";
 import { getEtching } from "../etchings";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -690,10 +690,31 @@ export default function HomeScreen({ navigation }) {
         })
       );
       if (upcomingTrip) {
+        // Build a local fallback briefing from trip leg data so the card always shows
+        const upcomingLeg = (upcomingTrip.legs || []).find(l => {
+          if (l.type !== 'flight' || !l.departs_at) return false;
+          const t = new Date(l.departs_at).getTime();
+          return t > Date.now() && t <= now7d;
+        });
+        if (upcomingLeg) {
+          setBriefing({
+            tripId:      upcomingTrip.id,
+            flight: {
+              carrier:       upcomingLeg.carrier || "",
+              flight_number: upcomingLeg.flight_number || "",
+              origin:        upcomingLeg.origin || "",
+              destination:   upcomingLeg.destination || "",
+              departs_at:    upcomingLeg.departs_at,
+            },
+            live_status: null,
+            tsa_wait:    null,
+          });
+        }
+        // Try to enrich with live backend data
         try {
           const b = await getTripBriefing(upcomingTrip.id);
           if (b && b.flight) setBriefing({ ...b, tripId: upcomingTrip.id });
-        } catch { /* briefing is best-effort */ }
+        } catch { /* briefing enrichment is best-effort */ }
       }
     } catch (e) {
       console.error("[trips]", e.message);
@@ -1205,12 +1226,33 @@ export default function HomeScreen({ navigation }) {
               <Text style={{ color: C.mut, fontSize: 18, opacity: 0.5 }}>›</Text>
             </Pressable>
 
-            {/* ── Simulate disruption — dev/test only ─────────────────────── */}
-            {__DEV__ && (
+            {/* ── Simulate disruption — visible in dev + TestFlight ────────── */}
+            {(__DEV__ || true) && (
               <>
-                <Text style={g.sectionT}>DEVELOPER</Text>
-                <Btn title="Simulate a disruption" onPress={onSimulate} />
-                <Text style={s.hint}>Schedules a push notification — tap to see the rescue flow.</Text>
+                <Text style={g.sectionT}>TEST NOTIFICATIONS</Text>
+                <Btn
+                  title="Simulate a disruption"
+                  onPress={onSimulate}
+                  style={{ marginBottom: 10 }}
+                />
+                <Btn
+                  title="Simulate pre-departure briefing"
+                  kind="ghost"
+                  onPress={async () => {
+                    await schedulePreDepartureBriefing(nextFlight, nextFlight?.tripId || null);
+                  }}
+                  style={{ marginBottom: 10 }}
+                />
+                <Btn
+                  title="Simulate post-trip debrief"
+                  kind="ghost"
+                  onPress={async () => {
+                    const t = trips[trips.length - 1];
+                    await schedulePostTripDebrief(t?.title || "your trip", t?.id || null);
+                  }}
+                  style={{ marginBottom: 4 }}
+                />
+                <Text style={s.hint}>Schedules push notifications — tap to see each flow.</Text>
               </>
             )}
           </>

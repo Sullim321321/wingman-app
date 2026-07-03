@@ -328,9 +328,23 @@ function TripCard({ trip, onDelete, navigation }) {
   const hotelLeg = legs.find(l => l.type === "hotel");
   const hotelName = hotelLeg?.carrier || hotelLeg?.title || null;
 
+  // Derive a smart display title from leg data if the stored title is generic
+  const derivedTitle = (() => {
+    const t = trip.title || "";
+    // If title looks meaningful (has → or a city name), use it
+    if (t.includes("→") || t.includes(" - ")) return t;
+    // Try to build from first flight leg
+    if (firstFlight?.origin && firstFlight?.destination) return `${firstFlight.origin} → ${firstFlight.destination}`;
+    // Try hotel leg
+    if (hotelLeg?.carrier) return hotelLeg.carrier;
+    if (hotelLeg?.destination) return hotelLeg.destination;
+    // Fall back to stored title
+    return t;
+  })();
+
   // Destination etching thumbnail — use etching system matching parchment card
   const destIcons = { "Bali": "🌴", "Swiss": "⛰️", "Kyoto": "🟯", "Tokyo": "🟯", "Paris": "🗻", "London": "🏰", "New York": "🏙️", "NYC": "🏙️" };
-  const iconKey = Object.keys(destIcons).find(k => trip.title?.includes(k));
+  const iconKey = Object.keys(destIcons).find(k => derivedTitle?.includes(k));
   const thumbIcon = iconKey ? destIcons[iconKey] : "✈️";
 
   return (
@@ -358,7 +372,7 @@ function TripCard({ trip, onDelete, navigation }) {
         {/* Info block */}
         <View style={s.tripInfo}>
           {dateRange && <Text style={s.tripDateRange}>{dateRange}</Text>}
-          <Text style={s.dest}>{trip.title}</Text>
+          <Text style={s.dest}>{derivedTitle}</Text>
           {/* Deck shows hotel name; fall back to destination city */}
           {(hotelName || firstFlight?.destination) && (
             <Text style={s.when}>{hotelName || firstFlight.destination}</Text>
@@ -1003,9 +1017,10 @@ export default function HomeScreen({ navigation }) {
 
             {/* ── Trip list or empty state ────────────────────────────────── */}
             {(() => {
-              const CARRIER_ONLY = /^(United Airlines|Delta Air Lines|American Airlines|British Airways|Lufthansa|Air France|Emirates|Qantas|Southwest Airlines|JetBlue|Alaska Airlines|Spirit Airlines|Frontier Airlines|Ryanair|easyJet|Wizz Air|Turkish Airlines|Singapore Airlines|Cathay Pacific|Air Canada|KLM|Iberia|Virgin Atlantic|Air New Zealand|Etihad Airways) Flight$/i;
+              const GENERIC_TITLE = /^(Unknown Trip|Unknown|Trip|Imported Trip)$/i;
+              const CARRIER_ONLY = /^(United Airlines|Delta Air Lines|American Airlines|British Airways|Lufthansa|Air France|Emirates|Qantas|Southwest Airlines|JetBlue|Alaska Airlines|Spirit Airlines|Frontier Airlines|Ryanair|easyJet|Wizz Air|Turkish Airlines|Singapore Airlines|Cathay Pacific|Air Canada|KLM|Iberia|Virgin Atlantic|Air New Zealand|Etihad Airways|Southwest|JetBlue Airways|Alaska) (Flight|Booking|Confirmation|Reservation)$/i;
               const visibleTrips = trips.filter(t => {
-                if (!t.title || t.title === "Unknown Trip" || t.title === "Unknown") return false;
+                if (!t.title || GENERIC_TITLE.test(t.title.trim())) return false;
                 if (CARRIER_ONLY.test(t.title.trim())) return false;
                 if ((t.legs || []).length === 0) return false;
                 return true;

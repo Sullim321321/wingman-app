@@ -87,11 +87,11 @@ function RiskBar({ risk }) {
 
 function ConnectionRiskBadge({ risk }) {
   const cfg = {
-    critical: { bg: "rgba(255,77,109,0.15)", border: "rgba(255,77,109,0.4)", text: C.coral, icon: "⚡" },
-    high:     { bg: "C.amber + "1E"",  border: "C.amber + "59"",  text: "C.amber", icon: "⚠️" },
-    moderate: { bg: "rgba(201,169,110,0.12)", border: "rgba(201,169,110,0.3)", text: C.gold,   icon: "👁" },
-    low:      { bg: "C.teal + "1A"",  border: "C.teal + "40"", text: "C.teal", icon: "✓" },
-  }[risk.risk_level] || { bg: "rgba(201,169,110,0.12)", border: "rgba(201,169,110,0.3)", text: C.gold, icon: "·" };
+    critical: { bg: C.coral + "26",  border: C.coral + "66",  text: C.coral, icon: "⚡" },
+    high:     { bg: C.amber + "1E",  border: C.amber + "59",  text: C.amber, icon: "⚠️" },
+    moderate: { bg: C.gold  + "1E",  border: C.gold  + "40",  text: C.gold,  icon: "👁" },
+    low:      { bg: C.teal  + "1A",  border: C.teal  + "40",  text: C.teal,  icon: "✓" },
+  }[risk.risk_level] || { bg: C.gold + "1E", border: C.gold + "40", text: C.gold, icon: "·" };
 
   return (
     <View style={[s.connRiskCard, { backgroundColor: cfg.bg, borderColor: cfg.border }]}>
@@ -243,6 +243,170 @@ function HotelLegCard({ leg, hotelAlert }) {
   );
 }
 
+// ─── TrainLegCard ──────────────────────────────────────────────────────────────
+
+function TrainLegCard({ leg }) {
+  const dep = fmt(leg.departs_at);
+  const arr = fmt(leg.arrives_at);
+  const from = leg.station_from || leg.origin || "?";
+  const to   = leg.station_to   || leg.destination || "?";
+  return (
+    <View style={s.legCard}>
+      <View style={g.rowBetween}>
+        <View style={{ flex: 1 }}>
+          <Text style={s.legCardTitle}>🚆 {leg.carrier || "Train"}</Text>
+          <Text style={s.legCardRoute}>{from}  →  {to}</Text>
+          {dep && <Text style={s.legCardSub}>
+            Departs {dep}{fmtTime(leg.departs_at) ? `  ·  ${fmtTime(leg.departs_at)}` : ""}
+            {arr ? `  –  Arrives ${arr}` : ""}
+          </Text>}
+          {leg.seat && <Text style={s.legCardSub}>Seat {leg.seat}</Text>}
+          {leg.confirmation && <Text style={s.legCardSub}>Ref: {leg.confirmation}</Text>}
+        </View>
+        <StatusBadge status="Booked" />
+      </View>
+    </View>
+  );
+}
+
+// ─── CarLegCard ─────────────────────────────────────────────────────────────────
+
+function CarLegCard({ leg }) {
+  const pickup = fmt(leg.departs_at);
+  const dropoff = fmt(leg.arrives_at);
+  const pickupLoc  = leg.pickup_location  || leg.origin      || leg.destination || "?";
+  const dropoffLoc = leg.dropoff_location || leg.destination || pickupLoc;
+  return (
+    <View style={s.legCard}>
+      <View style={g.rowBetween}>
+        <View style={{ flex: 1 }}>
+          <Text style={s.legCardTitle}>🚗 {leg.carrier || "Car rental"}
+            {leg.vehicle_class ? <Text style={s.legCardMeta}>  ·  {leg.vehicle_class}</Text> : null}
+          </Text>
+          <Text style={s.legCardRoute}>Pickup: {pickupLoc}</Text>
+          {dropoffLoc !== pickupLoc && <Text style={s.legCardRoute}>Return: {dropoffLoc}</Text>}
+          {pickup && <Text style={s.legCardSub}>
+            From {pickup}{dropoff ? `  –  To ${dropoff}` : ""}
+          </Text>}
+          {leg.confirmation && <Text style={s.legCardSub}>Conf: {leg.confirmation}</Text>}
+        </View>
+        <StatusBadge status="Booked" />
+      </View>
+    </View>
+  );
+}
+
+// ─── AirbnbLegCard ──────────────────────────────────────────────────────────────
+
+function AirbnbLegCard({ leg }) {
+  const checkIn  = fmt(leg.departs_at);
+  const checkOut = fmt(leg.arrives_at);
+  const nights = leg.nights || (checkIn && checkOut ? null : null);
+  return (
+    <View style={s.legCard}>
+      <View style={g.rowBetween}>
+        <View style={{ flex: 1 }}>
+          <Text style={s.legCardTitle}>🏠 {leg.carrier || leg.destination || "Airbnb"}</Text>
+          {leg.property_address && <Text style={s.legCardSub}>{leg.property_address}</Text>}
+          {checkIn && <Text style={s.legCardSub}>
+            Check-in {checkIn}{checkOut ? `  ·  Check-out ${checkOut}` : ""}
+            {nights ? `  ·  ${nights} night${nights !== 1 ? "s" : ""}` : ""}
+          </Text>}
+          {leg.guests && <Text style={s.legCardSub}>{leg.guests} guest{leg.guests !== 1 ? "s" : ""}</Text>}
+          {leg.confirmation && <Text style={s.legCardSub}>Conf: {leg.confirmation}</Text>}
+        </View>
+        <StatusBadge status="Booked" />
+      </View>
+    </View>
+  );
+}
+
+// ─── FerryLegCard ───────────────────────────────────────────────────────────────
+
+function FerryLegCard({ leg }) {
+  const dep = fmt(leg.departs_at);
+  const arr = fmt(leg.arrives_at);
+  return (
+    <View style={s.legCard}>
+      <View style={g.rowBetween}>
+        <View style={{ flex: 1 }}>
+          <Text style={s.legCardTitle}>⛴️ {leg.carrier || "Ferry"}</Text>
+          {(leg.origin || leg.destination) && (
+            <Text style={s.legCardRoute}>{leg.origin || "?"}  →  {leg.destination || "?"}</Text>
+          )}
+          {dep && <Text style={s.legCardSub}>
+            Departs {dep}{fmtTime(leg.departs_at) ? `  ·  ${fmtTime(leg.departs_at)}` : ""}
+            {arr ? `  –  Arrives ${arr}` : ""}
+          </Text>}
+          {leg.confirmation && <Text style={s.legCardSub}>Ref: {leg.confirmation}</Text>}
+        </View>
+        <StatusBadge status="Booked" />
+      </View>
+    </View>
+  );
+}
+
+// ─── ActivityLegCard ────────────────────────────────────────────────────────────
+
+function ActivityLegCard({ leg }) {
+  const date = fmt(leg.departs_at);
+  return (
+    <View style={s.legCard}>
+      <View style={g.rowBetween}>
+        <View style={{ flex: 1 }}>
+          <Text style={s.legCardTitle}>✨ {leg.carrier || leg.destination || "Activity"}</Text>
+          {leg.destination && leg.destination !== leg.carrier && (
+            <Text style={s.legCardSub}>{leg.destination}</Text>
+          )}
+          {date && <Text style={s.legCardSub}>
+            {date}{fmtTime(leg.departs_at) ? `  ·  ${fmtTime(leg.departs_at)}` : ""}
+          </Text>}
+          {leg.guests && <Text style={s.legCardSub}>{leg.guests} person{leg.guests !== 1 ? "s" : ""}</Text>}
+          {leg.confirmation && <Text style={s.legCardSub}>Ref: {leg.confirmation}</Text>}
+        </View>
+        <StatusBadge status="Booked" />
+      </View>
+    </View>
+  );
+}
+
+// ─── GenericLegCard (transfer / cruise / other) ─────────────────────────────────
+
+function GenericLegCard({ leg }) {
+  const typeIcons = { transfer: "🚖", cruise: "🚢", other: "📌" };
+  const icon = typeIcons[leg.type] || "📌";
+  const date = fmt(leg.departs_at);
+  return (
+    <View style={s.legCard}>
+      <View style={g.rowBetween}>
+        <View style={{ flex: 1 }}>
+          <Text style={s.legCardTitle}>{icon} {leg.carrier || leg.destination || "Booking"}</Text>
+          {(leg.origin || leg.destination) && (
+            <Text style={s.legCardRoute}>{[leg.origin, leg.destination].filter(Boolean).join("  →  ")}</Text>
+          )}
+          {date && <Text style={s.legCardSub}>{date}</Text>}
+          {leg.confirmation && <Text style={s.legCardSub}>Ref: {leg.confirmation}</Text>}
+        </View>
+        <StatusBadge status="Booked" />
+      </View>
+    </View>
+  );
+}
+
+// ─── LegRouter — picks the right card component by type ─────────────────────────
+
+function LegRouter({ leg, hotelAlert }) {
+  switch (leg.type) {
+    case "hotel":    return <HotelLegCard    leg={leg} hotelAlert={hotelAlert} />;
+    case "airbnb":   return <AirbnbLegCard   leg={leg} />;
+    case "train":    return <TrainLegCard     leg={leg} />;
+    case "car":      return <CarLegCard       leg={leg} />;
+    case "ferry":    return <FerryLegCard     leg={leg} />;
+    case "activity": return <ActivityLegCard  leg={leg} />;
+    default:         return <GenericLegCard   leg={leg} />;
+  }
+}
+
 // ─── OutcomeCard (post-trip learning loop) ───────────────────────────────────
 
 function OutcomeCard({ tripId, onSubmitted }) {
@@ -329,13 +493,21 @@ export default function TripDetailScreen({ route, navigation }) {
 
   const legs = trip.legs || [];
   const flightLegs = legs.filter(l => l.type === "flight");
-  const otherLegs = legs.filter(l => l.type !== "flight");
   const firstFlight = flightLegs[0];
-  const depDate = fmt(firstFlight?.departs_at);
 
-  // Determine if trip is in the past (completed)
-  const isCompleted = firstFlight?.departs_at
-    ? new Date(firstFlight.departs_at).getTime() < Date.now() - 24 * 3600000
+  // Use the trip_start/trip_end from the API (covers all leg types), fallback to first flight
+  const tripStartDate = trip.trip_start || firstFlight?.departs_at || legs[0]?.departs_at;
+  const tripEndDate   = trip.trip_end   || null;
+  const depDate = fmt(tripStartDate);
+  const endDate = fmt(tripEndDate);
+
+  // Determine if trip is in the past (completed) — use last leg end date
+  const lastLegEnd = tripEndDate || legs.reduce((latest, l) => {
+    const t = l.arrives_at || l.departs_at;
+    return t && (!latest || new Date(t) > new Date(latest)) ? t : latest;
+  }, null);
+  const isCompleted = lastLegEnd
+    ? new Date(lastLegEnd).getTime() < Date.now() - 24 * 3600000
     : false;
 
   // Load risk data on mount
@@ -447,7 +619,11 @@ export default function TripDetailScreen({ route, navigation }) {
         {/* Trip header */}
         <LinearGradient colors={[C.card, C.card2]} style={s.header}>
           <Text style={s.tripTitle}>{trip.title}</Text>
-          {depDate && <Text style={s.tripDate}>{depDate}</Text>}
+          {depDate && (
+            <Text style={s.tripDate}>
+              {depDate}{endDate && endDate !== depDate ? `  –  ${endDate}` : ""}
+            </Text>
+          )}
           <View style={s.pillRow}>
             <View style={s.pillLive}><Text style={s.pillLiveT}>● Live monitoring</Text></View>
             {flightLegs.length > 0 && (
@@ -455,13 +631,33 @@ export default function TripDetailScreen({ route, navigation }) {
                 <Text style={s.pillInfoT}>{flightLegs.length} flight{flightLegs.length !== 1 ? "s" : ""}</Text>
               </View>
             )}
+            {legs.filter(l => l.type === "hotel" || l.type === "airbnb").length > 0 && (
+              <View style={s.pillInfo}>
+                <Text style={s.pillInfoT}>
+                  {legs.filter(l => l.type === "hotel" || l.type === "airbnb").length === 1 ? "1 stay" :
+                    `${legs.filter(l => l.type === "hotel" || l.type === "airbnb").length} stays`}
+                </Text>
+              </View>
+            )}
+            {legs.filter(l => l.type === "train").length > 0 && (
+              <View style={s.pillInfo}>
+                <Text style={s.pillInfoT}>
+                  {legs.filter(l => l.type === "train").length} train{legs.filter(l => l.type === "train").length !== 1 ? "s" : ""}
+                </Text>
+              </View>
+            )}
+            {legs.filter(l => l.type === "car").length > 0 && (
+              <View style={s.pillInfo}>
+                <Text style={s.pillInfoT}>Car rental</Text>
+              </View>
+            )}
             {topRisk && topRisk.risk_level !== "low" && (
               <View style={[s.pillInfo, {
-                backgroundColor: topRisk.risk_level === "critical" ? "rgba(255,77,109,0.12)" : "rgba(255,140,0,0.1)",
-                borderColor: topRisk.risk_level === "critical" ? "rgba(255,77,109,0.3)" : "rgba(255,140,0,0.3)",
+                backgroundColor: topRisk.risk_level === "critical" ? C.coral + "1E" : C.amber + "1A",
+                borderColor:     topRisk.risk_level === "critical" ? C.coral + "4D" : C.amber + "40",
               }]}>
                 <Text style={[s.pillInfoT, {
-                  color: topRisk.risk_level === "critical" ? C.coral : "C.amber",
+                  color: topRisk.risk_level === "critical" ? C.coral : C.amber,
                 }]}>
                   {topRisk.risk_level === "critical" ? "⚡ Critical connection" : "⚠️ Tight connection"}
                 </Text>
@@ -597,12 +793,62 @@ export default function TripDetailScreen({ route, navigation }) {
           </>
         )}
 
-        {/* Hotel / car legs */}
-        {otherLegs.length > 0 && (
+        {/* Accommodation (hotel + Airbnb + short-term rental) */}
+        {legs.filter(l => l.type === "hotel" || l.type === "airbnb").length > 0 && (
+          <>
+            <Text style={g.sectionT}>ACCOMMODATION</Text>
+            {legs.filter(l => l.type === "hotel" || l.type === "airbnb").map((leg, i) => (
+              <LegRouter key={i} leg={leg} hotelAlert={hotelAlertMap[leg.id]} />
+            ))}
+          </>
+        )}
+
+        {/* Rail */}
+        {legs.filter(l => l.type === "train").length > 0 && (
+          <>
+            <Text style={g.sectionT}>TRAINS</Text>
+            {legs.filter(l => l.type === "train").map((leg, i) => (
+              <LegRouter key={i} leg={leg} />
+            ))}
+          </>
+        )}
+
+        {/* Car rentals */}
+        {legs.filter(l => l.type === "car").length > 0 && (
+          <>
+            <Text style={g.sectionT}>CAR RENTALS</Text>
+            {legs.filter(l => l.type === "car").map((leg, i) => (
+              <LegRouter key={i} leg={leg} />
+            ))}
+          </>
+        )}
+
+        {/* Ferries */}
+        {legs.filter(l => l.type === "ferry").length > 0 && (
+          <>
+            <Text style={g.sectionT}>FERRIES</Text>
+            {legs.filter(l => l.type === "ferry").map((leg, i) => (
+              <LegRouter key={i} leg={leg} />
+            ))}
+          </>
+        )}
+
+        {/* Activities & experiences */}
+        {legs.filter(l => l.type === "activity").length > 0 && (
+          <>
+            <Text style={g.sectionT}>ACTIVITIES</Text>
+            {legs.filter(l => l.type === "activity").map((leg, i) => (
+              <LegRouter key={i} leg={leg} />
+            ))}
+          </>
+        )}
+
+        {/* Transfers, cruises, and anything else */}
+        {legs.filter(l => l.type === "transfer" || l.type === "cruise" || l.type === "other").length > 0 && (
           <>
             <Text style={g.sectionT}>OTHER BOOKINGS</Text>
-            {otherLegs.map((leg, i) => (
-              <HotelLegCard key={i} leg={leg} hotelAlert={hotelAlertMap[leg.id]} />
+            {legs.filter(l => l.type === "transfer" || l.type === "cruise" || l.type === "other").map((leg, i) => (
+              <LegRouter key={i} leg={leg} />
             ))}
           </>
         )}
@@ -824,9 +1070,11 @@ const s = StyleSheet.create({
   factorT: { color: C.mut, fontSize: 12, flex: 1 },
   factorD: { color: C.ink, fontFamily: T.sansM },
 
-  // Hotel card
+  // Leg cards — all types
   legCardTitle: { color: C.ink, fontSize: 15, fontFamily: T.sansB, marginBottom: 4, letterSpacing: 0.1 },
-  legCardSub: { color: C.mut, fontSize: 12, fontFamily: T.sans, marginTop: 2 },
+  legCardRoute: { color: C.ink, fontSize: 13, fontFamily: T.sansM, marginTop: 2, marginBottom: 2 },
+  legCardMeta:  { color: C.mut, fontSize: 12, fontFamily: T.sans },
+  legCardSub:   { color: C.mut, fontSize: 12, fontFamily: T.sans, marginTop: 2 },
 
   // Empty
   emptyCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 32, alignItems: "center", marginBottom: 12 },

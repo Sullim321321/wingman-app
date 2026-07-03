@@ -314,37 +314,33 @@ function TripCard({ trip, onDelete, navigation }) {
       .catch(() => {});
   }, [firstFlight?.origin, firstFlight?.destination]);
 
-  // Build date range string like deck: "MAY 18 – MAY 24"
-  const lastFlight = legs.filter(l => l.type === "flight").slice(-1)[0];
-  const depDateFmt = firstFlight?.departs_at
-    ? new Date(firstFlight.departs_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase()
+  // Build date range from trip_start/trip_end (API-provided), fallback to leg scanning
+  const startTs = trip.trip_start || firstFlight?.departs_at || legs[0]?.departs_at;
+  const endTs   = trip.trip_end   || legs.reduce((latest, l) => {
+    const t = l.arrives_at || l.departs_at;
+    return t && (!latest || new Date(t) > new Date(latest)) ? t : latest;
+  }, null);
+  const depDateFmt = startTs
+    ? new Date(startTs).toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase()
     : null;
-  const arrDateFmt = lastFlight?.departs_at && lastFlight !== firstFlight
-    ? new Date(lastFlight.departs_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase()
+  const arrDateFmt = endTs && endTs !== startTs
+    ? new Date(endTs).toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase()
     : null;
   const dateRange = depDateFmt && arrDateFmt ? `${depDateFmt} – ${arrDateFmt}` : depDateFmt;
 
-  // Hotel name for subtitle — deck shows "Aman Villas at Nusa Dua" not IATA code
-  const hotelLeg = legs.find(l => l.type === "hotel");
-  const hotelName = hotelLeg?.carrier || hotelLeg?.title || null;
+  // Subtitle: hotel name > Airbnb name > destination city > first flight destination
+  const hotelLeg  = legs.find(l => l.type === "hotel" || l.type === "airbnb");
+  const hotelName = hotelLeg?.carrier || hotelLeg?.destination_city || hotelLeg?.destination || null;
+  const destCity  = legs.find(l => l.destination_city)?.destination_city || null;
 
-  // Derive a smart display title from leg data if the stored title is generic
-  const derivedTitle = (() => {
-    const t = trip.title || "";
-    // If title looks meaningful (has → or a city name), use it
-    if (t.includes("→") || t.includes(" - ")) return t;
-    // Try to build from first flight leg
-    if (firstFlight?.origin && firstFlight?.destination) return `${firstFlight.origin} → ${firstFlight.destination}`;
-    // Try hotel leg
-    if (hotelLeg?.carrier) return hotelLeg.carrier;
-    if (hotelLeg?.destination) return hotelLeg.destination;
-    // Fall back to stored title
-    return t;
-  })();
+  // Derive a smart display title — prefer the stored trip title (now destination-named)
+  const derivedTitle = trip.title || destCity ||
+    (firstFlight?.origin && firstFlight?.destination ? `${firstFlight.origin} → ${firstFlight.destination}` : "Trip");
 
   // Destination etching thumbnail — use etching system matching parchment card
-  const destIcons = { "Bali": "🌴", "Swiss": "⛰️", "Kyoto": "🟯", "Tokyo": "🟯", "Paris": "🗻", "London": "🏰", "New York": "🏙️", "NYC": "🏙️" };
-  const iconKey = Object.keys(destIcons).find(k => derivedTitle?.includes(k));
+  const etchingKey = destCity || firstFlight?.destination || "";
+  const destIcons = { "Bali": "🌴", "Swiss": "⛰️", "Kyoto": "🜯", "Tokyo": "🜯", "Paris": "🗻", "London": "🏰", "New York": "🏙️", "NYC": "🏙️", "Edinburgh": "🏰", "Scotland": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "Rome": "🇯", "Barcelona": "🇪🇸", "Amsterdam": "🇳🇱" };
+  const iconKey = Object.keys(destIcons).find(k => etchingKey.includes(k) || derivedTitle.includes(k));
   const thumbIcon = iconKey ? destIcons[iconKey] : "✈️";
 
   return (
@@ -373,9 +369,9 @@ function TripCard({ trip, onDelete, navigation }) {
         <View style={s.tripInfo}>
           {dateRange && <Text style={s.tripDateRange}>{dateRange}</Text>}
           <Text style={s.dest}>{derivedTitle}</Text>
-          {/* Deck shows hotel name; fall back to destination city */}
-          {(hotelName || firstFlight?.destination) && (
-            <Text style={s.when}>{hotelName || firstFlight.destination}</Text>
+          {/* Show hotel/Airbnb name, or destination city, or first flight destination */}
+          {(hotelName || destCity || firstFlight?.destination) && (
+            <Text style={s.when}>{hotelName || destCity || firstFlight.destination}</Text>
           )}
         </View>
         {/* Right: risk badge or chevron */}

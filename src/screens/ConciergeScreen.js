@@ -137,7 +137,7 @@ function buildFollowUpChips(lastReply, trips) {
   return chips.slice(0, 4);
 }
 
-export default function ConciergeScreen({ route }) {
+export default function ConciergeScreen({ route, navigation }) {
   const prefill     = route?.params?.prefill || null;
   const routeTripId = route?.params?.tripId ? Number(route.params.tripId) : null;
   const [trips, setTrips]               = useState([]);
@@ -226,7 +226,7 @@ export default function ConciergeScreen({ route }) {
           style: "destructive",
           onPress: async () => {
             try { await clearConciergeThread(activeTripId); } catch {}
-            setMessages([{ role: "assistant", content: WELCOME }]);
+            setMessages([{ role: "assistant", content: buildWelcome(tripsRef.current) }]);
           },
         },
       ]
@@ -287,7 +287,8 @@ export default function ConciergeScreen({ route }) {
     })
     .slice(0, 5);
   const hasUserMessages = messages.some(m => m.role === "user");
-  const lastAiReply = [...messages].reverse().find(m => m.role === "assistant" && m.content !== WELCOME)?.content || null;
+  const isWelcomeMsg = (c) => !c || c.startsWith("Good day.");
+  const lastAiReply = [...messages].reverse().find(m => m.role === "assistant" && !isWelcomeMsg(m.content))?.content || null;
   const chips = !hasUserMessages
     ? buildInitialChips(trips)
     : (!loading && lastAiReply ? buildFollowUpChips(lastAiReply, trips) : []);
@@ -418,15 +419,26 @@ export default function ConciergeScreen({ route }) {
             return null;
           })()}
         </View>
-        {hasUserMessages && (
-          <Pressable
-            style={s.clearBtn}
-            onPress={confirmClearThread}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Text style={s.clearBtnT}>✕ Clear</Text>
-          </Pressable>
-        )}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          {activeTripId && (
+            <Pressable
+              style={s.tripLinkBtn}
+              onPress={() => navigation.navigate("TripDetail", { tripId: activeTripId })}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Text style={s.tripLinkBtnT}>Trip ›</Text>
+            </Pressable>
+          )}
+          {hasUserMessages && (
+            <Pressable
+              style={s.clearBtn}
+              onPress={confirmClearThread}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Text style={s.clearBtnT}>✕ Clear</Text>
+            </Pressable>
+          )}
+        </View>
       </View>
 
       {upcomingTrips.length > 1 && (
@@ -543,6 +555,8 @@ const s = StyleSheet.create({
   headerSub:  { color: C.gold, fontSize: 10, fontFamily: T.sansM, letterSpacing: 0.5, marginTop: 2 },
   clearBtn:   { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: C.gold + "40", backgroundColor: C.gold + "0F" },
   clearBtnT:  { color: C.mut, fontSize: 11, fontFamily: T.sansM, letterSpacing: 0.5 },
+  tripLinkBtn:  { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: C.gold + "60", backgroundColor: C.gold + "15" },
+  tripLinkBtnT: { color: C.gold, fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.5 },
   threadRow: { paddingHorizontal: 16, paddingBottom: 10, gap: 8, flexDirection: "row" },
   threadChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 16, borderWidth: 1, borderColor: C.line, backgroundColor: C.card },
   threadChipActive: { borderColor: C.gold, backgroundColor: C.gold + "18" },

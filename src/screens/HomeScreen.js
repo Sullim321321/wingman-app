@@ -251,6 +251,40 @@ function NextUpCard({ flight, navigation }) {
           )}
           <Text style={s.parchArrow}>View Details  →</Text>
         </View>
+        {/* Quick action chips */}
+        <View style={{ flexDirection: "row", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
+          <Pressable
+            style={s.parchChip}
+            onPress={() => navigation.navigate("Concierge", {
+              prefill: `What do I need to know for my ${flightLabel || 'upcoming'} flight?`
+            })}
+          >
+            <Text style={s.parchChipT}>✦ Ask Wingman</Text>
+          </Pressable>
+          {flight.origin && (
+            <Pressable
+              style={s.parchChip}
+              onPress={() => navigation.navigate("AirportNavigation", {
+                iata: flight.origin,
+                gate: flight.gate || null,
+                flightInfo: flightLabel || null,
+              })}
+            >
+              <Text style={s.parchChipT}>🛋 Lounges</Text>
+            </Pressable>
+          )}
+          {flight.destination && (
+            <Pressable
+              style={s.parchChip}
+              onPress={() => navigation.navigate("GroundTransport", {
+                iata: flight.destination,
+                city: flight.destination,
+              })}
+            >
+              <Text style={s.parchChipT}>🚆 Ground transport</Text>
+            </Pressable>
+          )}
+        </View>
       </View>
     </Pressable>
   );
@@ -395,6 +429,44 @@ function TripCard({ trip, onDelete, navigation }) {
           <Text style={{ color: C.mut, fontSize: 18, lineHeight: 22 }}>›</Text>
         </View>
       </View>
+      {/* Quick action chips below card */}
+      {firstFlight && (
+        <View style={{ flexDirection: "row", gap: 8, marginTop: 6, marginBottom: 4, paddingHorizontal: 2 }}>
+          <Pressable
+            style={s.tcChip}
+            onPress={() => { tap(); navigation.navigate("Concierge", {
+              tripId: trip.id,
+              prefill: `What should I know about my ${trip.title || firstFlight.origin + ' to ' + firstFlight.destination} trip?`
+            }); }}
+          >
+            <Text style={s.tcChipT}>✦ Ask Wingman</Text>
+          </Pressable>
+          {firstFlight.destination && (
+            <Pressable
+              style={s.tcChip}
+              onPress={() => { tap(); navigation.navigate("GroundTransport", {
+                iata: firstFlight.destination,
+                city: firstFlight.destination,
+                tripId: trip.id,
+              }); }}
+            >
+              <Text style={s.tcChipT}>🚆 Transport</Text>
+            </Pressable>
+          )}
+          {firstFlight.origin && (
+            <Pressable
+              style={s.tcChip}
+              onPress={() => { tap(); navigation.navigate("AirportNavigation", {
+                iata: firstFlight.origin,
+                gate: null,
+                flightInfo: firstFlight.carrier && firstFlight.flight_number ? `${firstFlight.carrier}${firstFlight.flight_number}` : null,
+              }); }}
+            >
+              <Text style={s.tcChipT}>🛋 Lounge</Text>
+            </Pressable>
+          )}
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -608,15 +680,19 @@ export default function HomeScreen({ navigation }) {
       const data = result.data;
       const fetchedTrips = data.trips || [];
       setTrips(fetchedTrips);
-      // Check if any trip departs today — fetch briefing if so
-      const today = new Date().toDateString();
-      const todayTrip = fetchedTrips.find(trip =>
-        (trip.legs || []).some(l => l.type === 'flight' && l.departs_at && new Date(l.departs_at).toDateString() === today)
+      // Fetch briefing for any flight departing within 7 days (not just today)
+      const now7d = Date.now() + 7 * 86400000;
+      const upcomingTrip = fetchedTrips.find(trip =>
+        (trip.legs || []).some(l => {
+          if (l.type !== 'flight' || !l.departs_at) return false;
+          const t = new Date(l.departs_at).getTime();
+          return t > Date.now() && t <= now7d;
+        })
       );
-      if (todayTrip) {
+      if (upcomingTrip) {
         try {
-          const b = await getTripBriefing(todayTrip.id);
-          if (b && b.flight) setBriefing({ ...b, tripId: todayTrip.id });
+          const b = await getTripBriefing(upcomingTrip.id);
+          if (b && b.flight) setBriefing({ ...b, tripId: upcomingTrip.id });
         } catch { /* briefing is best-effort */ }
       }
     } catch (e) {
@@ -907,9 +983,16 @@ export default function HomeScreen({ navigation }) {
             )}
 
             {/* ── Day-of-flight mission briefing ────────────────────────── */}
-            {briefing && briefing.flight && (
+            {briefing && briefing.flight && (() => {
+              const daysUntil = briefing.flight.departs_at
+                ? Math.ceil((new Date(briefing.flight.departs_at).getTime() - Date.now()) / 86400000)
+                : 0;
+              const briefingTitle = daysUntil <= 0 ? "TODAY'S BRIEFING"
+                : daysUntil === 1 ? "TOMORROW'S BRIEFING"
+                : `FLIGHT BRIEFING · ${daysUntil} DAYS`;
+              return (
               <>
-                <Text style={g.sectionT}>TODAY'S BRIEFING</Text>
+                <Text style={g.sectionT}>{briefingTitle}</Text>
                 <Pressable
                   style={s.briefingCard}
                   onPress={() => navigation.navigate("TripDetail", { tripId: briefing.tripId })}
@@ -955,7 +1038,8 @@ export default function HomeScreen({ navigation }) {
                     <Pressable
                       style={s.briefingCTA}
                       onPress={() => navigation.navigate("Concierge", {
-                        prefill: `What do I need to know for my ${briefing.flight.carrier}${briefing.flight.flight_number} flight today?`
+                        prefill: `What do I need to know for my ${briefing.flight.carrier}${briefing.flight.flight_number} flight${daysUntil <= 0 ? ' today' : daysUntil === 1 ? ' tomorrow' : ` in ${daysUntil} days`}?`,
+                        tripId: briefing.tripId,
                       })}
                     >
                       <Text style={s.briefingCTAT}>Ask Wingman →</Text>
@@ -986,7 +1070,8 @@ export default function HomeScreen({ navigation }) {
                   </View>
                 </Pressable>
               </>
-            )}
+              );
+            })()}
 
             {/* ── Wingman Points tile ─────────────────────────────────────── */}
             {pointsData && (() => {
@@ -1289,4 +1374,10 @@ const s = StyleSheet.create({
   qaChip:         { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20, borderWidth: 1, borderColor: C.gold + "35", backgroundColor: C.gold + "0A" },
   qaChipIcon:     { color: C.gold, fontSize: 13, fontFamily: T.sansB },
   qaChipT:        { color: C.gold, fontSize: 12, fontFamily: T.sansM, letterSpacing: 0.2 },
+  // Trip card quick-action chips
+  tcChip:         { paddingHorizontal: 11, paddingVertical: 6, borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: C.card },
+  tcChipT:        { color: C.mut, fontSize: 11, fontFamily: T.sansM, letterSpacing: 0.2 },
+  // Parchment card quick-action chips (dark ink on parchment)
+  parchChip:      { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 14, borderWidth: 1, borderColor: "rgba(60,50,30,0.2)", backgroundColor: "rgba(60,50,30,0.07)" },
+  parchChipT:     { color: "#4A3C28", fontSize: 11, fontFamily: T.sansM, letterSpacing: 0.2 },
 });

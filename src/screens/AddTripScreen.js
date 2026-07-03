@@ -246,21 +246,43 @@ export default function AddTripScreen({ navigation }) {
       const data = await draftTripFromText(nlText.trim());
       if (data.title) setTitle(data.title);
       const updates = {};
-      if (data.origin)        updates.origin      = data.origin.toUpperCase();
-      if (data.destination)   updates.destination = data.destination.toUpperCase();
-      if (data.carrier)       updates.carrier     = data.carrier.toUpperCase();
-      if (data.flight_number) updates.flightNum   = String(data.flight_number);
+      const draftType = data.type && LEG_TYPES.find(t => t.id === data.type) ? data.type : "flight";
+      // Route fields by booking type — never put hotel/city names into flight airport fields
+      if (draftType === "flight" || draftType === "ferry") {
+        if (data.origin)        updates.origin      = data.origin.toUpperCase();
+        if (data.destination)   updates.destination = data.destination.toUpperCase();
+        if (data.carrier)       updates.carrier     = data.carrier.toUpperCase();
+        if (data.flight_number) updates.flightNum   = String(data.flight_number);
+      } else if (draftType === "train") {
+        if (data.station_from)  updates.stationFrom = data.station_from;
+        if (data.station_to)    updates.stationTo   = data.station_to;
+        if (data.carrier)       updates.carrier     = data.carrier;
+      } else if (draftType === "car") {
+        if (data.pickup_location)  updates.pickupLocation  = data.pickup_location;
+        if (data.dropoff_location) updates.dropoffLocation = data.dropoff_location;
+        if (data.carrier)          updates.carrier         = data.carrier;
+        if (data.vehicle_class)    updates.vehicleClass    = data.vehicle_class;
+      } else {
+        // hotel / airbnb / activity / cruise / other — carrier is the property/operator name
+        if (data.carrier)       updates.carrier     = data.carrier;
+      }
+      // Fields common to all types
       if (data.departs_at) {
         const d = new Date(data.departs_at);
         if (!isNaN(d)) updates.depDate = d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
       }
-      if (data.confirmation)  updates.confirmation = data.confirmation.toUpperCase();
-      if (data.property_name) updates.propertyName = data.property_name;
-      if (data.address)       updates.address      = data.address;
-      if (data.check_in)      updates.checkIn      = data.check_in;
-      if (data.check_out)     updates.checkOut     = data.check_out;
-      if (data.nights)        updates.nights       = String(data.nights);
-      if (data.type && LEG_TYPES.find(t => t.id === data.type)) setLegType(data.type);
+      if (data.confirmation)      updates.confirmation = data.confirmation.toUpperCase();
+      if (data.property_name)     updates.propertyName = data.property_name;
+      if (data.property_address)  updates.address      = data.property_address;
+      else if (data.address)      updates.address      = data.address;
+      if (data.check_in)          updates.checkIn      = data.check_in;
+      if (data.check_out)         updates.checkOut     = data.check_out;
+      if (data.nights)            updates.nights       = String(data.nights);
+      if (data.guests)            updates.guests       = String(data.guests);
+      if (data.cabin_class)       updates.cabinClass   = data.cabin_class;
+      if (data.seat)              updates.seat         = data.seat;
+      // Set leg type AFTER building updates so the correct form renders
+      if (draftType) setLegType(draftType);
       setLeg(prev => ({ ...prev, ...updates }));
       setDrafted(true);
       setTab("manual");

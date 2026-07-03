@@ -303,6 +303,20 @@ export default function ConnectionsScreen({ navigation, route }) {
   const connectAppleCalendar = async () => {
     setCalGranting(true);
     try {
+      // Check current status first — if already denied, go straight to Settings
+      const { status: currentStatus } = await Calendar.getCalendarPermissionsAsync();
+      if (currentStatus === "denied") {
+        Alert.alert(
+          "Calendar access blocked",
+          "Wingman needs Calendar access to detect trip dates. Please enable it in Settings.",
+          [
+            { text: "Open Settings", onPress: () => Linking.openURL("app-settings:") },
+            { text: "Cancel", style: "cancel" },
+          ]
+        );
+        setCalGranting(false);
+        return;
+      }
       const { status } = await Calendar.requestCalendarPermissionsAsync();
       if (status === "granted") {
         setAppleCalGranted(true);
@@ -313,8 +327,17 @@ export default function ConnectionsScreen({ navigation, route }) {
             ? `Wingman found ${count} travel event${count !== 1 ? "s" : ""} in your calendar and is now monitoring them.`
             : "Wingman is now watching your calendar. Travel events will appear automatically as you add them."
         );
+      } else if (status === "denied") {
+        Alert.alert(
+          "Calendar access denied",
+          "To connect Apple Calendar, enable access in Settings → Privacy & Security → Calendars → Wingman.",
+          [
+            { text: "Open Settings", onPress: () => Linking.openURL("app-settings:") },
+            { text: "Cancel", style: "cancel" },
+          ]
+        );
       } else {
-        Alert.alert("Permission denied", "Enable Calendar access in Settings → Privacy & Security → Calendars → Wingman.");
+        Alert.alert("Permission required", "Wingman needs Calendar access to detect trip dates automatically.");
       }
     } catch (e) {
       Alert.alert("Error", e.message);
@@ -447,8 +470,31 @@ export default function ConnectionsScreen({ navigation, route }) {
           <ConnRow
             iconKey="uber"
             title="Uber"
-            sub="Auto-opens Uber with airport pickup when you land — no account needed"
-            right={<ConnBadge on />}
+            sub="Opens Uber with your pickup pre-filled when you land — uses your own Uber account"
+            onPress={() => {
+              // Try to open the Uber app; fall back to App Store
+              Linking.canOpenURL("uber://")
+                .then(supported => {
+                  if (supported) {
+                    Linking.openURL("uber://");
+                  } else {
+                    Alert.alert(
+                      "Get Uber",
+                      "Wingman uses your Uber account to pre-fill airport pickups when you land. Install Uber to use this feature.",
+                      [
+                        { text: "Get Uber", onPress: () => Linking.openURL("https://apps.apple.com/app/uber/id368677368") },
+                        { text: "Cancel", style: "cancel" },
+                      ]
+                    );
+                  }
+                })
+                .catch(() => Linking.openURL("https://apps.apple.com/app/uber/id368677368"));
+            }}
+            right={
+              <View style={s.connectBtn}>
+                <Text style={s.connectBtnT}>Open</Text>
+              </View>
+            }
           />
 
           {/* WhatsApp */}

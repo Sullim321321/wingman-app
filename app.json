@@ -2,7 +2,7 @@
   "expo": {
     "name": "Wingman",
     "slug": "wingman-app",
-    "version": "1.0.114",
+    "version": "1.0.115",
     "orientation": "portrait",
     "scheme": "wingman",
     "userInterfaceStyle": "automatic",

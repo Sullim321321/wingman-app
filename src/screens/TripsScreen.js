@@ -1,168 +1,182 @@
-// TripsScreen.js
-// Dedicated trip list tab — shows all imported/added trips with TripCards.
-// Replaces the old ActivityScreen wiring on the Trips tab.
+// TripsScreen.js — Editorial v3
+// Italic serif headline "Your trips." · date-anchored rows · status pills
+// Upcoming above rule, past below rule — no cards, no chips, no chrome
 
 import React, { useState, useCallback, useEffect } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
-  ActivityIndicator, RefreshControl, Alert, Image,
+  ActivityIndicator, RefreshControl, Alert,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { C, T, TS } from "../theme";
-import { Btn, tap, SerifText, g } from "../components";
+import { C, T } from "../theme";
+import { tap } from "../components";
 import { getTrips, deleteTrip, getPrediction } from "../api";
 import { getCachedTrips } from "../offlineCache";
-import { getEtching } from "../etchings";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const GENERIC_TITLE = /^(Unknown Trip|Unknown|Trip|Imported Trip)$/i;
 const CARRIER_ONLY  = /^(United Airlines|Delta Air Lines|American Airlines|British Airways|Lufthansa|Air France|Emirates|Qantas|Southwest Airlines|JetBlue|Alaska Airlines|Spirit Airlines|Frontier Airlines|Ryanair|easyJet|Wizz Air|Turkish Airlines|Singapore Airlines|Cathay Pacific|Air Canada|KLM|Iberia|Virgin Atlantic|Air New Zealand|Etihad Airways|Southwest|JetBlue Airways|Alaska) (Flight|Booking|Confirmation|Reservation)$/i;
 
-// ─── Risk Badge ───────────────────────────────────────────────────────────────
-
-function RiskBadge({ risk }) {
-  if (risk == null || risk < 30) return null;
-  const high = risk >= 60;
-  return (
-    <View style={{
-      backgroundColor: high ? "rgba(217,95,95,0.12)" : "rgba(212,144,42,0.12)",
-      borderColor:     high ? "rgba(217,95,95,0.25)" : "rgba(212,144,42,0.25)",
-      borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4,
-      flexDirection: "row", alignItems: "center", gap: 4,
-    }}>
-      <Text style={{ color: high ? C.coral : C.amber, fontSize: 10, fontFamily: T.sansB, letterSpacing: T.trackMed }}>
-        {high ? "!" : "~"} {risk}% RISK
-      </Text>
-    </View>
-  );
+function isVisible(t) {
+  if (!t.title || GENERIC_TITLE.test(t.title.trim())) return false;
+  if (CARRIER_ONLY.test(t.title.trim())) return false;
+  if ((t.legs || []).length === 0) return false;
+  return true;
 }
 
-// ─── Trip Card ────────────────────────────────────────────────────────────────
-
-function TripCard({ trip, onDelete, navigation }) {
-  const [risk, setRisk] = useState(null);
+function tripEndTime(trip) {
   const legs = trip.legs || [];
+  if (trip.trip_end) return new Date(trip.trip_end).getTime();
+  return legs.reduce((latest, l) => {
+    const t = l.arrives_at || l.departs_at;
+    const ts = t ? new Date(t).getTime() : 0;
+    return ts > latest ? ts : latest;
+  }, 0);
+}
+
+function tripStartTime(trip) {
+  const legs = trip.legs || [];
+  if (trip.trip_start) return new Date(trip.trip_start).getTime();
   const firstFlight = legs.find(l => l.type === "flight");
+  const first = firstFlight?.departs_at || legs[0]?.departs_at;
+  return first ? new Date(first).getTime() : 0;
+}
+
+function statusForTrip(trip) {
+  const now = Date.now();
+  const start = tripStartTime(trip);
+  const end   = tripEndTime(trip);
+  if (end > 0 && end < now - 86400000) return "past";
+  if (start > 0 && start <= now && end >= now) return "active";
+  return "upcoming";
+}
+
+// ─── Status Pill ──────────────────────────────────────────────────────────────
+
+function StatusPill({ status, riskScore }) {
+  if (status === "past") {
+    return (
+      <View style={[s.pill, s.pillMut]}>
+        <Text style={[s.pillT, { color: C.mut }]}>COMPLETED</Text>
+      </View>
+    );
+  }
+  if (status === "active") {
+    return (
+      <View style={[s.pill, s.pillTeal]}>
+        <View style={s.pillDot} />
+        <Text style={[s.pillT, { color: C.teal }]}>ACTIVE</Text>
+      </View>
+    );
+  }
+  // Upcoming — show risk if significant, otherwise nothing
+  if (riskScore != null && riskScore >= 60) {
+    return (
+      <View style={[s.pill, s.pillCoral]}>
+        <Text style={[s.pillT, { color: C.coral }]}>{riskScore}% RISK</Text>
+      </View>
+    );
+  }
+  if (riskScore != null && riskScore >= 30) {
+    return (
+      <View style={[s.pill, s.pillAmber]}>
+        <Text style={[s.pillT, { color: C.amber }]}>{riskScore}% RISK</Text>
+      </View>
+    );
+  }
+  return null;
+}
+
+// ─── Trip Row ─────────────────────────────────────────────────────────────────
+
+function TripRow({ trip, navigation, onDelete }) {
+  const [riskScore, setRiskScore] = useState(null);
+
+  const legs        = trip.legs || [];
+  const firstFlight = legs.find(l => l.type === "flight");
+  const startTs     = tripStartTime(trip);
+  const status      = statusForTrip(trip);
 
   useEffect(() => {
+    if (status === "past") return;
     if (!firstFlight?.origin || !firstFlight?.destination) return;
-    const dep = firstFlight.departs_at ? new Date(firstFlight.departs_at).getTime() : 0;
-    if (dep < Date.now()) return;
     getPrediction({ dep: firstFlight.origin, arr: firstFlight.destination })
-      .then(p => setRisk(p?.risk ?? null))
+      .then(p => { if (p?.risk != null) setRiskScore(p.risk); })
       .catch(() => {});
-  }, [firstFlight?.origin, firstFlight?.destination]);
+  }, [firstFlight?.origin, firstFlight?.destination, status]);
 
-  // Build date range
-  const startTs = trip.trip_start || firstFlight?.departs_at || legs[0]?.departs_at;
-  const endTs   = trip.trip_end   || legs.reduce((latest, l) => {
-    const t = l.arrives_at || l.departs_at;
-    return t && (!latest || new Date(t) > new Date(latest)) ? t : latest;
-  }, null);
-  const depDateFmt = startTs
-    ? new Date(startTs).toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase()
+  // Date anchor — large day number
+  const dayNum  = startTs ? new Date(startTs).getDate() : null;
+  const monthAb = startTs ? new Date(startTs).toLocaleDateString("en-US", { month: "short" }).toUpperCase() : null;
+  const yearStr = startTs ? new Date(startTs).getFullYear() : null;
+  const nowYear = new Date().getFullYear();
+
+  // Route label
+  const origin = firstFlight?.origin || null;
+  const dest   = firstFlight?.destination || null;
+  const routeLabel = origin && dest ? `${origin} → ${dest}` : null;
+
+  // Flight ident
+  const ident = firstFlight
+    ? [firstFlight.carrier, firstFlight.flight_number].filter(Boolean).join("")
     : null;
-  const arrDateFmt = endTs && endTs !== startTs
-    ? new Date(endTs).toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase()
+
+  // Derived title
+  const derivedTitle = trip.title ||
+    (firstFlight?.destination ? firstFlight.destination : "Trip");
+
+  // Days away
+  const daysAway = startTs
+    ? Math.ceil((startTs - Date.now()) / 86400000)
     : null;
-  const dateRange = depDateFmt && arrDateFmt ? `${depDateFmt} – ${arrDateFmt}` : depDateFmt;
-
-  // Subtitle: hotel name > destination city > first flight destination
-  const hotelLeg  = legs.find(l => l.type === "hotel" || l.type === "airbnb");
-  const hotelName = hotelLeg?.carrier || hotelLeg?.destination_city || hotelLeg?.destination || null;
-  const destCity  = legs.find(l => l.destination_city)?.destination_city || null;
-
-  // Derive display title
-  const derivedTitle = trip.title || destCity ||
-    (firstFlight?.origin && firstFlight?.destination ? `${firstFlight.origin} → ${firstFlight.destination}` : "Trip");
-
-  // Thumbnail
-  const etchingKey = destCity || firstFlight?.destination || "";
-  const destIcons = {
-    "Bali": "🌴", "Swiss": "⛰️", "Tokyo": "🜯", "Paris": "🗻",
-    "London": "🏰", "New York": "🏙️", "NYC": "🏙️", "Edinburgh": "🏰",
-    "Rome": "🇯", "Barcelona": "🇪🇸", "Amsterdam": "🇳🇱",
-  };
-  const iconKey = Object.keys(destIcons).find(k => etchingKey.includes(k) || derivedTitle.includes(k));
-  const thumbIcon = iconKey ? destIcons[iconKey] : "✈️";
-
-  const iataCode = firstFlight?.destination || firstFlight?.origin || null;
-  const flightIdent = firstFlight ? `${firstFlight.carrier || ""}${firstFlight.flight_number || ""}`.trim() : null;
+  const daysLabel = status === "upcoming" && daysAway != null
+    ? (daysAway <= 0 ? "Today" : daysAway === 1 ? "Tomorrow" : `${daysAway}d`)
+    : null;
 
   return (
-    <View style={{ marginBottom: 14 }}>
-      <Pressable
-        onPress={() => { tap(); navigation.navigate("TripDetail", { trip }); }}
-        onLongPress={() => Alert.alert("Delete trip?", trip.title, [
-          { text: "Cancel", style: "cancel" },
-          { text: "Delete", style: "destructive", onPress: () => onDelete(trip.id) },
-        ])}
-      >
-        <View style={s.tripCard}>
-          {/* Thumbnail */}
-          <View style={s.tripThumb}>
-            {getEtching(firstFlight?.destination) ? (
-              <Image
-                source={getEtching(firstFlight?.destination)}
-                style={{ width: 56, height: 56, borderRadius: 8, opacity: 0.85 }}
-                resizeMode="cover"
-              />
-            ) : (
-              <Text style={s.tripThumbT}>{thumbIcon}</Text>
+    <Pressable
+      style={s.tripRow}
+      onPress={() => { tap(); navigation.navigate("TripDetail", { trip }); }}
+      onLongPress={() => Alert.alert("Delete trip?", derivedTitle, [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: () => onDelete(trip.id) },
+      ])}
+    >
+      {/* Date anchor */}
+      <View style={s.dateAnchor}>
+        {dayNum ? (
+          <>
+            <Text style={[s.dayNum, status === "past" && s.dayNumMut]}>{dayNum}</Text>
+            <Text style={[s.monthAb, status === "past" && s.monthAbMut]}>{monthAb}</Text>
+            {yearStr && yearStr !== nowYear && (
+              <Text style={s.yearStr}>{yearStr}</Text>
             )}
-          </View>
-          {/* Info */}
-          <View style={s.tripInfo}>
-            {dateRange && <Text style={s.tripDateRange}>{dateRange}</Text>}
-            <Text style={s.dest}>{derivedTitle}</Text>
-            {(hotelName || destCity || firstFlight?.destination) && (
-              <Text style={s.when}>{hotelName || destCity || firstFlight?.destination}</Text>
-            )}
-          </View>
-          {/* Right: countdown pill + risk badge + chevron */}
-          <View style={{ alignItems: "flex-end", gap: 6 }}>
-            {(() => {
-              if (!firstFlight?.departs_at) return null;
-              const diff = new Date(firstFlight.departs_at).getTime() - Date.now();
-              if (diff <= 0) return null;
-              const days = Math.floor(diff / 86400000);
-              if (days === 0) return <View style={s.cdPill}><Text style={s.cdPillT}>TODAY</Text></View>;
-              if (days === 1) return <View style={s.cdPill}><Text style={s.cdPillT}>TOMORROW</Text></View>;
-              if (days <= 30) return <View style={s.cdPill}><Text style={s.cdPillT}>{days}D</Text></View>;
-              return null;
-            })()}
-            {risk != null && risk >= 30 && <RiskBadge risk={risk} />}
-            <Text style={{ color: C.mut, fontSize: 18, lineHeight: 22 }}>›</Text>
-          </View>
-        </View>
-      </Pressable>
-      {/* Action chips */}
-      <View style={s.chipRow}>
-        <Pressable
-          style={s.actionChip}
-          onPress={() => { tap(); navigation.navigate("Concierge", { prefill: `Tell me about my ${derivedTitle} trip`, tripId: trip.id }); }}
-        >
-          <Text style={s.actionChipT}>✶ Ask Wingman</Text>
-        </Pressable>
-        {iataCode && (
-          <Pressable
-            style={s.actionChip}
-            onPress={() => { tap(); navigation.navigate("GroundTransport", { airport: iataCode, flight: flightIdent }); }}
-          >
-            <Text style={s.actionChipT}>🚆 Transport</Text>
-          </Pressable>
-        )}
-        {iataCode && (
-          <Pressable
-            style={s.actionChip}
-            onPress={() => { tap(); navigation.navigate("LoungeCards", { airport: iataCode }); }}
-          >
-            <Text style={s.actionChipT}>🛄 Lounge</Text>
-          </Pressable>
+          </>
+        ) : (
+          <Text style={s.dayNum}>—</Text>
         )}
       </View>
-    </View>
+
+      {/* Main content */}
+      <View style={s.tripBody}>
+        <Text style={[s.tripTitle, status === "past" && s.tripTitleMut]} numberOfLines={1}>
+          {derivedTitle}
+        </Text>
+        {routeLabel && (
+          <Text style={s.tripRoute}>{routeLabel}{ident ? `  ·  ${ident}` : ""}</Text>
+        )}
+        <View style={s.tripMeta}>
+          {daysLabel && (
+            <Text style={[s.daysLabel, daysAway === 0 && { color: C.teal }]}>{daysLabel}</Text>
+          )}
+          <StatusPill status={status} riskScore={riskScore} />
+        </View>
+      </View>
+
+      {/* Chevron */}
+      <Text style={s.chevron}>›</Text>
+    </Pressable>
   );
 }
 
@@ -171,29 +185,10 @@ function TripCard({ trip, onDelete, navigation }) {
 function EmptyState({ navigation }) {
   return (
     <View style={s.emptyWrap}>
-      <View style={s.emptyIconWrap}>
-        <Text style={{ fontSize: 22, color: C.gold, fontFamily: T.sansB }}>✈</Text>
-      </View>
-      <SerifText bold style={s.emptyTitle}>No trips yet</SerifText>
+      <Text style={s.emptyHed}>No trips yet.</Text>
       <Text style={s.emptySub}>
-        Add a trip and Wingman monitors it 24/7 — delays, cancellations, gate changes, and rescue options the moment anything goes wrong.
+        Add a trip and Wingman monitors it around the clock — delays, cancellations, gate changes, and rescue options the moment anything goes wrong.
       </Text>
-      {/* What Wingman watches — value preview */}
-      <View style={s.watchCard}>
-        {[
-          { icon: "!", color: C.coral,  label: "Delays & cancellations" },
-          { icon: "✓", color: C.teal,   label: "Automatic rebooking options" },
-          { icon: "❖", color: C.gold,   label: "Pre-departure briefings" },
-          { icon: "~", color: C.amber,  label: "Disruption risk predictions" },
-        ].map((item, i) => (
-          <View key={i} style={[s.watchRow, i > 0 && { borderTopWidth: 1, borderTopColor: C.line }]}>
-            <View style={[s.watchBadge, { backgroundColor: item.color + "18" }]}>
-              <Text style={{ color: item.color, fontSize: 12, fontFamily: T.sansB }}>{item.icon}</Text>
-            </View>
-            <Text style={s.watchLabel}>{item.label}</Text>
-          </View>
-        ))}
-      </View>
       <Pressable style={s.emptyPrimary} onPress={() => { tap(); navigation.navigate("AddTrip"); }}>
         <Text style={s.emptyPrimaryT}>+ Add a trip</Text>
       </Pressable>
@@ -214,10 +209,7 @@ export default function TripsScreen({ navigation }) {
   const load = useCallback(async () => {
     try {
       const result = await getCachedTrips(() => getTrips());
-      // getCachedTrips wraps the response: result.data is what getTrips() returned
-      // getTrips() returns { trips: [...] } from the server
-      const fetchedTrips = (result.data?.trips || []);
-      setTrips(fetchedTrips);
+      setTrips(result.data?.trips || []);
     } catch (e) {
       console.error("[trips]", e.message);
     } finally {
@@ -237,31 +229,16 @@ export default function TripsScreen({ navigation }) {
     }
   };
 
-  const visibleTrips = trips.filter(t => {
-    if (!t.title || GENERIC_TITLE.test(t.title.trim())) return false;
-    if (CARRIER_ONLY.test(t.title.trim())) return false;
-    if ((t.legs || []).length === 0) return false;
-    return true;
-  });
+  const visible = trips.filter(isVisible);
+  const upcoming = visible.filter(t => statusForTrip(t) !== "past")
+    .sort((a, b) => tripStartTime(a) - tripStartTime(b));
+  const past = visible.filter(t => statusForTrip(t) === "past")
+    .sort((a, b) => tripStartTime(b) - tripStartTime(a)); // most recent first
 
   return (
-    <SafeAreaView style={s.app}>
-      {/* Header */}
-      <View style={s.head}>
-        <Text style={s.headT}>TRIPS</Text>
-        {visibleTrips.length > 0 && (
-          <View style={s.countBadge}>
-            <Text style={s.countT}>{visibleTrips.length}</Text>
-          </View>
-        )}
-        <View style={{ flex: 1 }} />
-        <Pressable onPress={() => { tap(); navigation.navigate("AddTrip"); }} style={s.addBtn}>
-          <Text style={s.addBtnT}>+ Add</Text>
-        </Pressable>
-      </View>
-
+    <SafeAreaView style={s.root}>
       <ScrollView
-        contentContainerStyle={[g.scroll, { paddingTop: 8 }]}
+        contentContainerStyle={s.scroll}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -269,34 +246,73 @@ export default function TripsScreen({ navigation }) {
             tintColor={C.gold}
           />
         }
+        showsVerticalScrollIndicator={false}
       >
+        {/* ── Masthead ── */}
+        <View style={s.masthead}>
+          <Text style={s.mastTitle}>Your trips.</Text>
+          <Pressable style={s.addBtn} onPress={() => { tap(); navigation.navigate("AddTrip"); }}>
+            <Text style={s.addBtnT}>+ Add</Text>
+          </Pressable>
+        </View>
+
+        <View style={s.rule} />
+
         {loading ? (
-          <ActivityIndicator color={C.gold} style={{ marginTop: 40 }} />
-        ) : visibleTrips.length === 0 ? (
+          <ActivityIndicator color={C.gold} style={{ marginTop: 48 }} />
+        ) : visible.length === 0 ? (
           <EmptyState navigation={navigation} />
         ) : (
           <>
-            {visibleTrips.map(trip => (
-              <TripCard
-                key={trip.id}
-                trip={trip}
-                onDelete={handleDelete}
-                navigation={navigation}
-              />
-            ))}
-            <Btn
-              title="+ Add a trip"
-              onPress={() => { tap(); navigation.navigate("AddTrip"); }}
-              style={{ marginTop: 4 }}
-            />
-            <Btn
-              title="Import from email"
-              kind="ghost"
+            {/* ── Upcoming trips ── */}
+            {upcoming.length > 0 && (
+              <>
+                <Text style={s.sectionLabel}>UPCOMING</Text>
+                {upcoming.map(trip => (
+                  <TripRow
+                    key={trip.id}
+                    trip={trip}
+                    navigation={navigation}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </>
+            )}
+
+            {/* ── Import CTA ── */}
+            <Pressable
+              style={s.importRow}
               onPress={() => { tap(); navigation.navigate("Connections"); }}
-              style={{ marginTop: 8, marginBottom: 16 }}
-            />
+            >
+              <View style={s.importIcon}>
+                <Text style={s.importIconT}>✉</Text>
+              </View>
+              <Text style={s.importLabel}>Import from email</Text>
+              <Text style={s.importArrow}>›</Text>
+            </Pressable>
+
+            {/* ── Past trips ── */}
+            {past.length > 0 && (
+              <>
+                <View style={s.pastRule}>
+                  <View style={s.pastRuleLine} />
+                  <Text style={s.pastRuleLabel}>EARLIER</Text>
+                  <View style={s.pastRuleLine} />
+                </View>
+                {past.map(trip => (
+                  <TripRow
+                    key={trip.id}
+                    trip={trip}
+                    navigation={navigation}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </>
+            )}
           </>
         )}
+
+        <View style={{ height: 32 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -305,90 +321,297 @@ export default function TripsScreen({ navigation }) {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
-  app: { flex: 1, backgroundColor: C.bg },
+  root: {
+    flex: 1,
+    backgroundColor: C.bg,
+  },
+  scroll: {
+    paddingBottom: 16,
+  },
 
-  head: {
-    flexDirection: "row", alignItems: "center", gap: 10,
-    paddingHorizontal: 20, paddingTop: 8, paddingBottom: 6,
+  // ── Masthead ──
+  masthead: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 16,
   },
-  headT: { color: C.ink, fontSize: 11, fontFamily: T.sansB, letterSpacing: T.trackWide },
-  countBadge: {
-    backgroundColor: C.gold + "15", borderWidth: 1, borderColor: C.gold + "35",
-    borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3,
+  mastTitle: {
+    fontFamily: T.garamondSI,
+    fontSize: 34,
+    color: C.ink,
+    letterSpacing: -0.3,
+    lineHeight: 38,
   },
-  countT: { color: C.gold, fontSize: 10, fontFamily: T.sansB, letterSpacing: T.trackMed },
   addBtn: {
-    borderWidth: 1, borderColor: C.gold + "40", borderRadius: 10,
-    paddingHorizontal: 12, paddingVertical: 5,
-  },
-  addBtnT: { color: C.gold, fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.4 },
-
-  // Trip card — matches HomeScreen spec exactly
-  tripCard: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     backgroundColor: C.card,
-    borderRadius: 12,
-    padding: 16,
     borderWidth: 1,
     borderColor: C.line,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
+    borderRadius: 20,
+    marginBottom: 4,
   },
-  tripThumb: {
-    width: 56, height: 56, borderRadius: 8,
-    backgroundColor: C.card2, borderWidth: 1, borderColor: C.line,
-    alignItems: "center", justifyContent: "center", overflow: "hidden",
-  },
-  tripThumbT: { fontSize: 22, color: C.gold + "80" },
-  tripInfo:   { flex: 1 },
-  dest:       { color: C.ink, fontSize: TS.tripName, fontFamily: T.sansM, letterSpacing: -0.1, lineHeight: 22 },
-  when:       { color: C.mut, fontSize: TS.tripSub, fontFamily: T.sans, marginTop: 3, lineHeight: 17 },
-  tripDateRange: {
-    color: C.gold, fontSize: TS.tripDate, fontFamily: T.sansB,
-    letterSpacing: T.trackMed, marginBottom: 3,
+  addBtnT: {
+    fontFamily: T.sansM,
+    fontSize: 12,
+    color: C.gold,
+    letterSpacing: 1,
   },
 
-  // Countdown pill
-  cdPill:  { backgroundColor: C.gold + "18", borderColor: C.gold + "40", borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 },
-  cdPillT: { color: C.gold, fontSize: 10, fontFamily: T.sansB, letterSpacing: T.trackMed },
-  // Action chips below TripCard
-  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, paddingTop: 8, paddingHorizontal: 2 },
-  actionChip: {
-    backgroundColor: C.card2, borderWidth: 1, borderColor: C.line,
-    borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6,
+  // ── Rule ──
+  rule: {
+    height: 1,
+    marginHorizontal: 24,
+    backgroundColor: C.line,
+    opacity: 0.5,
+    marginBottom: 4,
   },
-  actionChipT: { color: C.mut, fontSize: 12, fontFamily: T.sansM, letterSpacing: 0.2 },
-  // Empty state
+
+  // ── Section label ──
+  sectionLabel: {
+    fontFamily: T.sansM,
+    fontSize: 9,
+    letterSpacing: 2.5,
+    color: C.mut,
+    textTransform: "uppercase",
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 4,
+    opacity: 0.7,
+  },
+
+  // ── Trip row ──
+  tripRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: C.line,
+    gap: 16,
+  },
+
+  // Date anchor
+  dateAnchor: {
+    width: 40,
+    alignItems: "center",
+    flexShrink: 0,
+  },
+  dayNum: {
+    fontFamily: T.garamondSI,
+    fontSize: 28,
+    color: C.gold,
+    lineHeight: 30,
+    letterSpacing: -0.5,
+  },
+  dayNumMut: {
+    color: C.mut,
+    opacity: 0.5,
+  },
+  monthAb: {
+    fontFamily: T.sansM,
+    fontSize: 9,
+    letterSpacing: 1.5,
+    color: C.gold,
+    textTransform: "uppercase",
+    marginTop: 1,
+  },
+  monthAbMut: {
+    color: C.mut,
+    opacity: 0.5,
+  },
+  yearStr: {
+    fontFamily: T.sans,
+    fontSize: 9,
+    color: C.mut,
+    opacity: 0.5,
+    marginTop: 1,
+  },
+
+  // Trip body
+  tripBody: {
+    flex: 1,
+    gap: 3,
+  },
+  tripTitle: {
+    fontFamily: T.sansM,
+    fontSize: 15,
+    color: C.ink,
+    letterSpacing: -0.2,
+  },
+  tripTitleMut: {
+    color: C.mut,
+    opacity: 0.6,
+  },
+  tripRoute: {
+    fontFamily: T.sans,
+    fontSize: 12,
+    color: C.mut,
+    letterSpacing: 0.3,
+  },
+  tripMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 2,
+  },
+  daysLabel: {
+    fontFamily: T.sansM,
+    fontSize: 10,
+    color: C.gold,
+    letterSpacing: 0.5,
+  },
+
+  // Chevron
+  chevron: {
+    fontFamily: T.sans,
+    fontSize: 18,
+    color: C.mut,
+    opacity: 0.4,
+  },
+
+  // ── Status pills ──
+  pill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  pillT: {
+    fontFamily: T.sansB,
+    fontSize: 9,
+    letterSpacing: 1.2,
+  },
+  pillMut: {
+    backgroundColor: "rgba(138,127,112,0.07)",
+    borderColor: "rgba(138,127,112,0.18)",
+  },
+  pillTeal: {
+    backgroundColor: "rgba(45,184,150,0.08)",
+    borderColor: "rgba(45,184,150,0.2)",
+  },
+  pillAmber: {
+    backgroundColor: "rgba(212,144,42,0.08)",
+    borderColor: "rgba(212,144,42,0.2)",
+  },
+  pillCoral: {
+    backgroundColor: "rgba(217,95,95,0.08)",
+    borderColor: "rgba(217,95,95,0.2)",
+  },
+  pillDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: C.teal,
+  },
+
+  // ── Import row ──
+  importRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: C.line,
+    gap: 14,
+  },
+  importIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(43,184,150,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(43,184,150,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  importIconT: {
+    fontSize: 14,
+  },
+  importLabel: {
+    flex: 1,
+    fontFamily: T.sansM,
+    fontSize: 13,
+    color: C.teal,
+  },
+  importArrow: {
+    fontFamily: T.sans,
+    fontSize: 18,
+    color: C.mut,
+    opacity: 0.4,
+  },
+
+  // ── Past rule ──
+  pastRule: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 4,
+  },
+  pastRuleLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: C.line,
+    opacity: 0.4,
+  },
+  pastRuleLabel: {
+    fontFamily: T.sansM,
+    fontSize: 9,
+    letterSpacing: 2.5,
+    color: C.mut,
+    opacity: 0.5,
+  },
+
+  // ── Empty state ──
   emptyWrap: {
-    alignItems: "center", padding: 44,
-    backgroundColor: C.card, borderRadius: 20,
-    borderWidth: 1, borderColor: C.line,
+    paddingHorizontal: 24,
+    paddingTop: 32,
   },
-  emptyIconWrap: {
-    width: 64, height: 64, borderRadius: 18,
-    backgroundColor: C.card2, borderWidth: 1, borderColor: C.gold + "30",
-    alignItems: "center", justifyContent: "center", marginBottom: 20,
+  emptyHed: {
+    fontFamily: T.garamondSI,
+    fontSize: 28,
+    color: C.ink,
+    marginBottom: 12,
+    letterSpacing: -0.3,
   },
-  emptyTitle: { color: C.ink, fontSize: 22, letterSpacing: T.trackTight, marginBottom: 10 },
   emptySub: {
-    color: C.mut, fontSize: 14, fontFamily: T.sans,
-    textAlign: "center", lineHeight: 21, marginBottom: 28,
+    fontFamily: T.garamondI,
+    fontSize: 16,
+    color: C.mut,
+    lineHeight: 26,
+    marginBottom: 28,
   },
   emptyPrimary: {
-    backgroundColor: C.gold, borderRadius: 14,
-    paddingHorizontal: 28, paddingVertical: 14,
-    width: "100%", alignItems: "center", marginBottom: 12,
+    backgroundColor: C.gold,
+    borderRadius: 28,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginBottom: 12,
   },
-  emptyPrimaryT: { color: C.inkD, fontSize: 15, fontFamily: T.sansB, letterSpacing: 0.3 },
+  emptyPrimaryT: {
+    fontFamily: T.sansB,
+    fontSize: 14,
+    color: C.bg,
+    letterSpacing: 0.5,
+  },
   emptyGhost: {
-    borderWidth: 1, borderColor: C.line, borderRadius: 14,
-    paddingHorizontal: 28, paddingVertical: 14,
-    width: "100%", alignItems: "center",
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 28,
+    paddingVertical: 13,
+    alignItems: "center",
   },
-  emptyGhostT: { color: C.ink, fontSize: 15, fontFamily: T.sansM, letterSpacing: 0.2 },
-  // Watch card (empty state preview)
-  watchCard:  { width: "100%", borderRadius: 14, borderWidth: 1, borderColor: C.line, backgroundColor: C.card2, overflow: "hidden", marginBottom: 24 },
-  watchRow:   { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 11 },
-  watchBadge: { width: 28, height: 28, borderRadius: 8, alignItems: "center", justifyContent: "center" },
-  watchLabel: { color: C.ink, fontSize: 13, fontFamily: T.sansM, flex: 1 },
+  emptyGhostT: {
+    fontFamily: T.sansM,
+    fontSize: 14,
+    color: C.mut,
+  },
 });

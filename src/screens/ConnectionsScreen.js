@@ -498,26 +498,54 @@ export default function ConnectionsScreen({ navigation }) {
 
         {/* ── Manual import ─────────────────────────────────────────────────── */}
         <Text style={g.sectionT}>MANUAL IMPORT</Text>
-        <View style={g.group}>
-          <ConnRow
-            iconKey="forward"
-            title="Forward a booking email"
-            sub={`Forward any booking confirmation to ${FORWARD_EMAIL} — Wingman imports it automatically`}
-            right={
-              <Pressable
-                style={s.connectBtn}
-                onPress={() => {
-                  Share.share({ message: FORWARD_EMAIL, title: "Wingman import address" })
-                    .catch(() => Alert.alert("Forward to", FORWARD_EMAIL));
-                }}
-              >
-                <Text style={s.connectBtnT}>Share</Text>
-              </Pressable>
-            }
-          />
+
+        {/* ── Forward address hero card ─────────────────────────────────── */}
+        <View style={s.forwardCard}>
+          <View style={s.forwardTop}>
+            <View style={s.forwardIconWrap}>
+              <Text style={s.forwardIcon}>✉</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={s.forwardTitle}>Forward any booking email</Text>
+              <Text style={s.forwardSub}>
+                Hotels, flights, trains, cars, Airbnb — forward the confirmation and Wingman imports it automatically.
+              </Text>
+            </View>
+          </View>
+          <View style={s.forwardAddressRow}>
+            <Text style={s.forwardAddress} selectable>{FORWARD_EMAIL}</Text>
+          </View>
+          <View style={s.forwardActions}>
+            <Pressable
+              style={s.forwardActionBtn}
+              onPress={() => {
+                const { Clipboard } = require("react-native");
+                Clipboard.setString(FORWARD_EMAIL);
+                Alert.alert("Copied", `${FORWARD_EMAIL} copied to clipboard.`);
+              }}
+            >
+              <Text style={s.forwardActionT}>Copy address</Text>
+            </Pressable>
+            <View style={s.forwardActionDivider} />
+            <Pressable
+              style={s.forwardActionBtn}
+              onPress={() => {
+                Share.share({ message: FORWARD_EMAIL, title: "Wingman import address" })
+                  .catch(() => Alert.alert("Forward to", FORWARD_EMAIL));
+              }}
+            >
+              <Text style={s.forwardActionT}>Share</Text>
+            </Pressable>
+          </View>
+          <Text style={s.forwardHint}>
+            Works with Gmail, Apple Mail, Outlook, and any email app. Supports all booking types.
+          </Text>
+        </View>
+
+        <View style={[g.group, { marginTop: 8 }]}>
           <ConnRow
             iconKey="paste"
-            title="Paste a confirmation email"
+            title="Paste a confirmation"
             sub="Copy a booking confirmation and paste it here — Wingman extracts the trip instantly"
             last
           />
@@ -622,4 +650,19 @@ const s = StyleSheet.create({
     backgroundColor: C.card2,
     alignItems: "center", justifyContent: "center",
   },
+
+  // Forward address hero card
+  forwardCard:         { borderRadius: 20, borderWidth: 1, borderColor: C.gold + "40", backgroundColor: C.card, overflow: "hidden", marginBottom: 4 },
+  forwardTop:          { flexDirection: "row", alignItems: "flex-start", gap: 14, padding: 18, paddingBottom: 12 },
+  forwardIconWrap:     { width: 44, height: 44, borderRadius: 22, backgroundColor: C.gold + "18", alignItems: "center", justifyContent: "center" },
+  forwardIcon:         { fontSize: 20, color: C.gold },
+  forwardTitle:        { color: C.ink, fontSize: 15, fontFamily: T.sansB, marginBottom: 4 },
+  forwardSub:          { color: C.mut, fontSize: 12, lineHeight: 18 },
+  forwardAddressRow:   { marginHorizontal: 18, marginBottom: 12, backgroundColor: C.bg, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, borderWidth: 1, borderColor: C.line },
+  forwardAddress:      { color: C.gold, fontSize: 15, fontFamily: T.sansB, letterSpacing: 0.3, textAlign: "center" },
+  forwardActions:      { flexDirection: "row", borderTopWidth: 1, borderTopColor: C.line },
+  forwardActionBtn:    { flex: 1, paddingVertical: 13, alignItems: "center" },
+  forwardActionT:      { color: C.gold, fontSize: 13, fontFamily: T.sansM },
+  forwardActionDivider:{ width: 1, backgroundColor: C.line },
+  forwardHint:         { color: C.mut, fontSize: 11, fontFamily: T.sans, textAlign: "center", paddingHorizontal: 18, paddingVertical: 10, borderTopWidth: 1, borderTopColor: C.line },
 });

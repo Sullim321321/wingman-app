@@ -9,7 +9,7 @@ import React, {
 import {
   SafeAreaView, View, Text, TextInput, Pressable, FlatList,
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
-  Alert, Animated, Easing,
+  Alert, Animated, Easing, AppState,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
@@ -19,7 +19,7 @@ import { tap } from "../components";
 import {
   getTrips, getHomeState, getWeather, getMe,
   sendConciergeMessage, getConciergeThread, saveConciergeThread, clearConciergeThread,
-  getTripBriefing, getPrediction,
+  getTripBriefing, getPrediction, triggerGmailScan,
 } from "../api";
 import { scheduleDisruption, schedulePreDepartureBriefing, schedulePostTripDebrief } from "../notify";
 import { LOCATION_OPT_IN_KEY } from "./SettingsScreen";
@@ -314,6 +314,45 @@ export default function HomeScreen({ navigation }) {
     if (!tripsLoaded) return;
     loadThread();
   }, [tripsLoaded]);
+
+  // ── Background scan — trigger Gmail scan when app comes to foreground ────────
+  // Runs silently: no spinner, no alert. Trips refresh automatically if new ones found.
+  // Throttled to once per 15 minutes to avoid hammering the API.
+  const SCAN_THROTTLE_MS = 15 * 60 * 1000; // 15 minutes
+  const LAST_SCAN_KEY = "@wingman_last_bg_scan";
+  const appStateRef = useRef(AppState.currentState);
+
+  useEffect(() => {
+    const runScanIfDue = async () => {
+      try {
+        const lastStr = await AsyncStorage.getItem(LAST_SCAN_KEY);
+        const last = lastStr ? parseInt(lastStr, 10) : 0;
+        if (Date.now() - last < SCAN_THROTTLE_MS) return; // too soon
+        await AsyncStorage.setItem(LAST_SCAN_KEY, String(Date.now()));
+        await triggerGmailScan();
+        // Silently refresh trips after scan
+        const data = await getTrips();
+        const loaded = data.trips || [];
+        tripsRef.current = loaded;
+        setTrips(loaded);
+      } catch {
+        // Silent — never surface background scan errors to the user
+      }
+    };
+
+    // Run once on mount
+    runScanIfDue();
+
+    // Run again whenever the app returns to the foreground
+    const sub = AppState.addEventListener("change", nextState => {
+      if (appStateRef.current.match(/inactive|background/) && nextState === "active") {
+        runScanIfDue();
+      }
+      appStateRef.current = nextState;
+    });
+
+    return () => sub.remove();
+  }, []);
 
   // ── Thread persistence ───────────────────────────────────────────────────────
 

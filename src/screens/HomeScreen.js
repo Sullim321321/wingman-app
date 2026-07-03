@@ -255,34 +255,41 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPr
       : `I'm watching it. Ask me anything about the trip.`;
 
   } else {
-    // No trips at all — situational intelligence briefing
+    // No trips at all — city-specific intelligence briefing
     statusDotColor = C.mut;
     statusLabel    = "Standing by";
     const hour = new Date().getHours();
     const timeGreet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
     const name = firstName || null;
-    const greet = name ? `${timeGreet}, ${name}.` : `${timeGreet}.`;
-    headline = `Your concierge\nis standing by.`;
-    // Build situational prose using local weather if available
-    const weatherLine = w && w.city && w.temp != null
-      ? `It's ${w.temp}° in ${w.city}${w.desc ? ` — ${w.desc.toLowerCase()}` : ""}.`
+    const city = w?.city || null;
+    // Headline: personalised city greeting if we have location, otherwise generic
+    if (city && name) {
+      headline = `${timeGreet},\n${name}.`;
+    } else if (city) {
+      headline = `Welcome to\n${city}.`;
+    } else {
+      headline = `Your concierge\nis standing by.`;
+    }
+    // Prose: city + weather + what Wingman can do here
+    const weatherDetail = w && w.temp != null
+      ? `${city ? `It's ${w.temp}° in ${city}` : `It's ${w.temp}°`}${w.description ? ` — ${w.description.toLowerCase()}` : ""}.`
       : null;
-    const suggestions = [
-      "Tell me where you're headed and I'll start watching it — gate changes, weather, lounge access, upgrade windows.",
-      "You can also say \"Find my trips\" and I'll scan your inbox for any bookings I may have missed.",
-    ];
-    prose = [greet, weatherLine, suggestions[0]].filter(Boolean).join(" ");
+    const cityLine = city
+      ? `What can I help you with in ${city}?`
+      : "What can I help you with today?";
+    prose = [weatherDetail, cityLine].filter(Boolean).join(" ");
   }
 
   return { headline, prose, statusDotColor, statusLabel };
 }
 
 // Build the welcome message for the chat thread
-function buildWelcomeMessage(trips, firstName) {
+function buildWelcomeMessage(trips, firstName, city) {
   const next = findNextFlight(trips);
   if (!next) {
     const name = firstName ? `, ${firstName}` : "";
-    return `Good morning${name}. Nothing on the board yet. Tell me where you're headed and I'll start watching it.`;
+    const cityHint = city ? ` I'm here in ${city} with you.` : "";
+    return `Good morning${name}.${cityHint} Tell me where you're headed and I'll start watching it, or ask me anything about where you are now.`;
   }
   const diff  = new Date(next.departs_at).getTime() - Date.now();
   if (diff <= 0) return "Good day. I'm monitoring your active trip. What can I do for you?";
@@ -341,7 +348,7 @@ export default function HomeScreen({ navigation }) {
         // Update welcome message if thread is still at initial state
         setMessages(prev => {
           if (prev.length === 1 && prev[0].role === "assistant") {
-            return [{ role: "assistant", content: buildWelcomeMessage(loaded, firstName) }];
+            return [{ role: "assistant", content: buildWelcomeMessage(loaded, firstName, null) }];
           }
           return prev;
         });
@@ -457,12 +464,12 @@ export default function HomeScreen({ navigation }) {
       const data = await getConciergeThread(null);
       const saved = (data.messages || []).filter(m => m && (m.content || m.transit || m.places || m.action));
       if (saved.length > 0) {
-        setMessages([{ role: "assistant", content: buildWelcomeMessage(tripsRef.current, firstName) }, ...saved]);
+        setMessages([{ role: "assistant", content: buildWelcomeMessage(tripsRef.current, firstName, weather?.city || null) }, ...saved]);
       } else {
-        setMessages([{ role: "assistant", content: buildWelcomeMessage(tripsRef.current, firstName) }]);
+        setMessages([{ role: "assistant", content: buildWelcomeMessage(tripsRef.current, firstName, weather?.city || null) }]);
       }
     } catch {
-      setMessages([{ role: "assistant", content: buildWelcomeMessage(tripsRef.current, firstName) }]);
+      setMessages([{ role: "assistant", content: buildWelcomeMessage(tripsRef.current, firstName, weather?.city || null) }]);
     } finally {
       setThreadLoading(false);
     }
@@ -531,7 +538,7 @@ export default function HomeScreen({ navigation }) {
           text: "Clear", style: "destructive",
           onPress: async () => {
             try { await clearConciergeThread(null); } catch {}
-            setMessages([{ role: "assistant", content: buildWelcomeMessage(tripsRef.current, firstName) }]);
+            setMessages([{ role: "assistant", content: buildWelcomeMessage(tripsRef.current, firstName, weather?.city || null) }]);
           },
         },
       ]

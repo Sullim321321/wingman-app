@@ -270,14 +270,11 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPr
     } else {
       headline = `Your concierge\nis standing by.`;
     }
-    // Prose: city + weather + what Wingman can do here
+    // Prose: weather only (no city repeat) + open-ended offer
     const weatherDetail = w && w.temp != null
-      ? `${city ? `It's ${w.temp}° in ${city}` : `It's ${w.temp}°`}${w.description ? ` — ${w.description.toLowerCase()}` : ""}.`
+      ? `It's ${w.temp}°${w.description ? ` and ${w.description.toLowerCase()}` : ""}.`
       : null;
-    const cityLine = city
-      ? `What do you need in ${city}?`
-      : "What do you need?";
-    prose = [weatherDetail, cityLine].filter(Boolean).join(" ");
+    prose = [weatherDetail, "How can I help today?"].filter(Boolean).join(" ");
   }
 
   return { headline, prose, statusDotColor, statusLabel };
@@ -289,9 +286,8 @@ function buildWelcomeMessage(trips, firstName, city) {
   if (!next) {
     const name = firstName ? `, ${firstName}` : "";
     const hour = new Date().getHours();
-    const greet = hour < 12 ? `Good morning${name}` : hour < 17 ? `Good afternoon${name}` : `Good evening${name}`;
-    const cityHint = city ? ` in ${city}` : "";
-    return `${greet}. I'm your concierge${cityHint}. What do you need?`;
+    const greet = hour < 12 ? `Morning${name}` : hour < 17 ? `Afternoon${name}` : `Evening${name}`;
+    return `${greet}. How can I help today?`;
   }
   const diff  = new Date(next.departs_at).getTime() - Date.now();
   if (diff <= 0) return "Good day. I'm monitoring your active trip. What can I do for you?";

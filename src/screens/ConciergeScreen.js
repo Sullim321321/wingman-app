@@ -151,11 +151,13 @@ export default function ConciergeScreen({ route }) {
   const listRef      = useRef(null);
   const prefillSent  = useRef(false);
   const saveTimer    = useRef(null);
+  const tripsRef     = useRef([]);  // always holds latest trips for use inside async callbacks
 
   useFocusEffect(useCallback(() => {
     getTrips()
       .then(data => {
         const loaded = data.trips || [];
+        tripsRef.current = loaded;
         setTrips(loaded);
         setTripsLoaded(true);
         // Update the welcome message with trip context (only if thread hasn't been loaded yet)
@@ -202,12 +204,12 @@ export default function ConciergeScreen({ route }) {
         m && (m.content || m.transit || m.places || m.action)
       );
       if (saved.length > 0) {
-        setMessages([{ role: "assistant", content: buildWelcome(trips) }, ...saved]);
+        setMessages([{ role: "assistant", content: buildWelcome(tripsRef.current) }, ...saved]);
       } else {
-        setMessages([{ role: "assistant", content: buildWelcome(trips) }]);
+        setMessages([{ role: "assistant", content: buildWelcome(tripsRef.current) }]);
       }
     } catch {
-      setMessages([{ role: "assistant", content: buildWelcome(trips) }]);
+      setMessages([{ role: "assistant", content: buildWelcome(tripsRef.current) }]);
     } finally {
       setThreadLoading(false);
     }

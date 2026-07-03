@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import { C, T } from "../theme";
 import { Btn, BackBar, Chip, g } from "../components";
-import { API_BASE, getToken } from "../api";
+import { getSignals, triggerGmailImport } from "../api";
 
 const SOURCE_ICONS = {
   gmail: "📧",
@@ -36,12 +36,7 @@ export default function SignalScreen({ navigation }) {
     let alive = true;
     const load = async () => {
       try {
-        const token = await getToken();
-        const resp = await fetch(`${API_BASE}/signals`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!resp.ok) throw new Error("Failed to load signals");
-        const data = await resp.json();
+        const data = await getSignals();
         if (alive) {
           setSignals(data.signals || []);
           setImports(data.imports || []);
@@ -180,17 +175,9 @@ export default function SignalScreen({ navigation }) {
               kind="ghost"
               onPress={async () => {
                 try {
-                  const token = await getToken();
-                  await fetch(`${API_BASE}/auth/gmail/import`, {
-                    method: "POST",
-                    headers: { Authorization: `Bearer ${token}` },
-                  });
-                  // Reload
+                  await triggerGmailImport();
                   setLoading(true);
-                  const resp = await fetch(`${API_BASE}/signals`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                  });
-                  const data = await resp.json();
+                  const data = await getSignals();
                   setSignals(data.signals || []);
                   setImports(data.imports || []);
                 } catch (_) {}

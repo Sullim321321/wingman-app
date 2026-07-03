@@ -857,7 +857,7 @@ export default function HomeScreen({ navigation }) {
                   {isDisrupted && (
                     <Pressable
                       style={s.disruptionCTA}
-                      onPress={() => navigation.navigate("DisruptionScreen", { tripId: leg.trip_id, legId: leg.id, ident: leg.ident })}
+                      onPress={() => navigation.navigate("Disruption", { tripId: leg.trip_id, legId: leg.id, ident: leg.ident })}
                     >
                       <Text style={s.disruptionCTAT}>See options & your rights  →</Text>
                     </Pressable>
@@ -887,7 +887,7 @@ export default function HomeScreen({ navigation }) {
               );
             })()}
             {/* ── Contextual quick-action chips (no active trip) ──────── */}
-            {!homeState?.state && trips.length === 0 && (
+            {(!homeState?.state || homeState?.state === "no_trip") && trips.length === 0 && (
               <View style={{ flexDirection: "row", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
                 {[
                   { label: "Add a trip",        icon: "+", route: "AddTrip",      params: undefined },

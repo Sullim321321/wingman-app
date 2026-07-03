@@ -79,6 +79,9 @@ export const disconnectGmailAccount = (accountId) =>
   req(`/auth/gmail?account_id=${accountId}`, { method: "DELETE" });
 export const scanEmailBody = (emailBody, source) =>
   req("/auth/gmail/scan", { method: "POST", body: JSON.stringify({ emailBody, source }) });
+export const getSignals = () => req("/signals");
+export const triggerGmailImport = () =>
+  req("/auth/gmail/import", { method: "POST" });
 
 // Trips
 export const getTrips = () => req("/trips");

@@ -188,18 +188,33 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore }) {
       parts.push(`${riskScore}% disruption risk this week — I'll alert you the moment anything changes, with a rescue plan ready`);
     }
     if (w && weatherCity) parts.push(`${weatherCity} will be ${w.temp}° when you land`);
+    // Local weather context
+    const localW = weather;
+    if (localW && localW.city && localW.temp != null && localW.city !== weatherCity) {
+      parts.push(`It's ${localW.temp}° here in ${localW.city} right now`);
+    }
     prose = parts.length
-      ? `${parts.join(". ")}. What would you like to know?`
-      : `I'm watching it. What would you like to know?`;
+      ? `${parts.join(". ")}. Ask me anything about the trip.`
+      : `I'm watching it. Ask me anything about the trip.`;
 
   } else {
-    // No trips at all — new user state
+    // No trips at all — situational intelligence briefing
     statusDotColor = C.mut;
-    statusLabel    = "No trips yet";
-    // Personalised intelligence briefing — no onboarding prompts, no CTAs on Home
-    const greeting = firstName ? `Good morning, ${firstName}.` : `Good morning.`;
-    headline       = `Your concierge\nis standing by.`;
-    prose          = `${greeting} Nothing on the board yet. The moment you have a flight, I'll brief you every morning on what matters — gate changes, weather at your destination, lounge access, upgrade windows. I'm watching your inbox. Where are you headed next?`;
+    statusLabel    = "Standing by";
+    const hour = new Date().getHours();
+    const timeGreet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+    const name = firstName || null;
+    const greet = name ? `${timeGreet}, ${name}.` : `${timeGreet}.`;
+    headline = `Your concierge\nis standing by.`;
+    // Build situational prose using local weather if available
+    const weatherLine = w && w.city && w.temp != null
+      ? `It's ${w.temp}° in ${w.city}${w.desc ? ` — ${w.desc.toLowerCase()}` : ""}.`
+      : null;
+    const suggestions = [
+      "Tell me where you're headed and I'll start watching it — gate changes, weather, lounge access, upgrade windows.",
+      "You can also say \"Find my trips\" and I'll scan your inbox for any bookings I may have missed.",
+    ];
+    prose = [greet, weatherLine, suggestions[0]].filter(Boolean).join(" ");
   }
 
   return { headline, prose, statusDotColor, statusLabel };
@@ -285,8 +300,25 @@ export default function HomeScreen({ navigation }) {
     // Location + weather + home state
     (async () => {
       try {
-        const optIn = await AsyncStorage.getItem(LOCATION_OPT_IN_KEY);
+        let optIn = await AsyncStorage.getItem(LOCATION_OPT_IN_KEY);
         let lat = null, lng = null;
+        // If never asked, proactively request location so masthead always has weather
+        if (optIn === null) {
+          const { status: existing } = await Location.getForegroundPermissionsAsync();
+          if (existing === "granted") {
+            // Already granted (e.g. from a previous install) — use it silently
+            await AsyncStorage.setItem(LOCATION_OPT_IN_KEY, "true");
+            optIn = "true";
+          } else {
+            const { status: asked } = await Location.requestForegroundPermissionsAsync();
+            if (asked === "granted") {
+              await AsyncStorage.setItem(LOCATION_OPT_IN_KEY, "true");
+              optIn = "true";
+            } else {
+              await AsyncStorage.setItem(LOCATION_OPT_IN_KEY, "false");
+            }
+          }
+        }
         if (optIn === "true") {
           const { status } = await Location.getForegroundPermissionsAsync();
           if (status === "granted") {
@@ -483,11 +515,15 @@ export default function HomeScreen({ navigation }) {
     if (hs?.state === "in_transit") {
       return "38,000 ft";
     }
-    const city = weather?.city || hs?.active_trip?.destination_city || null;
-    const temp = weather?.temp != null ? `${weather.temp}°` : null;
-    if (city && temp) return `${city} · ${temp}`;
-    if (city) return city;
-    if (temp) return temp;
+    // Always prefer local weather (user's current location) for the masthead
+    const localCity = weather?.city || null;
+    const localTemp = weather?.temp != null ? `${weather.temp}°` : null;
+    if (localCity && localTemp) return `${localCity} · ${localTemp}`;
+    if (localCity) return localCity;
+    if (localTemp) return localTemp;
+    // Fall back to destination city if no local weather
+    const destCity = hs?.active_trip?.destination_city || null;
+    if (destCity) return destCity;
     return null;
   })();
 
@@ -497,10 +533,10 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <SafeAreaView style={s.root}>
-      <KeyboardAvoidingView
+        <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 88 : 0}
       >
         {/* ── Masthead ──────────────────────────────────────────────────── */}
         <View style={s.masthead}>
@@ -620,6 +656,11 @@ export default function HomeScreen({ navigation }) {
               returnKeyType="send"
               multiline={false}
               editable={!chatLoading}
+              autoCorrect={true}
+              spellCheck={true}
+              autoCapitalize="sentences"
+              autoComplete="off"
+              keyboardAppearance="dark"
             />
             <Pressable
               style={[s.sendBtn, (!input.trim() || chatLoading) && s.sendBtnDim]}
@@ -1010,8 +1051,8 @@ const s = StyleSheet.create({
   },
   inputField: {
     flex: 1,
-    fontFamily: T.garamondI,
-    fontSize: 16,
+    fontFamily: T.sans,
+    fontSize: 15,
     color: C.ink,
     paddingVertical: 6,
   },

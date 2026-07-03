@@ -275,8 +275,8 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPr
       ? `${city ? `It's ${w.temp}° in ${city}` : `It's ${w.temp}°`}${w.description ? ` — ${w.description.toLowerCase()}` : ""}.`
       : null;
     const cityLine = city
-      ? `What can I help you with in ${city}?`
-      : "What can I help you with today?";
+      ? `What do you need in ${city}?`
+      : "What do you need?";
     prose = [weatherDetail, cityLine].filter(Boolean).join(" ");
   }
 
@@ -288,8 +288,10 @@ function buildWelcomeMessage(trips, firstName, city) {
   const next = findNextFlight(trips);
   if (!next) {
     const name = firstName ? `, ${firstName}` : "";
-    const cityHint = city ? ` I'm here in ${city} with you.` : "";
-    return `Good morning${name}.${cityHint} Tell me where you're headed and I'll start watching it, or ask me anything about where you are now.`;
+    const hour = new Date().getHours();
+    const greet = hour < 12 ? `Good morning${name}` : hour < 17 ? `Good afternoon${name}` : `Good evening${name}`;
+    const cityHint = city ? ` in ${city}` : "";
+    return `${greet}. I'm your concierge${cityHint}. What do you need?`;
   }
   const diff  = new Date(next.departs_at).getTime() - Date.now();
   if (diff <= 0) return "Good day. I'm monitoring your active trip. What can I do for you?";

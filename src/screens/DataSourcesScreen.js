@@ -216,7 +216,7 @@ const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
 
   hero: { marginBottom: 24 },
-  heroH: { color: C.ink, fontSize: 28, fontFamily: "PlayfairDisplay_700Bold", lineHeight: 36, marginBottom: 10 },
+  heroH: { color: C.ink, fontSize: 28, fontFamily: T.serifB, lineHeight: 36, marginBottom: 10 },
   heroSub: { color: C.mut, fontSize: 14, lineHeight: 21, marginBottom: 8 },
   heroDisclaimer: { color: C.mut, fontSize: 11, lineHeight: 16, fontStyle: "italic" },
 

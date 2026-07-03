@@ -13,7 +13,7 @@ const APPLE_MERCHANT_ID = "merchant.club.welcometothefight.wingman";
 
 const PLAN_COLORS = {
   pro: C.teal,
-  elite: "#818CF8",
+  elite: C.indigo,
 };
 
 const PLAN_ICONS = {
@@ -63,7 +63,7 @@ function PlanCard({ plan, planKey, current, onSelect, loading }) {
           {loading ? (
             <ActivityIndicator color="#fff" size="small" />
           ) : (
-            <Text style={s.subscribeBtnT}>Subscribe with Apple Pay</Text>
+            <Text style={s.subscribeBtnT}>Subscribe</Text>
           )}
         </Pressable>
       )}
@@ -179,9 +179,10 @@ function SubscriptionContent({ navigation }) {
     <SafeAreaView style={s.app}>
       <View style={s.head}>
         <Pressable onPress={() => navigation.goBack()} style={s.backBtn}>
-          <Text style={s.backBtnT}>← Back</Text>
+          <Text style={s.backBtnT}>‹ Back</Text>
         </Pressable>
         <Text style={s.headT}>Wingman Premium</Text>
+        <View style={{ width: 60 }} />
       </View>
       <ScrollView contentContainerStyle={[g.scroll, { paddingTop: 8 }]}>
         <View style={s.heroCard}>
@@ -252,8 +253,8 @@ const s = StyleSheet.create({
   planHeader: { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 16 },
   planIconWrap: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   planName: { color: C.ink, fontSize: 16, fontFamily: T.sansB },
-  planPrice: { color: C.ink, fontSize: 22, fontWeight: "800", marginTop: 2 },
-  planInterval: { color: C.mut, fontSize: 14, fontWeight: "400" },
+  planPrice: { color: C.ink, fontSize: 22, fontFamily: T.serifB, marginTop: 2 },
+  planInterval: { color: C.mut, fontSize: 14, fontFamily: T.sans },
   activeBadge: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1 },
   activeBadgeT: { fontSize: 12, fontFamily: T.sansB },
   featureList: { gap: 8, marginBottom: 16 },
@@ -261,7 +262,7 @@ const s = StyleSheet.create({
   featureCheck: { fontSize: 14, fontFamily: T.sansB, width: 16 },
   featureText: { color: C.mut, fontSize: 13, flex: 1 },
   subscribeBtn: { borderRadius: 14, paddingVertical: 14, alignItems: "center" },
-  subscribeBtnT: { color: "#fff", fontSize: 15, fontFamily: T.sansB },
+  subscribeBtnT: { color: C.inkD, fontSize: 15, fontFamily: T.sansB },
   footer: { paddingHorizontal: 4, paddingBottom: 32 },
   footerT: { color: C.mut, fontSize: 12, textAlign: "center", lineHeight: 17 },
 });

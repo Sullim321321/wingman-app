@@ -74,7 +74,7 @@ const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
   stats: { flexDirection: "row", gap: 10, marginBottom: 14 },
   stat: { flex: 1, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 13, alignItems: "center" },
-  statN: { fontSize: 24, fontWeight: "800", color: C.teal },
+  statN: { fontSize: 24, fontFamily: T.sansB, color: C.teal },
   statL: { fontSize: 10, color: C.mut, marginTop: 3, textAlign: "center" },
   calib: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 16, marginBottom: 12 },
   calT: { fontSize: 11, color: C.mut, letterSpacing: 1, marginBottom: 4 },

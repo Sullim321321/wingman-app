@@ -153,17 +153,17 @@ const s = StyleSheet.create({
   card: { borderRadius: 20, padding: 24, borderWidth: 1, borderColor: C.line, marginBottom: 14 },
 
   heroEye:   { color: C.gold, fontSize: 11, fontFamily: T.sansB, letterSpacing: 2, marginBottom: 12 },
-  heroTitle: { color: C.ink, fontSize: 34, fontFamily: "PlayfairDisplay_700Bold", lineHeight: 42, marginBottom: 10 },
+  heroTitle: { color: C.ink, fontSize: 34, fontFamily: T.serifB, lineHeight: 42, marginBottom: 10 },
   heroSub:   { color: C.mut, fontSize: 15, lineHeight: 22 },
 
   twoCol: { flexDirection: "row", gap: 14, marginBottom: 0 },
 
-  bigNum:   { color: C.gold, fontSize: 48, fontFamily: "PlayfairDisplay_700Bold", lineHeight: 56 },
+  bigNum:   { color: C.gold, fontSize: 48, fontFamily: T.serifB, lineHeight: 56 },
   bigLabel: { color: C.ink, fontSize: 16, fontFamily: T.sansB, marginTop: 2 },
   bigSub:   { color: C.mut, fontSize: 12, marginTop: 4 },
 
   roiEye: { color: C.gold, fontSize: 11, fontFamily: T.sansB, letterSpacing: 2, marginBottom: 8 },
-  roiNum: { color: C.ink, fontSize: 52, fontFamily: "PlayfairDisplay_700Bold", lineHeight: 60, marginBottom: 6 },
+  roiNum: { color: C.ink, fontSize: 52, fontFamily: T.serifB, lineHeight: 60, marginBottom: 6 },
   roiSub: { color: C.mut, fontSize: 14, lineHeight: 20 },
 
   destEye: { color: C.mut, fontSize: 11, fontFamily: T.sansB, letterSpacing: 1.5, marginBottom: 8 },
@@ -176,6 +176,6 @@ const s = StyleSheet.create({
   footer: { color: C.mut, fontSize: 12, textAlign: "center", marginBottom: 8 },
 
   emptyIcon: { fontSize: 40, color: C.gold, marginBottom: 16, textAlign: "center" },
-  emptyH:    { color: C.ink, fontSize: 20, fontFamily: "PlayfairDisplay_700Bold", textAlign: "center", marginBottom: 10 },
+  emptyH:    { color: C.ink, fontSize: 20, fontFamily: T.serifB, textAlign: "center", marginBottom: 10 },
   emptySub:  { color: C.mut, fontSize: 14, lineHeight: 21, textAlign: "center" },
 });

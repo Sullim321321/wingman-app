@@ -310,7 +310,7 @@ const s = StyleSheet.create({
   typeIcon: { fontSize: 14 },
   typeLabel: { fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.5 },
   bestBadge: { backgroundColor: "rgba(201,169,110,0.2)", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 },
-  bestBadgeT: { color: C.gold, fontSize: 10, fontWeight: "800", letterSpacing: 1 },
+  bestBadgeT: { color: C.gold, fontSize: 10, fontFamily: T.sansB, letterSpacing: 1 },
   complexityBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 },
   complexityT: { fontSize: 10, fontFamily: T.sansB, letterSpacing: 0.5 },
 
@@ -343,7 +343,7 @@ const s = StyleSheet.create({
   stepsDivider: { height: 1, backgroundColor: C.border, marginBottom: 12 },
   stepRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 10 },
   stepNum: { width: 24, height: 24, borderRadius: 12, backgroundColor: C.gold, justifyContent: "center", alignItems: "center", flexShrink: 0 },
-  stepNumT: { color: "#000", fontSize: 12, fontWeight: "800" },
+  stepNumT: { color: C.inkD, fontSize: 12, fontFamily: T.sansB },
   stepText: { flex: 1, color: C.text, fontSize: 14, lineHeight: 20 },
 
   // Concierge CTA

@@ -67,7 +67,7 @@ const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
   radarCap: { textAlign: "center", fontSize: 11, color: C.mut, marginBottom: 14 },
   conf: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 16, alignItems: "center", marginBottom: 12 },
-  confBig: { fontSize: 40, fontWeight: "800", color: C.coral },
+  confBig: { fontSize: 40, fontFamily: T.sansB, color: C.coral },
   confLbl: { fontSize: 11, color: C.mut, letterSpacing: 1, marginTop: 2 },
   contrib: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 14, marginBottom: 12 },
   contribT: { fontSize: 11, color: C.mut, letterSpacing: 1, marginBottom: 12 },

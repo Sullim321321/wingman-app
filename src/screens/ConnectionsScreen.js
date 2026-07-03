@@ -308,9 +308,9 @@ export default function ConnectionsScreen({ navigation }) {
         </View>
 
         {/* ── Ambient sources ──────────────────────────────────────────────── */}
-        <Text style={g.sectionT}>AMBIENT SOURCES</Text>
+        <Text style={g.sectionT}>CONNECTED SOURCES</Text>
         <Text style={s.ambientNote}>
-          With your permission, Wingman watches these sources silently in the background. Your trips appear automatically — no manual entry needed.
+          Wingman reads only travel-relevant details from these sources, with your explicit permission. Your trips appear automatically — no manual entry needed.
         </Text>
 
         <View style={g.group}>

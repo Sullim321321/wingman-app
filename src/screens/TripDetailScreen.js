@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
-  ActivityIndicator, Alert, RefreshControl, Share, Linking,
+  ActivityIndicator, Alert, RefreshControl, Share, Linking, TextInput,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { C, T } from "../theme";
@@ -45,14 +45,14 @@ function formatMoney(n) {
 function StatusBadge({ status, size = "md" }) {
   if (!status) return null;
   const map = {
-    "On Time":   { bg: "rgba(34,211,166,0.14)", border: "rgba(34,211,166,0.3)", text: C.teal },
-    "Delayed":   { bg: "rgba(255,176,46,0.14)",  border: "rgba(255,176,46,0.3)",  text: C.amber },
-    "Cancelled": { bg: "rgba(255,92,122,0.14)",  border: "rgba(255,92,122,0.3)",  text: C.coral },
-    "Landed":    { bg: "rgba(99,102,241,0.14)",  border: "rgba(99,102,241,0.3)",  text: "#818CF8" },
-    "Scheduled": { bg: "rgba(148,163,184,0.14)", border: "rgba(148,163,184,0.3)", text: C.mut },
-    "In Air":    { bg: "rgba(201,169,110,0.14)",  border: "rgba(201,169,110,0.3)",  text: C.gold },
-    "Booked":    { bg: "rgba(148,163,184,0.14)", border: "rgba(148,163,184,0.3)", text: C.mut },
-    "Unknown":   { bg: "rgba(148,163,184,0.14)", border: "rgba(148,163,184,0.3)", text: C.mut },
+    "On Time":   { bg: C.teal + "22",  border: C.teal + "4D",  text: C.teal },
+    "Delayed":   { bg: C.amber + "22", border: C.amber + "4D", text: C.amber },
+    "Cancelled": { bg: C.coral + "22", border: C.coral + "4D", text: C.coral },
+    "Landed":    { bg: C.indigo + "22",           border: C.indigo + "4D",           text: C.indigo },
+    "Scheduled": { bg: C.card2, border: C.line, text: C.mut },
+    "In Air":    { bg: C.gold + "22",  border: C.gold + "4D",  text: C.gold },
+    "Booked":    { bg: C.card2,          border: C.line,          text: C.mut },
+    "Unknown":   { bg: C.card2,          border: C.line,          text: C.mut },
   };
   const st = map[status] || map["Scheduled"];
   const px = size === "lg" ? { paddingHorizontal: 14, paddingVertical: 6 } : { paddingHorizontal: 10, paddingVertical: 4 };
@@ -88,9 +88,9 @@ function RiskBar({ risk }) {
 function ConnectionRiskBadge({ risk }) {
   const cfg = {
     critical: { bg: "rgba(255,77,109,0.15)", border: "rgba(255,77,109,0.4)", text: C.coral, icon: "⚡" },
-    high:     { bg: "rgba(255,140,0,0.12)",  border: "rgba(255,140,0,0.35)",  text: "#FF8C00", icon: "⚠️" },
+    high:     { bg: "C.amber + "1E"",  border: "C.amber + "59"",  text: "C.amber", icon: "⚠️" },
     moderate: { bg: "rgba(201,169,110,0.12)", border: "rgba(201,169,110,0.3)", text: C.gold,   icon: "👁" },
-    low:      { bg: "rgba(100,200,140,0.1)",  border: "rgba(100,200,140,0.25)", text: "#64C88C", icon: "✓" },
+    low:      { bg: "C.teal + "1A"",  border: "C.teal + "40"", text: "C.teal", icon: "✓" },
   }[risk.risk_level] || { bg: "rgba(201,169,110,0.12)", border: "rgba(201,169,110,0.3)", text: C.gold, icon: "·" };
 
   return (
@@ -461,7 +461,7 @@ export default function TripDetailScreen({ route, navigation }) {
                 borderColor: topRisk.risk_level === "critical" ? "rgba(255,77,109,0.3)" : "rgba(255,140,0,0.3)",
               }]}>
                 <Text style={[s.pillInfoT, {
-                  color: topRisk.risk_level === "critical" ? C.coral : "#FF8C00",
+                  color: topRisk.risk_level === "critical" ? C.coral : "C.amber",
                 }]}>
                   {topRisk.risk_level === "critical" ? "⚡ Critical connection" : "⚠️ Tight connection"}
                 </Text>
@@ -506,7 +506,7 @@ export default function TripDetailScreen({ route, navigation }) {
             {flightLegs.map((leg, i) => (
               <View key={i}>
                 <FlightLegCard leg={leg} />
-                <View style={{ flexDirection: "row", gap: 10, marginTop: -4, marginBottom: 10 }}>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4, marginBottom: 10 }}>
                   {/* Apple Wallet pass */}
                   {leg.id && (
                     <Pressable
@@ -722,18 +722,18 @@ export default function TripDetailScreen({ route, navigation }) {
           )}
           <View style={s.companionInputRow}>
             <View style={s.companionInput}>
-              <Text
+              <TextInput
                 style={s.companionInputText}
-                onPress={() => Alert.prompt(
-                  "Invite companion",
-                  "Enter their email address",
-                  email => { setInviteEmail(email || ""); handleInviteCompanion(); },
-                  "plain-text",
-                  inviteEmail
-                )}
-              >
-                {inviteEmail || "Enter email address…"}
-              </Text>
+                value={inviteEmail}
+                onChangeText={setInviteEmail}
+                placeholder="Enter email address…"
+                placeholderTextColor={C.mut}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="send"
+                onSubmitEditing={handleInviteCompanion}
+              />
             </View>
             <Btn
               title={inviting ? "…" : "Invite"}
@@ -771,12 +771,12 @@ export default function TripDetailScreen({ route, navigation }) {
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
   header: { borderRadius: 20, padding: 20, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", marginBottom: 4 },
-  tripTitle: { color: C.ink, fontSize: 28, fontFamily: "PlayfairDisplay_700Bold", letterSpacing: -0.5 },
+  tripTitle: { color: C.ink, fontSize: 28, fontFamily: T.serifB, letterSpacing: -0.5 },
   tripDate: { color: C.mut, fontSize: 13, fontFamily: T.sans, marginTop: 4 },
   pillRow: { flexDirection: "row", gap: 8, marginTop: 12, flexWrap: "wrap" },
-  pillLive: { backgroundColor: "rgba(34,211,166,0.14)", borderColor: "rgba(34,211,166,0.3)", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
+  pillLive: { backgroundColor: C.teal + "22", borderColor: C.teal + "4D", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
   pillLiveT: { color: C.teal, fontSize: 11, fontFamily: T.sansB },
-  pillInfo: { backgroundColor: "rgba(201,169,110,0.12)", borderColor: "rgba(201,169,110,0.25)", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
+  pillInfo: { backgroundColor: C.gold + "1E", borderColor: C.gold + "40", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
   pillInfoT: { color: C.gold, fontSize: 11, fontFamily: T.sansM },
 
   // Risk loading
@@ -784,10 +784,10 @@ const s = StyleSheet.create({
 
   // Connection risk cards
   connRiskCard: { borderRadius: 14, borderWidth: 1, padding: 14, marginBottom: 10 },
-  connRiskLevel: { fontSize: 12, fontWeight: "800", letterSpacing: 0.5, flex: 1 },
-  connRiskScore: { fontSize: 14, fontWeight: "800" },
+  connRiskLevel: { fontSize: 12, fontFamily: T.sansB, letterSpacing: 0.5, flex: 1 },
+  connRiskScore: { fontSize: 14, fontFamily: T.sansB },
   connRiskRoute: { color: C.ink, fontSize: 13, fontFamily: T.sansM, marginBottom: 4 },
-  connRiskRec: { color: C.mut, fontSize: 12, lineHeight: 17 },
+  connRiskRec: { color: C.mut, fontSize: 12, fontFamily: T.sans, lineHeight: 17 },
   connRiskDownstream: { fontSize: 12, fontFamily: T.sansB, marginTop: 6 },
 
   // Hotel alert
@@ -804,7 +804,7 @@ const s = StyleSheet.create({
   flightNum: { color: C.mut, fontSize: 13, fontFamily: T.sans },
   infoRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   infoIc: { fontSize: 14 },
-  infoT: { color: C.ink, fontSize: 13, fontWeight: "500" },
+  infoT: { color: C.ink, fontSize: 13, fontFamily: T.sansM },
 
   // Disruption CTA
   disruptionCta: { marginTop: -4, marginBottom: 10, paddingHorizontal: 4 },
@@ -816,17 +816,17 @@ const s = StyleSheet.create({
   riskWrap: { marginTop: 4 },
   riskRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 4 },
   riskLabel: { color: C.ink, fontSize: 13, fontFamily: T.sansM },
-  riskPct: { fontSize: 13, fontWeight: "800" },
+  riskPct: { fontSize: 13, fontFamily: T.sansB },
   riskTrack: { height: 6, backgroundColor: C.card2, borderRadius: 99, overflow: "hidden" },
   riskFill: { height: "100%", borderRadius: 99 },
   factorRow: { flexDirection: "row", gap: 6 },
   factorDot: { color: C.mut, fontSize: 12 },
   factorT: { color: C.mut, fontSize: 12, flex: 1 },
-  factorD: { color: C.ink, fontWeight: "500" },
+  factorD: { color: C.ink, fontFamily: T.sansM },
 
   // Hotel card
   legCardTitle: { color: C.ink, fontSize: 15, fontFamily: T.sansB, marginBottom: 4, letterSpacing: 0.1 },
-  legCardSub: { color: C.mut, fontSize: 12, marginTop: 2 },
+  legCardSub: { color: C.mut, fontSize: 12, fontFamily: T.sans, marginTop: 2 },
 
   // Empty
   emptyCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 32, alignItems: "center", marginBottom: 12 },
@@ -884,15 +884,15 @@ const s = StyleSheet.create({
   upgradeBidBtnT: { color: C.gold, fontSize: 12, fontFamily: T.sansM },
 
   // Compensation button
-  compensationBtn: { backgroundColor: "rgba(79,142,247,0.08)", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: "rgba(79,142,247,0.3)" },
-  compensationBtnT: { color: "#4F8EF7", fontSize: 12, fontFamily: T.sansM },
+  compensationBtn: { backgroundColor: C.gold + "14", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: C.gold + "40" },
+  compensationBtnT: { color: C.gold, fontSize: 12, fontFamily: T.sansM },
 
   // Ground transport + airport intel buttons
   airportBtnsRow: { flexDirection: "row", gap: 6, flexWrap: "wrap" },
-  groundTransportBtn: { backgroundColor: "rgba(78,205,196,0.08)", borderWidth: 1, borderColor: "rgba(78,205,196,0.25)", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
-  groundTransportBtnT: { color: "#4ECDC4", fontSize: 13, fontFamily: T.sansM },
-  airportDiningBtn: { backgroundColor: "rgba(201,169,110,0.08)", borderWidth: 1, borderColor: "rgba(201,169,110,0.25)", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
-  airportDiningBtnT: { color: "#C9A96E", fontSize: 13, fontFamily: T.sansM },
-  airportNavBtn: { backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
-  airportNavBtnT: { color: "#FFFFFF", fontSize: 13, fontFamily: T.sansM },
+  groundTransportBtn: { backgroundColor: C.teal + "14", borderWidth: 1, borderColor: C.teal + "40", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
+  groundTransportBtnT: { color: C.teal, fontSize: 13, fontFamily: T.sansM },
+  airportDiningBtn: { backgroundColor: C.gold + "14", borderWidth: 1, borderColor: C.gold + "40", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
+  airportDiningBtnT: { color: C.gold, fontSize: 13, fontFamily: T.sansM },
+  airportNavBtn: { backgroundColor: C.card2, borderWidth: 1, borderColor: C.line, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
+  airportNavBtnT: { color: C.ink, fontSize: 13, fontFamily: T.sansM },
 });

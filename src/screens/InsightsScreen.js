@@ -237,11 +237,11 @@ export default function InsightsScreen({ navigation }) {
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
 
-  roiCard: { borderRadius: 20, padding: 28, borderWidth: 1, borderColor: "rgba(201,169,110,0.3)", marginBottom: 20 },
+  roiCard: { borderRadius: 20, padding: 28, borderWidth: 1, borderColor: C.gold + "4D", marginBottom: 20 },
   roiEyebrowRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
   roiEyebrow: { color: C.gold, fontSize: 11, fontFamily: T.sansB, letterSpacing: 2.5 },
   roiYear: { color: C.mut, fontSize: 11, fontFamily: T.sansM, letterSpacing: 0.5 },
-  roiValue: { color: C.ink, fontSize: 56, fontFamily: "PlayfairDisplay_700Bold", lineHeight: 64, marginBottom: 8 },
+  roiValue: { color: C.ink, fontSize: 56, fontFamily: T.serifB, lineHeight: 64, marginBottom: 8 },
   roiSub: { color: C.mut, fontSize: 14, lineHeight: 20 },
   shareBtn: { marginTop: 18, alignSelf: "flex-start", paddingHorizontal: 16, paddingVertical: 9, borderRadius: 12, borderWidth: 1, borderColor: C.gold + "50", backgroundColor: C.gold + "12" },
   shareBtnT: { color: C.gold, fontSize: 12, fontFamily: T.sansB, letterSpacing: 0.5 },
@@ -254,7 +254,7 @@ const s = StyleSheet.create({
 
   streakRow: { flexDirection: "row", gap: 10, marginBottom: 20 },
   streakCard: { flex: 1, backgroundColor: C.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)" },
-  streakValue: { color: C.gold, fontSize: 28, fontFamily: "PlayfairDisplay_700Bold", marginBottom: 4 },
+  streakValue: { color: C.gold, fontSize: 28, fontFamily: T.serifB, marginBottom: 4 },
   streakLabel: { color: C.ink, fontSize: 13, fontFamily: T.sansB },
   streakSub: { color: C.mut, fontSize: 11, marginTop: 2 },
 
@@ -263,7 +263,7 @@ const s = StyleSheet.create({
     flex: 1, minWidth: "45%", backgroundColor: C.card,
     borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "rgba(201,169,110,0.18)",
   },
-  statValue: { color: C.gold, fontSize: 28, fontFamily: "PlayfairDisplay_700Bold", marginBottom: 4 },
+  statValue: { color: C.gold, fontSize: 28, fontFamily: T.serifB, marginBottom: 4 },
   statLabel: { color: C.ink, fontSize: 13, fontFamily: T.sansB },
   statSub: { color: C.mut, fontSize: 11, marginTop: 2 },
 
@@ -286,14 +286,14 @@ const s = StyleSheet.create({
   outcomeTime: { color: C.mut, fontSize: 11, marginTop: 4 },
 
   wrappedCard: { borderRadius: 20, overflow: "hidden", marginBottom: 14 },
-  wrappedGrad:  { padding: 24, borderRadius: 20, borderWidth: 1, borderColor: "rgba(201,169,110,0.25)" },
+  wrappedGrad:  { padding: 24, borderRadius: 20, borderWidth: 1, borderColor: C.gold + "40", backgroundColor: C.card },
   wrappedEye:   { color: C.gold, fontSize: 11, fontFamily: T.sansB, letterSpacing: 2.5, marginBottom: 10 },
-  wrappedTitle: { color: C.ink, fontSize: 24, fontFamily: "PlayfairDisplay_700Bold", marginBottom: 6, letterSpacing: -0.3 },
+  wrappedTitle: { color: C.ink, fontSize: 24, fontFamily: T.serifB, marginBottom: 6, letterSpacing: -0.3 },
   wrappedSub:   { color: C.mut, fontSize: 13, lineHeight: 19, marginBottom: 14 },
   wrappedCta:   { color: C.gold, fontSize: 13, fontFamily: T.sansM, letterSpacing: 0.3 },
 
   empty: { alignItems: "center", paddingVertical: 40 },
   emptyIcon: { fontSize: 36, color: C.gold, marginBottom: 16 },
-  emptyH: { color: C.ink, fontSize: 18, fontFamily: "PlayfairDisplay_700Bold", textAlign: "center", marginBottom: 10 },
+  emptyH: { color: C.ink, fontSize: 18, fontFamily: T.serifB, textAlign: "center", marginBottom: 10 },
   emptySub: { color: C.mut, fontSize: 14, lineHeight: 21, textAlign: "center" },
 });

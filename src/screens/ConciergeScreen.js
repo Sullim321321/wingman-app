@@ -386,13 +386,15 @@ export default function ConciergeScreen({ route }) {
             return null;
           })()}
         </View>
-        <Pressable
-          style={s.clearBtn}
-          onPress={confirmClearThread}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Text style={s.clearBtnT}>✕ Clear</Text>
-        </Pressable>
+        {hasUserMessages && (
+          <Pressable
+            style={s.clearBtn}
+            onPress={confirmClearThread}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Text style={s.clearBtnT}>✕ Clear</Text>
+          </Pressable>
+        )}
       </View>
 
       {upcomingTrips.length > 1 && (
@@ -426,7 +428,7 @@ export default function ConciergeScreen({ route }) {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
         {threadLoading ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
@@ -507,7 +509,7 @@ const s = StyleSheet.create({
   headerMark: { width: 34, height: 34, borderRadius: 9, borderWidth: 1, borderColor: C.gold + "55", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(201,169,110,0.06)" },
   headerT:    { color: C.ink, fontSize: 11, fontFamily: T.sansB, letterSpacing: T.trackWide },
   headerSub:  { color: C.gold, fontSize: 10, fontFamily: T.sansM, letterSpacing: 0.5, marginTop: 2 },
-  clearBtn:   { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: "rgba(201,169,110,0.25)", backgroundColor: "rgba(201,169,110,0.06)" },
+  clearBtn:   { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: C.gold + "40", backgroundColor: C.gold + "0F" },
   clearBtnT:  { color: C.mut, fontSize: 11, fontFamily: T.sansM, letterSpacing: 0.5 },
   threadRow: { paddingHorizontal: 16, paddingBottom: 10, gap: 8, flexDirection: "row" },
   threadChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 16, borderWidth: 1, borderColor: C.line, backgroundColor: C.card },
@@ -520,17 +522,17 @@ const s = StyleSheet.create({
   bubble:     { marginBottom: 14, maxWidth: "86%" },
   userBubble: {
     alignSelf: "flex-end",
-    backgroundColor: "rgba(201,169,110,0.14)",
+    backgroundColor: C.gold + "22",
     borderRadius: 18, borderBottomRightRadius: 4,
     padding: 14,
-    borderWidth: 1, borderColor: "rgba(201,169,110,0.45)",
+    borderWidth: 1, borderColor: C.gold + "66",
   },
   aiBubble: {
     alignSelf: "flex-start",
-    backgroundColor: "rgba(34,30,26,0.95)",
+    backgroundColor: C.card,
     borderRadius: 18, borderBottomLeftRadius: 4,
     padding: 16,
-    borderWidth: 1, borderColor: "rgba(201,169,110,0.12)",
+    borderWidth: 1, borderColor: C.line,
   },
   bubbleT:     { color: C.ink, fontSize: 15, fontFamily: T.sans, lineHeight: 24 },
   userBubbleT: { color: C.ink },
@@ -570,16 +572,16 @@ const s = StyleSheet.create({
   placeName:   { color: C.ink, fontSize: 14, fontFamily: T.sansB, flex: 1, marginRight: 8 },
   placeAddr:   { color: C.mut, fontSize: 12, fontFamily: T.sans },
   placeRating: { color: C.gold, fontSize: 12, fontFamily: T.sansM },
-  placeOpen:   { color: "#7ecb8f", fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.5 },
-  placeClosed: { color: "#e07070", fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.5 },
+  placeOpen:   { color: C.teal, fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.5 },
+  placeClosed: { color: C.coral, fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.5 },
   placeMapLink: { color: C.gold, fontSize: 12, fontFamily: T.sansM },
   actionBtn: { marginTop: 14, borderRadius: 12, overflow: "hidden" },
   actionBtnGrad: { paddingVertical: 13, paddingHorizontal: 18, alignItems: "center" },
   actionBtnT: { color: C.inkD, fontSize: 14, fontFamily: T.sansB, letterSpacing: 0.5 },
   transitCard: {
     marginTop: 14,
-    backgroundColor: "rgba(13,11,8,0.98)",
-    borderWidth: 1, borderColor: "rgba(201,169,110,0.3)",
+    backgroundColor: C.card2,
+    borderWidth: 1, borderColor: C.gold + "4D",
     borderRadius: 14, padding: 14, gap: 10,
   },
   transitHeader: { flexDirection: "row", alignItems: "flex-start", gap: 10 },

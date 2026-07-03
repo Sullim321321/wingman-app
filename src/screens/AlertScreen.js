@@ -29,13 +29,30 @@ function buildRescueSteps(dep, arr, flightLabel, optionLabel) {
 }
 
 function findNextFlight(trips) {
+  // First try: upcoming flights (departs_at > now)
   const now = Date.now();
   let best = null, bestTime = Infinity;
   for (const trip of trips) {
     for (const leg of (trip.legs || [])) {
-      if (leg.type !== "flight" || !leg.departs_at) continue;
+      if (leg.type !== "flight") continue;
+      if (!leg.departs_at) {
+        // Leg has no date — use it as a fallback if nothing else found
+        if (!best) best = { ...leg, tripId: trip.id, tripTitle: trip.title };
+        continue;
+      }
       const t = new Date(leg.departs_at).getTime();
       if (t > now && t < bestTime) { bestTime = t; best = { ...leg, tripId: trip.id, tripTitle: trip.title }; }
+    }
+  }
+  // Second try: if no upcoming flight, use the most recent past flight
+  if (!best) {
+    let recentTime = 0;
+    for (const trip of trips) {
+      for (const leg of (trip.legs || [])) {
+        if (leg.type !== "flight" || !leg.departs_at) continue;
+        const t = new Date(leg.departs_at).getTime();
+        if (t > recentTime) { recentTime = t; best = { ...leg, tripId: trip.id, tripTitle: trip.title }; }
+      }
     }
   }
   return best;
@@ -60,10 +77,10 @@ function formatTime(iso) {
 
 function RiskBadge({ level }) {
   const cfg = {
-    critical: { bg: "rgba(255,77,109,0.15)", border: "rgba(255,77,109,0.4)", text: C.coral, label: "CRITICAL" },
-    high:     { bg: "rgba(255,140,0,0.12)",  border: "rgba(255,140,0,0.35)",  text: "#FF8C00", label: "HIGH RISK" },
-    moderate: { bg: "rgba(201,169,110,0.12)", border: "rgba(201,169,110,0.3)", text: C.gold,   label: "MODERATE" },
-    low:      { bg: "rgba(100,200,140,0.1)",  border: "rgba(100,200,140,0.25)", text: "#64C88C", label: "LOW" },
+    critical: { bg: "rgba(217,95,95,0.15)",  border: "rgba(217,95,95,0.4)",  text: C.coral, label: "CRITICAL" },
+    high:     { bg: C.amber + "1E",           border: C.amber + "59",          text: C.amber, label: "HIGH RISK" },
+    moderate: { bg: C.gold + "1E",            border: C.gold + "4D",           text: C.gold,  label: "MODERATE" },
+    low:      { bg: C.teal + "1A",            border: C.teal + "40",           text: C.teal,  label: "LOW" },
   }[level] || { bg: "rgba(201,169,110,0.12)", border: "rgba(201,169,110,0.3)", text: C.gold, label: level?.toUpperCase() || "RISK" };
 
   return (
@@ -89,7 +106,7 @@ function RescueRow({ opt, selected, onSelect, rank }) {
       {/* Rank badge */}
       {rank === 1 && (
         <View style={[s.wingmanPick, { borderColor: accentBorder, backgroundColor: accentBg }]}>
-          <Text style={{ color: accentColor, fontSize: 9, fontWeight: "800", letterSpacing: 0.8 }}>WINGMAN PICK</Text>
+          <Text style={{ color: accentColor, fontSize: 9, fontFamily: T.sansB, letterSpacing: 0.8 }}>WINGMAN PICK</Text>
         </View>
       )}
 
@@ -125,7 +142,7 @@ function RescueRow({ opt, selected, onSelect, rank }) {
 
           {/* Downstream protection */}
           {opt.downstream_protection && opt.downstream_value_protected > 0 && (
-            <Text style={[s.rescueMeta, { color: "#64C88C", marginTop: 4 }]}>
+            <Text style={[s.rescueMeta, { color: "C.teal", marginTop: 4 }]}>
               ✓ Protects {formatMoney(opt.downstream_value_protected)} in downstream legs
             </Text>
           )}
@@ -141,13 +158,13 @@ function RescueRow({ opt, selected, onSelect, rank }) {
               )}
             </>
           ) : (
-            <Text style={[s.rescuePrice, { color: opt.cost_usd === 0 ? "#64C88C" : C.ink }]}>
+            <Text style={[s.rescuePrice, { color: opt.cost_usd === 0 ? "C.teal" : C.ink }]}>
               {opt.cost_usd === 0 ? "Free" : formatMoney(opt.cost_usd)}
             </Text>
           )}
           {selected && (
             <View style={[s.selectedBadge, { borderColor: accentColor, backgroundColor: accentBg }]}>
-              <Text style={{ color: accentColor, fontSize: 9, fontWeight: "800" }}>SELECTED</Text>
+              <Text style={{ color: accentColor, fontSize: 9, fontFamily: T.sansB, letterSpacing: 0.8 }}>SELECTED</Text>
             </View>
           )}
         </View>
@@ -553,51 +570,55 @@ export default function AlertScreen({ navigation, route }) {
               )}
             </View>
           )}
-          {/* Cash rebooking button — DECK: dark card bg, white text, gold $ icon */}
-          <Pressable
-            style={[s.approveBtn, s.approveBtnCash]}
-            onPress={handleAccept}
-            disabled={accepting}
-          >
-            <View style={s.approveBtnInner}>
-              <View style={[s.approveBtnIcon, s.approveBtnIconCash]}>
-                <Text style={{ fontSize: 15, color: C.gold, fontFamily: T.sansB }}>$</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[s.approveBtnT, { color: C.ink }]}>
-                  {accepting ? "Handling it…" : "Approve Rebooking"}
-                </Text>
-                {selectedOption?.cost_usd != null && (
-                  <Text style={[s.approveBtnS, { color: C.mut }]}>
-                    {selectedOption.cost_usd === 0 ? "No charge" : `(+${formatMoney(selectedOption.cost_usd)})`}
+          {/* Show cash button when selected option is cash (or no selection yet) */}
+          {(!selectedOption || selectedOption.type !== "points") && (
+            <Pressable
+              style={[s.approveBtn, s.approveBtnCash]}
+              onPress={handleAccept}
+              disabled={accepting}
+            >
+              <View style={s.approveBtnInner}>
+                <View style={[s.approveBtnIcon, s.approveBtnIconCash]}>
+                  <Text style={{ fontSize: 15, color: C.gold, fontFamily: T.sansB }}>$</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.approveBtnT, { color: C.ink }]}>
+                    {accepting ? "Handling it…" : "Approve Rebooking"}
                   </Text>
-                )}
+                  {selectedOption?.cost_usd != null && (
+                    <Text style={[s.approveBtnS, { color: C.mut }]}>
+                      {selectedOption.cost_usd === 0 ? "No charge" : `(+${formatMoney(selectedOption.cost_usd)})`}
+                    </Text>
+                  )}
+                </View>
+                <Text style={[s.approveBtnChev, { color: C.mut }]}>›</Text>
               </View>
-              <Text style={[s.approveBtnChev, { color: C.mut }]}>›</Text>
-            </View>
-          </Pressable>
+            </Pressable>
+          )}
 
-          {/* Points rebooking button — DECK: parchment bg, dark ink text, P icon */}
-          <Pressable
-            style={[s.approveBtn, s.approveBtnPoints]}
-            onPress={handleAccept}
-            disabled={accepting}
-          >
-            <View style={s.approveBtnInner}>
-              <View style={[s.approveBtnIcon, s.approveBtnIconPoints]}>
-                <Text style={{ fontSize: 13, color: C.inkD, fontFamily: T.sansB }}>P</Text>
+          {/* Show points button when selected option is points */}
+          {selectedOption?.type === "points" && (
+            <Pressable
+              style={[s.approveBtn, s.approveBtnPoints]}
+              onPress={handleAccept}
+              disabled={accepting}
+            >
+              <View style={s.approveBtnInner}>
+                <View style={[s.approveBtnIcon, s.approveBtnIconPoints]}>
+                  <Text style={{ fontSize: 13, color: C.inkD, fontFamily: T.sansB }}>P</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.approveBtnT, { color: C.inkD }]}>Approve with Points</Text>
+                  <Text style={[s.approveBtnS, { color: C.mutD }]}>
+                    {selectedOption.cost_points
+                      ? `Redeem ${formatPoints(selectedOption.cost_points)}`
+                      : "Redeem points"}
+                  </Text>
+                </View>
+                <Text style={[s.approveBtnChev, { color: C.mutD }]}>›</Text>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[s.approveBtnT, { color: C.inkD }]}>Approve Rebooking</Text>
-                <Text style={[s.approveBtnS, { color: C.mutD }]}>
-                  {selectedOption?.points_cost
-                    ? `(${formatPoints(selectedOption.points_cost)})`
-                    : "(Redeem points)"}
-                </Text>
-              </View>
-              <Text style={[s.approveBtnChev, { color: C.mutD }]}>›</Text>
-            </View>
-          </Pressable>
+            </Pressable>
+          )}
 
           {/* Footer — DECK: shield + "You're in control. We'll act when you say go." */}
           <View style={s.controlFooter}>
@@ -628,7 +649,7 @@ const s = StyleSheet.create({
   heroDisruptBadge: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 14 },
   heroDisruptIc: { fontSize: 14 },
   heroDisruptLabel: { color: C.coral, fontSize: 11, fontFamily: T.sansB, letterSpacing: 3.5 },
-  heroH: { color: C.ink, fontSize: 30, fontFamily: T.serif, marginBottom: 10, letterSpacing: -0.5, lineHeight: 38 },
+  heroH: { color: C.ink, fontSize: 30, fontFamily: T.serifB, marginBottom: 10, letterSpacing: -0.5, lineHeight: 38 },
   heroRoute: { color: C.mut, fontSize: 15, fontFamily: T.sansM, marginBottom: 4, letterSpacing: 0.5 },
   heroRouteSub: { color: C.mut, fontSize: 13, fontFamily: T.sans, marginBottom: 12, opacity: 0.7 },
   heroP: { color: C.ink, fontSize: 14, lineHeight: 22, opacity: 0.75 },
@@ -653,14 +674,14 @@ const s = StyleSheet.create({
   controlFooterS:  { color: C.mut, fontSize: 13, fontFamily: T.sans, marginTop: 1 },
   whyLink: { color: C.gold, fontSize: 14, fontFamily: T.sansM, textAlign: "center", marginVertical: 16 },
   downstreamBanner: {
-    marginTop: 14, backgroundColor: "rgba(255,140,0,0.1)", borderRadius: 10,
-    borderWidth: 1, borderColor: "rgba(255,140,0,0.25)", paddingHorizontal: 12, paddingVertical: 8,
+    marginTop: 14, backgroundColor: C.amber + "1A", borderRadius: 10,
+    borderWidth: 1, borderColor: C.amber + "40", paddingHorizontal: 12, paddingVertical: 8,
   },
-  downstreamText: { color: "#FF8C00", fontSize: 13, fontFamily: T.sansB },
+  downstreamText: { color: C.amber, fontSize: 13, fontFamily: T.sansB },
 
   // Risk badge
   riskBadge: { borderRadius: 8, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3 },
-  riskBadgeText: { fontSize: 10, fontWeight: "800", letterSpacing: 0.8 },
+  riskBadgeText: { fontSize: 10, fontFamily: T.sansB, letterSpacing: 0.8 },
 
   // Rescue rows — exact deck option card spec
   rescueNote: { color: C.mut, fontSize: 13, lineHeight: 19, marginBottom: 12, fontFamily: T.sans },
@@ -679,7 +700,7 @@ const s = StyleSheet.create({
   },
   rescueLabel: { color: C.ink, fontSize: 13, fontFamily: T.sansM, marginBottom: 2 },
   rescueMeta: { color: C.mut, fontSize: 12, marginTop: 1 },
-  rescuePrice: { fontSize: 16, fontWeight: "800", letterSpacing: -0.3 },
+  rescuePrice: { fontSize: 16, fontFamily: T.sansB, letterSpacing: -0.3 },
   cabinBadge: { borderRadius: 6, borderWidth: 1, paddingHorizontal: 6, paddingVertical: 2 },
   selectedBadge: { borderRadius: 6, borderWidth: 1, paddingHorizontal: 6, paddingVertical: 2 },
 
@@ -689,9 +710,9 @@ const s = StyleSheet.create({
     backgroundColor: "rgba(201,169,110,0.08)", borderRadius: 12, borderWidth: 1,
     borderColor: "rgba(201,169,110,0.2)", padding: 12, marginBottom: 12,
   },
-  selectedSummaryLabel: { color: C.gold, fontSize: 9, fontWeight: "800", letterSpacing: 1.2, marginBottom: 2 },
+  selectedSummaryLabel: { color: C.gold, fontSize: 9, fontFamily: T.sansB, letterSpacing: 1.2, marginBottom: 2 },
   selectedSummaryText: { color: C.ink, fontSize: 14, fontFamily: T.sansB },
-  selectedSummaryProtect: { color: "#64C88C", fontSize: 12, marginTop: 4 },
+  selectedSummaryProtect: { color: C.teal, fontSize: 12, fontFamily: T.sans, marginTop: 4 },
   sum: { color: C.mut, fontSize: 13, textAlign: "center", marginBottom: 12, lineHeight: 19 },
   declineBtn: { marginTop: 10, paddingVertical: 12, alignItems: "center" },
   declineText: { color: C.mut, fontSize: 13, fontFamily: T.sansM },
@@ -711,7 +732,7 @@ const s = StyleSheet.create({
     backgroundColor: "rgba(201,169,110,0.08)",
     paddingHorizontal: 14, paddingVertical: 8,
   },
-  notifyBtnDone: { borderColor: "rgba(100,200,140,0.4)", backgroundColor: "rgba(100,200,140,0.08)" },
+  notifyBtnDone: { borderColor: C.teal + "66", backgroundColor: C.teal + "14" },
   notifyBtnText: { color: C.gold, fontSize: 13, fontFamily: T.sansB },
 
   // Empty state

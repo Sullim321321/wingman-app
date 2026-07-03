@@ -51,7 +51,7 @@ export default function FlightConfirmScreen({ navigation, route }) {
 const s = StyleSheet.create({
   hero: { alignItems: "center", paddingVertical: 32 },
   heroIcon: { fontSize: 52, marginBottom: 12 },
-  heroTitle: { color: C.ink, fontSize: 24, fontWeight: "800", marginBottom: 6 },
+  heroTitle: { color: C.ink, fontSize: 24, fontFamily: T.sansB, marginBottom: 6 },
   heroSub: { color: C.mut, fontSize: 14, textAlign: "center" },
   card: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 16, marginBottom: 12 },
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.line },

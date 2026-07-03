@@ -33,9 +33,10 @@ export const C = {
   goldGlass: "#C9A96E18", // Gold 10% opacity glass tint
 
   // ─── Status ─────────────────────────────────────────────────────────────────
-  teal:  "#2DB896",   // "ON TIME" badge
-  coral: "#D95F5F",   // Disruption / high risk alert
-  amber: "#D4902A",   // Moderate delay risk
+  teal:   "#2DB896",   // "ON TIME" badge
+  coral:  "#D95F5F",   // Disruption / high risk alert
+  amber:  "#D4902A",   // Moderate delay risk
+  indigo: "#818CF8",   // Landed / elite / premium accent (Tailwind indigo-400)
 
   // ─── Semantic shortcuts ──────────────────────────────────────────────────────
   ok:    "#2DB896",

@@ -163,7 +163,7 @@ function NextUpCard({ flight, navigation }) {
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             {/* Hairline plane icon in a circle */}
             <View style={s.parchIcon}>
-              <Text style={{ fontSize: 14, color: C.inkD }}>+</Text>
+              <Text style={{ fontSize: 13, color: C.inkD, fontFamily: T.sansB }}>✈</Text>
             </View>
             <Text style={s.parchLabel}>NEXT UP</Text>
           </View>
@@ -283,7 +283,7 @@ function FlightLeg({ leg }) {
     <View style={s.leg}>
       {/* Hairline plane icon */}
       <View style={s.legIconWrap}>
-        <Text style={s.legIc}>+</Text>
+        <Text style={s.legIc}>✈</Text>
       </View>
       <View style={{ flex: 1 }}>
         <Text style={s.legT}>{title}</Text>
@@ -425,7 +425,7 @@ function EmptyState({ navigation }) {
       <View style={s.trackerCard}>
         <LinearGradient colors={[C.gold + "10", "transparent"]} style={{ position: "absolute", top: 0, left: 0, right: 0, height: 80, borderRadius: 22 }} />
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 14 }}>
-          <View style={s.emptyIcon}><Text style={{ fontSize: 14, color: C.gold }}>+</Text></View>
+          <View style={s.emptyIcon}><Text style={{ fontSize: 16, color: C.gold, fontFamily: T.sans }}>✈</Text></View>
           <Text style={s.trackerTitle}>Track any flight, right now</Text>
         </View>
         <Text style={s.trackerSub}>No trip needed. Enter any flight number to see live status.</Text>
@@ -495,7 +495,7 @@ function EmptyState({ navigation }) {
         <LinearGradient colors={[C.gold + "0A", "transparent"]} style={{ position: "absolute", top: 0, left: 0, right: 0, height: 60, borderRadius: 18 }} />
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <View style={[s.emptyIcon, { width: 40, height: 40, borderRadius: 12 }]}>
-            <Text style={{ fontSize: 16, color: C.gold }}>@</Text>
+            <Text style={{ fontSize: 16, color: C.gold, fontFamily: T.sans }}>@</Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={s.gmailTitle}>Auto-import all your trips</Text>
@@ -776,7 +776,7 @@ export default function HomeScreen({ navigation }) {
                     <SerifText bold style={{ color: C.ink, fontSize: 24 }}>{leg.origin}</SerifText>
                     <Text style={{ color: C.mut, fontSize: 14 }}>→</Text>
                     <SerifText bold style={{ color: C.ink, fontSize: 24 }}>{leg.destination}</SerifText>
-                    {leg.ident ? <Text style={{ color: C.mut, fontSize: 12, fontFamily: "DM Sans", marginLeft: 4 }}>{leg.ident}</Text> : null}
+                    {leg.ident ? <Text style={{ color: C.mut, fontSize: 12, fontFamily: T.sans, marginLeft: 4 }}>{leg.ident}</Text> : null}
                   </View>
                   {/* Flight meta row */}
                   <View style={{ flexDirection: "row", gap: 16, marginBottom: 10 }}>
@@ -1053,10 +1053,14 @@ export default function HomeScreen({ navigation }) {
               <Text style={{ color: C.mut, fontSize: 18, opacity: 0.5 }}>›</Text>
             </Pressable>
 
-            {/* ── Simulate disruption ─────────────────────────────────────── */}
-            <Text style={g.sectionT}>WHEN TRAVEL BREAKS</Text>
-            <Btn title="Simulate a disruption" onPress={onSimulate} />
-            <Text style={s.hint}>Schedules a real push in a few seconds — tap it to see the rescue.</Text>
+            {/* ── Simulate disruption — dev/test only ─────────────────────── */}
+            {__DEV__ && (
+              <>
+                <Text style={g.sectionT}>DEVELOPER</Text>
+                <Btn title="Simulate a disruption" onPress={onSimulate} />
+                <Text style={s.hint}>Schedules a push notification — tap to see the rescue flow.</Text>
+              </>
+            )}
           </>
         )}
       </ScrollView>
@@ -1081,7 +1085,7 @@ const s = StyleSheet.create({
   // Greeting — exact deck scale
   greetWrap: { marginBottom: 28 },
   greetH:    { color: C.ink, fontSize: TS.greetingH, letterSpacing: T.trackTight, marginBottom: 6 },
-  greetS:    { color: C.mut, fontSize: TS.greetingSub, fontFamily: T.sans, lineHeight: 20 },
+  greetS:    { color: C.mut, fontSize: TS.greetingSub, fontFamily: T.sans, lineHeight: 22 },
 
   // ── Parchment Next Up card — exact deck spec ───────────────────────────────
   parchCard: {
@@ -1138,8 +1142,8 @@ const s = StyleSheet.create({
   tripThumb: { width: 56, height: 56, borderRadius: 8, backgroundColor: C.card2, borderWidth: 1, borderColor: C.line, alignItems: "center", justifyContent: "center", overflow: "hidden" },
   tripThumbT: { fontSize: 22, color: C.gold + "80" },
   tripInfo:  { flex: 1 },
-  dest:      { color: C.ink, fontSize: TS.tripName, fontFamily: T.sansM, letterSpacing: 0 },
-  when:      { color: C.mut, fontSize: TS.tripSub, fontFamily: T.sans, marginTop: 2 },
+  dest:      { color: C.ink, fontSize: TS.tripName, fontFamily: T.sansM, letterSpacing: -0.1, lineHeight: 22 },
+  when:      { color: C.mut, fontSize: TS.tripSub, fontFamily: T.sans, marginTop: 3, lineHeight: 17 },
   tripDateRange: { color: C.gold, fontSize: TS.tripDate, fontFamily: T.sansB, letterSpacing: T.trackMed, marginBottom: 3 },
   pillLive:  { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: C.gold + "10", borderColor: C.gold + "30", borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 },
   pillDot:   { width: 5, height: 5, borderRadius: 3, backgroundColor: C.gold },
@@ -1187,7 +1191,7 @@ const s = StyleSheet.create({
   briefingCTA:    { borderTopWidth: 0.5, borderTopColor: C.line, paddingTop: 12, marginTop: 4 },
   briefingCTAT:   { color: C.gold, fontSize: 13, fontFamily: T.sansM, letterSpacing: 0.2 },
   briefingGroundBtn:  { borderTopWidth: 0.5, borderTopColor: C.line, paddingTop: 12, marginTop: 4 },
-  briefingGroundBtnT: { color: "#4ECDC4", fontSize: 13, fontFamily: T.sansM, letterSpacing: 0.2 },
+  briefingGroundBtnT: { color: C.teal, fontSize: 13, fontFamily: T.sansM, letterSpacing: 0.2 },
 
   // ── Points expiry card ───────────────────────────────────────────────────────
   expiryCard:     { backgroundColor: C.amber + "10", borderRadius: 14, padding: 14, borderWidth: 1, borderColor: C.amber + "30", marginBottom: 12 },
@@ -1220,18 +1224,18 @@ const s = StyleSheet.create({
   pointsTileBarFill: { height: 3, borderRadius: 2 },
   // ── Contextual State Card ────────────────────────────────────────────────────
   stateCard:      { backgroundColor: "transparent", borderRadius: 20, padding: 18, borderWidth: 1, marginBottom: 12, overflow: "hidden" },
-  stateLabel:     { fontSize: 10, fontFamily: "DM Sans", fontWeight: "700", letterSpacing: 1.4 },
-  stateMeta:      { color: "#8A8070", fontSize: 9, fontFamily: "DM Sans", fontWeight: "700", letterSpacing: 1.2, marginBottom: 2 },
-  stateValue:     { color: "#1A1612", fontSize: 15, fontFamily: "DM Sans", fontWeight: "600" },
+  stateLabel:     { fontSize: 10, fontFamily: T.sans, fontWeight: "700", letterSpacing: 1.4 },
+  stateMeta:      { color: "#8A8070", fontSize: 9, fontFamily: T.sans, fontWeight: "700", letterSpacing: 1.2, marginBottom: 2 },
+  stateValue:     { color: "#1A1612", fontSize: 15, fontFamily: T.sans, fontWeight: "600" },
   bufferBar:      { borderRadius: 10, borderWidth: 1, padding: 10, marginTop: 6 },
-  bufferVerdict:  { fontSize: 12, fontFamily: "DM Sans", fontWeight: "600" },
-  bufferSub:      { color: "#8A8070", fontSize: 11, fontFamily: "DM Sans", marginTop: 3 },
+  bufferVerdict:  { fontSize: 12, fontFamily: T.sans, fontWeight: "600" },
+  bufferSub:      { color: "#8A8070", fontSize: 11, fontFamily: T.sans, marginTop: 3 },
   disruptionCTA:  { backgroundColor: "#D95F5F18", borderRadius: 10, padding: 10, marginTop: 10, borderWidth: 1, borderColor: "#D95F5F40" },
-  disruptionCTAT: { color: "#D95F5F", fontSize: 13, fontFamily: "DM Sans", fontWeight: "600", textAlign: "center" },
+  disruptionCTAT: { color: "#D95F5F", fontSize: 13, fontFamily: T.sans, fontWeight: "600", textAlign: "center" },
   sugChip:        { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: "#3A3020", backgroundColor: "#1A1612" },
-  sugChipT:       { color: "#C9A96E", fontSize: 12, fontFamily: "DM Sans", fontWeight: "500" },
+  sugChipT:       { color: "#C9A96E", fontSize: 12, fontFamily: T.sans, fontFamily: T.sansM },
   journeyTimingBtn:  { backgroundColor: "#D4902A12", borderRadius: 10, padding: 10, marginTop: 8, borderWidth: 1, borderColor: "#D4902A40" },
-  journeyTimingBtnT: { color: "#D4902A", fontSize: 12, fontFamily: "DM Sans", fontWeight: "600", textAlign: "center" },
+  journeyTimingBtnT: { color: "#D4902A", fontSize: 12, fontFamily: T.sans, fontWeight: "600", textAlign: "center" },
   windowTitle:    { color: C.ink, fontSize: 14, fontFamily: T.sansB },
   windowBody:     { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 19 },
   weatherChip:    { alignItems: "flex-end", marginLeft: 12, paddingTop: 4 },

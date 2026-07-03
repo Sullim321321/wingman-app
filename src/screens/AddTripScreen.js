@@ -388,7 +388,7 @@ const s = StyleSheet.create({
 
   // AI card
   aiCard: { borderRadius: 20, padding: 24, borderWidth: 1, borderColor: C.line, marginBottom: 4 },
-  aiHeadline: { color: C.ink, fontSize: 26, fontFamily: "PlayfairDisplay_700Bold", lineHeight: 34, marginBottom: 10 },
+  aiHeadline: { color: C.ink, fontSize: 26, fontFamily: T.serifB, lineHeight: 34, marginBottom: 10 },
   aiSub: { color: C.mut, fontSize: 14, lineHeight: 20, marginBottom: 18 },
   aiInput: {
     color: C.ink, fontSize: 16, lineHeight: 24, minHeight: 80,
@@ -433,7 +433,7 @@ const s = StyleSheet.create({
   // Fields
   field: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.line },
   label: { color: C.mut, fontSize: 11, fontFamily: T.sansB, textTransform: "uppercase", letterSpacing: 0.5 },
-  input: { color: C.ink, fontSize: 16, fontWeight: "500" },
+  input: { color: C.ink, fontSize: 16, fontFamily: T.sansM },
   pasteInput: { minHeight: 120, marginTop: 8, lineHeight: 22 },
 
   // Lookup badge

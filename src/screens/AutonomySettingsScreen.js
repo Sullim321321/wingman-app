@@ -241,7 +241,7 @@ const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
 
   hero: { marginBottom: 24 },
-  heroH: { color: C.ink, fontSize: 28, fontFamily: "PlayfairDisplay_700Bold", lineHeight: 36, marginBottom: 10 },
+  heroH: { color: C.ink, fontSize: 28, fontFamily: T.serifB, lineHeight: 36, marginBottom: 10 },
   heroSub: { color: C.mut, fontSize: 14, lineHeight: 21 },
 
   modeRow: { flexDirection: "row", alignItems: "flex-start", gap: 14, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.line },
@@ -253,7 +253,7 @@ const s = StyleSheet.create({
   modeDesc: { color: C.mut, fontSize: 12, lineHeight: 18, marginTop: 3 },
 
   thresholdLabel: { color: C.mut, fontSize: 13 },
-  thresholdValue: { color: C.gold, fontSize: 26, fontFamily: "PlayfairDisplay_700Bold" },
+  thresholdValue: { color: C.gold, fontSize: 26, fontFamily: T.serifB },
   sliderEdge: { color: C.mut, fontSize: 11 },
   thresholdBtn: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 20, borderWidth: 1, borderColor: C.line, backgroundColor: C.card },
   thresholdBtnActive: { borderColor: C.gold, backgroundColor: "rgba(201,169,110,0.1)" },

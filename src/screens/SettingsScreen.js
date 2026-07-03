@@ -345,7 +345,7 @@ export default function SettingsScreen({ navigation }) {
 
         <Text style={g.sectionT}>CONNECTED ACCOUNTS</Text>
         <View style={g.group}>
-          <SetRow ic="@" iconColor={C.gold} t="Inbox" sub="Sync travel emails automatically" right={<Chip color={C.teal}>Manage ›</Chip>} onPress={() => navigation.navigate("DataSources")} />
+          <SetRow ic="@" iconColor={C.gold} t="Inbox" sub="Sync travel emails automatically" right={<Chip color={C.teal}>Manage ›</Chip>} onPress={() => navigation.navigate("Connections")} />
           <SetRow ic="$" iconColor={C.gold} t="Payment & trip protection" sub="Manage payment methods" right={<Chip>Manage</Chip>} onPress={() => navigation.navigate("Subscription")} />
           <View style={{ borderBottomWidth: 0 }}>
             <SetRow ic="+" iconColor={C.gold} t="All channels & privacy" sub="Email, Calendar, WhatsApp, Messages" right={<Chip color={C.gold}>Manage ›</Chip>} onPress={() => navigation.navigate("Connections")} />
@@ -384,7 +384,7 @@ export default function SettingsScreen({ navigation }) {
           <SetRow ic="◈" iconColor={C.gold} t="Autonomy settings" sub="Delegation policy, approval thresholds, payment prefs" right={<Chip color={C.gold}>Edit ›</Chip>} onPress={() => navigation.navigate("Autonomy")} />
           <SetRow ic="🛂" iconColor={C.gold} t="Traveler ID" sub="Name, DOB, passport — required for autonomous rebooking" right={<Chip color={C.gold}>Edit ›</Chip>} onPress={() => navigation.navigate("PassengerProfile")} />
           <View style={{ borderBottomWidth: 0 }}>
-            <SetRow ic="◎" iconColor={C.gold} t="Data sources" sub="Gmail, Calendar, Messages — ambient ingestion" right={<Chip color={C.gold}>Manage ›</Chip>} onPress={() => navigation.navigate("DataSources")} />
+            <SetRow ic="◎" iconColor={C.gold} t="Data sources" sub="Gmail, Calendar, Messages — explicit opt-in only" right={<Chip color={C.gold}>Manage ›</Chip>} onPress={() => navigation.navigate("Connections")} />
           </View>
         </View>
 

@@ -41,7 +41,7 @@ const REDEEMABLE_PERKS = [
   { id: "priority_support", cost: 300, label: "Priority Support",   icon: "⚡", desc: "Jump to the front of the support queue for your next issue.", color: "#5B8CFF" },
   { id: "upgrade_boost",    cost: 400, label: "Upgrade Bid Boost",  icon: "🚀", desc: "2× points on your next upgrade bid — doubles your chances.", color: C.gold },
   { id: "free_month",       cost: 500, label: "1 Month Free",       icon: "✦",  desc: "One full month of Wingman Premium at no charge.", color: "#FF9F43" },
-  { id: "lounge_day_pass",  cost: 600, label: "Lounge Day Pass",    icon: "◈",  desc: "One-day Priority Pass lounge access at any participating airport.", color: "#4ECDC4" },
+  { id: "lounge_day_pass",  cost: 600, label: "Lounge Day Pass",    icon: "◈",  desc: "One-day Priority Pass lounge access at any participating airport.", color: "C.teal" },
   { id: "concierge_call",   cost: 800, label: "Concierge Call",     icon: "◆",  desc: "30-minute call with a Wingman travel expert — your personal fixer.", color: "#C9A96E" },
 ];
 

@@ -112,7 +112,7 @@ const s = StyleSheet.create({
   root:   { flex: 1, backgroundColor: C.bg },
   scroll: { flexGrow: 1, padding: 28, paddingTop: 24 },
   mark:   { width: 56, height: 56, borderRadius: 16, alignItems: "center", justifyContent: "center", marginBottom: 20 },
-  h:      { color: C.ink, fontSize: 28, fontFamily: "PlayfairDisplay_700Bold", marginBottom: 8, lineHeight: 36, letterSpacing: -0.4 },
+  h:      { color: C.ink, fontSize: 28, fontFamily: T.serifB, marginBottom: 8, lineHeight: 36, letterSpacing: -0.4 },
   sub:    { color: C.mut, fontSize: 14, lineHeight: 20, marginBottom: 28 },
   label:  { color: C.mut, fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.8, marginBottom: 10, textTransform: "uppercase" },
   input:  {

@@ -11,30 +11,60 @@ import * as SecureStore from "expo-secure-store";
 
 const KEY_DEMO_INJECTED = "wingman_demo_injected";
 
-// Build a realistic demo trip ~14 days from now so Home is never empty on first launch.
-// The trip is real in the backend — it gets monitored and briefed like any other trip.
+// Build a realistic demo trip ~5 days from now so Home is never empty on first launch.
+// Includes outbound flight, hotel stay, and return flight for a rich TripCard.
 async function injectDemoTrip() {
   try {
     const already = await SecureStore.getItemAsync(KEY_DEMO_INJECTED);
     if (already) return; // only inject once
-    // Depart 14 days from now at 08:30 local, arrive +5h30m
-    const dep = new Date(Date.now() + 14 * 86400000);
-    dep.setHours(8, 30, 0, 0);
-    const arr = new Date(dep.getTime() + 5.5 * 3600000);
     const fmt = (d) => d.toISOString().replace("Z", "+00:00");
+    // Outbound: JFK → LHR, departs 5 days from now at 08:30, +7h flight
+    const dep = new Date(Date.now() + 5 * 86400000);
+    dep.setHours(8, 30, 0, 0);
+    const arr = new Date(dep.getTime() + 7 * 3600000);
+    // Hotel: check-in same day as arrival at 15:00, 4-night stay
+    const hotelIn  = new Date(arr);
+    hotelIn.setHours(15, 0, 0, 0);
+    const hotelOut = new Date(hotelIn.getTime() + 4 * 86400000);
+    hotelOut.setHours(11, 0, 0, 0);
+    // Return: LHR → JFK, day after hotel checkout at 11:30, +8h flight
+    const retDep = new Date(hotelOut.getTime() + 86400000);
+    retDep.setHours(11, 30, 0, 0);
+    const retArr = new Date(retDep.getTime() + 8 * 3600000);
     await createTrip({
       title: "New York → London",
       mode: "demo",
-      legs: [{
-        type:          "flight",
-        carrier:       "BA",
-        flight_number: "178",
-        origin:        "JFK",
-        destination:   "LHR",
-        departs_at:    fmt(dep),
-        arrives_at:    fmt(arr),
-        cabin:         "economy",
-      }],
+      legs: [
+        {
+          type:          "flight",
+          carrier:       "BA",
+          flight_number: "178",
+          origin:        "JFK",
+          destination:   "LHR",
+          departs_at:    fmt(dep),
+          arrives_at:    fmt(arr),
+          cabin:         "economy",
+        },
+        {
+          type:             "hotel",
+          carrier:          "The Ned London",
+          origin:           "LHR",
+          destination:      "London",
+          destination_city: "London",
+          departs_at:       fmt(hotelIn),
+          arrives_at:       fmt(hotelOut),
+        },
+        {
+          type:          "flight",
+          carrier:       "BA",
+          flight_number: "177",
+          origin:        "LHR",
+          destination:   "JFK",
+          departs_at:    fmt(retDep),
+          arrives_at:    fmt(retArr),
+          cabin:         "economy",
+        },
+      ],
     });
     await SecureStore.setItemAsync(KEY_DEMO_INJECTED, "1");
   } catch (_) {

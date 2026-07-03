@@ -154,9 +154,9 @@ export default function ActivityScreen({ navigation }) {
             <View style={s.emptyIcon}>
               <Text style={{ color: C.gold, fontSize: 18, fontFamily: T.sansB }}>◈</Text>
             </View>
-            <SerifText style={s.emptyT}>No trips yet.</SerifText>
+            <SerifText style={s.emptyT}>All clear.</SerifText>
             <Text style={s.emptySub}>
-              Add a trip and Wingman begins monitoring immediately — delays, cancellations, and gate changes surface here the moment they happen.
+              Wingman is watching your trips. Disruptions, delays, and gate changes will surface here the moment they happen — with rescue options ready.
             </Text>
             <Pressable style={s.emptyBtn} onPress={() => navigation.navigate("AddTrip")}>
               <Text style={s.emptyBtnT}>Add a trip</Text>
@@ -245,7 +245,7 @@ const s = StyleSheet.create({
   // Empty state
   emptyCard: { alignItems: "center", padding: 44, backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.line },
   emptyIcon: { width: 52, height: 52, borderRadius: 26, borderWidth: 1, borderColor: C.gold + "40", alignItems: "center", justifyContent: "center", marginBottom: 18 },
-  emptyT:    { color: C.ink, fontSize: 22, letterSpacing: T.trackTight, marginBottom: 8 },
+  emptyT:    { color: C.ink, fontSize: 22, fontFamily: T.serifB, letterSpacing: T.trackTight, marginBottom: 8 },
   emptySub:  { color: C.mut, fontSize: 14, fontFamily: T.sans, textAlign: "center", lineHeight: 21, marginBottom: 24 },
   emptyBtn:  { backgroundColor: C.gold, borderRadius: 12, paddingHorizontal: 22, paddingVertical: 12 },
   emptyBtnT: { color: C.inkD, fontSize: 14, fontFamily: T.sansB, letterSpacing: 0.3 },

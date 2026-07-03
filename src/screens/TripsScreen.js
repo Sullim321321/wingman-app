@@ -87,53 +87,82 @@ function TripCard({ trip, onDelete, navigation }) {
   const iconKey = Object.keys(destIcons).find(k => etchingKey.includes(k) || derivedTitle.includes(k));
   const thumbIcon = iconKey ? destIcons[iconKey] : "✈️";
 
+  const iataCode = firstFlight?.destination || firstFlight?.origin || null;
+  const flightIdent = firstFlight ? `${firstFlight.carrier || ""}${firstFlight.flight_number || ""}`.trim() : null;
+
   return (
-    <Pressable
-      onPress={() => { tap(); navigation.navigate("TripDetail", { trip }); }}
-      onLongPress={() => Alert.alert("Delete trip?", trip.title, [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: () => onDelete(trip.id) },
-      ])}
-      style={{ marginBottom: 10 }}
-    >
-      <View style={s.tripCard}>
-        {/* Thumbnail */}
-        <View style={s.tripThumb}>
-          {getEtching(firstFlight?.destination) ? (
-            <Image
-              source={getEtching(firstFlight?.destination)}
-              style={{ width: 56, height: 56, borderRadius: 8, opacity: 0.85 }}
-              resizeMode="cover"
-            />
-          ) : (
-            <Text style={s.tripThumbT}>{thumbIcon}</Text>
-          )}
+    <View style={{ marginBottom: 14 }}>
+      <Pressable
+        onPress={() => { tap(); navigation.navigate("TripDetail", { trip }); }}
+        onLongPress={() => Alert.alert("Delete trip?", trip.title, [
+          { text: "Cancel", style: "cancel" },
+          { text: "Delete", style: "destructive", onPress: () => onDelete(trip.id) },
+        ])}
+      >
+        <View style={s.tripCard}>
+          {/* Thumbnail */}
+          <View style={s.tripThumb}>
+            {getEtching(firstFlight?.destination) ? (
+              <Image
+                source={getEtching(firstFlight?.destination)}
+                style={{ width: 56, height: 56, borderRadius: 8, opacity: 0.85 }}
+                resizeMode="cover"
+              />
+            ) : (
+              <Text style={s.tripThumbT}>{thumbIcon}</Text>
+            )}
+          </View>
+          {/* Info */}
+          <View style={s.tripInfo}>
+            {dateRange && <Text style={s.tripDateRange}>{dateRange}</Text>}
+            <Text style={s.dest}>{derivedTitle}</Text>
+            {(hotelName || destCity || firstFlight?.destination) && (
+              <Text style={s.when}>{hotelName || destCity || firstFlight?.destination}</Text>
+            )}
+          </View>
+          {/* Right: countdown pill + risk badge + chevron */}
+          <View style={{ alignItems: "flex-end", gap: 6 }}>
+            {(() => {
+              if (!firstFlight?.departs_at) return null;
+              const diff = new Date(firstFlight.departs_at).getTime() - Date.now();
+              if (diff <= 0) return null;
+              const days = Math.floor(diff / 86400000);
+              if (days === 0) return <View style={s.cdPill}><Text style={s.cdPillT}>TODAY</Text></View>;
+              if (days === 1) return <View style={s.cdPill}><Text style={s.cdPillT}>TOMORROW</Text></View>;
+              if (days <= 30) return <View style={s.cdPill}><Text style={s.cdPillT}>{days}D</Text></View>;
+              return null;
+            })()}
+            {risk != null && risk >= 30 && <RiskBadge risk={risk} />}
+            <Text style={{ color: C.mut, fontSize: 18, lineHeight: 22 }}>›</Text>
+          </View>
         </View>
-        {/* Info */}
-        <View style={s.tripInfo}>
-          {dateRange && <Text style={s.tripDateRange}>{dateRange}</Text>}
-          <Text style={s.dest}>{derivedTitle}</Text>
-          {(hotelName || destCity || firstFlight?.destination) && (
-            <Text style={s.when}>{hotelName || destCity || firstFlight?.destination}</Text>
-          )}
-        </View>
-        {/* Right: countdown pill + risk badge + chevron */}
-        <View style={{ alignItems: "flex-end", gap: 6 }}>
-          {(() => {
-            if (!firstFlight?.departs_at) return null;
-            const diff = new Date(firstFlight.departs_at).getTime() - Date.now();
-            if (diff <= 0) return null;
-            const days = Math.floor(diff / 86400000);
-            if (days === 0) return <View style={s.cdPill}><Text style={s.cdPillT}>TODAY</Text></View>;
-            if (days === 1) return <View style={s.cdPill}><Text style={s.cdPillT}>TOMORROW</Text></View>;
-            if (days <= 30) return <View style={s.cdPill}><Text style={s.cdPillT}>{days}D</Text></View>;
-            return null;
-          })()}
-          {risk != null && risk >= 30 && <RiskBadge risk={risk} />}
-          <Text style={{ color: C.mut, fontSize: 18, lineHeight: 22 }}>›</Text>
-        </View>
+      </Pressable>
+      {/* Action chips */}
+      <View style={s.chipRow}>
+        <Pressable
+          style={s.actionChip}
+          onPress={() => { tap(); navigation.navigate("Concierge", { prefill: `Tell me about my ${derivedTitle} trip`, tripId: trip.id }); }}
+        >
+          <Text style={s.actionChipT}>✶ Ask Wingman</Text>
+        </Pressable>
+        {iataCode && (
+          <Pressable
+            style={s.actionChip}
+            onPress={() => { tap(); navigation.navigate("GroundTransport", { airport: iataCode, flight: flightIdent }); }}
+          >
+            <Text style={s.actionChipT}>🚆 Transport</Text>
+          </Pressable>
+        )}
+        {iataCode && (
+          <Pressable
+            style={s.actionChip}
+            onPress={() => { tap(); navigation.navigate("LoungeCards", { airport: iataCode }); }}
+          >
+            <Text style={s.actionChipT}>🛄 Lounge</Text>
+          </Pressable>
+        )}
       </View>
-    </Pressable>
+    </View>
   );
 }
 
@@ -322,6 +351,13 @@ const s = StyleSheet.create({
   // Countdown pill
   cdPill:  { backgroundColor: C.gold + "18", borderColor: C.gold + "40", borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 },
   cdPillT: { color: C.gold, fontSize: 10, fontFamily: T.sansB, letterSpacing: T.trackMed },
+  // Action chips below TripCard
+  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, paddingTop: 8, paddingHorizontal: 2 },
+  actionChip: {
+    backgroundColor: C.card2, borderWidth: 1, borderColor: C.line,
+    borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6,
+  },
+  actionChipT: { color: C.mut, fontSize: 12, fontFamily: T.sansM, letterSpacing: 0.2 },
   // Empty state
   emptyWrap: {
     alignItems: "center", padding: 44,

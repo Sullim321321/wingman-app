@@ -609,6 +609,8 @@ export default function HomeScreen({ navigation }) {
   const [homeState, setHomeState]           = useState(null);  // contextual travel state
   const [journeyData, setJourneyData]       = useState(null);  // journey simulation result
   const [disruptionData, setDisruptionData] = useState(null);  // disruption alternatives
+  const [devMode, setDevMode]               = useState(__DEV__); // hidden 5-tap unlock
+  const devTapCount = useRef(0);
 
   useEffect(() => {
     // Fetch geolocated weather if user has opted in
@@ -1212,7 +1214,16 @@ export default function HomeScreen({ navigation }) {
             })()}
 
             {/* ── Live monitoring row ─────────────────────────────────────── */}
-            <Text style={g.sectionT}>LIVE MONITORING</Text>
+            <Text
+              style={g.sectionT}
+              onPress={() => {
+                devTapCount.current += 1;
+                if (devTapCount.current >= 5) {
+                  devTapCount.current = 0;
+                  setDevMode(v => !v);
+                }
+              }}
+            >LIVE MONITORING</Text>
             <Pressable style={s.monitor} onPress={() => navigation.navigate("Track")}>
               <View style={s.radarMini}>
                 <View style={s.radarMiniRing} />
@@ -1226,8 +1237,8 @@ export default function HomeScreen({ navigation }) {
               <Text style={{ color: C.mut, fontSize: 18, opacity: 0.5 }}>›</Text>
             </Pressable>
 
-            {/* ── Simulate disruption — visible in dev + TestFlight ────────── */}
-            {(__DEV__ || true) && (
+            {/* ── Simulate disruption — hidden behind 5-tap on LIVE MONITORING ── */}
+            {devMode && (
               <>
                 <Text style={g.sectionT}>TEST NOTIFICATIONS</Text>
                 <Btn
@@ -1421,13 +1432,13 @@ const s = StyleSheet.create({
   stateCard:      { backgroundColor: "transparent", borderRadius: 20, padding: 18, borderWidth: 1, marginBottom: 12, overflow: "hidden" },
   stateLabel:     { fontSize: 10, fontFamily: T.sans, fontWeight: "700", letterSpacing: 1.4 },
   stateMeta:      { color: "#8A8070", fontSize: 9, fontFamily: T.sans, fontWeight: "700", letterSpacing: 1.2, marginBottom: 2 },
-  stateValue:     { color: "#1A1612", fontSize: 15, fontFamily: T.sans, fontWeight: "600" },
+  stateValue:     { color: C.inkD, fontSize: 15, fontFamily: T.sansM },
   bufferBar:      { borderRadius: 10, borderWidth: 1, padding: 10, marginTop: 6 },
   bufferVerdict:  { fontSize: 12, fontFamily: T.sans, fontWeight: "600" },
   bufferSub:      { color: "#8A8070", fontSize: 11, fontFamily: T.sans, marginTop: 3 },
   disruptionCTA:  { backgroundColor: "#D95F5F18", borderRadius: 10, padding: 10, marginTop: 10, borderWidth: 1, borderColor: "#D95F5F40" },
   disruptionCTAT: { color: "#D95F5F", fontSize: 13, fontFamily: T.sans, fontWeight: "600", textAlign: "center" },
-  sugChip:        { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: "#3A3020", backgroundColor: "#1A1612" },
+  sugChip:        { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: C.line, backgroundColor: C.card },
   sugChipT:       { color: C.gold, fontSize: 12, fontFamily: T.sans, fontFamily: T.sansM },
   journeyTimingBtn:  { backgroundColor: "#D4902A12", borderRadius: 10, padding: 10, marginTop: 8, borderWidth: 1, borderColor: "#D4902A40" },
   journeyTimingBtnT: { color: "#D4902A", fontSize: 12, fontFamily: T.sans, fontWeight: "600", textAlign: "center" },
@@ -1445,5 +1456,5 @@ const s = StyleSheet.create({
   tcChipT:        { color: C.mut, fontSize: 11, fontFamily: T.sansM, letterSpacing: 0.2 },
   // Parchment card quick-action chips (dark ink on parchment)
   parchChip:      { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 14, borderWidth: 1, borderColor: "rgba(60,50,30,0.2)", backgroundColor: "rgba(60,50,30,0.07)" },
-  parchChipT:     { color: "#4A3C28", fontSize: 11, fontFamily: T.sansM, letterSpacing: 0.2 },
+  parchChipT:     { color: C.inkD, fontSize: 11, fontFamily: T.sansM, letterSpacing: 0.2 },
 });

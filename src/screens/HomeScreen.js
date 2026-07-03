@@ -196,18 +196,22 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore }) {
     // No trips at all — new user state
     statusDotColor = C.mut;
     statusLabel    = "No trips yet";
-    const name     = firstName ? `, ${firstName}` : "";
+    // Personalised intelligence briefing — no onboarding prompts, no CTAs on Home
+    const greeting = firstName ? `Good morning, ${firstName}.` : `Good morning.`;
     headline       = `Your concierge\nis standing by.`;
-    prose          = `No flights on the board yet${name}. Once you add a trip — or connect your email and let me find them — I'll brief you every morning on what matters: gate changes, weather at your destination, lounge access, upgrade windows. Where are you headed next?`;
+    prose          = `${greeting} Nothing on the board yet. The moment you have a flight, I'll brief you every morning on what matters — gate changes, weather at your destination, lounge access, upgrade windows. I'm watching your inbox. Where are you headed next?`;
   }
 
   return { headline, prose, statusDotColor, statusLabel };
 }
 
 // Build the welcome message for the chat thread
-function buildWelcomeMessage(trips) {
+function buildWelcomeMessage(trips, firstName) {
   const next = findNextFlight(trips);
-  if (!next) return "Good day. I'm your private travel concierge. I watch your flights, brief you on what matters, and handle the details so you don't have to. Where are you headed next?";
+  if (!next) {
+    const name = firstName ? `, ${firstName}` : "";
+    return `Good morning${name}. Nothing on the board yet. Tell me where you're headed and I'll start watching it.`;
+  }
   const diff  = new Date(next.departs_at).getTime() - Date.now();
   if (diff <= 0) return "Good day. I'm monitoring your active trip. What can I do for you?";
   const hours = Math.floor(diff / 3600000);
@@ -264,7 +268,7 @@ export default function HomeScreen({ navigation }) {
         // Update welcome message if thread is still at initial state
         setMessages(prev => {
           if (prev.length === 1 && prev[0].role === "assistant") {
-            return [{ role: "assistant", content: buildWelcomeMessage(loaded) }];
+            return [{ role: "assistant", content: buildWelcomeMessage(loaded, firstName) }];
           }
           return prev;
         });
@@ -362,12 +366,12 @@ export default function HomeScreen({ navigation }) {
       const data = await getConciergeThread(null);
       const saved = (data.messages || []).filter(m => m && (m.content || m.transit || m.places || m.action));
       if (saved.length > 0) {
-        setMessages([{ role: "assistant", content: buildWelcomeMessage(tripsRef.current) }, ...saved]);
+        setMessages([{ role: "assistant", content: buildWelcomeMessage(tripsRef.current, firstName) }, ...saved]);
       } else {
-        setMessages([{ role: "assistant", content: buildWelcomeMessage(tripsRef.current) }]);
+        setMessages([{ role: "assistant", content: buildWelcomeMessage(tripsRef.current, firstName) }]);
       }
     } catch {
-      setMessages([{ role: "assistant", content: buildWelcomeMessage(tripsRef.current) }]);
+      setMessages([{ role: "assistant", content: buildWelcomeMessage(tripsRef.current, firstName) }]);
     } finally {
       setThreadLoading(false);
     }
@@ -436,7 +440,7 @@ export default function HomeScreen({ navigation }) {
           text: "Clear", style: "destructive",
           onPress: async () => {
             try { await clearConciergeThread(null); } catch {}
-            setMessages([{ role: "assistant", content: buildWelcomeMessage(tripsRef.current) }]);
+            setMessages([{ role: "assistant", content: buildWelcomeMessage(tripsRef.current, firstName) }]);
           },
         },
       ]
@@ -551,33 +555,7 @@ export default function HomeScreen({ navigation }) {
                 <Text style={s.prose}>{prose}</Text>
               ) : null}
 
-              {/* No-trip CTAs */}
-              {isNoTrip && (
-                <>
-                  <Pressable
-                    style={s.ctaRow}
-                    onPress={() => { tap(); navigation.navigate("AddTrip"); }}
-                  >
-                    <View style={s.ctaIcon}><Text style={s.ctaIconT}>✈</Text></View>
-                    <View style={s.ctaBody}>
-                      <Text style={s.ctaTitle}>Add a trip</Text>
-                      <Text style={s.ctaSub}>Enter a flight number or itinerary</Text>
-                    </View>
-                    <Text style={s.ctaArrow}>›</Text>
-                  </Pressable>
-                  <Pressable
-                    style={[s.ctaRow, s.ctaRowTeal]}
-                    onPress={() => { tap(); navigation.navigate("Connections"); }}
-                  >
-                    <View style={[s.ctaIcon, s.ctaIconTeal]}><Text style={s.ctaIconT}>✉</Text></View>
-                    <View style={s.ctaBody}>
-                      <Text style={[s.ctaTitle, { color: C.teal }]}>Connect Gmail</Text>
-                      <Text style={s.ctaSub}>I'll find your bookings automatically</Text>
-                    </View>
-                    <Text style={s.ctaArrow}>›</Text>
-                  </Pressable>
-                </>
-              )}
+              {/* No-trip state: briefing only — no CTAs on Home */}
 
               {/* CONVERSATION rule */}
               <View style={s.sectionRule}>

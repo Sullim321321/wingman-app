@@ -19,7 +19,7 @@ import { tap } from "../components";
 import {
   getTrips, getHomeState, getWeather, getMe,
   sendConciergeMessage, getConciergeThread, saveConciergeThread, clearConciergeThread,
-  getTripBriefing, getPrediction, triggerGmailScan,
+  getTripBriefing, getPrediction, triggerGmailScan, getTravelProfile,
 } from "../api";
 import { scheduleDisruption, schedulePreDepartureBriefing, schedulePostTripDebrief } from "../notify";
 import { LOCATION_OPT_IN_KEY } from "./SettingsScreen";
@@ -67,8 +67,24 @@ function formatEditionDate() {
   });
 }
 
+// Cabin label helper
+const CABIN_LABELS = {
+  economy: "Economy",
+  premium_economy: "Premium Economy",
+  business: "Business",
+  first: "First Class",
+};
+
+// Seat preference label helper
+function seatLabel(seatPref) {
+  if (!seatPref) return null;
+  if (seatPref === "window") return "window seat";
+  if (seatPref === "aisle") return "aisle seat";
+  return null;
+}
+
 // Build the editorial headline and prose briefing from home state + trip data
-function buildBriefing({ homeState, trips, weather, firstName, riskScore }) {
+function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPrefs }) {
   const hs    = homeState;
   const leg   = hs?.active_leg;
   const trip  = hs?.active_trip;
@@ -134,6 +150,17 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore }) {
       statusLabel    = riskScore >= 60 ? "Disruption risk" : "Moderate risk";
       parts.push(`${riskScore}% disruption risk — I'm watching it`);
     }
+    // Preference-aware additions
+    const cabin = userPrefs?.cabin_preference;
+    const seat  = seatLabel(userPrefs?.seat_preference);
+    const loungeCards = userPrefs?.lounge_cards || [];
+    if (cabin && (cabin === "business" || cabin === "first")) {
+      const loungeLine = loungeCards.length > 0
+        ? `Your ${loungeCards[0].replace(/_/g, " ")} card gets you into the lounge`
+        : `Check the lounge before you board`;
+      parts.push(loungeLine);
+    }
+    if (seat) parts.push(`I'll flag if your ${seat} is available at check-in`);
     prose = parts.length
       ? `${parts.join(". ")}. What do you need before you board?`
       : `I'm watching your flight. What do you need before you board?`;
@@ -151,6 +178,18 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore }) {
       parts.push(`${hotel.name} checks in at ${checkinTime || "3:00 PM"}`);
     }
     if (w) parts.push(`${city} is ${w.temp}°${w.description ? `, ${w.description.toLowerCase()}` : ""}`);
+    // Preference-aware additions at destination
+    const destCabin = userPrefs?.cabin_preference;
+    const destSeat  = seatLabel(userPrefs?.seat_preference);
+    const destPace  = userPrefs?.travel_pace;
+    if (destCabin === "business" || destCabin === "first") {
+      parts.push("I can check upgrade availability on your return flight now");
+    }
+    if (destPace === "tight") {
+      parts.push("You like to cut it close — I'll remind you when it's time to leave for the airport");
+    } else if (destPace === "generous") {
+      parts.push("I'll build in extra buffer time for your return journey");
+    }
     prose = parts.length
       ? `${parts.join(". ")}. What can I arrange for you?`
       : `You've arrived. What can I arrange for you?`;
@@ -193,6 +232,24 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore }) {
     if (localW && localW.city && localW.temp != null && localW.city !== weatherCity) {
       parts.push(`It's ${localW.temp}° here in ${localW.city} right now`);
     }
+    // Preference-aware additions pre-departure
+    const preCabin = userPrefs?.cabin_preference;
+    const preSeat  = seatLabel(userPrefs?.seat_preference);
+    const prePace  = userPrefs?.travel_pace;
+    const preLounge = userPrefs?.lounge_cards || [];
+    if (preCabin) {
+      const cabinLabel = CABIN_LABELS[preCabin] || preCabin;
+      if (next.cabin_class && next.cabin_class.toLowerCase() !== preCabin) {
+        parts.push(`You're booked in ${next.cabin_class} — upgrade availability is worth checking`);
+      } else {
+        parts.push(`${cabinLabel} confirmed`);
+      }
+    }
+    if (preSeat) parts.push(`I'll watch for a ${preSeat} at check-in`);
+    if ((preCabin === "business" || preCabin === "first") && preLounge.length > 0) {
+      parts.push(`Your ${preLounge[0].replace(/_/g, " ")} card covers the lounge`);
+    }
+    if (prePace === "tight") parts.push("You like to cut it close — I'll alert you at the last safe moment to leave");
     prose = parts.length
       ? `${parts.join(". ")}. Ask me anything about the trip.`
       : `I'm watching it. Ask me anything about the trip.`;
@@ -252,6 +309,7 @@ export default function HomeScreen({ navigation }) {
   const [firstName, setFirstName]       = useState("");
   const [riskScore, setRiskScore]       = useState(null);
   const [userLocation, setUserLocation] = useState(null);
+  const [userPrefs, setUserPrefs]       = useState(null); // cabin, seat, lounge_cards, home_airports
 
   // Chat state
   const [messages, setMessages]         = useState([{ role: "assistant", content: "" }]);
@@ -339,8 +397,9 @@ export default function HomeScreen({ navigation }) {
       } catch {}
     })();
 
-    // User name
+    // User name + travel preferences
     getMe().then(u => { if (!cancelled && u?.first_name) setFirstName(u.first_name); }).catch(() => {});
+    getTravelProfile().then(d => { if (!cancelled && d?.profile) setUserPrefs(d.profile); }).catch(() => {});
 
     return () => { cancelled = true; };
   }, []));
@@ -482,8 +541,8 @@ export default function HomeScreen({ navigation }) {
   // ── Derived briefing ─────────────────────────────────────────────────────────
 
   const { headline, prose, statusDotColor, statusLabel } = useMemo(
-    () => buildBriefing({ homeState, trips, weather, firstName, riskScore }),
-    [homeState, trips, weather, firstName, riskScore]
+    () => buildBriefing({ homeState, trips, weather, firstName, riskScore, userPrefs }),
+    [homeState, trips, weather, firstName, riskScore, userPrefs]
   );
 
   const nextFlight = useMemo(() => findNextFlight(trips), [trips]);

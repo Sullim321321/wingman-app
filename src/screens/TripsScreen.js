@@ -2,12 +2,13 @@
 // Italic serif headline "Your trips." · date-anchored rows · status pills
 // Upcoming above rule, past below rule — no cards, no chips, no chrome
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
-  ActivityIndicator, RefreshControl, Alert,
+  ActivityIndicator, RefreshControl, Alert, Animated,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import { Swipeable } from "react-native-gesture-handler";
 import { C, T } from "../theme";
 import { tap } from "../components";
 import { getTrips, deleteTrip, getPrediction } from "../api";
@@ -92,6 +93,7 @@ function StatusPill({ status, riskScore }) {
 
 function TripRow({ trip, navigation, onDelete }) {
   const [riskScore, setRiskScore] = useState(null);
+  const swipeRef = useRef(null);
 
   const legs        = trip.legs || [];
   const firstFlight = legs.find(l => l.type === "flight");
@@ -134,14 +136,39 @@ function TripRow({ trip, navigation, onDelete }) {
     ? (daysAway <= 0 ? "Today" : daysAway === 1 ? "Tomorrow" : `${daysAway}d`)
     : null;
 
+  const renderRightActions = (progress, dragX) => {
+    const scale = dragX.interpolate({
+      inputRange: [-80, 0],
+      outputRange: [1, 0.8],
+      extrapolate: "clamp",
+    });
+    return (
+      <Pressable
+        style={s.deleteAction}
+        onPress={() => {
+          swipeRef.current?.close();
+          Alert.alert("Delete trip?", derivedTitle, [
+            { text: "Cancel", style: "cancel", onPress: () => swipeRef.current?.close() },
+            { text: "Delete", style: "destructive", onPress: () => onDelete(trip.id) },
+          ]);
+        }}
+      >
+        <Animated.Text style={[s.deleteActionT, { transform: [{ scale }] }]}>Delete</Animated.Text>
+      </Pressable>
+    );
+  };
+
   return (
+    <Swipeable
+      ref={swipeRef}
+      renderRightActions={renderRightActions}
+      overshootRight={false}
+      friction={2}
+      rightThreshold={40}
+    >
     <Pressable
       style={s.tripRow}
       onPress={() => { tap(); navigation.navigate("TripDetail", { trip }); }}
-      onLongPress={() => Alert.alert("Delete trip?", derivedTitle, [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: () => onDelete(trip.id) },
-      ])}
     >
       {/* Date anchor */}
       <View style={s.dateAnchor}>
@@ -177,6 +204,7 @@ function TripRow({ trip, navigation, onDelete }) {
       {/* Chevron */}
       <Text style={s.chevron}>›</Text>
     </Pressable>
+    </Swipeable>
   );
 }
 
@@ -471,6 +499,22 @@ const s = StyleSheet.create({
     fontSize: 18,
     color: C.mut,
     opacity: 0.4,
+  },
+
+  // ── Swipe-to-delete action ──
+  deleteAction: {
+    backgroundColor: C.coral || "#E05C5C",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 80,
+    borderBottomWidth: 1,
+    borderBottomColor: C.line,
+  },
+  deleteActionT: {
+    fontFamily: T.sansM,
+    fontSize: 13,
+    color: "#fff",
+    letterSpacing: 0.5,
   },
 
   // ── Status pills ──

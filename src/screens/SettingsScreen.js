@@ -252,6 +252,45 @@ export default function SettingsScreen({ navigation }) {
           </Text>
         </View>
 
+        {/* ── Briefing time hero — most important daily setting, first thing you see ————————————— */}
+        <View style={s.briefingHero}>
+          <View style={s.briefingHeroLeft}>
+            <Text style={s.briefingHeroLabel}>MORNING BRIEFING</Text>
+            <Text style={s.briefingHeroTime}>{briefingHour}:00</Text>
+            <Text style={s.briefingHeroSub}>
+              {briefingEnabled ? "Your brief arrives each morning at this time." : "Daily briefing is paused."}
+            </Text>
+          </View>
+          <View style={s.briefingHeroRight}>
+            <View style={{ flexDirection: "row", gap: 6, marginBottom: 10 }}>
+              {[6, 7, 8, 9].map(h => (
+                <TouchableOpacity
+                  key={h}
+                  onPress={async () => {
+                    setBriefingHour(h);
+                    try { await updateBriefingTime(h); } catch {}
+                  }}
+                  style={[s.briefingTimeBtn, briefingHour === h && s.briefingTimeBtnActive]}
+                >
+                  <Text style={[s.briefingTimeBtnT, briefingHour === h && s.briefingTimeBtnTActive]}>
+                    {h}am
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Switch
+              value={briefingEnabled}
+              onValueChange={async (val) => {
+                setBriefingEnabled(val);
+                try { await updateBriefingTime(briefingHour); } catch {}
+              }}
+              trackColor={{ true: C.gold, false: C.card2 }}
+              thumbColor={briefingEnabled ? C.inkD : C.mut}
+              ios_backgroundColor={C.card2}
+            />
+          </View>
+        </View>
+
         {/* Quick profile shortcuts — surfaced prominently so users find them */}
         <View style={s.profileShortcuts}>
           <Text style={s.profileShortcutsLabel}>QUICK SETUP</Text>
@@ -580,6 +619,64 @@ const s = StyleSheet.create({
     color: C.gold,
   },
   // Quick profile shortcuts
+  // ── Briefing hero card ──
+  briefingHero: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginHorizontal: 20,
+    marginBottom: 20,
+    marginTop: 4,
+    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: "rgba(201,169,110,0.25)",
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+  },
+  briefingHeroLeft: { flex: 1, marginRight: 12 },
+  briefingHeroLabel: {
+    fontFamily: T.sansM,
+    fontSize: 9,
+    letterSpacing: 2,
+    color: C.gold,
+    textTransform: "uppercase",
+    marginBottom: 4,
+  },
+  briefingHeroTime: {
+    fontFamily: T.garamondSI,
+    fontSize: 40,
+    color: C.ink,
+    lineHeight: 44,
+    letterSpacing: -1,
+  },
+  briefingHeroSub: {
+    fontFamily: T.sans,
+    fontSize: 12,
+    color: C.mut,
+    marginTop: 4,
+    lineHeight: 16,
+  },
+  briefingHeroRight: { alignItems: "flex-end" },
+  briefingTimeBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: C.card2,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: C.line,
+  },
+  briefingTimeBtnActive: {
+    backgroundColor: "rgba(201,169,110,0.15)",
+    borderColor: C.gold,
+  },
+  briefingTimeBtnT: {
+    fontFamily: T.sansM,
+    fontSize: 12,
+    color: C.mut,
+  },
+  briefingTimeBtnTActive: { color: C.gold },
+
   profileShortcuts: { marginBottom: 20 },
   profileShortcutsLabel: { color: C.mut, fontSize: 10, fontFamily: T.sansB, letterSpacing: 1.5, marginBottom: 10, textTransform: "uppercase" },
   profileShortcutCard: {

@@ -2,9 +2,10 @@ import React, { useState, useRef } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, TextInput, Pressable,
   StyleSheet, Alert, ActivityIndicator, TouchableOpacity, Animated,
-  KeyboardAvoidingView, Platform, Share, Clipboard,
+  KeyboardAvoidingView, Platform, Share, Clipboard, Modal,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { C, T } from "../theme";
 import { BackBar, Btn, g, tap } from "../components";
 import { createTrip, getFlightStatus, draftTripFromText } from "../api";
@@ -60,6 +61,57 @@ function Field({ label, value, onChangeText, placeholder, keyboardType, autoCapi
   );
 }
 
+// ── DateField — tap to open native date+time picker ─────────────────────────
+function DateField({ label, value, onChange, mode = "datetime" }) {
+  const [show, setShow] = useState(false);
+  const parsed = value ? new Date(value) : new Date();
+  const display = value
+    ? (mode === "date"
+        ? parsed.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+        : parsed.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) +
+          " " + parsed.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }))
+    : null;
+
+  const handleChange = (event, selectedDate) => {
+    if (Platform.OS === "android") setShow(false);
+    if (event.type === "dismissed") return;
+    if (selectedDate) {
+      onChange(
+        mode === "date"
+          ? selectedDate.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+          : selectedDate.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) +
+            " " + selectedDate.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
+      );
+    }
+    if (Platform.OS === "ios") setShow(false);
+  };
+
+  return (
+    <View style={s.field}>
+      <Text style={s.label}>{label}</Text>
+      <Pressable
+        style={[s.input, s.dateBtn]}
+        onPress={() => { tap(); setShow(true); }}
+      >
+        <Text style={[s.dateBtnT, !display && { color: C.mut }]}>
+          {display || (mode === "date" ? "Select date" : "Select date & time")}
+        </Text>
+        <Text style={s.dateBtnIcon}>▼</Text>
+      </Pressable>
+      {show && (
+        <DateTimePicker
+          value={parsed}
+          mode={mode === "date" ? "date" : "datetime"}
+          display={Platform.OS === "ios" ? "inline" : "default"}
+          onChange={handleChange}
+          minimumDate={new Date()}
+          themeVariant="dark"
+        />
+      )}
+    </View>
+  );
+}
+
 // ── Type-specific form sections ───────────────────────────────────────────────
 
 function FlightFields({ state, set, lookingUp, looked, onFlightQueryChange }) {
@@ -88,7 +140,7 @@ function FlightFields({ state, set, lookingUp, looked, onFlightQueryChange }) {
       <Field label="Airline" value={state.carrier} onChangeText={v => set("carrier", v)} placeholder="BA" autoCapitalize="characters" editable={!looked} />
       <Field label="Cabin Class" value={state.cabinClass} onChangeText={v => set("cabinClass", v)} placeholder="Economy / Business / First" autoCapitalize="words" />
       <Field label="Seat" value={state.seat} onChangeText={v => set("seat", v)} placeholder="12A" autoCapitalize="characters" />
-      <Field label="Departure Date & Time" value={state.depDate} onChangeText={v => set("depDate", v)} placeholder="Jul 15 2026 09:30" autoCapitalize="none" />
+      <DateField label="Departure Date & Time" value={state.depDate} onChange={v => set("depDate", v)} />
       <View style={[s.field, { borderBottomWidth: 0 }]}>
         <Text style={s.label}>Confirmation #</Text>
         <TextInput style={s.input} value={state.confirmation} onChangeText={v => set("confirmation", v)}
@@ -103,8 +155,8 @@ function HotelFields({ state, set }) {
     <View style={g.group}>
       <Field label="Property Name" value={state.propertyName} onChangeText={v => set("propertyName", v)} placeholder="The Hoxton, Edinburgh" />
       <Field label="Address" value={state.address} onChangeText={v => set("address", v)} placeholder="19–21 Market St, Edinburgh" multiline />
-      <Field label="Check-in Date" value={state.checkIn} onChangeText={v => set("checkIn", v)} placeholder="Jul 3 2026" autoCapitalize="none" />
-      <Field label="Check-out Date" value={state.checkOut} onChangeText={v => set("checkOut", v)} placeholder="Jul 8 2026" autoCapitalize="none" />
+      <DateField label="Check-in Date" value={state.checkIn} onChange={v => set("checkIn", v)} mode="date" />
+      <DateField label="Check-out Date" value={state.checkOut} onChange={v => set("checkOut", v)} mode="date" />
       <Field label="Nights" value={state.nights} onChangeText={v => set("nights", v)} placeholder="5" keyboardType="number-pad" autoCapitalize="none" />
       <Field label="Guests" value={state.guests} onChangeText={v => set("guests", v)} placeholder="2" keyboardType="number-pad" autoCapitalize="none" />
       <View style={[s.field, { borderBottomWidth: 0 }]}>
@@ -121,8 +173,8 @@ function AirbnbFields({ state, set }) {
     <View style={g.group}>
       <Field label="Property Name" value={state.propertyName} onChangeText={v => set("propertyName", v)} placeholder="Cosy flat in Leith" />
       <Field label="Address" value={state.address} onChangeText={v => set("address", v)} placeholder="12 Shore, Leith, Edinburgh" multiline />
-      <Field label="Check-in Date" value={state.checkIn} onChangeText={v => set("checkIn", v)} placeholder="Jul 3 2026" autoCapitalize="none" />
-      <Field label="Check-out Date" value={state.checkOut} onChangeText={v => set("checkOut", v)} placeholder="Jul 8 2026" autoCapitalize="none" />
+      <DateField label="Check-in Date" value={state.checkIn} onChange={v => set("checkIn", v)} mode="date" />
+      <DateField label="Check-out Date" value={state.checkOut} onChange={v => set("checkOut", v)} mode="date" />
       <Field label="Nights" value={state.nights} onChangeText={v => set("nights", v)} placeholder="5" keyboardType="number-pad" autoCapitalize="none" />
       <Field label="Guests" value={state.guests} onChangeText={v => set("guests", v)} placeholder="2" keyboardType="number-pad" autoCapitalize="none" />
       <View style={[s.field, { borderBottomWidth: 0 }]}>
@@ -140,8 +192,8 @@ function TrainFields({ state, set }) {
       <Field label="Operator" value={state.carrier} onChangeText={v => set("carrier", v)} placeholder="LNER / ScotRail / Eurostar" />
       <Field label="From Station" value={state.stationFrom} onChangeText={v => set("stationFrom", v)} placeholder="London King's Cross" />
       <Field label="To Station" value={state.stationTo} onChangeText={v => set("stationTo", v)} placeholder="Edinburgh Waverley" />
-      <Field label="Departure Date & Time" value={state.depDate} onChangeText={v => set("depDate", v)} placeholder="Jul 3 2026 10:00" autoCapitalize="none" />
-      <Field label="Arrival Date & Time" value={state.arrDate} onChangeText={v => set("arrDate", v)} placeholder="Jul 3 2026 14:25" autoCapitalize="none" />
+      <DateField label="Departure Date & Time" value={state.depDate} onChange={v => set("depDate", v)} />
+      <DateField label="Arrival Date & Time" value={state.arrDate} onChange={v => set("arrDate", v)} />
       <Field label="Seat / Coach" value={state.seat} onChangeText={v => set("seat", v)} placeholder="Coach B, Seat 42" />
       <View style={[s.field, { borderBottomWidth: 0 }]}>
         <Text style={s.label}>Booking Reference</Text>
@@ -159,8 +211,8 @@ function CarFields({ state, set }) {
       <Field label="Vehicle Class" value={state.vehicleClass} onChangeText={v => set("vehicleClass", v)} placeholder="Economy / SUV / Luxury" />
       <Field label="Pickup Location" value={state.pickupLocation} onChangeText={v => set("pickupLocation", v)} placeholder="Edinburgh Airport" />
       <Field label="Dropoff Location" value={state.dropoffLocation} onChangeText={v => set("dropoffLocation", v)} placeholder="Edinburgh City Centre" />
-      <Field label="Pickup Date & Time" value={state.depDate} onChangeText={v => set("depDate", v)} placeholder="Jul 3 2026 15:00" autoCapitalize="none" />
-      <Field label="Return Date & Time" value={state.arrDate} onChangeText={v => set("arrDate", v)} placeholder="Jul 8 2026 10:00" autoCapitalize="none" />
+      <DateField label="Pickup Date & Time" value={state.depDate} onChange={v => set("depDate", v)} />
+      <DateField label="Return Date & Time" value={state.arrDate} onChange={v => set("arrDate", v)} />
       <View style={[s.field, { borderBottomWidth: 0 }]}>
         <Text style={s.label}>Confirmation #</Text>
         <TextInput style={s.input} value={state.confirmation} onChangeText={v => set("confirmation", v)}
@@ -176,8 +228,8 @@ function FerryFields({ state, set }) {
       <Field label="Operator" value={state.carrier} onChangeText={v => set("carrier", v)} placeholder="CalMac / Stena / P&O" />
       <Field label="From Port" value={state.origin} onChangeText={v => set("origin", v)} placeholder="Ardrossan" />
       <Field label="To Port" value={state.destination} onChangeText={v => set("destination", v)} placeholder="Brodick (Arran)" />
-      <Field label="Departure Date & Time" value={state.depDate} onChangeText={v => set("depDate", v)} placeholder="Jul 3 2026 09:45" autoCapitalize="none" />
-      <Field label="Return Date & Time" value={state.arrDate} onChangeText={v => set("arrDate", v)} placeholder="Jul 8 2026 17:00" autoCapitalize="none" />
+      <DateField label="Departure Date & Time" value={state.depDate} onChange={v => set("depDate", v)} />
+      <DateField label="Return Date & Time" value={state.arrDate} onChange={v => set("arrDate", v)} />
       <View style={[s.field, { borderBottomWidth: 0 }]}>
         <Text style={s.label}>Booking Reference</Text>
         <TextInput style={s.input} value={state.confirmation} onChangeText={v => set("confirmation", v)}
@@ -193,7 +245,7 @@ function ActivityFields({ state, set }) {
       <Field label="Activity / Experience" value={state.propertyName} onChangeText={v => set("propertyName", v)} placeholder="Whisky distillery tour" />
       <Field label="Provider" value={state.carrier} onChangeText={v => set("carrier", v)} placeholder="Glenfarclas / Viator / GetYourGuide" />
       <Field label="Location" value={state.address} onChangeText={v => set("address", v)} placeholder="Ballindalloch, Speyside" />
-      <Field label="Date & Time" value={state.depDate} onChangeText={v => set("depDate", v)} placeholder="Jul 5 2026 11:00" autoCapitalize="none" />
+      <DateField label="Date & Time" value={state.depDate} onChange={v => set("depDate", v)} />
       <Field label="Guests / Tickets" value={state.guests} onChangeText={v => set("guests", v)} placeholder="2" keyboardType="number-pad" autoCapitalize="none" />
       <View style={[s.field, { borderBottomWidth: 0 }]}>
         <Text style={s.label}>Booking Reference</Text>
@@ -675,6 +727,9 @@ const s = StyleSheet.create({
   // Lookup badge
   lookedBadge: { backgroundColor: "rgba(201,169,110,0.12)", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: "rgba(201,169,110,0.25)" },
   lookedT:     { color: C.gold, fontSize: 11, fontFamily: T.sansB },
+  dateBtn:     { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  dateBtnT:    { color: C.fg, fontSize: 15, fontFamily: T.sans, flex: 1 },
+  dateBtnIcon: { color: C.gold, fontSize: 10, marginLeft: 8 },
 
   // Email forward card
   importCard:      { marginTop: 28, borderRadius: 20, borderWidth: 1, borderColor: C.line, overflow: "hidden" },

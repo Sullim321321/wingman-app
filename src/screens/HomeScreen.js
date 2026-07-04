@@ -731,7 +731,50 @@ export default function HomeScreen({ navigation }) {
 
         <View style={s.rule} />
 
-        {/* ── Scrollable content: briefing + conversation ───────────────── */}
+        {/* ── HERO BRIEFING — fills the viewport above the fold ─────────── */}
+        <View style={s.heroWrap}>
+          {/* Edition line */}
+          <View style={s.edition}>
+            <Text style={s.editionDate}>{formatEditionDate()}</Text>
+            <View style={s.editionStatus}>
+              <View style={[s.editionDot, { backgroundColor: statusDotColor }]} />
+              <Text style={s.editionStatusText}>{statusLabel.toUpperCase()}</Text>
+            </View>
+          </View>
+
+          {/* Headline — large serif, takes up space */}
+          {headline ? (
+            <View style={s.headlineWrap}>
+              <HeadlineText text={headline} />
+            </View>
+          ) : null}
+
+          {/* Prose briefing */}
+          {prose ? (
+            <Text style={s.prose}>{prose}</Text>
+          ) : null}
+
+          {/* Tap-to-speak hint — only when not speaking */}
+          {!isSpeaking && headline ? (
+            <Pressable onPress={() => { tap(); speakBriefing(); }} style={s.speakHint}>
+              <Text style={s.speakHintT}>▶ Hear briefing</Text>
+            </Pressable>
+          ) : null}
+          {isSpeaking ? (
+            <Pressable onPress={() => { tap(); speakBriefing(); }} style={s.speakHint}>
+              <Text style={[s.speakHintT, { color: C.gold }]}>◼ Stop</Text>
+            </Pressable>
+          ) : null}
+        </View>
+
+        {/* ── CONVERSATION divider ──────────────────────────────────────── */}
+        <View style={s.sectionRule}>
+          <View style={s.sectionRuleLine} />
+          <Text style={s.sectionRuleLabel}>CONVERSATION</Text>
+          <View style={s.sectionRuleLine} />
+        </View>
+
+        {/* ── Scrollable conversation thread ────────────────────────────── */}
         <FlatList
           ref={listRef}
           style={{ flex: 1 }}
@@ -739,39 +782,8 @@ export default function HomeScreen({ navigation }) {
           data={messages}
           keyExtractor={(_, i) => String(i)}
           renderItem={renderMessage}
-          ListHeaderComponent={() => (
-            <>
-              {/* Edition line */}
-              <View style={s.edition}>
-                <Text style={s.editionDate}>{formatEditionDate()}</Text>
-                <View style={s.editionStatus}>
-                  <View style={[s.editionDot, { backgroundColor: statusDotColor }]} />
-                  <Text style={s.editionStatusText}>{statusLabel.toUpperCase()}</Text>
-                </View>
-              </View>
-
-              {/* Headline */}
-              {headline ? (
-                <View style={s.headlineWrap}>
-                  <HeadlineText text={headline} />
-                </View>
-              ) : null}
-
-              {/* Prose briefing */}
-              {prose ? (
-                <Text style={s.prose}>{prose}</Text>
-              ) : null}
-
-              {/* No-trip state: briefing only — no CTAs on Home */}
-
-              {/* CONVERSATION rule */}
-              <View style={s.sectionRule}>
-                <View style={s.sectionRuleLine} />
-                <Text style={s.sectionRuleLabel}>CONVERSATION</Text>
-                <View style={s.sectionRuleLine} />
-              </View>
-            </>
-          )}
+          ListHeaderComponent={null}
+          ListHeaderComponentStyle={null}
           ListFooterComponent={() => (
             <>
               {chatLoading && (
@@ -988,6 +1000,29 @@ const s = StyleSheet.create({
     marginHorizontal: 24,
     backgroundColor: C.line,
     opacity: 0.5,
+  },
+
+  // ── Hero briefing wrapper ──
+  // Sits between masthead and CONVERSATION divider.
+  // Does NOT scroll — it is always visible above the fold.
+  heroWrap: {
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: C.line,
+    borderBottomOpacity: 0.4,
+  },
+
+  // Tap-to-speak hint line below prose
+  speakHint: {
+    paddingHorizontal: 24,
+    paddingTop: 14,
+  },
+  speakHintT: {
+    fontFamily: T.sansM,
+    fontSize: 11,
+    letterSpacing: 1.5,
+    color: C.mut,
+    textTransform: "uppercase",
   },
 
   // ── Scroll content ──

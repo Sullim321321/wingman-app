@@ -50,6 +50,9 @@ function Field({ label, value, onChangeText, placeholder, keyboardType, autoCapi
         placeholderTextColor={C.mut}
         keyboardType={keyboardType || "default"}
         autoCapitalize={autoCapitalize || "words"}
+        autoCorrect={autoCapitalize !== "characters" && autoCapitalize !== "none"}
+        spellCheck={autoCapitalize !== "characters" && autoCapitalize !== "none"}
+        keyboardAppearance="dark"
         editable={editable}
         multiline={multiline}
       />
@@ -205,7 +208,7 @@ function ActivityFields({ state, set }) {
 export default function AddTripScreen({ navigation }) {
   const [title, setTitle]   = useState("");
   const [mode, setMode]     = useState("solo");
-  const [tab, setTab]       = useState("ai");
+    const [tab, setTab] = useState("ai"); // AI is always the default entry point
   const [legType, setLegType] = useState("flight");
 
   // AI / NL drafting
@@ -287,7 +290,7 @@ export default function AddTripScreen({ navigation }) {
       setDrafted(true);
       setTab("manual");
       tap("medium");
-      Alert.alert("Trip drafted", "Review the details below and save when ready.");
+      // No Alert — the form fills in and the user can see the result immediately
     } catch (e) {
       Alert.alert("Couldn't draft trip", e.message || "Try being more specific.");
     } finally {

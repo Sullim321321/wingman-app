@@ -268,8 +268,15 @@ export default function ConciergeScreen({ route, navigation }) {
       const updated = [...newMessages, aiMsg];
       setMessages(updated);
       scheduleSave(updated.slice(1), activeTripId);
-    } catch {
-      setMessages(prev => [...prev, { role: "assistant", content: "Sorry, I couldn't connect right now. Try again in a moment." }]);
+    } catch (err) {
+      const isTimeout = err?.name === "TimeoutError" || err?.name === "AbortError";
+      const isOffline = err?.message?.includes("No connection") || err?.message?.includes("Network request failed");
+      const errMsg = isOffline
+        ? "No internet connection — check your signal and try again."
+        : isTimeout
+        ? "That took too long to respond. The server may be waking up — try again in a few seconds."
+        : "Something went wrong. Try again in a moment.";
+      setMessages(prev => [...prev, { role: "assistant", content: errMsg }]);
     } finally {
       setLoading(false);
     }

@@ -1,10 +1,11 @@
 // FlightSearchScreen — Route search, flight number lookup, confirmation lookup
 // Warm espresso palette + champagne gold
+// Build #35: airport autocomplete, time-aware UX, better error messages
 
-import React, { useState } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import {
   View, Text, TextInput, ScrollView, Pressable, ActivityIndicator,
-  StyleSheet, Platform, KeyboardAvoidingView,
+  StyleSheet, Platform, KeyboardAvoidingView, FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BackBar, Btn, Segmented, g, tap } from "../components";
@@ -35,6 +36,83 @@ function toYMD(d) {
 }
 function displayDate(d) {
   return d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+}
+
+// ─── Airport Autocomplete Input ──────────────────────────────────────────────
+
+function AirportInput({ label, value, iata, onSelect, placeholder }) {
+  const [query, setQuery] = useState(value || "");
+  const [suggestions, setSuggestions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const debounceRef = useRef(null);
+
+  // When iata is set externally (e.g. swap), sync the display
+  React.useEffect(() => {
+    if (iata && value) setQuery(`${iata} — ${value}`);
+  }, [iata, value]);
+
+  function handleChange(text) {
+    setQuery(text);
+    // If user clears the field, clear the selection
+    if (!text) { onSelect(null); setSuggestions([]); return; }
+    // Debounce 300ms
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      if (text.length < 2) { setSuggestions([]); return; }
+      setLoading(true);
+      try {
+        const res = await api.searchAirports(text);
+        setSuggestions(res.airports || []);
+      } catch { setSuggestions([]); }
+      finally { setLoading(false); }
+    }, 300);
+  }
+
+  function handleSelect(airport) {
+    tap();
+    setQuery(`${airport.iata} — ${airport.city}`);
+    setSuggestions([]);
+    onSelect(airport);
+  }
+
+  return (
+    <View style={{ flex: 1 }}>
+      <View style={s.inputWrap}>
+        <Text style={s.inputLabel}>{label}</Text>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <TextInput
+            style={[s.input, { flex: 1 }]}
+            placeholder={placeholder || "City or airport"}
+            placeholderTextColor={C.mut}
+            value={query}
+            onChangeText={handleChange}
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="off"
+            returnKeyType="search"
+          />
+          {loading && <ActivityIndicator size="small" color={C.gold} style={{ marginLeft: 6 }} />}
+        </View>
+      </View>
+      {suggestions.length > 0 && (
+        <View style={s.dropdown}>
+          {suggestions.map((a, i) => (
+            <Pressable
+              key={a.iata + i}
+              style={[s.dropdownItem, i < suggestions.length - 1 && s.dropdownDivider]}
+              onPress={() => handleSelect(a)}
+            >
+              <Text style={s.dropdownIata}>{a.iata}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={s.dropdownName} numberOfLines={1}>{a.city}</Text>
+                <Text style={s.dropdownCountry} numberOfLines={1}>{a.name}{a.country ? ` · ${a.country}` : ""}</Text>
+              </View>
+            </Pressable>
+          ))}
+        </View>
+      )}
+    </View>
+  );
 }
 
 // ─── Offer Card ─────────────────────────────────────────────────────────────
@@ -152,7 +230,6 @@ function ConfirmationCard({ trip }) {
 }
 
 // ─── Date Picker Row ─────────────────────────────────────────────────────────
-// Simple +/- day stepper — no native module required
 
 function DateRow({ label, date, onChange }) {
   function shift(days) {
@@ -185,9 +262,9 @@ const TABS = ["Route", "Flight No.", "Confirmation"];
 export default function FlightSearchScreen({ navigation }) {
   const [tab, setTab] = useState("Route");
 
-  // Route tab
-  const [origin, setOrigin]           = useState("");
-  const [destination, setDestination] = useState("");
+  // Route tab — now stores full airport objects
+  const [originAirport, setOriginAirport]           = useState(null);
+  const [destinationAirport, setDestinationAirport] = useState(null);
   const [departDate, setDepartDate]   = useState(new Date(Date.now() + 86400000));
   const [returnDate, setReturnDate]   = useState(new Date(Date.now() + 7 * 86400000));
   const [cabin, setCabin]             = useState("economy");
@@ -208,15 +285,17 @@ export default function FlightSearchScreen({ navigation }) {
 
   // ── Route search ──────────────────────────────────────────────────────────
   async function searchRoute() {
-    if (!origin.trim() || !destination.trim()) {
-      setError("Please enter origin and destination airports.");
+    const originIata = originAirport?.iata;
+    const destIata = destinationAirport?.iata;
+    if (!originIata || !destIata) {
+      setError("Please select an origin and destination airport from the suggestions.");
       return;
     }
     setError(null); setLoading(true); setOffers(null);
     try {
       const body = {
-        origin: origin.trim().toUpperCase(),
-        destination: destination.trim().toUpperCase(),
+        origin: originIata,
+        destination: destIata,
         departure_date: toYMD(departDate),
         cabin_class: cabin,
         passengers: parseInt(passengers, 10) || 1,
@@ -224,12 +303,20 @@ export default function FlightSearchScreen({ navigation }) {
       if (tripType === "Return") body.return_date = toYMD(returnDate);
       const result = await api.searchFlights(body);
       setOffers(result.offers || []);
-      if ((result.offers || []).length === 0) setError("No flights found. Try different dates or airports.");
+      if ((result.offers || []).length === 0) setError("No flights found for this route and date. Try adjusting your dates or cabin class.");
     } catch (e) {
       setError(e.message || "Search failed. Please try again.");
     } finally {
       setLoading(false);
     }
+  }
+
+  // ── Swap origin/destination ───────────────────────────────────────────────
+  function swapAirports() {
+    tap();
+    const tmp = originAirport;
+    setOriginAirport(destinationAirport);
+    setDestinationAirport(tmp);
   }
 
   // ── Flight number lookup ──────────────────────────────────────────────────
@@ -253,7 +340,6 @@ export default function FlightSearchScreen({ navigation }) {
     if (!ref) { setError("Enter a booking reference or confirmation number."); return; }
     setError(null); setLoading(true); setConfirmResult(null);
     try {
-      // Search user's saved trips for a matching booking reference
       const data = await api.getTrips();
       const trips = data.trips || [];
       const match = trips.find(t =>
@@ -303,38 +389,24 @@ export default function FlightSearchScreen({ navigation }) {
               <Segmented options={["One-way", "Return"]} value={tripType} onChange={setTripType} />
 
               <Text style={g.sectionT}>ROUTE</Text>
-              <View style={s.row}>
-                <View style={[s.inputWrap, { flex: 1 }]}>
-                  <Text style={s.inputLabel}>From</Text>
-                  <TextInput
-                    style={s.input}
-                    placeholder="JFK"
-                    placeholderTextColor={C.mut}
-                    value={origin}
-                    onChangeText={v => setOrigin(v.toUpperCase())}
-                    autoCapitalize="characters"
-                    autoCorrect={false}
-                    maxLength={3}
-                    returnKeyType="next"
-                  />
-                </View>
-                <Pressable style={s.swap} onPress={() => { tap(); const t = origin; setOrigin(destination); setDestination(t); }}>
+              <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8, zIndex: 10 }}>
+                <AirportInput
+                  label="From"
+                  value={originAirport?.city}
+                  iata={originAirport?.iata}
+                  placeholder="City or airport"
+                  onSelect={setOriginAirport}
+                />
+                <Pressable style={[s.swap, { marginTop: 28 }]} onPress={swapAirports}>
                   <Text style={{ color: C.gold, fontSize: 18 }}>⇄</Text>
                 </Pressable>
-                <View style={[s.inputWrap, { flex: 1 }]}>
-                  <Text style={s.inputLabel}>To</Text>
-                  <TextInput
-                    style={s.input}
-                    placeholder="LAX"
-                    placeholderTextColor={C.mut}
-                    value={destination}
-                    onChangeText={v => setDestination(v.toUpperCase())}
-                    autoCapitalize="characters"
-                    autoCorrect={false}
-                    maxLength={3}
-                    returnKeyType="done"
-                  />
-                </View>
+                <AirportInput
+                  label="To"
+                  value={destinationAirport?.city}
+                  iata={destinationAirport?.iata}
+                  placeholder="City or airport"
+                  onSelect={setDestinationAirport}
+                />
               </View>
 
               <Text style={g.sectionT}>DATES</Text>
@@ -370,13 +442,18 @@ export default function FlightSearchScreen({ navigation }) {
 
               {error ? <Text style={s.error}>{error}</Text> : null}
               <View style={{ marginTop: 20, marginBottom: 24 }}>
-                <Btn title={loading ? "Searching…" : "Search Flights"} onPress={searchRoute} kind="primary" />
+                <Btn
+                  title={loading ? "Searching airlines…" : "Search Flights"}
+                  onPress={searchRoute}
+                  kind="primary"
+                  disabled={loading}
+                />
               </View>
 
               {loading && (
                 <View style={{ alignItems: "center", paddingVertical: 40 }}>
                   <ActivityIndicator color={C.gold} size="large" />
-                  <Text style={{ color: C.mut, marginTop: 12, fontSize: 13 }}>Checking airlines…</Text>
+                  <Text style={{ color: C.mut, marginTop: 12, fontSize: 13 }}>Checking all airlines — usually takes 10–20 seconds…</Text>
                 </View>
               )}
               {offers && offers.length > 0 && (
@@ -417,7 +494,7 @@ export default function FlightSearchScreen({ navigation }) {
 
               {error ? <Text style={s.error}>{error}</Text> : null}
               <View style={{ marginTop: 20, marginBottom: 24 }}>
-                <Btn title={loading ? "Looking up…" : "Look Up Flight"} onPress={lookupFlight} kind="primary" />
+                <Btn title={loading ? "Looking up…" : "Look Up Flight"} onPress={lookupFlight} kind="primary" disabled={loading} />
               </View>
 
               {loading && (
@@ -458,7 +535,7 @@ export default function FlightSearchScreen({ navigation }) {
 
               {error ? <Text style={s.error}>{error}</Text> : null}
               <View style={{ marginTop: 20, marginBottom: 24 }}>
-                <Btn title={loading ? "Searching…" : "Find Trip"} onPress={lookupConfirmation} kind="primary" />
+                <Btn title={loading ? "Searching…" : "Find Trip"} onPress={lookupConfirmation} kind="primary" disabled={loading} />
               </View>
 
               {loading && (
@@ -504,7 +581,15 @@ const s = StyleSheet.create({
   dateDisplay: { color: C.ink, fontSize: 14, fontFamily: T.sansM },
   dateBtn: { width: 28, height: 28, borderRadius: 8, backgroundColor: C.card2, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", alignItems: "center", justifyContent: "center" },
   dateBtnT: { color: C.gold, fontSize: 18, fontFamily: T.sansB, lineHeight: 22 },
-  swap: { width: 36, height: 36, borderRadius: 10, backgroundColor: C.card, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", alignItems: "center", justifyContent: "center", marginTop: 16 },
+  swap: { width: 36, height: 36, borderRadius: 10, backgroundColor: C.card, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", alignItems: "center", justifyContent: "center" },
+
+  // Airport autocomplete dropdown
+  dropdown: { backgroundColor: C.card2, borderWidth: 1, borderColor: "rgba(201,169,110,0.25)", borderRadius: 12, marginTop: 2, marginBottom: 4, overflow: "hidden", zIndex: 999 },
+  dropdownItem: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 12, paddingVertical: 10 },
+  dropdownDivider: { borderBottomWidth: 1, borderBottomColor: C.line },
+  dropdownIata: { color: C.gold, fontSize: 15, fontFamily: T.sansB, minWidth: 36 },
+  dropdownName: { color: C.ink, fontSize: 14, fontFamily: T.sansM },
+  dropdownCountry: { color: C.mut, fontSize: 11, fontFamily: T.sans, marginTop: 1 },
 
   cabinBtn: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 10, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
   cabinBtnSel: { backgroundColor: "rgba(201,169,110,0.12)", borderColor: C.gold },

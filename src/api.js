@@ -169,6 +169,7 @@ export const searchAwards = ({ origin, destination, date, cabin = 'economy' }) =
   req(`/awards/search?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&date=${encodeURIComponent(date)}&cabin=${encodeURIComponent(cabin)}`);
 
 // Duffel flight search + booking
+export const searchAirports = (q) => req(`/airports/search?q=${encodeURIComponent(q)}`);
 export const searchFlights = (body) =>
   req("/flights/search", { method: "POST", body: JSON.stringify(body) });
 export const getFlightOffer = (offerId) => req("/flights/offer/" + offerId);

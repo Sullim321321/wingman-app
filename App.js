@@ -105,7 +105,7 @@ const TAB_ICONS = {
 const TAB_LABELS = {
   Home:         "HOME",
   Trips:        "TRIPS",
-  Intelligence: "INTEL",
+  Intelligence: "SIGNALS",
   Insights:     "INSIGHTS",
 };
 
@@ -352,6 +352,7 @@ function Root() {
             <Stack.Screen name="AirportDining"      component={AirportDiningScreen} />
             <Stack.Screen name="AirportNavigation"  component={AirportNavigationScreen} />
             <Stack.Screen name="LoungeCards"          component={LoungeCardsScreen} />
+            <Stack.Screen name="Concierge"            component={ConciergeScreen} />
             <Stack.Screen name="Disruption"           component={DisruptionScreen} />
             <Stack.Screen name="JourneySimulator"     component={JourneySimulatorScreen} />
             <Stack.Screen name="TravelProfile"        component={TravelProfileScreen} />

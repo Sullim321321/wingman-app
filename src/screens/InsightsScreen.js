@@ -214,6 +214,19 @@ export default function InsightsScreen({ navigation }) {
           </View>
         </View>
 
+        {/* New user motivational empty state */}
+        {tripsTotal === 0 && disruptionsHandled === 0 && events.length === 0 && (
+          <View style={s.newUserCard}>
+            <Text style={s.newUserHed}>Your travel ROI starts here.</Text>
+            <Text style={s.newUserBody}>
+              Once Wingman handles its first disruption on your behalf, your savings, time recovered, and rescue rate will appear here — compounding with every trip.
+            </Text>
+            <Pressable style={s.newUserBtn} onPress={() => { tap(); navigation.navigate("AddTrip"); }}>
+              <Text style={s.newUserBtnT}>Add your first trip  →</Text>
+            </Pressable>
+          </View>
+        )}
+
         {/* Recent outcomes */}
         {events.length > 0 && (
           <View>
@@ -299,6 +312,12 @@ const s = StyleSheet.create({
   learnIcon: { fontSize: 22, color: C.gold, marginTop: 2 },
   learnTitle: { color: C.gold, fontSize: 14, fontFamily: T.sansB, marginBottom: 4 },
   learnBody: { color: C.mut, fontSize: 13, lineHeight: 19 },
+
+  newUserCard: { backgroundColor: C.card, borderWidth: 1, borderColor: "rgba(201,169,110,0.15)", borderRadius: 16, padding: 22, marginBottom: 16 },
+  newUserHed:  { fontFamily: T.garamondI, fontSize: 22, color: C.ink, marginBottom: 10, lineHeight: 28 },
+  newUserBody: { fontFamily: T.sans, fontSize: 14, color: C.mut, lineHeight: 21, marginBottom: 18 },
+  newUserBtn:  { backgroundColor: "rgba(201,169,110,0.12)", borderWidth: 1, borderColor: "rgba(201,169,110,0.3)", borderRadius: 24, paddingVertical: 12, paddingHorizontal: 20, alignSelf: "flex-start" },
+  newUserBtnT: { fontFamily: T.sansM, fontSize: 14, color: C.gold },
 
   outcomeRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.line },
   outcomeIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: "rgba(201,169,110,0.08)", alignItems: "center", justifyContent: "center" },

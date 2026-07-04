@@ -232,7 +232,7 @@ export default function SettingsScreen({ navigation }) {
   if (loading) {
     return (
       <SafeAreaView style={s.app}>
-        <BackBar nav={navigation} label="Trust controls" />
+        <BackBar nav={navigation} label="Settings" />
         <ActivityIndicator color={C.gold} style={{ marginTop: 60 }} />
       </SafeAreaView>
     );
@@ -241,7 +241,7 @@ export default function SettingsScreen({ navigation }) {
   return (
     <SafeAreaView style={s.app}>
       <ScrollView contentContainerStyle={g.scroll}>
-        <BackBar nav={navigation} label="Trust controls" />
+        <BackBar nav={navigation} label="Settings" />
 
         <View style={g.trustNote}>
           <Text style={g.trustNoteT}>
@@ -362,54 +362,6 @@ export default function SettingsScreen({ navigation }) {
                   thumbColor={locationEnabled ? C.inkD : C.mut}
                   ios_backgroundColor={C.card2}
                 />
-              }
-            />
-          </View>
-        </View>
-
-        <Text style={g.sectionT}>MORNING BRIEFING</Text>
-        <View style={g.group}>
-          <SetRow
-            ic="◷"
-            iconColor={C.gold}
-            t="Daily briefing"
-            sub={briefingEnabled ? `Sent at ${briefingHour}:00 each morning` : "Briefing paused"}
-            right={
-              <Switch
-                value={briefingEnabled}
-                onValueChange={async (val) => {
-                  setBriefingEnabled(val);
-                  try { await updateBriefingTime(briefingHour); } catch {}
-                }}
-                trackColor={{ true: C.gold, false: C.card2 }}
-                thumbColor={briefingEnabled ? C.inkD : C.mut}
-                ios_backgroundColor={C.card2}
-              />
-            }
-          />
-          <View style={{ borderBottomWidth: 0 }}>
-            <SetRow
-              ic="⏰"
-              iconColor={C.gold}
-              t="Briefing time"
-              sub="Choose when you receive your morning brief"
-              right={
-                <View style={{ flexDirection: "row", gap: 6 }}>
-                  {[6, 7, 8, 9].map(h => (
-                    <TouchableOpacity
-                      key={h}
-                      onPress={async () => {
-                        setBriefingHour(h);
-                        try { await updateBriefingTime(h); } catch {}
-                      }}
-                      style={[s.themeBtn, briefingHour === h && s.themeBtnActive]}
-                    >
-                      <Text style={[s.themeBtnT, briefingHour === h && s.themeBtnTActive]}>
-                        {h}am
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
               }
             />
           </View>

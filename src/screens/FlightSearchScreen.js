@@ -232,23 +232,29 @@ function ConfirmationCard({ trip }) {
 // ─── Date Picker Row ─────────────────────────────────────────────────────────
 
 function DateRow({ label, date, onChange }) {
-  function shift(days) {
-    const d = new Date(date);
-    d.setDate(d.getDate() + days);
-    if (d >= new Date(new Date().setHours(0,0,0,0))) onChange(d);
-  }
+  const [show, setShow] = React.useState(false);
   return (
     <View style={[s.inputWrap, { flex: 1 }]}>
       <Text style={s.inputLabel}>{label}</Text>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 }}>
-        <Pressable onPress={() => shift(-1)} style={s.dateBtn}>
-          <Text style={s.dateBtnT}>‹</Text>
-        </Pressable>
-        <Text style={[s.dateDisplay, { flex: 1, textAlign: "center" }]}>{displayDate(date)}</Text>
-        <Pressable onPress={() => shift(1)} style={s.dateBtn}>
-          <Text style={s.dateBtnT}>›</Text>
-        </Pressable>
-      </View>
+      <Pressable
+        style={s.dateTapBtn}
+        onPress={() => { tap(); setShow(true); }}
+      >
+        <Text style={s.dateTapBtnT}>{displayDate(date)}</Text>
+      </Pressable>
+      {show && (
+        <DateTimePicker
+          value={date}
+          mode="date"
+          display="spinner"
+          minimumDate={new Date(new Date().setHours(0,0,0,0))}
+          themeVariant="dark"
+          onChange={(_, selected) => {
+            setShow(false);
+            if (selected) onChange(selected);
+          }}
+        />
+      )}
     </View>
   );
 }
@@ -578,9 +584,8 @@ const s = StyleSheet.create({
   inputWrap: { backgroundColor: C.card, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", borderRadius: 12, padding: 12, marginBottom: 4 },
   inputLabel: { color: C.mut, fontSize: 11, fontFamily: T.sansB, letterSpacing: 1, marginBottom: 4 },
   input: { color: C.ink, fontSize: 16, fontFamily: T.sansM },
-  dateDisplay: { color: C.ink, fontSize: 14, fontFamily: T.sansM },
-  dateBtn: { width: 28, height: 28, borderRadius: 8, backgroundColor: C.card2, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", alignItems: "center", justifyContent: "center" },
-  dateBtnT: { color: C.gold, fontSize: 18, fontFamily: T.sansB, lineHeight: 22 },
+  dateTapBtn: { backgroundColor: C.card2, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, marginTop: 4 },
+  dateTapBtnT: { color: C.ink, fontSize: 14, fontFamily: T.sansM },
   swap: { width: 36, height: 36, borderRadius: 10, backgroundColor: C.card, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", alignItems: "center", justifyContent: "center" },
 
   // Airport autocomplete dropdown

@@ -301,10 +301,20 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPr
         }).join(" · ")
       : null;
 
-    // Top news headline — just the first one, no source attribution
-    const topNews = newsData?.articles?.[0]?.title || null;
-
-    prose = [weatherDetail, trafficLine, eventsLine, topNews, "How can I help today?"].filter(Boolean).join(" ");
+    // Build prose from contextual signals — NO raw news headlines
+    const proseParts = [];
+    if (weatherDetail) proseParts.push(weatherDetail);
+    if (trafficLine) proseParts.push(trafficLine);
+    if (eventsLine) proseParts.push(`You have ${eventsLine}`);
+    // Closing offer — personalised with name and city
+    if (name && city) {
+      proseParts.push(`I see you're in ${city}. What can I help you with?`);
+    } else if (city) {
+      proseParts.push(`What can I help you with in ${city}?`);
+    } else {
+      proseParts.push("What can I help you with?");
+    }
+    prose = proseParts.join(" ");
   }
 
   return { headline, prose, statusDotColor, statusLabel };
@@ -314,10 +324,11 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPr
 function buildWelcomeMessage(trips, firstName, city) {
   const next = findNextFlight(trips);
   if (!next) {
-    const name = firstName ? `, ${firstName}` : "";
     const hour = new Date().getHours();
-    const greet = hour < 12 ? `Morning${name}` : hour < 17 ? `Afternoon${name}` : `Evening${name}`;
-    return `${greet}. How can I help today?`;
+    const timeGreet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+    const namePart = firstName ? `, ${firstName}` : "";
+    const cityPart = city ? ` I see you're in ${city}.` : "";
+    return `${timeGreet}${namePart}.${cityPart} What can I help you with?`;
   }
   const diff  = new Date(next.departs_at).getTime() - Date.now();
   if (diff <= 0) return "Good day. I'm monitoring your active trip. What can I do for you?";
@@ -350,6 +361,8 @@ export default function HomeScreen({ navigation }) {
   const [todayEvents, setTodayEvents]   = useState([]);   // [{ title, time, location }]
   const [restaurantSuggestion, setRestaurantSuggestion] = useState(null); // { name, rating, maps_url }
   const [isSpeaking, setIsSpeaking]     = useState(false);
+  const [isRefreshing, setIsRefreshing]  = useState(false);
+  const [briefingLoading, setBriefingLoading] = useState(true); // skeleton state
 
   // Chat state
   const [messages, setMessages]         = useState([{ role: "assistant", content: "" }]);
@@ -367,8 +380,35 @@ export default function HomeScreen({ navigation }) {
 
   // ── Data loading ────────────────────────────────────────────────────────────
 
+  // ── Manual refresh ─────────────────────────────────────────────────────────
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      const [tripsData, meData] = await Promise.allSettled([getTrips(), getMe()]);
+      if (tripsData.status === "fulfilled") {
+        const loaded = tripsData.value.trips || [];
+        tripsRef.current = loaded;
+        setTrips(loaded);
+      }
+      if (meData.status === "fulfilled" && meData.value?.first_name) {
+        setFirstName(meData.value.first_name);
+      }
+      // Re-fetch home state with current location
+      const lat = userLocation?.lat;
+      const lng = userLocation?.lng;
+      if (lat && lng) {
+        const hs = await getHomeState({ lat, lng });
+        if (hs?.ok) setHomeState(hs);
+        const ws = await getWeather({ lat, lng });
+        if (ws?.ok) setWeather(ws);
+      }
+    } catch {}
+    setIsRefreshing(false);
+  }, [userLocation]);
+
   useFocusEffect(useCallback(() => {
     let cancelled = false;
+    setBriefingLoading(true);
 
     // Load trips
     getTrips()
@@ -393,7 +433,7 @@ export default function HomeScreen({ navigation }) {
             .catch(() => {});
         }
       })
-      .catch(() => { if (!cancelled) setTripsLoaded(true); });
+      .catch(() => { if (!cancelled) { setTripsLoaded(true); setBriefingLoading(false); } });
 
     // Location + weather + home state
     (async () => {
@@ -436,8 +476,9 @@ export default function HomeScreen({ navigation }) {
             if (hs.value?.restaurant_suggestion) setRestaurantSuggestion(hs.value.restaurant_suggestion);
           }
           if (w.status === "fulfilled" && w.value?.ok) setWeather(w.value);
+          if (!cancelled) setBriefingLoading(false);
         }
-      } catch {}
+      } catch { if (!cancelled) setBriefingLoading(false); }
     })();
 
     // User name + travel preferences
@@ -737,22 +778,45 @@ export default function HomeScreen({ navigation }) {
           <View style={s.edition}>
             <Text style={s.editionDate}>{formatEditionDate()}</Text>
             <View style={s.editionStatus}>
-              <View style={[s.editionDot, { backgroundColor: statusDotColor }]} />
-              <Text style={s.editionStatusText}>{statusLabel.toUpperCase()}</Text>
+              <View style={[s.editionDot, { backgroundColor: briefingLoading ? C.mut : statusDotColor }]} />
+              <Text style={s.editionStatusText}>{briefingLoading ? "LOADING" : statusLabel.toUpperCase()}</Text>
             </View>
           </View>
 
-          {/* Headline — large serif, takes up space */}
-          {headline ? (
-            <View style={s.headlineWrap}>
-              <HeadlineText text={headline} />
+          {/* Skeleton loading state */}
+          {briefingLoading ? (
+            <View style={s.skeletonWrap}>
+              <View style={[s.skeletonLine, { width: "60%", height: 44, marginBottom: 6 }]} />
+              <View style={[s.skeletonLine, { width: "80%", height: 44, marginBottom: 20 }]} />
+              <View style={[s.skeletonLine, { width: "95%", height: 16, marginBottom: 8 }]} />
+              <View style={[s.skeletonLine, { width: "85%", height: 16, marginBottom: 8 }]} />
+              <View style={[s.skeletonLine, { width: "70%", height: 16 }]} />
             </View>
-          ) : null}
+          ) : (
+            <>
+              {/* Headline — large serif, takes up space */}
+              {headline ? (
+                <View style={s.headlineWrap}>
+                  <HeadlineText text={headline} />
+                </View>
+              ) : null}
 
-          {/* Prose briefing */}
-          {prose ? (
-            <Text style={s.prose}>{prose}</Text>
-          ) : null}
+              {/* Prose briefing */}
+              {prose ? (
+                <Text style={s.prose}>{prose}</Text>
+              ) : null}
+
+              {/* Add Trip shortcut — only when no trips */}
+              {!trips.length && !briefingLoading ? (
+                <Pressable
+                  style={s.addTripShortcut}
+                  onPress={() => { tap(); navigation.navigate("AddTrip"); }}
+                >
+                  <Text style={s.addTripShortcutT}>+ Add your first trip</Text>
+                </Pressable>
+              ) : null}
+            </>
+          )}
 
           {/* Tap-to-speak hint — only when not speaking */}
           {!isSpeaking && headline ? (
@@ -782,6 +846,8 @@ export default function HomeScreen({ navigation }) {
           data={messages}
           keyExtractor={(_, i) => String(i)}
           renderItem={renderMessage}
+          refreshing={isRefreshing}
+          onRefresh={handleRefresh}
           ListHeaderComponent={null}
           ListHeaderComponentStyle={null}
           ListFooterComponent={() => (
@@ -1079,6 +1145,34 @@ const s = StyleSheet.create({
   hedGold: {
     color: C.goldL,
     fontFamily: T.garamondSI,
+  },
+
+  // ── Skeleton loading ──
+  skeletonWrap: {
+    paddingHorizontal: 24,
+    paddingTop: 14,
+  },
+  skeletonLine: {
+    backgroundColor: "rgba(200,168,106,0.07)",
+    borderRadius: 6,
+  },
+
+  // ── Add Trip shortcut ──
+  addTripShortcut: {
+    marginHorizontal: 24,
+    marginTop: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "rgba(200,168,106,0.25)",
+    borderRadius: 8,
+    alignSelf: "flex-start",
+  },
+  addTripShortcutT: {
+    fontFamily: T.sansM,
+    fontSize: 13,
+    color: C.gold,
+    letterSpacing: 0.5,
   },
 
   // ── Prose briefing ──

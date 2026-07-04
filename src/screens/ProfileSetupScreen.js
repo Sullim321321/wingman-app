@@ -3,15 +3,15 @@
 // EB Garamond serif headline · DM Sans body · gold primary button
 // All backend hooks preserved: updateProfile, updateLocale, injectDemoTrip
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   SafeAreaView, View, Text, TextInput, ScrollView,
-  Pressable, StyleSheet, Platform, KeyboardAvoidingView,
+  Pressable, StyleSheet, Platform, KeyboardAvoidingView, FlatList,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { C, T, GRAD } from "../theme";
 import { tap } from "../components";
-import { updateProfile, updateLocale, createTrip } from "../api";
+import { updateProfile, updateLocale, createTrip, searchAirports } from "../api";
 import * as SecureStore from "expo-secure-store";
 
 const KEY_DEMO_INJECTED = "wingman_demo_injected";
@@ -56,16 +56,19 @@ const CABIN_OPTIONS = [
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function ProfileSetupScreen({ navigation }) {
-  const [firstName,   setFirstName]   = useState("");
-  const [homeAirport, setHomeAirport] = useState("");
-  const [cabin,       setCabin]       = useState("economy");
-  const [busy,        setBusy]        = useState(false);
+  const [firstName,       setFirstName]       = useState("");
+  const [homeAirport,     setHomeAirport]     = useState(""); // display string
+  const [homeAirportCode, setHomeAirportCode] = useState(""); // IATA code
+  const [airportSuggestions, setAirportSuggestions] = useState([]);
+  const [cabin,             setCabin]         = useState("economy");
+  const [busy,              setBusy]          = useState(false);
+  const airportTimer = useRef(null);
 
   const finish = async () => {
     if (busy) return;
     setBusy(true);
     try { await SecureStore.setItemAsync(KEY_PROFILE_DONE, "1"); } catch (_) {}
-    const homeCode = homeAirport.trim().toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4);
+    const homeCode = homeAirportCode || homeAirport.trim().toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4);
     updateProfile({
       first_name: firstName.trim(),
       preferences: {
@@ -116,20 +119,57 @@ export default function ProfileSetupScreen({ navigation }) {
             returnKeyType="done"
           />
 
-          {/* Home airport */}
+          {/* Home airport — smart autocomplete */}
           <Text style={[s.fieldLabel, { marginTop: 24 }]}>HOME AIRPORT</Text>
           <Text style={s.hint}>Wingman uses this to pre-fill ground transport and lounge searches.</Text>
-          <TextInput
-            style={s.input}
-            placeholder="IATA code — e.g. JFK, LHR, SYD"
-            placeholderTextColor={C.mut}
-            autoCapitalize="characters"
-            autoCorrect={false}
-            maxLength={4}
-            value={homeAirport}
-            onChangeText={v => setHomeAirport(v.toUpperCase().replace(/[^A-Z]/g, ""))}
-            returnKeyType="done"
-          />
+          <View style={{ position: "relative", zIndex: 10 }}>
+            <TextInput
+              style={s.input}
+              placeholder="Search city or airport…"
+              placeholderTextColor={C.mut}
+              autoCapitalize="none"
+              autoCorrect={false}
+              value={homeAirport}
+              onChangeText={v => {
+                setHomeAirport(v);
+                setHomeAirportCode("");
+                clearTimeout(airportTimer.current);
+                if (v.length >= 2) {
+                  airportTimer.current = setTimeout(async () => {
+                    try {
+                      const res = await searchAirports(v);
+                      setAirportSuggestions(res?.places || []);
+                    } catch {}
+                  }, 300);
+                } else {
+                  setAirportSuggestions([]);
+                }
+              }}
+              returnKeyType="done"
+            />
+            {airportSuggestions.length > 0 && (
+              <View style={s.airportDropdown}>
+                {airportSuggestions.slice(0, 5).map((place) => (
+                  <Pressable
+                    key={place.iata_code}
+                    style={s.airportOption}
+                    onPress={() => {
+                      tap();
+                      setHomeAirport(`${place.iata_code} — ${place.city_name}`);
+                      setHomeAirportCode(place.iata_code);
+                      setAirportSuggestions([]);
+                    }}
+                  >
+                    <Text style={s.airportOptionCode}>{place.iata_code}</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.airportOptionCity}>{place.city_name}</Text>
+                      <Text style={s.airportOptionName} numberOfLines={1}>{place.name}</Text>
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
 
           {/* Cabin preference */}
           <Text style={[s.fieldLabel, { marginTop: 24 }]}>PREFERRED CABIN</Text>
@@ -265,6 +305,51 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     backgroundColor: C.card,
+  },
+
+  // ── Airport autocomplete dropdown ──
+  airportDropdown: {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    right: 0,
+    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: "rgba(200,168,106,0.25)",
+    borderRadius: 12,
+    marginTop: 4,
+    zIndex: 100,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  airportOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.04)",
+  },
+  airportOptionCode: {
+    fontFamily: T.sansB,
+    fontSize: 14,
+    color: C.gold,
+    width: 36,
+  },
+  airportOptionCity: {
+    fontFamily: T.sansM,
+    fontSize: 13,
+    color: C.ink,
+  },
+  airportOptionName: {
+    fontFamily: T.sans,
+    fontSize: 11,
+    color: C.mut,
+    marginTop: 1,
   },
 
   // ── Cabin chips ──

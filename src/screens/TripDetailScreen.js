@@ -128,7 +128,7 @@ function FlightLegRow({ leg, isCompleted, tripId, navigation }) {
         {leg.id && (
           <Pressable
             style={s.legAction}
-            onPress={() => Linking.openURL(`${API_BASE}/wallet/pass/${leg.id}`)}
+            onPress={() => { tap(); Linking.openURL(`${API_BASE}/wallet/pass/${leg.id}`); }}
           >
             <Text style={s.legActionT}>Wallet</Text>
           </Pressable>
@@ -136,11 +136,11 @@ function FlightLegRow({ leg, isCompleted, tripId, navigation }) {
         {!isCompleted && leg.id && (
           <Pressable
             style={s.legAction}
-            onPress={() => navigation.navigate("UpgradeBid", {
+            onPress={() => { tap(); navigation.navigate("UpgradeBid", {
               tripId, legId: leg.id,
               flightIdent: leg.flight_number,
               origin: leg.origin, destination: leg.destination, carrier: leg.carrier,
-            })}
+            }); }}
           >
             <Text style={s.legActionT}>Upgrade bid</Text>
           </Pressable>
@@ -148,9 +148,9 @@ function FlightLegRow({ leg, isCompleted, tripId, navigation }) {
         {isCompleted && leg.id && (
           <Pressable
             style={s.legAction}
-            onPress={() => navigation.navigate("Compensation", {
+            onPress={() => { tap(); navigation.navigate("Compensation", {
               tripId, legId: leg.id, flightIdent: leg.flight_number,
-            })}
+            }); }}
           >
             <Text style={s.legActionT}>Claim compensation</Text>
           </Pressable>
@@ -158,9 +158,9 @@ function FlightLegRow({ leg, isCompleted, tripId, navigation }) {
         {leg.destination && (
           <Pressable
             style={s.legAction}
-            onPress={() => navigation.navigate("GroundTransport", {
+            onPress={() => { tap(); navigation.navigate("GroundTransport", {
               iata: leg.destination, city: leg.destination, tripId,
-            })}
+            }); }}
           >
             <Text style={s.legActionT}>Transport</Text>
           </Pressable>
@@ -168,7 +168,7 @@ function FlightLegRow({ leg, isCompleted, tripId, navigation }) {
         {leg.destination && (
           <Pressable
             style={s.legAction}
-            onPress={() => navigation.navigate("LoungeCards", { airport: leg.destination })}
+            onPress={() => { tap(); navigation.navigate("LoungeCards", { airport: leg.destination }); }}
           >
             <Text style={s.legActionT}>Lounge</Text>
           </Pressable>
@@ -528,7 +528,7 @@ export default function TripDetailScreen({ route, navigation }) {
         {/* ── Three primary action rows ── */}
         <View style={s.actionsBlock}>
           {/* Ask Wingman */}
-          <Pressable style={s.actionRow} onPress={openConcierge}>
+          <Pressable style={s.actionRow} onPress={() => { tap(); openConcierge(); }}>
             <Text style={s.actionRowLabel}>Ask Wingman</Text>
             <Text style={s.actionRowArrow}>›</Text>
           </Pressable>
@@ -538,12 +538,12 @@ export default function TripDetailScreen({ route, navigation }) {
             <>
               <Pressable
                 style={s.actionRow}
-                onPress={() => navigation.navigate("UpgradeBid", {
+                onPress={() => { tap(); navigation.navigate("UpgradeBid", {
                   tripId: trip.id, legId: firstFlight.id,
                   flightIdent: firstFlight.flight_number,
                   origin: firstFlight.origin, destination: firstFlight.destination,
                   carrier: firstFlight.carrier,
-                })}
+                }); }}
               >
                 <Text style={s.actionRowLabel}>Upgrade bid</Text>
                 <Text style={s.actionRowArrow}>›</Text>
@@ -556,7 +556,7 @@ export default function TripDetailScreen({ route, navigation }) {
             <>
               <Pressable
                 style={s.actionRow}
-                onPress={() => Linking.openURL(`${API_BASE}/wallet/pass/${firstFlight.id}`)}
+                onPress={() => { tap(); Linking.openURL(`${API_BASE}/wallet/pass/${firstFlight.id}`); }}
               >
                 <Text style={s.actionRowLabel}>Add to Wallet</Text>
                 <Text style={s.actionRowArrow}>›</Text>
@@ -565,7 +565,7 @@ export default function TripDetailScreen({ route, navigation }) {
             </>
           )}
           {/* Share */}
-          <Pressable style={s.actionRow} onPress={handleShareTrip}>
+          <Pressable style={s.actionRow} onPress={() => { tap(); handleShareTrip(); }}>
             <Text style={s.actionRowLabel}>Share trip</Text>
             <Text style={s.actionRowArrow}>›</Text>
           </Pressable>

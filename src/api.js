@@ -426,3 +426,8 @@ export const getLocalTraffic = ({ lat, lng, city } = {}) => {
   return req(`/local-traffic?${params.toString()}`);
 };
 export const getTodayEvents = () => req("/today-events");
+
+// ── Briefing time ─────────────────────────────────────────────────────────────
+export const updateBriefingTime = (hour) =>
+  req("/me/briefing-time", { method: "PATCH", body: JSON.stringify({ briefing_hour: hour }) });
+

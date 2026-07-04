@@ -9,7 +9,7 @@ import { C, T } from "../theme";
 import { useTheme } from "../ThemeContext";
 import { BackBar, Segmented, SetRow, Chip, Btn, g } from "../components";
 import { useAuth } from "../auth";
-import { getPolicy, updatePolicy, updateLocale, getHotelAffinity, removeHotelAffinity } from "../api";
+import { getPolicy, updatePolicy, updateLocale, getHotelAffinity, removeHotelAffinity, updateBriefingTime } from "../api";
 
 export const LOCATION_OPT_IN_KEY = "wingman_location_opt_in";
 
@@ -143,6 +143,10 @@ export default function SettingsScreen({ navigation }) {
   const [locale,   setLocale]   = useState("en");
   const [currency, setCurrency] = useState("USD");
 
+  // Morning briefing time
+  const [briefingHour, setBriefingHour]       = useState(7);
+  const [briefingEnabled, setBriefingEnabled] = useState(true);
+
   // UI state
   const [loading, setLoading]   = useState(true);
   const [saving,  setSaving]    = useState(false);
@@ -163,6 +167,8 @@ export default function SettingsScreen({ navigation }) {
       if (p.quiet_hours    != null) setQuiet(p.quiet_hours);
       if (p.locale)   setLocale(p.locale);
       if (p.currency) setCurrency(p.currency);
+      if (p.briefing_hour != null) setBriefingHour(p.briefing_hour);
+      if (p.briefing_enabled != null) setBriefingEnabled(p.briefing_enabled);
     } catch (e) {
       console.warn("SettingsScreen loadPolicy:", e.message);
     } finally {
@@ -317,6 +323,54 @@ export default function SettingsScreen({ navigation }) {
                   thumbColor={locationEnabled ? C.inkD : C.mut}
                   ios_backgroundColor={C.card2}
                 />
+              }
+            />
+          </View>
+        </View>
+
+        <Text style={g.sectionT}>MORNING BRIEFING</Text>
+        <View style={g.group}>
+          <SetRow
+            ic="◷"
+            iconColor={C.gold}
+            t="Daily briefing"
+            sub={briefingEnabled ? `Sent at ${briefingHour}:00 each morning` : "Briefing paused"}
+            right={
+              <Switch
+                value={briefingEnabled}
+                onValueChange={async (val) => {
+                  setBriefingEnabled(val);
+                  try { await updateBriefingTime(briefingHour); } catch {}
+                }}
+                trackColor={{ true: C.gold, false: C.card2 }}
+                thumbColor={briefingEnabled ? C.inkD : C.mut}
+                ios_backgroundColor={C.card2}
+              />
+            }
+          />
+          <View style={{ borderBottomWidth: 0 }}>
+            <SetRow
+              ic="⏰"
+              iconColor={C.gold}
+              t="Briefing time"
+              sub="Choose when you receive your morning brief"
+              right={
+                <View style={{ flexDirection: "row", gap: 6 }}>
+                  {[6, 7, 8, 9].map(h => (
+                    <TouchableOpacity
+                      key={h}
+                      onPress={async () => {
+                        setBriefingHour(h);
+                        try { await updateBriefingTime(h); } catch {}
+                      }}
+                      style={[s.themeBtn, briefingHour === h && s.themeBtnActive]}
+                    >
+                      <Text style={[s.themeBtnT, briefingHour === h && s.themeBtnTActive]}>
+                        {h}am
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               }
             />
           </View>

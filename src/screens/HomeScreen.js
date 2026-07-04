@@ -171,7 +171,9 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPr
     statusDotColor = C.gold;
     statusLabel    = "At destination";
     const city = trip.destination_city || leg?.destination || "your destination";
-    headline = `Welcome to\n${city}.`;
+    const _destHour = new Date().getHours();
+    const _destGreet = _destHour < 12 ? "Good morning" : _destHour < 17 ? "Good afternoon" : "Good evening";
+    headline = `${_destGreet} in\n${city}.`;
     const parts = [];
     if (hotel) {
       const checkinTime = hotel.checkin_at
@@ -268,13 +270,13 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPr
     const timeGreet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
     const name = firstName || null;
     const city = w?.city || null;
-    // Headline: personalised city greeting if we have location, otherwise generic
-    if (city && name) {
+    // Headline: personalised time-aware greeting
+    if (name) {
       headline = `${timeGreet},\n${name}.`;
     } else if (city) {
-      headline = `Welcome to\n${city}.`;
+      headline = `${timeGreet}\nin ${city}.`;
     } else {
-      headline = `Your concierge\nis standing by.`;
+      headline = `${timeGreet}.\nHow can I help?`;
     }
     // Prose: weather + traffic + today's events + top news headline + open-ended offer
     const weatherDetail = w && w.temp != null
@@ -589,11 +591,15 @@ export default function HomeScreen({ navigation }) {
       const updated = [...newMessages, aiMsg];
       setMessages(updated);
       scheduleSave(updated);
-    } catch {
-      setMessages(prev => [...prev, {
-        role: "assistant",
-        content: "Sorry, I couldn't connect right now. Try again in a moment.",
-      }]);
+    } catch (err) {
+      const isTimeout = err?.name === "TimeoutError" || err?.name === "AbortError";
+      const isOffline = err?.message?.includes("No connection");
+      const errMsg = isOffline
+        ? "No internet connection — check your signal and try again."
+        : isTimeout
+        ? "That took too long to respond. The server may be waking up — try again in a few seconds."
+        : "Something went wrong. Try again in a moment.";
+      setMessages(prev => [...prev, { role: "assistant", content: errMsg }]);
     } finally {
       setChatLoading(false);
     }

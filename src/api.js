@@ -125,7 +125,11 @@ export const getWeather = (lat, lng) =>
 
 // Concierge
 export const sendConciergeMessage = (message, history = [], location = null) =>
-  req("/concierge", { method: "POST", body: JSON.stringify({ message, history, ...(location ? { location } : {}) }) });
+  req("/concierge", {
+    method: "POST",
+    body: JSON.stringify({ message, history, ...(location ? { location } : {}) }),
+    signal: AbortSignal.timeout(30000), // 30s — allows for Render cold-start + Claude latency
+  });
 
 // Apple Wallet
 export const getWalletPass = (legId) => req("/wallet/pass/" + legId);

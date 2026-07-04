@@ -408,3 +408,21 @@ export const notifyRestaurant = (tripId, legId, delayMinutes, restaurantPhone) =
     method: "POST",
     body: JSON.stringify({ leg_id: legId, delay_minutes: delayMinutes, restaurant_phone: restaurantPhone }),
   });
+
+// ── Briefing data sources ─────────────────────────────────────────────────────
+export const getLocalNews = ({ city, country, lat, lng } = {}) => {
+  const params = new URLSearchParams();
+  if (city)    params.set("city",    city);
+  if (country) params.set("country", country);
+  if (lat)     params.set("lat",     String(lat));
+  if (lng)     params.set("lng",     String(lng));
+  return req(`/local-news?${params.toString()}`);
+};
+export const getLocalTraffic = ({ lat, lng, city } = {}) => {
+  const params = new URLSearchParams();
+  if (lat)  params.set("lat",  String(lat));
+  if (lng)  params.set("lng",  String(lng));
+  if (city) params.set("city", city);
+  return req(`/local-traffic?${params.toString()}`);
+};
+export const getTodayEvents = () => req("/today-events");

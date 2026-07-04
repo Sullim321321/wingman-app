@@ -20,6 +20,7 @@ import {
   getTrips, getHomeState, getWeather, getMe,
   sendConciergeMessage, getConciergeThread, saveConciergeThread, clearConciergeThread,
   getTripBriefing, getPrediction, triggerGmailScan, getTravelProfile,
+  getLocalNews, getLocalTraffic, getTodayEvents,
 } from "../api";
 import { scheduleDisruption, schedulePreDepartureBriefing, schedulePostTripDebrief } from "../notify";
 import { LOCATION_OPT_IN_KEY } from "./SettingsScreen";
@@ -84,7 +85,7 @@ function seatLabel(seatPref) {
 }
 
 // Build the editorial headline and prose briefing from home state + trip data
-function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPrefs }) {
+function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPrefs, newsData, trafficData, todayEvents }) {
   const hs    = homeState;
   const leg   = hs?.active_leg;
   const trip  = hs?.active_trip;
@@ -270,11 +271,33 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPr
     } else {
       headline = `Your concierge\nis standing by.`;
     }
-    // Prose: weather only (no city repeat) + open-ended offer
+    // Prose: weather + traffic + today's events + top news headline + open-ended offer
     const weatherDetail = w && w.temp != null
       ? `It's ${w.temp}°${w.description ? ` and ${w.description.toLowerCase()}` : ""}.`
       : null;
-    prose = [weatherDetail, "How can I help today?"].filter(Boolean).join(" ");
+
+    // Traffic line — only if there's a notable delay
+    const trafficLine = trafficData?.summary && trafficData?.delay_mins > 5
+      ? trafficData.summary
+      : null;
+
+    // Today's calendar events — show first 2 upcoming
+    const now = new Date();
+    const upcomingEvents = (todayEvents || []).filter(e => {
+      if (!e.time) return true;
+      return new Date(e.time) > now;
+    }).slice(0, 2);
+    const eventsLine = upcomingEvents.length > 0
+      ? upcomingEvents.map(e => {
+          const timeStr = e.time ? new Date(e.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : null;
+          return timeStr ? `${timeStr} — ${e.title}` : e.title;
+        }).join(" · ")
+      : null;
+
+    // Top news headline — just the first one, no source attribution
+    const topNews = newsData?.articles?.[0]?.title || null;
+
+    prose = [weatherDetail, trafficLine, eventsLine, topNews, "How can I help today?"].filter(Boolean).join(" ");
   }
 
   return { headline, prose, statusDotColor, statusLabel };
@@ -315,6 +338,9 @@ export default function HomeScreen({ navigation }) {
   const [riskScore, setRiskScore]       = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [userPrefs, setUserPrefs]       = useState(null); // cabin, seat, lounge_cards, home_airports
+  const [newsData, setNewsData]         = useState(null); // { articles: [] }
+  const [trafficData, setTrafficData]   = useState(null); // { summary, delay_mins }
+  const [todayEvents, setTodayEvents]   = useState([]);   // [{ title, time, location }]
 
   // Chat state
   const [messages, setMessages]         = useState([{ role: "assistant", content: "" }]);
@@ -406,6 +432,30 @@ export default function HomeScreen({ navigation }) {
     getMe().then(u => { if (!cancelled && u?.first_name) setFirstName(u.first_name); }).catch(() => {});
     getTravelProfile().then(d => { if (!cancelled && d?.profile) setUserPrefs(d.profile); }).catch(() => {});
 
+    // Briefing data: news, traffic, today events — fetched in parallel, silently
+    // Only fetch when we have location
+    const fetchBriefingData = async (lat, lng, city) => {
+      try {
+        const [news, traffic, events] = await Promise.allSettled([
+          getLocalNews({ city, lat, lng }),
+          lat && lng ? getLocalTraffic({ lat, lng, city }) : Promise.resolve(null),
+          getTodayEvents(),
+        ]);
+        if (!cancelled) {
+          if (news.status === "fulfilled" && news.value?.ok) setNewsData(news.value);
+          if (traffic.status === "fulfilled" && traffic.value?.ok) setTrafficData(traffic.value);
+          if (events.status === "fulfilled" && events.value?.ok) setTodayEvents(events.value.events || []);
+        }
+      } catch {}
+    };
+    // Delay slightly to let weather/location resolve first
+    setTimeout(() => {
+      if (!cancelled) {
+        const city = null; // will be populated from weather state after it resolves
+        fetchBriefingData(null, null, null);
+      }
+    }, 2000);
+
     return () => { cancelled = true; };
   }, []));
 
@@ -414,6 +464,24 @@ export default function HomeScreen({ navigation }) {
     if (!tripsLoaded) return;
     loadThread();
   }, [tripsLoaded]);
+
+  // Refetch briefing data when weather/location resolves (provides city + coords)
+  useEffect(() => {
+    if (!weather) return;
+    const lat = userLocation?.lat;
+    const lng = userLocation?.lng;
+    const city = weather.city || null;
+    const country = weather.country_code || null;
+    Promise.allSettled([
+      getLocalNews({ city, country, lat, lng }),
+      lat && lng ? getLocalTraffic({ lat, lng, city }) : Promise.resolve(null),
+      getTodayEvents(),
+    ]).then(([news, traffic, events]) => {
+      if (news.status === "fulfilled" && news.value?.ok) setNewsData(news.value);
+      if (traffic.status === "fulfilled" && traffic.value?.ok) setTrafficData(traffic.value);
+      if (events.status === "fulfilled" && events.value?.ok) setTodayEvents(events.value.events || []);
+    }).catch(() => {});
+  }, [weather?.city]);
 
   // ── Background scan — trigger Gmail scan when app comes to foreground ────────
   // Runs silently: no spinner, no alert. Trips refresh automatically if new ones found.
@@ -546,8 +614,8 @@ export default function HomeScreen({ navigation }) {
   // ── Derived briefing ─────────────────────────────────────────────────────────
 
   const { headline, prose, statusDotColor, statusLabel } = useMemo(
-    () => buildBriefing({ homeState, trips, weather, firstName, riskScore, userPrefs }),
-    [homeState, trips, weather, firstName, riskScore, userPrefs]
+    () => buildBriefing({ homeState, trips, weather, firstName, riskScore, userPrefs, newsData, trafficData, todayEvents }),
+    [homeState, trips, weather, firstName, riskScore, userPrefs, newsData, trafficData, todayEvents]
   );
 
   const nextFlight = useMemo(() => findNextFlight(trips), [trips]);

@@ -23,6 +23,7 @@ import {
   getLocalNews, getLocalTraffic, getTodayEvents,
 } from "../api";
 import { scheduleDisruption, schedulePreDepartureBriefing, schedulePostTripDebrief } from "../notify";
+import * as Speech from "expo-speech";
 import { LOCATION_OPT_IN_KEY } from "./SettingsScreen";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -85,7 +86,7 @@ function seatLabel(seatPref) {
 }
 
 // Build the editorial headline and prose briefing from home state + trip data
-function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPrefs, newsData, trafficData, todayEvents }) {
+function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPrefs, newsData, trafficData, todayEvents, restaurantSuggestion }) {
   const hs    = homeState;
   const leg   = hs?.active_leg;
   const trip  = hs?.active_trip;
@@ -190,6 +191,10 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPr
       parts.push("You like to cut it close — I'll remind you when it's time to leave for the airport");
     } else if (destPace === "generous") {
       parts.push("I'll build in extra buffer time for your return journey");
+    }
+    if (restaurantSuggestion?.name) {
+      const stars = restaurantSuggestion.rating ? ` (${restaurantSuggestion.rating}★)` : "";
+      parts.push(`${restaurantSuggestion.name}${stars} is worth a visit`);
     }
     prose = parts.length
       ? `${parts.join(". ")}. What can I arrange for you?`
@@ -341,6 +346,8 @@ export default function HomeScreen({ navigation }) {
   const [newsData, setNewsData]         = useState(null); // { articles: [] }
   const [trafficData, setTrafficData]   = useState(null); // { summary, delay_mins }
   const [todayEvents, setTodayEvents]   = useState([]);   // [{ title, time, location }]
+  const [restaurantSuggestion, setRestaurantSuggestion] = useState(null); // { name, rating, maps_url }
+  const [isSpeaking, setIsSpeaking]     = useState(false);
 
   // Chat state
   const [messages, setMessages]         = useState([{ role: "assistant", content: "" }]);
@@ -422,7 +429,10 @@ export default function HomeScreen({ navigation }) {
           lat && lng ? getWeather(lat, lng) : Promise.resolve(null),
         ]);
         if (!cancelled) {
-          if (hs.status === "fulfilled" && hs.value?.ok) setHomeState(hs.value);
+          if (hs.status === "fulfilled" && hs.value?.ok) {
+            setHomeState(hs.value);
+            if (hs.value?.restaurant_suggestion) setRestaurantSuggestion(hs.value.restaurant_suggestion);
+          }
           if (w.status === "fulfilled" && w.value?.ok) setWeather(w.value);
         }
       } catch {}
@@ -614,8 +624,8 @@ export default function HomeScreen({ navigation }) {
   // ── Derived briefing ─────────────────────────────────────────────────────────
 
   const { headline, prose, statusDotColor, statusLabel } = useMemo(
-    () => buildBriefing({ homeState, trips, weather, firstName, riskScore, userPrefs, newsData, trafficData, todayEvents }),
-    [homeState, trips, weather, firstName, riskScore, userPrefs, newsData, trafficData, todayEvents]
+    () => buildBriefing({ homeState, trips, weather, firstName, riskScore, userPrefs, newsData, trafficData, todayEvents, restaurantSuggestion }),
+    [homeState, trips, weather, firstName, riskScore, userPrefs, newsData, trafficData, todayEvents, restaurantSuggestion]
   );
 
   const nextFlight = useMemo(() => findNextFlight(trips), [trips]);
@@ -661,6 +671,27 @@ export default function HomeScreen({ navigation }) {
 
   const isNoTrip = !trips.length;
 
+  // ── Voice briefing ───────────────────────────────────────────────────────────
+  const speakBriefing = async () => {
+    const speaking = await Speech.isSpeakingAsync();
+    if (speaking) {
+      Speech.stop();
+      setIsSpeaking(false);
+      return;
+    }
+    const text = [headline?.replace(/\n/g, " "), prose].filter(Boolean).join(" ");
+    if (!text) return;
+    setIsSpeaking(true);
+    Speech.speak(text, {
+      language: "en-GB",
+      pitch: 0.95,
+      rate: 0.9,
+      onDone: () => setIsSpeaking(false),
+      onError: () => setIsSpeaking(false),
+      onStopped: () => setIsSpeaking(false),
+    });
+  };
+
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
@@ -672,7 +703,9 @@ export default function HomeScreen({ navigation }) {
       >
         {/* ── Masthead ──────────────────────────────────────────────────── */}
         <View style={s.masthead}>
-          <Text style={s.mastW}>W</Text>
+          <Pressable onPress={() => { tap(); speakBriefing(); }} hitSlop={8}>
+            <Text style={[s.mastW, isSpeaking && { opacity: 0.5 }]}>W</Text>
+          </Pressable>
           <Text style={s.mastName}>WINGMAN</Text>
           <View style={s.mastRight}>
             {mastheadRight ? (

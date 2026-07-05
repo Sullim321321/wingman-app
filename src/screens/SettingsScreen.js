@@ -602,6 +602,7 @@ export default function SettingsScreen({ navigation }) {
         <Text style={g.sectionT}>ACCOUNT</Text>
         <Text style={s.acct}>Signed in as {email || "—"}</Text>
         <Btn title="Sign out" kind="ghost" onPress={signOut} />
+        <Text style={s.versionT}>Wingman v1.0.115 · Build 173+</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -610,6 +611,7 @@ export default function SettingsScreen({ navigation }) {
 const s = StyleSheet.create({
   app:  { flex: 1, backgroundColor: C.bg },
   acct: { color: C.mut, fontSize: 14, fontFamily: T.sans, marginBottom: 14, letterSpacing: 0.1 },
+  versionT: { color: C.mut, fontSize: 11, fontFamily: T.sans, textAlign: "center", marginTop: 8, marginBottom: 24, opacity: 0.5 },
   localeRow: {
     paddingVertical: 12,
     paddingHorizontal: 16,

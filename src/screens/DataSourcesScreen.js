@@ -60,9 +60,18 @@ export default function DataSourcesScreen({ navigation }) {
         const data = await getGmailConnectUrl();
         if (data.url) {
           await Linking.openURL(data.url);
+        } else if (data.error) {
+          Alert.alert("Gmail not available",
+            data.error === "Google OAuth not configured"
+              ? "Gmail connection requires server configuration. Please contact support."
+              : data.error);
         }
       } catch (e) {
-        Alert.alert("Gmail", e.message);
+        const msg = e?.status === 503
+          ? "Gmail connection is temporarily unavailable. Try again in a moment."
+          : e?.message?.includes("No connection") ? "No internet connection."
+          : e?.message || "Could not connect Gmail.";
+        Alert.alert("Gmail", msg);
       } finally {
         setLoadingGmail(false);
       }

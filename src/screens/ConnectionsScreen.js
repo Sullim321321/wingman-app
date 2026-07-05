@@ -163,9 +163,21 @@ export default function ConnectionsScreen({ navigation, route }) {
       if (data.url) {
         awaitingGmailReturn.current = true;
         await Linking.openURL(data.url);
+      } else if (data.error) {
+        Alert.alert(
+          "Gmail not available",
+          data.error === "Google OAuth not configured"
+            ? "Gmail connection requires Google OAuth credentials to be configured on the server. Please contact support."
+            : data.error
+        );
       }
     } catch (e) {
-      Alert.alert("Error", e.message);
+      const msg = e?.status === 503
+        ? "Gmail connection is not available right now. The server may be starting up — try again in a moment."
+        : e?.message?.includes("No connection")
+        ? "No internet connection — check your signal and try again."
+        : e?.message || "Could not connect Gmail. Try again.";
+      Alert.alert("Gmail connection failed", msg);
     } finally {
       setConnecting(false);
     }

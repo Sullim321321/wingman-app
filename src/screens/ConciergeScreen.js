@@ -269,6 +269,13 @@ export default function ConciergeScreen({ route, navigation }) {
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setLoading(true);
+    // Show a warm-up notice if the server takes more than 8 seconds (Render cold start)
+    const warmupTimer = setTimeout(() => {
+      setMessages(prev => [
+        ...prev,
+        { role: "assistant", content: "Wingman is waking up — just a moment... ☕" },
+      ]);
+    }, 8000);
     try {
       const history = newMessages.slice(1).map(m => ({ role: m.role, content: m.content }));
       const tripContext = buildTripContext(trips);
@@ -277,6 +284,7 @@ export default function ConciergeScreen({ route, navigation }) {
         ? `[User's trips:\n${tripContext}]\n\n${msg}`
         : msg;
       const data = await sendConciergeMessage(enrichedMsg, history.slice(0, -1), userLocation);
+      clearTimeout(warmupTimer);
       const aiMsg = {
         role: "assistant",
         content: data.reply,
@@ -290,14 +298,21 @@ export default function ConciergeScreen({ route, navigation }) {
       setMessages(updated);
       scheduleSave(updated.slice(1), activeTripId);
     } catch (err) {
+      clearTimeout(warmupTimer);
       const isTimeout = err?.name === "TimeoutError" || err?.name === "AbortError";
       const isOffline = err?.message?.includes("No connection") || err?.message?.includes("Network request failed");
       const errMsg = isOffline
         ? "No internet connection — check your signal and try again."
         : isTimeout
-        ? "That took too long to respond. The server may be waking up — try again in a few seconds."
+        ? "Still waking up — the server was asleep. Please try again in a few seconds."
+        : err?.message?.includes("401") || err?.message?.includes("Session expired")
+        ? "Session expired — please sign out and back in."
         : "Something went wrong. Try again in a moment.";
-      setMessages(prev => [...prev, { role: "assistant", content: errMsg }]);
+      // Remove the warm-up notice if it was shown, then add the error
+      setMessages(prev => {
+        const filtered = prev.filter(m => !m.content?.includes("Wingman is waking up"));
+        return [...filtered, { role: "assistant", content: errMsg }];
+      });
     } finally {
       setLoading(false);
     }

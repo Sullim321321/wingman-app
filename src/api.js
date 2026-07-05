@@ -146,7 +146,7 @@ export const sendConciergeMessage = (message, history = [], location = null) =>
   req("/concierge", {
     method: "POST",
     body: JSON.stringify({ message, history, ...(location ? { location } : {}) }),
-    signal: AbortSignal.timeout(30000), // 30s — allows for Render cold-start + Claude latency
+    signal: AbortSignal.timeout(65000), // 65s — Render free tier cold-start (up to 50s) + Claude latency
   });
 
 // Apple Wallet

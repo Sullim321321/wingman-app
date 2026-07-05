@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, TextInput, Pressable,
   StyleSheet, Alert, ActivityIndicator, TouchableOpacity, Animated,
-  KeyboardAvoidingView, Platform, Share, Clipboard,
+  KeyboardAvoidingView, Platform, Share,
 } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { C, T } from "../theme";
@@ -885,7 +886,7 @@ export default function AddTripScreen({ navigation, route }) {
               style={s.importActionBtn}
               onPress={() => {
                 tap();
-                Clipboard.setString("import@wingmantravel.app");
+                Clipboard.setStringAsync("import@wingmantravel.app");
                 Alert.alert("Copied", "import@wingmantravel.app copied to clipboard.");
               }}
             >

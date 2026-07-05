@@ -3,8 +3,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, StyleSheet,
-  ActivityIndicator, Pressable, Alert, Clipboard, Animated, Easing,
+  ActivityIndicator, Pressable, Alert, Animated, Easing,
 } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { C, T, GRAD } from "../theme";
 import { SerifText, BackBar, tap } from "../components";
@@ -155,7 +156,7 @@ export default function CompensationScreen({ navigation, route }) {
   const handleCopyLetter = () => {
     tap();
     if (eligibility?.template_body) {
-      Clipboard.setString(eligibility.template_body);
+      Clipboard.setStringAsync(eligibility.template_body);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     }

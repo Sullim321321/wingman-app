@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import * as Calendar from "expo-calendar";
 import * as DocumentPicker from "expo-document-picker";
+import * as Clipboard from "expo-clipboard";
 import { C, T } from "../theme";
 import { BackBar, Btn, g } from "../components";
 import {
@@ -718,8 +719,7 @@ export default function ConnectionsScreen({ navigation, route }) {
             <Pressable
               style={s.forwardActionBtn}
               onPress={() => {
-                const { Clipboard } = require("react-native");
-                Clipboard.setString(FORWARD_EMAIL);
+                Clipboard.setStringAsync(FORWARD_EMAIL);
                 Alert.alert("Copied", `${FORWARD_EMAIL} copied to clipboard.`);
               }}
             >

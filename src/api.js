@@ -35,7 +35,7 @@ async function reqRaw(path, opts = {}) {
   return r.text();
 }
 
-async function req(path, opts = {}) {
+export async function req(path, opts = {}) {
   const headers = { "Content-Type": "application/json", ...(opts.headers || {}) };
   if (_token) headers.Authorization = "Bearer " + _token;
   let r;

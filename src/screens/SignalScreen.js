@@ -4,7 +4,7 @@ import {
   ActivityIndicator, Pressable,
 } from "react-native";
 import { C, T } from "../theme";
-import { Btn, BackBar, Chip, g } from "../components";
+import { Btn, BackBar, Chip, g, tap } from "../components";
 import { getSignals, triggerGmailImport } from "../api";
 
 const SOURCE_ICONS = {
@@ -90,7 +90,7 @@ export default function SignalScreen({ navigation }) {
             <Btn
               title="Go to Connections"
               kind="ghost"
-              onPress={() => navigation.navigate("Connections")}
+              onPress={() => { tap(); navigation.navigate("Connections"); }}
               style={{ marginTop: 12 }}
             />
           </View>
@@ -107,7 +107,7 @@ export default function SignalScreen({ navigation }) {
             <Btn
               title="Connect sources"
               kind="accent"
-              onPress={() => navigation.navigate("Connections")}
+              onPress={() => { tap(); navigation.navigate("Connections"); }}
               style={{ marginTop: 14 }}
             />
           </View>
@@ -120,7 +120,7 @@ export default function SignalScreen({ navigation }) {
               <Pressable
                 key={sig.id}
                 style={s.signalCard}
-                onPress={() => navigation.navigate("Concierge", { prefill: buildPrefill(sig) })}
+                onPress={() => { tap(); navigation.navigate("Concierge", { prefill: buildPrefill(sig) }); }}
               >
                 <View style={s.signalHeader}>
                   <Text style={s.signalIcon}>{SOURCE_ICONS[sig.type] || "✦"}</Text>
@@ -196,7 +196,7 @@ export default function SignalScreen({ navigation }) {
             <Btn
               title="✦  Open Concierge"
               kind="accent"
-              onPress={() => navigation.navigate("Concierge")}
+              onPress={() => { tap(); navigation.navigate("Concierge"); }}
             />
           </View>
         )}

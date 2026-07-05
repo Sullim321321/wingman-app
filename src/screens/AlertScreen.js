@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { C, T } from "../theme";
-import { Btn, BackBar, SerifText, useCountUp, success, g } from "../components";
+import { Btn, BackBar, SerifText, useCountUp, success, g, tap } from "../components";
 import {
   getPrediction, getTrips,
   getRescueOptions, acceptRescue, rejectRescue,
@@ -380,13 +380,13 @@ export default function AlertScreen({ navigation, route }) {
             <Btn
               title="+ Add a trip"
               kind="primary"
-              onPress={() => navigation.navigate("AddTrip")}
+              onPress={() => { tap(); navigation.navigate("AddTrip"); }}
               style={{ marginTop: 24, alignSelf: "stretch" }}
             />
             <Btn
               title="Import from email"
               kind="ghost"
-              onPress={() => navigation.navigate("Connections")}
+              onPress={() => { tap(); navigation.navigate("Connections"); }}
               style={{ marginTop: 10, alignSelf: "stretch" }}
             />
           </View>

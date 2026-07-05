@@ -7,6 +7,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { req } from "../api";
 import { C as _C, T } from "../theme";
+import { tap } from "../components";
 
 // Extend shared theme with screen-specific aliases
 const C = {
@@ -263,10 +264,10 @@ export default function GroundTransportScreen() {
         {/* Ask Concierge CTA */}
         <Pressable
           style={s.conciergeCta}
-          onPress={() => navigation.navigate("Concierge", {
+          onPress={() => { tap(); navigation.navigate("Concierge", {
             prefill: `I just landed at ${iata}${destination ? ` and I'm heading to ${destination}` : ""}. What's the best way to get there and what should I know?`,
             tripId,
-          })}
+          }); }}
         >
           <Text style={s.conciergeCtaT}>✦ Ask Wingman for local advice</Text>
         </Pressable>

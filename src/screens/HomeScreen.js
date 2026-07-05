@@ -9,7 +9,7 @@ import React, {
 import {
   SafeAreaView, View, Text, TextInput, Pressable, FlatList,
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
-  Alert, Animated, Easing, AppState,
+  Alert, Animated, Easing, AppState, ScrollView,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
@@ -369,6 +369,7 @@ export default function HomeScreen({ navigation }) {
   const [input, setInput]               = useState("");
   const [chatLoading, setChatLoading]   = useState(false);
   const [threadLoading, setThreadLoading] = useState(false);
+  const [loadedAt, setLoadedAt]         = useState(null); // timestamp when briefing last loaded
 
   // Dev mode (5-tap unlock)
   const [devMode, setDevMode]           = useState(__DEV__);
@@ -476,9 +477,17 @@ export default function HomeScreen({ navigation }) {
             if (hs.value?.restaurant_suggestion) setRestaurantSuggestion(hs.value.restaurant_suggestion);
           }
           if (w.status === "fulfilled" && w.value?.ok) setWeather(w.value);
-          if (!cancelled) setBriefingLoading(false);
+          if (!cancelled) {
+          setBriefingLoading(false);
+          setLoadedAt(new Date());
         }
-      } catch { if (!cancelled) setBriefingLoading(false); }
+        }
+      } catch {
+        if (!cancelled) {
+          setBriefingLoading(false);
+          setLoadedAt(new Date());
+        }
+      }
     })();
 
     // User name + travel preferences
@@ -517,6 +526,30 @@ export default function HomeScreen({ navigation }) {
     if (!tripsLoaded) return;
     loadThread();
   }, [tripsLoaded]);
+
+  // ── Context-aware opener based on thread recency ─────────────────────────────
+  function buildContextOpener(updatedAt, trips, firstName, city) {
+    // If thread was active within last 24h, use a "welcome back" opener
+    if (updatedAt) {
+      const hoursSince = (Date.now() - new Date(updatedAt).getTime()) / 3600000;
+      if (hoursSince < 24) {
+        const next = findNextFlight(trips);
+        if (next) {
+          const diff = new Date(next.departs_at).getTime() - Date.now();
+          const hours = Math.floor(diff / 3600000);
+          const days  = Math.floor(diff / 86400000);
+          const timeStr = hours < 1 ? `in ${Math.round(diff / 60000)}m`
+            : hours < 24 ? `in ${hours}h`
+            : days === 1 ? "tomorrow"
+            : `in ${days} days`;
+          const ident = next.carrier && next.flight_number ? `${next.carrier}${next.flight_number}` : null;
+          return `Welcome back${firstName ? `, ${firstName}` : ""}. ${ident ? `${ident} departs ${timeStr}` : `Your next flight departs ${timeStr}`} — anything you need?`;
+        }
+        return `Welcome back${firstName ? `, ${firstName}` : ""}. What can I help with?`;
+      }
+    }
+    return buildWelcomeMessage(trips, firstName, city);
+  }
 
   // Refetch briefing data when weather/location resolves (provides city + coords)
   useEffect(() => {
@@ -582,10 +615,11 @@ export default function HomeScreen({ navigation }) {
     try {
       const data = await getConciergeThread(null);
       const saved = (data.messages || []).filter(m => m && (m.content || m.transit || m.places || m.action));
+      const opener = buildContextOpener(data.updated_at, tripsRef.current, firstName, weather?.city || null);
       if (saved.length > 0) {
-        setMessages([{ role: "assistant", content: buildWelcomeMessage(tripsRef.current, firstName, weather?.city || null) }, ...saved]);
+        setMessages([{ role: "assistant", content: opener }, ...saved]);
       } else {
-        setMessages([{ role: "assistant", content: buildWelcomeMessage(tripsRef.current, firstName, weather?.city || null) }]);
+        setMessages([{ role: "assistant", content: opener }]);
       }
     } catch {
       setMessages([{ role: "assistant", content: buildWelcomeMessage(tripsRef.current, firstName, weather?.city || null) }]);
@@ -718,6 +752,61 @@ export default function HomeScreen({ navigation }) {
 
   const isNoTrip = !trips.length;
 
+  // ── Dynamic placeholder based on home state ─────────────────────────────
+  const inputPlaceholder = (() => {
+    const hs = homeState;
+    const next = findNextFlight(trips);
+    if (hs?.state === "at_airport") return "Ask about your gate, lounge, or departure…";
+    if (hs?.state === "in_transit") return "Ask about your flight, connection, or arrival…";
+    if (hs?.state === "at_destination") {
+      const dest = hs?.active_trip?.destination_city || hs?.active_leg?.destination || "your destination";
+      return `Ask about restaurants, transport, or things to do in ${dest}…`;
+    }
+    if (next) {
+      const dest = next.destination || "your destination";
+      return `Ask about your trip to ${dest}…`;
+    }
+    return "Ask anything…";
+  })();
+
+  // ── Context-aware suggestion chips ───────────────────────────────────────
+  const suggestionChips = (() => {
+    if (messages.some(m => m.role === "user")) return []; // hide after user has typed
+    const hs = homeState;
+    const next = findNextFlight(trips);
+    const chips = [];
+    if (hs?.state === "in_transit") {
+      chips.push("How much longer until landing?");
+      chips.push("What's the weather at my destination?");
+      chips.push("Will I make my connection?");
+    } else if (hs?.state === "at_airport") {
+      chips.push("Which lounge can I access?");
+      chips.push("What's my gate?");
+      chips.push("Any delay risk?");
+    } else if (hs?.state === "at_destination") {
+      const dest = hs?.active_trip?.destination_city || hs?.active_leg?.destination;
+      if (dest) chips.push(`Best restaurants in ${dest}?`);
+      chips.push("What's on this week?");
+      chips.push("Best way to get around?");
+    } else if (next) {
+      const ident = next.carrier && next.flight_number ? `${next.carrier}${next.flight_number}` : null;
+      if (ident) chips.push(`Is ${ident} on time?`);
+      if (next.origin && next.destination) chips.push(`Weather risk: ${next.origin} → ${next.destination}?`);
+      chips.push("Upgrade options on my next flight?");
+      chips.push("What should I pack?");
+    } else {
+      chips.push("Any disruption risks?");
+      chips.push("Best airport lounge here?");
+      chips.push("Dinner recommendations?");
+    }
+    return chips.slice(0, 3);
+  })();
+
+  // ── Last updated timestamp ──────────────────────────────────────────────────
+  const lastUpdatedStr = loadedAt
+    ? `Updated ${loadedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+    : null;
+
   // ── Voice briefing ───────────────────────────────────────────────────────────
   const speakBriefing = async () => {
     const speaking = await Speech.isSpeakingAsync();
@@ -818,16 +907,29 @@ export default function HomeScreen({ navigation }) {
             </>
           )}
 
-          {/* Tap-to-speak hint — only when not speaking */}
-          {!isSpeaking && headline ? (
-            <Pressable onPress={() => { tap(); speakBriefing(); }} style={s.speakHint}>
-              <Text style={s.speakHintT}>▶ Hear briefing</Text>
-            </Pressable>
+          {/* Last updated timestamp */}
+          {lastUpdatedStr && !briefingLoading ? (
+            <Text style={s.lastUpdated}>{lastUpdatedStr}</Text>
           ) : null}
-          {isSpeaking ? (
-            <Pressable onPress={() => { tap(); speakBriefing(); }} style={s.speakHint}>
-              <Text style={[s.speakHintT, { color: C.gold }]}>◼ Stop</Text>
-            </Pressable>
+
+          {/* Briefing controls row: speak + refresh */}
+          {headline && !briefingLoading ? (
+            <View style={s.briefingControls}>
+              <Pressable onPress={() => { tap(); speakBriefing(); }} style={s.speakHint}>
+                <Text style={[s.speakHintT, isSpeaking && { color: C.gold }]}>
+                  {isSpeaking ? "◼ Stop" : "▶ Hear briefing"}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => { tap(); handleRefresh(); }}
+                style={s.speakHint}
+                disabled={isRefreshing}
+              >
+                <Text style={[s.speakHintT, isRefreshing && { opacity: 0.4 }]}>
+                  {isRefreshing ? "Refreshing…" : "↺ Refresh"}
+                </Text>
+              </Pressable>
+            </View>
           ) : null}
         </View>
 
@@ -894,12 +996,27 @@ export default function HomeScreen({ navigation }) {
 
         {/* ── Input bar ─────────────────────────────────────────────────── */}
         <View style={s.inputWrap}>
+          {/* Context-aware suggestion chips — only before first user message */}
+          {suggestionChips.length > 0 && !chatLoading ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={s.chipsRow}
+              keyboardShouldPersistTaps="handled"
+            >
+              {suggestionChips.map(chip => (
+                <Pressable key={chip} style={s.chip} onPress={() => { tap(); send(chip); }}>
+                  <Text style={s.chipT}>{chip}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          ) : null}
           <View style={s.inputInner}>
             <TextInput
               style={s.inputField}
               value={input}
               onChangeText={setInput}
-              placeholder="Ask anything…"
+              placeholder={inputPlaceholder}
               placeholderTextColor={C.mut}
               onSubmitEditing={() => send()}
               returnKeyType="send"
@@ -1078,6 +1195,13 @@ const s = StyleSheet.create({
     borderBottomOpacity: 0.4,
   },
 
+  // Briefing controls row (speak + refresh)
+  briefingControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    paddingTop: 4,
+  },
   // Tap-to-speak hint line below prose
   speakHint: {
     paddingHorizontal: 24,
@@ -1377,6 +1501,39 @@ const s = StyleSheet.create({
   devTapTarget: {
     height: 8,
     width: "100%",
+  },
+
+  // ── Suggestion chips row ──
+  chipsRow: {
+    paddingHorizontal: 16,
+    paddingBottom: 10,
+    gap: 8,
+    flexDirection: "row",
+  },
+  chip: {
+    backgroundColor: "rgba(200,168,106,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(200,168,106,0.28)",
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  chipT: {
+    fontFamily: T.sansM,
+    fontSize: 12,
+    color: C.gold,
+    letterSpacing: 0.1,
+  },
+
+  // ── Last updated timestamp ──
+  lastUpdated: {
+    paddingHorizontal: 24,
+    paddingTop: 6,
+    fontFamily: T.sans,
+    fontSize: 10,
+    color: C.mut,
+    opacity: 0.5,
+    letterSpacing: 0.5,
   },
 
   // ── Dev section ──

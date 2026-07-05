@@ -19,25 +19,30 @@ const KEY_PROFILE_DONE  = "wingman_profile_done";
 
 // ─── Demo trip injection ──────────────────────────────────────────────────────
 
-async function injectDemoTrip() {
+async function injectDemoTrip(cabin = "economy", homeAirport = "JFK") {
   try {
     const already = await SecureStore.getItemAsync(KEY_DEMO_INJECTED);
     if (already) return;
     const fmt = (d) => d.toISOString().replace("Z", "+00:00");
-    const dep = new Date(Date.now() + 5 * 86400000);
-    dep.setHours(8, 30, 0, 0);
-    const arr = new Date(dep.getTime() + 7 * 3600000);
+    // Schedule demo trip 7 days out so it shows as "upcoming" on first open
+    const dep = new Date(Date.now() + 7 * 86400000);
+    dep.setHours(9, 0, 0, 0);
+    const arr = new Date(dep.getTime() + 7 * 3600000); // 7h flight JFK→LHR
     const hotelIn  = new Date(arr); hotelIn.setHours(15, 0, 0, 0);
     const hotelOut = new Date(hotelIn.getTime() + 4 * 86400000); hotelOut.setHours(11, 0, 0, 0);
-    const retDep = new Date(hotelOut.getTime() + 86400000); retDep.setHours(11, 30, 0, 0);
+    const retDep = new Date(hotelOut); retDep.setHours(12, 0, 0, 0);
     const retArr = new Date(retDep.getTime() + 8 * 3600000);
+    // Use user's home airport as origin if not JFK
+    const origin = homeAirport && homeAirport.length >= 3 ? homeAirport.toUpperCase().slice(0, 4) : "JFK";
+    const outboundFlight = origin === "JFK" ? "178" : "174";
+    const inboundFlight  = origin === "JFK" ? "177" : "173";
     await createTrip({
-      title: "New York → London",
+      title: `${origin} → London`,
       mode: "demo",
       legs: [
-        { type: "flight", carrier: "BA", flight_number: "178", origin: "JFK", destination: "LHR", departs_at: fmt(dep), arrives_at: fmt(arr), cabin: "economy" },
+        { type: "flight", carrier: "BA", flight_number: outboundFlight, origin, destination: "LHR", departs_at: fmt(dep), arrives_at: fmt(arr), cabin },
         { type: "hotel", carrier: "The Ned London", origin: "LHR", destination: "London", destination_city: "London", departs_at: fmt(hotelIn), arrives_at: fmt(hotelOut) },
-        { type: "flight", carrier: "BA", flight_number: "177", origin: "LHR", destination: "JFK", departs_at: fmt(retDep), arrives_at: fmt(retArr), cabin: "economy" },
+        { type: "flight", carrier: "BA", flight_number: inboundFlight, origin: "LHR", destination: origin, departs_at: fmt(retDep), arrives_at: fmt(retArr), cabin },
       ],
     });
     await SecureStore.setItemAsync(KEY_DEMO_INJECTED, "1");
@@ -79,7 +84,7 @@ export default function ProfileSetupScreen({ navigation }) {
     }).catch(e => console.warn("[ProfileSetup] updateProfile:", e.message));
     updateLocale({ locale: "en", currency: "USD" })
       .catch(e => console.warn("[ProfileSetup] updateLocale:", e.message));
-    injectDemoTrip();
+    injectDemoTrip(cabin, homeAirportCode || homeAirport.trim().toUpperCase().slice(0, 4) || "JFK");
     navigation.replace("Welcome", { firstName: firstName.trim() });
   };
 

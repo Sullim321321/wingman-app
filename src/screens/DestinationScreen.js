@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { C, T } from "../theme";
-import { SerifText } from "../components";
+import { SerifText, tap } from "../components";
 import { getDestinationIntel } from "../api";
 
 // ─── Category type → accent color ────────────────────────────────────────────
@@ -218,7 +218,7 @@ export default function DestinationScreen({ route, navigation }) {
                 <Pressable
                   key={i}
                   style={s.conciergePrompt}
-                  onPress={() => navigation.navigate("Concierge", { prefill: prompt })}
+                  onPress={() => { tap(); navigation.navigate("Concierge", { prefill: prompt }); }}
                 >
                   <Text style={s.conciergePromptT}>{prompt}</Text>
                   <Text style={s.conciergeArrow}>›</Text>

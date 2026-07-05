@@ -124,6 +124,28 @@ function TabIcon({ name, focused }) {
 
 function Tabs() {
   const { C: TC, isDark } = useTheme();
+  const [signalBadge, setSignalBadge] = React.useState(null);
+
+  // Poll for active signals every 5 min to keep the badge fresh
+  React.useEffect(() => {
+    const refresh = async () => {
+      try {
+        const { getActivity } = require("./src/api");
+        const data = await getActivity(50);
+        const events = data?.events || [];
+        const now = Date.now();
+        const active = events.filter(e => {
+          const diff = now - new Date(e.created_at).getTime();
+          return diff < 24 * 3600000 && (e.type === "disruption" || e.type === "delay" || e.type === "weather");
+        });
+        setSignalBadge(active.length > 0 ? active.length : null);
+      } catch {}
+    };
+    refresh();
+    const t = setInterval(refresh, 5 * 60 * 1000);
+    return () => clearInterval(t);
+  }, []);
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -153,7 +175,14 @@ function Tabs() {
     >
       <Tab.Screen name="Home"         component={HomeScreen} />
       <Tab.Screen name="Trips"        component={TripsScreen} />
-      <Tab.Screen name="Intelligence" component={ActivityScreen} />
+      <Tab.Screen
+        name="Intelligence"
+        component={ActivityScreen}
+        options={{
+          tabBarBadge: signalBadge ?? undefined,
+          tabBarBadgeStyle: { backgroundColor: C.coral, fontSize: 9, minWidth: 16, height: 16, borderRadius: 8 },
+        }}
+      />
       <Tab.Screen name="Insights"     component={InsightsScreen} />
     </Tab.Navigator>
   );

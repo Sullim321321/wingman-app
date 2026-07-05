@@ -106,6 +106,14 @@ export default function WelcomeScreen({ navigation, route }) {
           </Text>
         </FadeIn>
 
+        {/* Demo trip notice */}
+        <FadeIn delay={380}>
+          <View style={s.demoNotice}>
+            <View style={[s.demoDot, { backgroundColor: C.gold }]} />
+            <Text style={s.demoNoticeT}>A sample trip has been added so you can explore Wingman right away.</Text>
+          </View>
+        </FadeIn>
+
         {/* Rule */}
         <FadeIn delay={400}>
           <View style={s.rule} />
@@ -248,7 +256,30 @@ const s = StyleSheet.create({
     fontSize: 17,
     color: C.mut,
     lineHeight: 28,
-    marginBottom: 24,
+    marginBottom: 10,
+  },
+
+  // ── Demo trip notice ──
+  demoNotice: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 20,
+    paddingHorizontal: 2,
+  },
+  demoDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    flexShrink: 0,
+  },
+  demoNoticeT: {
+    fontFamily: T.sans,
+    fontSize: 12,
+    color: C.gold,
+    opacity: 0.8,
+    flex: 1,
+    lineHeight: 18,
   },
 
   // ── Rule ──

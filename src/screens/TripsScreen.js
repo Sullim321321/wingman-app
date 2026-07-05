@@ -287,7 +287,22 @@ export default function TripsScreen({ navigation }) {
         <View style={s.rule} />
 
         {loading ? (
-          <ActivityIndicator color={C.gold} style={{ marginTop: 48 }} />
+          // Skeleton rows while loading
+          <View style={{ paddingHorizontal: 24, gap: 0 }}>
+            <Text style={s.sectionLabel}>UPCOMING</Text>
+            {[0, 1, 2].map(i => (
+              <View key={i} style={[s.tripRow, { borderTopWidth: i > 0 ? 1 : 0, borderTopColor: C.line }]}>
+                <View style={s.dateAnchor}>
+                  <View style={{ width: 28, height: 28, backgroundColor: C.card2, borderRadius: 4 }} />
+                  <View style={{ width: 22, height: 10, backgroundColor: C.card2, borderRadius: 3, marginTop: 4 }} />
+                </View>
+                <View style={s.tripBody}>
+                  <View style={{ height: 16, width: "60%", backgroundColor: C.card2, borderRadius: 4, marginBottom: 6 }} />
+                  <View style={{ height: 12, width: "40%", backgroundColor: C.card2, borderRadius: 3 }} />
+                </View>
+              </View>
+            ))}
+          </View>
         ) : visible.length === 0 ? (
           <EmptyState navigation={navigation} />
         ) : (

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
-  SafeAreaView, ScrollView, View, Text, TouchableOpacity,
+  SafeAreaView, ScrollView, View, Text, TouchableOpacity, Pressable,
   StyleSheet, Animated, Dimensions,
 } from "react-native";
 import { C, T } from "../theme";
@@ -350,11 +350,16 @@ export default function TasteSetupScreen({ navigation, route }) {
             <Text style={s.backBtnT}>← Back</Text>
           </TouchableOpacity>
         )}
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, gap: 10 }}>
           <Btn
             title={isLast ? (saving ? "Saving…" : "Save my taste profile") : "Continue →"}
             onPress={isLast ? handleFinish : () => animateNext(step + 1)}
           />
+          {!fromSettings && (
+            <Pressable onPress={() => { tap(); handleFinish(); }} style={s.skipAllBtn}>
+              <Text style={s.skipAllBtnT}>Skip all — set up later</Text>
+            </Pressable>
+          )}
         </View>
       </View>
     </SafeAreaView>
@@ -439,6 +444,19 @@ const s = StyleSheet.create({
   // Food skip note
   skipNote: { marginTop: 16, alignItems: "center" },
   skipNoteT: { color: C.mut, fontSize: 13 },
+
+  // Skip all button
+  skipAllBtn: {
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  skipAllBtnT: {
+    color: C.mut,
+    fontSize: 13,
+    fontFamily: T.sans,
+    textDecorationLine: "underline",
+    opacity: 0.7,
+  },
 
   // Footer
   footer: {

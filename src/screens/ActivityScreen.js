@@ -145,6 +145,7 @@ export default function ActivityScreen({ navigation }) {
   const disruptionCount = events.filter(e =>
     e.type === "disruption" || e.type === "delay" || e.type === "weather"
   ).length;
+  const activeCount = activeSignals.length;
 
   return (
     <SafeAreaView style={s.root}>
@@ -162,9 +163,9 @@ export default function ActivityScreen({ navigation }) {
         {/* ── Masthead ── */}
         <View style={s.masthead}>
           <Text style={s.mastTitle}>Intelligence.</Text>
-          {disruptionCount > 0 && (
-            <View style={s.disruptBadge}>
-              <Text style={s.disruptBadgeT}>{disruptionCount}</Text>
+          {activeCount > 0 && (
+            <View style={[s.disruptBadge, disruptionCount > 0 ? null : { backgroundColor: C.gold }]}>
+              <Text style={s.disruptBadgeT}>{activeCount}</Text>
             </View>
           )}
         </View>
@@ -172,7 +173,19 @@ export default function ActivityScreen({ navigation }) {
         <View style={s.rule} />
 
         {loading ? (
-          <ActivityIndicator color={C.gold} style={{ marginTop: 48 }} />
+          // Skeleton rows while loading
+          <View style={s.feedBlock} >
+            {[0,1,2].map(i => (
+              <View key={i} style={[s.signalRow, i > 0 && s.signalRowBorder]}>
+                <View style={[s.dot, { backgroundColor: C.card2, borderColor: "transparent" }]} />
+                <View style={{ flex: 1, gap: 8 }}>
+                  <View style={{ height: 9, width: "30%", backgroundColor: C.card2, borderRadius: 4 }} />
+                  <View style={{ height: 14, width: "75%", backgroundColor: C.card2, borderRadius: 4 }} />
+                  <View style={{ height: 12, width: "55%", backgroundColor: C.card2, borderRadius: 4 }} />
+                </View>
+              </View>
+            ))}
+          </View>
         ) : error ? (
           <View style={s.emptyWrap}>
             <Text style={s.emptyHed}>Couldn't load signals.</Text>

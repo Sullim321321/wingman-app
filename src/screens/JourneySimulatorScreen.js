@@ -224,9 +224,9 @@ export default function JourneySimulatorScreen({ route, navigation }) {
         {/* Ask Wingman */}
         <Pressable
           style={s.askCard}
-          onPress={() => navigation.navigate("Concierge", {
+          onPress={() => { tap(); navigation.navigate("Concierge", {
             prefill: `I'm heading to ${data.flight?.origin} for ${data.flight?.ident}. What do I need to know?`
-          })}
+          }); }}
         >
           <Text style={s.askT}>Ask Wingman about this journey  →</Text>
         </Pressable>

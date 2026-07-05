@@ -383,7 +383,20 @@ export default function TripDetailScreen({ route, navigation }) {
   const handleShareTrip = async () => {
     try {
       const data = await shareTripLink(trip.id);
-      await Share.share({ message: `Check out my trip "${trip.title}" — ${data.share_url}`, url: data.share_url });
+      // Build a richer share card message
+      const legs = (trip.legs || []).filter(l => l.type === "flight");
+      const legStr = legs.length > 0
+        ? legs.map(l => l.origin && l.destination ? `${l.origin}→${l.destination}` : null).filter(Boolean).join(" · ")
+        : null;
+      const valueLine = trip.value_saved > 0
+        ? ` Wingman saved me $${trip.value_saved.toLocaleString()} on this trip.`
+        : "";
+      const shareMsg = [
+        `${trip.title}${legStr ? ` (${legStr})` : ""}${valueLine}`,
+        `Tracked by Wingman — wingmantravel.app`,
+        data.share_url,
+      ].filter(Boolean).join("\n");
+      await Share.share({ message: shareMsg, url: data.share_url });
     } catch {
       Alert.alert("Share", "Could not generate share link. Try again.");
     }
@@ -573,7 +586,7 @@ export default function TripDetailScreen({ route, navigation }) {
 
         {/* ── Destination intel ── */}
         {destIntel?.pro_required && (
-          <Pressable style={s.proCard} onPress={() => navigation.navigate("Subscription")}>
+          <Pressable style={s.proCard} onPress={() => { tap(); navigation.navigate("Subscription"); }}>
             <Text style={s.proTitle}>Destination Intel — Pro</Text>
             <Text style={s.proSub}>AI-curated local tips, restaurant picks, and neighbourhood guides for every destination.</Text>
             <Text style={s.proCta}>Upgrade to Pro →</Text>
@@ -597,9 +610,9 @@ export default function TripDetailScreen({ route, navigation }) {
               ))}
               <Pressable
                 style={s.intelCta}
-                onPress={() => navigation.navigate("Destination", {
+                onPress={() => { tap(); navigation.navigate("Destination", {
                   city: destIntel.destination, trip_id: trip.id, tripTitle: trip.title,
-                })}
+                }); }}
               >
                 <Text style={s.intelCtaT}>Explore {destIntel.destination}  ›</Text>
               </Pressable>

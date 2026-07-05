@@ -11,7 +11,7 @@ import * as Location from "expo-location";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { C, T } from "../theme";
-import { SerifText } from "../components";
+import { SerifText, tap } from "../components";
 import { sendConciergeMessage, getTrips, getConciergeThread, saveConciergeThread, clearConciergeThread } from "../api";
 import { LOCATION_OPT_IN_KEY } from "./SettingsScreen";
 
@@ -74,10 +74,29 @@ function buildInitialChips(trips) {
   const next = findNextFlight(trips);
   const chips = [];
   if (next?.origin && next?.destination) {
-    chips.push(`Weather risk for ${next.origin} → ${next.destination}?`);
-    if (next.carrier && next.flight_number) chips.push(`Is ${next.carrier}${next.flight_number} on time?`);
+    const diff = new Date(next.departs_at).getTime() - Date.now();
+    const daysAway = Math.ceil(diff / 86400000);
+    if (daysAway <= 0) {
+      // In transit or today
+      if (next.carrier && next.flight_number) chips.push(`Is ${next.carrier}${next.flight_number} on time?`);
+      chips.push(`What's the weather in ${next.destination}?`);
+      chips.push("Which lounge can I access?");
+    } else if (daysAway <= 1) {
+      // Tomorrow
+      if (next.carrier && next.flight_number) chips.push(`Is ${next.carrier}${next.flight_number} on time?`);
+      chips.push(`What should I pack for ${next.destination}?`);
+      chips.push("Any disruption risks?");
+    } else if (daysAway <= 7) {
+      // This week
+      chips.push(`Weather risk for ${next.origin} → ${next.destination}?`);
+      chips.push(`Best restaurants in ${next.destination}?`);
+      if (next.carrier && next.flight_number) chips.push(`Upgrade options on ${next.carrier}${next.flight_number}?`);
+    } else {
+      chips.push(`Weather risk for ${next.origin} → ${next.destination}?`);
+      if (next.carrier && next.flight_number) chips.push(`Is ${next.carrier}${next.flight_number} on time?`);
+    }
   }
-  if (trips.length > 0) chips.push("What's my next trip?");
+  if (trips.length > 0 && chips.length < 4) chips.push("What's my next trip?");
   const fallbacks = [
     "Any disruption risks?",
     "Dinner recommendations?",
@@ -85,6 +104,7 @@ function buildInitialChips(trips) {
     "What should I know before I fly?",
     "Upgrade options on my next flight?",
     "How do I earn more points?",
+    "What's on in my destination?",
   ];
   for (const f of fallbacks) {
     if (chips.length >= 4) break;
@@ -430,7 +450,7 @@ export default function ConciergeScreen({ route, navigation }) {
           {activeTripId && (
             <Pressable
               style={s.tripLinkBtn}
-              onPress={() => navigation.navigate("TripDetail", { tripId: activeTripId })}
+              onPress={() => { tap(); navigation.navigate("TripDetail", { tripId: activeTripId }); }}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Text style={s.tripLinkBtnT}>Trip ›</Text>

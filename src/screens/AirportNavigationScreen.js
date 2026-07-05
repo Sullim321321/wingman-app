@@ -7,6 +7,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getAirportNavigation } from "../api";
 import { C as _C, T } from "../theme";
+import { tap } from "../components";
 
 // Extend shared theme with screen-specific aliases
 const C = {
@@ -204,7 +205,7 @@ export default function AirportNavigationScreen() {
               </Pressable>
               <Pressable
                 style={s.actionBtn}
-                onPress={() => navigation.navigate("AirportDining", { iata, flightInfo })}
+                onPress={() => { tap(); navigation.navigate("AirportDining", { iata, flightInfo }); }}
               >
                 <Text style={s.actionIcon}>◈</Text>
                 <Text style={s.actionLabel}>Dining</Text>
@@ -314,7 +315,7 @@ export default function AirportNavigationScreen() {
             {/* City transport CTA */}
             <Pressable
               style={s.cityTransportCta}
-              onPress={() => navigation.navigate("GroundTransport", { iata })}
+              onPress={() => { tap(); navigation.navigate("GroundTransport", { iata }); }}
             >
               <Text style={s.cityTransportCtaIcon}>🏙️</Text>
               <View style={s.cityTransportCtaMeta}>

@@ -74,6 +74,12 @@ export default function InsightsScreen({ navigation }) {
   const tripsTotal        = roi?.trips_total ?? 0;
   const bestRescueValue   = roi?.best_rescue_value ?? null;
   const bestRescueFlight  = roi?.best_rescue_flight ?? null;
+  const protectedSince    = roi?.protected_since ?? null;
+
+  // Format protected_since as "Jan 2025"
+  const protectedSinceStr = protectedSince
+    ? new Date(protectedSince).toLocaleDateString("en-US", { month: "short", year: "numeric" })
+    : null;
 
   const handleShare = async () => {
     try {
@@ -116,7 +122,7 @@ export default function InsightsScreen({ navigation }) {
               : "Your first disruption handled will appear here."}
           </Text>
           {totalSaved > 0 && (
-            <Pressable style={s.shareBtn} onPress={handleShare}>
+            <Pressable style={s.shareBtn} onPress={() => { tap(); handleShare(); }}>
               <Text style={s.shareBtnT}>Share your ROI  ↗</Text>
             </Pressable>
           )}
@@ -142,7 +148,7 @@ export default function InsightsScreen({ navigation }) {
               <View style={s.streakCard}>
                 <Text style={s.streakValue}>{tripsTotal}</Text>
                 <Text style={s.streakLabel}>Trips protected</Text>
-                <Text style={s.streakSub}>Total with Wingman</Text>
+                <Text style={s.streakSub}>{protectedSinceStr ? `Since ${protectedSinceStr}` : "Total with Wingman"}</Text>
               </View>
             )}
             {bestRescueValue && (
@@ -247,7 +253,7 @@ export default function InsightsScreen({ navigation }) {
         )}
 
         {/* Wingman Wrapped entry */}
-        <Pressable style={s.wrappedCard} onPress={() => navigation.navigate("Wrapped")}>
+        <Pressable style={s.wrappedCard} onPress={() => { tap(); navigation.navigate("Wrapped"); }}>
           <LinearGradient colors={["#241808", "#1A1209"]} style={s.wrappedGrad}>
             <Text style={s.wrappedEye}>{YEAR} WRAPPED</Text>
             <Text style={s.wrappedTitle}>Your year in travel</Text>

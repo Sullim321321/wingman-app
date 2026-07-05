@@ -511,3 +511,40 @@ export const exportCalendarIcs = (tripId) =>
 
 // Offline snapshot
 export const getOfflineSnapshot = () => req("/me/offline-snapshot");
+
+// ─── TRIPIT iCAL SYNC ─────────────────────────────────────────────────────────
+export const syncTripItIcal = (ical_url) =>
+  req("/integrations/tripit/sync", { method: "POST", body: JSON.stringify({ ical_url }) });
+export const getTripItStatus = () => req("/integrations/tripit/status");
+export const disconnectTripIt = () => req("/integrations/tripit", { method: "DELETE" });
+
+// ─── TRAVELPERK OAUTH SYNC ────────────────────────────────────────────────────
+export const getTravelPerkConnectUrl = () => req("/integrations/travelperk/connect");
+export const syncTravelPerk = () => req("/integrations/travelperk/sync", { method: "POST" });
+export const getTravelPerkStatus = () => req("/integrations/travelperk/status");
+export const disconnectTravelPerk = () => req("/integrations/travelperk", { method: "DELETE" });
+
+// ─── PDF OCR IMPORT ───────────────────────────────────────────────────────────
+// Uploads a PDF or image file and extracts booking data using Claude vision
+export const importPdfOcr = async (fileUri, mimeType = "application/pdf") => {
+  const headers = {};
+  if (_token) headers.Authorization = "Bearer " + _token;
+  const formData = new FormData();
+  formData.append("pdf", { uri: fileUri, type: mimeType, name: "booking.pdf" });
+  let r;
+  try {
+    r = await fetchWithRetry(API_BASE + "/trips/import/pdf-ocr", {
+      method: "POST",
+      headers,
+      body: formData,
+      signal: AbortSignal.timeout(60000),
+    });
+  } catch (e) {
+    throw new Error("No connection — check your internet and try again.");
+  }
+  const text = await r.text();
+  let body;
+  try { body = text ? JSON.parse(text) : {}; } catch { body = { raw: text }; }
+  if (!r.ok) throw Object.assign(new Error(body.error || `HTTP ${r.status}`), { status: r.status, body });
+  return body;
+};

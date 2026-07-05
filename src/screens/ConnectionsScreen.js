@@ -1,4 +1,4 @@
-// ConnectionsScreen.js — multi-account Gmail/Calendar support
+// ConnectionsScreen.js — multi-account Gmail/Calendar support + TripIt/TravelPerk/PDF import
 // Warm espresso palette + champagne gold + DM Sans
 
 import React, { useState, useEffect, useRef } from "react";
@@ -7,11 +7,15 @@ import {
   Alert, ActivityIndicator, TextInput, Linking, AppState, Share,
 } from "react-native";
 import * as Calendar from "expo-calendar";
+import * as DocumentPicker from "expo-document-picker";
 import { C, T } from "../theme";
 import { BackBar, Btn, g } from "../components";
 import {
   getMe, getGmailConnectUrl, triggerGmailScan, rescanInbox,
   disconnectGmail, disconnectGmailAccount, scanEmailBody, syncCalendar,
+  syncTripItIcal, getTripItStatus, disconnectTripIt,
+  getTravelPerkConnectUrl, syncTravelPerk, getTravelPerkStatus, disconnectTravelPerk,
+  importPdfOcr,
 } from "../api";
 
 const CHANNEL_ICONS = {
@@ -111,6 +115,21 @@ export default function ConnectionsScreen({ navigation, route }) {
   const [pasteText,         setPasteText]         = useState("");
   const [pasteLoading,      setPasteLoading]      = useState(false);
 
+  // TripIt iCal
+  const [tripitConnected,   setTripitConnected]   = useState(false);
+  const [tripitUrl,         setTripitUrl]         = useState("");
+  const [showTripitInput,   setShowTripitInput]   = useState(false);
+  const [tripitLoading,     setTripitLoading]     = useState(false);
+
+  // TravelPerk OAuth
+  const [tpConnected,       setTpConnected]       = useState(false);
+  const [tpConnecting,      setTpConnecting]      = useState(false);
+  const [tpSyncing,         setTpSyncing]         = useState(false);
+  const awaitingTpReturn = useRef(false);
+
+  // PDF OCR
+  const [pdfLoading,        setPdfLoading]        = useState(false);
+
   const awaitingGmailReturn = useRef(false);
 
   const gmailConnected = connectedAccounts.length > 0;
@@ -125,12 +144,20 @@ export default function ConnectionsScreen({ navigation, route }) {
         const { status } = await Calendar.getCalendarPermissionsAsync();
         setAppleCalGranted(status === "granted");
       } catch {}
+      try {
+        const tripit = await getTripItStatus();
+        setTripitConnected(tripit.connected);
+      } catch {}
+      try {
+        const tp = await getTravelPerkStatus();
+        setTpConnected(tp.connected);
+      } catch {}
       setLoading(false);
     };
     init();
   }, []);
 
-  // Re-check when returning from Gmail OAuth
+  // Re-check when returning from Gmail or TravelPerk OAuth
   useEffect(() => {
     const sub = AppState.addEventListener("change", async (nextState) => {
       if (nextState === "active" && awaitingGmailReturn.current) {
@@ -149,6 +176,16 @@ export default function ConnectionsScreen({ navigation, route }) {
               "Not connected yet",
               "It looks like Gmail wasn't connected. Please try again — make sure to complete the sign-in and grant Wingman read-only access."
             );
+          }
+        } catch {}
+      }
+      if (nextState === "active" && awaitingTpReturn.current) {
+        awaitingTpReturn.current = false;
+        try {
+          const tp = await getTravelPerkStatus();
+          setTpConnected(tp.connected);
+          if (tp.connected) {
+            Alert.alert("TravelPerk connected", "Wingman is syncing your corporate trips. They'll appear in the Trips tab shortly.");
           }
         } catch {}
       }
@@ -367,6 +404,109 @@ export default function ConnectionsScreen({ navigation, route }) {
         { text: "Cancel", style: "cancel" },
       ]
     );
+  };
+
+  // ── TripIt iCal handlers ──────────────────────────────────────────────────
+  const connectTripIt = async () => {
+    const url = tripitUrl.trim();
+    if (!url) return Alert.alert("Paste your TripIt iCal URL", "Go to TripIt → Settings → Publishing Options → Calendar Feed, then copy the URL and paste it here.");
+    setTripitLoading(true);
+    try {
+      const result = await syncTripItIcal(url);
+      setTripitConnected(true);
+      setShowTripitInput(false);
+      setTripitUrl("");
+      Alert.alert(
+        result.trips_created > 0 ? `${result.trips_created} trip${result.trips_created !== 1 ? 's' : ''} imported` : "TripIt connected",
+        result.trips_created > 0
+          ? `Wingman imported ${result.trips_created} trip${result.trips_created !== 1 ? 's' : ''} from your TripIt account.`
+          : "TripIt is connected. Wingman will sync your trips automatically.",
+        [{ text: "View Trips", onPress: () => navigation.navigate("Trips") }, { text: "Done", style: "cancel" }]
+      );
+    } catch (e) {
+      Alert.alert("TripIt sync failed", e.message || "Could not import from TripIt. Check the URL and try again.");
+    } finally {
+      setTripitLoading(false);
+    }
+  };
+
+  const handleDisconnectTripIt = () => {
+    Alert.alert("Disconnect TripIt", "Remove TripIt sync? Imported trips will remain.", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Disconnect", style: "destructive", onPress: async () => {
+        try { await disconnectTripIt(); setTripitConnected(false); } catch {}
+      }},
+    ]);
+  };
+
+  // ── TravelPerk OAuth handlers ─────────────────────────────────────────────
+  const connectTravelPerk = async () => {
+    setTpConnecting(true);
+    try {
+      const data = await getTravelPerkConnectUrl();
+      if (data.url) {
+        awaitingTpReturn.current = true;
+        await Linking.openURL(data.url);
+      } else if (data.error) {
+        Alert.alert("TravelPerk not available",
+          data.error === "TravelPerk OAuth not configured"
+            ? "TravelPerk connection requires server configuration. Please contact support."
+            : data.error);
+      }
+    } catch (e) {
+      Alert.alert("TravelPerk connection failed", e.message || "Could not connect TravelPerk.");
+    } finally {
+      setTpConnecting(false);
+    }
+  };
+
+  const handleResyncTravelPerk = async () => {
+    setTpSyncing(true);
+    try {
+      const result = await syncTravelPerk();
+      Alert.alert("Sync complete", result.trips_created > 0 ? `${result.trips_created} new trip${result.trips_created !== 1 ? 's' : ''} imported.` : "Already up to date.");
+    } catch (e) {
+      Alert.alert("Sync failed", e.message);
+    } finally {
+      setTpSyncing(false);
+    }
+  };
+
+  const handleDisconnectTravelPerk = () => {
+    Alert.alert("Disconnect TravelPerk", "Remove TravelPerk sync? Imported trips will remain.", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Disconnect", style: "destructive", onPress: async () => {
+        try { await disconnectTravelPerk(); setTpConnected(false); } catch {}
+      }},
+    ]);
+  };
+
+  // ── PDF OCR import ────────────────────────────────────────────────────────
+  const importFromPdf = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ["application/pdf", "image/*"],
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled) return;
+      const file = result.assets?.[0];
+      if (!file) return;
+      setPdfLoading(true);
+      const data = await importPdfOcr(file.uri, file.mimeType || "application/pdf");
+      Alert.alert(
+        `Trip imported from PDF`,
+        `Wingman extracted "${data.trip_title}" with ${data.legs_created} booking${data.legs_created !== 1 ? 's' : ''}.`,
+        [{ text: "View Trip", onPress: () => navigation.navigate("Trips") }, { text: "Done", style: "cancel" }]
+      );
+    } catch (e) {
+      if (e.message?.includes("No booking data")) {
+        Alert.alert("No bookings found", "Wingman couldn't find booking details in that PDF. Try forwarding the confirmation email to import@wingmantravel.app instead.");
+      } else {
+        Alert.alert("PDF import failed", e.message || "Could not read that PDF.");
+      }
+    } finally {
+      setPdfLoading(false);
+    }
   };
 
   const ConnBadge = ({ on }) => on ? (
@@ -633,6 +773,99 @@ export default function ConnectionsScreen({ navigation, route }) {
           )}
         </View>
 
+        {/* ── Corporate travel ─────────────────────────────────────────────── */}
+        <Text style={g.sectionT}>CORPORATE &amp; THIRD-PARTY TRAVEL</Text>
+        <View style={g.group}>
+          {/* TripIt */}
+          <ConnRow
+            iconKey="paste"
+            title="TripIt"
+            sub={tripitConnected ? "Connected — syncing your TripIt itineraries" : "Sync trips from your TripIt account via iCal feed"}
+            right={
+              tripitConnected ? (
+                <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+                  <ConnBadge on />
+                  <Pressable style={s.disconnectBtn} onPress={handleDisconnectTripIt}>
+                    <Text style={s.disconnectT}>✕</Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <Pressable style={s.connectBtn} onPress={() => setShowTripitInput(v => !v)}>
+                  <Text style={s.connectBtnT}>{showTripitInput ? "Cancel" : "Connect"}</Text>
+                </Pressable>
+              )
+            }
+          />
+          {showTripitInput && !tripitConnected && (
+            <View style={s.tripitInputWrap}>
+              <Text style={s.tripitHint}>
+                Go to TripIt → Settings → Publishing Options → Calendar Feed, then copy and paste the URL below.
+              </Text>
+              <TextInput
+                style={s.tripitInput}
+                placeholder="https://www.tripit.com/feed/ical/p/..."
+                placeholderTextColor={C.mut}
+                value={tripitUrl}
+                onChangeText={setTripitUrl}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+              />
+              <Btn
+                title={tripitLoading ? "Syncing…" : "Sync TripIt trips"}
+                onPress={connectTripIt}
+                disabled={!tripitUrl.trim() || tripitLoading}
+                style={{ marginTop: 10 }}
+              />
+            </View>
+          )}
+
+          {/* TravelPerk */}
+          <ConnRow
+            iconKey="forward"
+            title="TravelPerk"
+            sub={tpConnected ? "Connected — corporate trips synced automatically" : "Sync corporate bookings from TravelPerk"}
+            last
+            right={
+              tpConnected ? (
+                <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+                  <Pressable style={s.rescanBtn} onPress={handleResyncTravelPerk} disabled={tpSyncing}>
+                    {tpSyncing
+                      ? <ActivityIndicator color={C.gold} size="small" />
+                      : <Text style={s.rescanT}>Re-sync</Text>}
+                  </Pressable>
+                  <Pressable style={s.disconnectBtn} onPress={handleDisconnectTravelPerk}>
+                    <Text style={s.disconnectT}>✕</Text>
+                  </Pressable>
+                  <ConnBadge on />
+                </View>
+              ) : (
+                <Pressable style={s.connectBtn} onPress={connectTravelPerk} disabled={tpConnecting}>
+                  {tpConnecting
+                    ? <ActivityIndicator color={C.inkD} size="small" />
+                    : <Text style={s.connectBtnT}>Connect</Text>}
+                </Pressable>
+              )
+            }
+          />
+        </View>
+
+        {/* ── PDF / Image import ───────────────────────────────────────────── */}
+        <Text style={g.sectionT}>IMPORT FROM PDF</Text>
+        <View style={[g.group, { paddingVertical: 4 }]}>
+          <View style={s.pdfRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={s.rowT}>Upload a booking PDF</Text>
+              <Text style={s.rowS}>Scanned or image PDFs, e-tickets, hotel vouchers — Wingman reads them all</Text>
+            </View>
+            <Pressable style={[s.connectBtn, pdfLoading && { opacity: 0.6 }]} onPress={importFromPdf} disabled={pdfLoading}>
+              {pdfLoading
+                ? <ActivityIndicator color={C.inkD} size="small" />
+                : <Text style={s.connectBtnT}>Choose file</Text>}
+            </Pressable>
+          </View>
+        </View>
+
         {/* ── What Wingman reads ────────────────────────────────────────────── */}
         <Text style={g.sectionT}>WHAT WINGMAN READS</Text>
         <View style={[g.group, { paddingVertical: 12 }]}>
@@ -724,4 +957,12 @@ const s = StyleSheet.create({
   forwardActionT:      { color: C.gold, fontSize: 13, fontFamily: T.sansM },
   forwardActionDivider:{ width: 1, backgroundColor: C.line },
   forwardHint:         { color: C.mut, fontSize: 11, fontFamily: T.sans, textAlign: "center", paddingHorizontal: 18, paddingVertical: 10, borderTopWidth: 1, borderTopColor: C.line },
+
+  // TripIt iCal input
+  tripitInputWrap: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 14, borderTopWidth: 0.5, borderTopColor: C.line },
+  tripitHint:      { color: C.mut, fontSize: 12, fontFamily: T.sans, lineHeight: 18, marginBottom: 10 },
+  tripitInput:     { backgroundColor: C.bg, borderRadius: 10, borderWidth: 0.5, borderColor: C.line, color: C.ink, fontFamily: T.sans, fontSize: 13, paddingHorizontal: 12, paddingVertical: 10 },
+
+  // PDF import row
+  pdfRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14, paddingHorizontal: 16 },
 });

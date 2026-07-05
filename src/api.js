@@ -548,3 +548,6 @@ export const importPdfOcr = async (fileUri, mimeType = "application/pdf") => {
   if (!r.ok) throw Object.assign(new Error(body.error || `HTTP ${r.status}`), { status: r.status, body });
   return body;
 };
+
+// ─── TRAVEL STATS ─────────────────────────────────────────────────────────────
+export const getTravelStats = () => req("/me/stats");

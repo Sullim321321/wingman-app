@@ -180,6 +180,9 @@ export default function TravelProfileScreen({ navigation }) {
 
         {/* Header */}
         <View style={s.header}>
+          <Pressable onPress={() => navigation.goBack()} style={s.backBtn}>
+            <Text style={s.backBtnT}>‹ Back</Text>
+          </Pressable>
           <SerifText bold style={s.title}>Travel Profile</SerifText>
           <Text style={s.subtitle}>Wingman uses this to personalise every interaction — from seat selection to payment warnings.</Text>
         </View>
@@ -351,6 +354,8 @@ const s = StyleSheet.create({
   root:           { flex: 1, backgroundColor: C.bg },
   scroll:         { paddingHorizontal: 20, paddingTop: 16 },
   header:         { marginBottom: 24 },
+  backBtn:        { marginBottom: 12, alignSelf: 'flex-start' },
+  backBtnT:       { color: C.gold, fontSize: 16, fontWeight: '500' },
   title:          { color: C.ink, fontSize: 28, marginBottom: 6 },
   subtitle:       { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 19 },
   sectionHeader:  { marginTop: 20, marginBottom: 8 },

@@ -20,7 +20,7 @@ import {
   getTrips, getHomeState, getWeather, getMe,
   sendConciergeMessage, getConciergeThread, saveConciergeThread, clearConciergeThread,
   getTripBriefing, getPrediction, triggerGmailScan, getTravelProfile,
-  getLocalNews, getLocalTraffic, getTodayEvents,
+  getLocalNews, getLocalTraffic, getTodayEvents, getTravelStats,
 } from "../api";
 import { scheduleDisruption, schedulePreDepartureBriefing, schedulePostTripDebrief } from "../notify";
 import * as Speech from "expo-speech";
@@ -466,6 +466,7 @@ export default function HomeScreen({ navigation }) {
   const [trafficData, setTrafficData]   = useState(null); // { summary, delay_mins }
   const [todayEvents, setTodayEvents]   = useState([]);   // [{ title, time, location }]
   const [restaurantSuggestion, setRestaurantSuggestion] = useState(null); // { name, rating, maps_url }
+  const [travelStats, setTravelStats]     = useState(null); // { trips_this_year, miles_this_year, nights_away_this_year }
   const [isSpeaking, setIsSpeaking]     = useState(false);
   const [isRefreshing, setIsRefreshing]  = useState(false);
   const [briefingLoading, setBriefingLoading] = useState(true); // skeleton state
@@ -603,6 +604,8 @@ export default function HomeScreen({ navigation }) {
     // User name + travel preferences
     getMe().then(u => { if (!cancelled && u?.first_name) setFirstName(u.first_name); }).catch(() => {});
     getTravelProfile().then(d => { if (!cancelled && d?.profile) setUserPrefs(d.profile); }).catch(() => {});
+    // Travel stats for home screen strip
+    getTravelStats().then(s => { if (!cancelled && s?.ok) setTravelStats(s); }).catch(() => {});
 
     // Briefing data: news, traffic, today events — fetched in parallel, silently
     // Only fetch when we have location
@@ -1032,6 +1035,26 @@ export default function HomeScreen({ navigation }) {
                     </View>
                   ))}
                 </ScrollView>
+              ) : null}
+
+              {/* Travel stats strip — trips this year / miles / nights */}
+              {travelStats && travelStats.total_trips > 0 && !briefingLoading ? (
+                <View style={s.statsStrip}>
+                  <View style={s.statItem}>
+                    <Text style={s.statValue}>{travelStats.trips_this_year}</Text>
+                    <Text style={s.statLabel}>trips {travelStats.year}</Text>
+                  </View>
+                  <View style={s.statDivider} />
+                  <View style={s.statItem}>
+                    <Text style={s.statValue}>{travelStats.miles_this_year > 0 ? travelStats.miles_this_year.toLocaleString() : travelStats.total_trips}</Text>
+                    <Text style={s.statLabel}>{travelStats.miles_this_year > 0 ? "est. miles" : "total trips"}</Text>
+                  </View>
+                  <View style={s.statDivider} />
+                  <View style={s.statItem}>
+                    <Text style={s.statValue}>{travelStats.nights_away_this_year}</Text>
+                    <Text style={s.statLabel}>nights away</Text>
+                  </View>
+                </View>
               ) : null}
 
               {/* Add Trip shortcut — only when no trips */}
@@ -1469,6 +1492,43 @@ const s = StyleSheet.create({
     fontSize: 11,
     color: "rgba(255,255,255,0.75)",
     letterSpacing: 0.2,
+  },
+
+  // ── Travel stats strip ──
+  statsStrip: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 24,
+    marginTop: 18,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: "rgba(200,168,106,0.06)",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(200,168,106,0.12)",
+  },
+  statItem: {
+    flex: 1,
+    alignItems: "center",
+  },
+  statValue: {
+    fontFamily: T.garamondB || T.garamond,
+    fontSize: 22,
+    color: C.gold,
+    letterSpacing: -0.3,
+  },
+  statLabel: {
+    fontFamily: T.sans,
+    fontSize: 10,
+    color: C.mut,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    marginTop: 2,
+  },
+  statDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: "rgba(200,168,106,0.15)",
   },
 
   // ── Prose briefing ──

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, TextInput, Pressable,
   StyleSheet, Alert, ActivityIndicator, TouchableOpacity, Animated,
@@ -26,6 +26,7 @@ const LEG_TYPES = [
   { id: "car",      label: "Car",      icon: "◉" },
   { id: "ferry",    label: "Ferry",    icon: "⊕" },
   { id: "activity", label: "Activity", icon: "◈" },
+  { id: "event",    label: "Show / Event", icon: "◆" },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -256,8 +257,24 @@ function ActivityFields({ state, set }) {
   );
 }
 
-// ── Main screen ───────────────────────────────────────────────────────────────
-export default function AddTripScreen({ navigation }) {
+function EventFields({ state, set }) {
+  return (
+    <View style={g.group}>
+      <Field label="Event / Show Name" value={state.propertyName} onChangeText={v => set("propertyName", v)} placeholder="Coldplay — Music of the Spheres" />
+      <Field label="Venue" value={state.address} onChangeText={v => set("address", v)} placeholder="Wembley Stadium, London" multiline />
+      <DateField label="Event Date & Time" value={state.depDate} onChange={v => set("depDate", v)} />
+      <Field label="Tickets / Guests" value={state.guests} onChangeText={v => set("guests", v)} placeholder="2" keyboardType="number-pad" autoCapitalize="none" />
+      <View style={[s.field, { borderBottomWidth: 0 }]}>
+        <Text style={s.label}>Booking Reference</Text>
+        <TextInput style={s.input} value={state.confirmation} onChangeText={v => set("confirmation", v)}
+          placeholder="EVT-12345" placeholderTextColor={C.mut} autoCapitalize="characters" />
+      </View>
+    </View>
+  );
+}
+
+// ── Main screen ────────────────────────────────────────────────────────────────
+export default function AddTripScreen({ navigation, route }) {
   const [title, setTitle]   = useState("");
   const [mode, setMode]     = useState("solo");
     const [tab, setTab] = useState("ai"); // AI is always the default entry point
@@ -267,6 +284,22 @@ export default function AddTripScreen({ navigation }) {
   const [nlText, setNlText]   = useState("");
   const [drafting, setDrafting] = useState(false);
   const [drafted, setDrafted]   = useState(false);
+
+  // ── prefillPlan: populate from concierge plan card ──────────────────────────
+  useEffect(() => {
+    const plan = route?.params?.prefillPlan;
+    if (!plan) return;
+    // Set trip title from plan
+    if (plan.title) setTitle(plan.title);
+    // Pre-fill the NL text with a description so the user can see what was planned
+    const cityList = Array.isArray(plan.cities) ? plan.cities.join(" → ") : "";
+    const nights = plan.nights ? `${plan.nights} nights` : "";
+    const desc = [plan.title, cityList, nights].filter(Boolean).join(" · ");
+    if (desc) setNlText(desc);
+    // Switch to manual tab so the user can review and save
+    setTab("manual");
+    setDrafted(true);
+  }, [route?.params?.prefillPlan]);
 
   // Flight lookup
   const [lookingUp, setLookingUp] = useState(false);
@@ -449,6 +482,14 @@ export default function AddTripScreen({ navigation }) {
           departs_at: leg.depDate.trim() ? new Date(leg.depDate.trim()).toISOString() : null,
           guests: leg.guests ? parseInt(leg.guests, 10) : null,
         };
+      case "event":
+        return {
+          ...base,
+          property_name: leg.propertyName.trim() || null,
+          property_address: leg.address.trim() || null,
+          departs_at: leg.depDate.trim() ? new Date(leg.depDate.trim()).toISOString() : null,
+          guests: leg.guests ? parseInt(leg.guests, 10) : null,
+        };
       default:
         return base;
     }
@@ -611,6 +652,7 @@ export default function AddTripScreen({ navigation }) {
             {legType === "car"      && <CarFields      state={leg} set={setF} />}
             {legType === "ferry"    && <FerryFields    state={leg} set={setF} />}
             {legType === "activity" && <ActivityFields state={leg} set={setF} />}
+            {legType === "event"    && <EventFields    state={leg} set={setF} />}
 
             <Btn
               title={loading ? "Saving…" : "Save Trip"}

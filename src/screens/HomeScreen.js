@@ -28,6 +28,112 @@ import { LOCATION_OPT_IN_KEY } from "./SettingsScreen";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+// Build the horizontal intelligence signals strip pills from existing state
+// Returns array of { label, color } — no new API calls needed
+function buildSignalPills({ homeState, weather, trafficData, todayEvents, riskScore }) {
+  const hs  = homeState;
+  const leg = hs?.active_leg;
+  const pills = [];
+
+  if (hs?.state === "at_airport" && leg) {
+    // Flight status
+    const delay = leg.delay_minutes || 0;
+    if (delay > 15) {
+      pills.push({ label: `${leg.ident || "Flight"} delayed ${delay}m`, color: "coral" });
+    } else {
+      pills.push({ label: `${leg.ident || "Flight"} on time`, color: "teal" });
+    }
+    // Gate
+    if (leg.gate) pills.push({ label: `Gate ${leg.gate} confirmed`, color: "teal" });
+    // Risk
+    if (riskScore != null && riskScore >= 30) {
+      pills.push({ label: `${riskScore}% disruption risk`, color: riskScore >= 60 ? "coral" : "amber" });
+    }
+    // Traffic to airport
+    if (trafficData?.delay_mins > 5) {
+      pills.push({ label: trafficData.summary || `${trafficData.delay_mins}m traffic delay`, color: "amber" });
+    }
+    // Weather at destination
+    if (hs?.weather?.temp != null) {
+      const dest = leg.destination || hs?.active_trip?.destination_city;
+      pills.push({ label: `${dest ? dest + " " : ""}${hs.weather.temp}° on arrival`, color: "gold" });
+    }
+  } else if (hs?.state === "in_transit" && leg) {
+    const dest = leg.destination || hs?.active_trip?.destination_city || "destination";
+    pills.push({ label: `En route to ${dest}`, color: "gold" });
+    if (hs?.weather?.temp != null) pills.push({ label: `${dest} ${hs.weather.temp}° on landing`, color: "gold" });
+    if (leg.delay_minutes > 5) pills.push({ label: `${leg.delay_minutes}m delay`, color: "amber" });
+  } else if (hs?.state === "at_destination") {
+    // Local weather
+    const w = hs?.weather || weather;
+    if (w?.temp != null) pills.push({ label: `${w.temp}°${w.description ? " · " + w.description : ""}`, color: "gold" });
+    // Return flight status
+    if (leg?.ident) pills.push({ label: `Return: ${leg.ident}`, color: "teal" });
+    // Traffic
+    if (trafficData?.delay_mins > 5) {
+      pills.push({ label: trafficData.summary || `${trafficData.delay_mins}m delays`, color: "amber" });
+    } else if (trafficData?.city) {
+      pills.push({ label: `Traffic normal in ${trafficData.city}`, color: "teal" });
+    }
+    // Today's events
+    if (todayEvents?.length > 0) {
+      const e = todayEvents[0];
+      const timeStr = e.time ? new Date(e.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : null;
+      pills.push({ label: timeStr ? `${timeStr} — ${e.title}` : e.title, color: "indigo" });
+    }
+  } else if (hs?.state === "pre_departure" && leg) {
+    // Disruption risk
+    if (riskScore != null && riskScore >= 30) {
+      pills.push({ label: `${riskScore}% disruption risk`, color: riskScore >= 60 ? "coral" : "amber" });
+    } else {
+      pills.push({ label: "No disruption forecast", color: "teal" });
+    }
+    // Destination weather
+    const w = hs?.weather || weather;
+    if (w?.temp != null) {
+      const dest = leg.destination || hs?.active_trip?.destination_city;
+      pills.push({ label: `${dest ? dest + " " : ""}${w.temp}° at landing`, color: "gold" });
+    }
+    // Today's events
+    if (todayEvents?.length > 0) {
+      const e = todayEvents[0];
+      const timeStr = e.time ? new Date(e.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : null;
+      pills.push({ label: timeStr ? `${timeStr} — ${e.title}` : e.title, color: "indigo" });
+    }
+  } else {
+    // No trip / standing by — city intelligence
+    const w = weather;
+    if (w?.temp != null) {
+      const desc = w.description ? ` · ${w.description}` : "";
+      pills.push({ label: `${w.temp}°${desc}`, color: "gold" });
+    }
+    // Airport status (use trafficData as a proxy for general city intel)
+    if (trafficData?.delay_mins > 5) {
+      pills.push({ label: trafficData.summary || `${trafficData.delay_mins}m delays`, color: "amber" });
+    } else if (trafficData?.city) {
+      pills.push({ label: `No major delays in ${trafficData.city}`, color: "teal" });
+    }
+    // Today's events
+    if (todayEvents?.length > 0) {
+      const e = todayEvents[0];
+      const timeStr = e.time ? new Date(e.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : null;
+      pills.push({ label: timeStr ? `${timeStr} — ${e.title}` : e.title, color: "indigo" });
+    }
+  }
+
+  return pills.slice(0, 6); // max 6 pills
+}
+
+// Map pill color name to actual hex
+const PILL_COLORS = {
+  teal:   "#2DB896",
+  coral:  "#D95F5F",
+  amber:  "#D4902A",
+  gold:   "#C9A96E",
+  indigo: "#818CF8",
+  mut:    "#8A7F70",
+};
+
 function findNextFlight(trips) {
   const now = Date.now();
   let best = null, bestTime = Infinity;
@@ -721,6 +827,12 @@ export default function HomeScreen({ navigation }) {
 
   const nextFlight = useMemo(() => findNextFlight(trips), [trips]);
 
+  // ── Intelligence signals strip ───────────────────────────────────────────────
+  const signalPills = useMemo(
+    () => buildSignalPills({ homeState, weather, trafficData, todayEvents, riskScore }),
+    [homeState, weather, trafficData, todayEvents, riskScore]
+  );
+
   // ── Render helpers ───────────────────────────────────────────────────────────
 
   function renderMessage({ item, index }) {
@@ -903,6 +1015,23 @@ export default function HomeScreen({ navigation }) {
               {/* Prose briefing */}
               {prose ? (
                 <Text style={s.prose}>{prose}</Text>
+              ) : null}
+
+              {/* Intelligence signals strip — horizontal scrollable pills */}
+              {signalPills.length > 0 && !briefingLoading ? (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={s.signalStrip}
+                  contentContainerStyle={s.signalStripContent}
+                >
+                  {signalPills.map((pill, i) => (
+                    <View key={i} style={s.signalPill}>
+                      <View style={[s.signalDot, { backgroundColor: PILL_COLORS[pill.color] || PILL_COLORS.mut }]} />
+                      <Text style={s.signalPillT}>{pill.label}</Text>
+                    </View>
+                  ))}
+                </ScrollView>
               ) : null}
 
               {/* Add Trip shortcut — only when no trips */}
@@ -1307,6 +1436,39 @@ const s = StyleSheet.create({
     fontSize: 13,
     color: C.gold,
     letterSpacing: 0.5,
+  },
+
+  // ── Intelligence signals strip ──
+  signalStrip: {
+    marginTop: 14,
+  },
+  signalStripContent: {
+    paddingHorizontal: 24,
+    gap: 8,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  signalPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.07)",
+    borderRadius: 20,
+  },
+  signalDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+  signalPillT: {
+    fontFamily: T.sansM,
+    fontSize: 11,
+    color: "rgba(255,255,255,0.75)",
+    letterSpacing: 0.2,
   },
 
   // ── Prose briefing ──

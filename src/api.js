@@ -22,6 +22,19 @@ async function fetchWithRetry(url, opts = {}, retries = 2) {
   }
 }
 
+async function reqRaw(path, opts = {}) {
+  const headers = { ...(opts.headers || {}) };
+  if (_token) headers.Authorization = "Bearer " + _token;
+  let r;
+  try {
+    r = await fetchWithRetry(API_BASE + path, { ...opts, headers });
+  } catch (e) {
+    throw new Error("No connection — check your internet and try again.");
+  }
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.text();
+}
+
 async function req(path, opts = {}) {
   const headers = { "Content-Type": "application/json", ...(opts.headers || {}) };
   if (_token) headers.Authorization = "Bearer " + _token;
@@ -473,3 +486,28 @@ export const updateCompanionsMeta = (tripId, companionsCount, companionNames) =>
 // ── Show nights ───────────────────────────────────────────────────────────────
 export const getShowNights = (tripId) =>
   req(`/trips/${tripId}/show-nights`);
+
+// Leg edit / delete / add
+export const editLeg = (tripId, legId, updates) =>
+  req(`/trips/${tripId}/legs/${legId}`, { method: "PATCH", body: JSON.stringify(updates) });
+export const deleteLeg = (tripId, legId) =>
+  req(`/trips/${tripId}/legs/${legId}`, { method: "DELETE" });
+export const addLeg = (tripId, leg) =>
+  req(`/trips/${tripId}/legs`, { method: "POST", body: JSON.stringify(leg) });
+
+// Itinerary paste import
+export const importPasteItinerary = (text, companions_count, companion_names) =>
+  req("/trips/import/paste", { method: "POST", body: JSON.stringify({ text, companions_count, companion_names }) });
+
+// Saved hotel/flight options
+export const saveOption = (tripId, option) =>
+  req(`/trips/${tripId}/saved-options`, { method: "POST", body: JSON.stringify({ option }) });
+export const getSavedOptions = (tripId) =>
+  req(`/trips/${tripId}/saved-options`);
+
+// Calendar export — fetches the .ics with auth and returns raw text
+export const exportCalendarIcs = (tripId) =>
+  reqRaw(`/trips/${tripId}/calendar.ics`);
+
+// Offline snapshot
+export const getOfflineSnapshot = () => req("/me/offline-snapshot");

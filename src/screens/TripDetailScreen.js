@@ -9,13 +9,15 @@ import {
   ActivityIndicator, Alert, RefreshControl, Share, Linking, TextInput,
 } from "react-native";
 import { C, T } from "../theme";
-import { tap, Btn } from "../components";
+import { tap } from "../components";
+import * as Calendar from "expo-calendar";
 import {
   getFlightStatus, getPrediction, refreshTrip, getTripRisk,
   recordTripOutcome, shareTripLink, getDestinationIntel,
   inviteCompanion, getCompanions, getTrips,
   getChecklist, generateChecklist, updateChecklistItem, addChecklistItem,
   getShowNights, updateCompanionsMeta, getDisruptionAlternatives,
+  editLeg, deleteLeg, exportCalendarIcs,
 } from "../api";
 import { API_BASE } from "../config";
 
@@ -66,7 +68,7 @@ function StatusPill({ status }) {
 
 // ─── Live Flight Card ─────────────────────────────────────────────────────────
 
-function FlightLegRow({ leg, isCompleted, tripId, navigation }) {
+function FlightLegRow({ leg, isCompleted, tripId, navigation, onEdit, onDelete }) {
   const [liveStatus, setLiveStatus] = useState(null);
   const [risk, setRisk]             = useState(null);
 
@@ -175,6 +177,16 @@ function FlightLegRow({ leg, isCompleted, tripId, navigation }) {
             <Text style={s.legActionT}>Lounge</Text>
           </Pressable>
         )}
+        {onEdit && (
+          <Pressable style={s.legAction} onPress={() => { tap(); onEdit(leg); }}>
+            <Text style={s.legActionT}>Edit</Text>
+          </Pressable>
+        )}
+        {onDelete && (
+          <Pressable style={[s.legAction, s.legActionDanger]} onPress={() => { tap(); onDelete(leg); }}>
+            <Text style={[s.legActionT, { color: C.coral }]}>Remove</Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -182,7 +194,7 @@ function FlightLegRow({ leg, isCompleted, tripId, navigation }) {
 
 // ─── Non-flight Leg Row ───────────────────────────────────────────────────────
 
-function OtherLegRow({ leg }) {
+function OtherLegRow({ leg, onEdit, onDelete }) {
   const typeLabel = {
     hotel:    "Stay",
     airbnb:   "Stay",
@@ -216,6 +228,18 @@ function OtherLegRow({ leg }) {
         )}
         {leg.confirmation && (
           <Text style={s.otherMeta}>Ref: {leg.confirmation}</Text>
+        )}
+      </View>
+      <View style={s.otherActions}>
+        {onEdit && (
+          <Pressable style={s.legAction} onPress={() => { tap(); onEdit(leg); }}>
+            <Text style={s.legActionT}>Edit</Text>
+          </Pressable>
+        )}
+        {onDelete && (
+          <Pressable style={[s.legAction, s.legActionDanger]} onPress={() => { tap(); onDelete(leg); }}>
+            <Text style={[s.legActionT, { color: C.coral }]}>Remove</Text>
+          </Pressable>
         )}
       </View>
       <StatusPill status="Booked" />
@@ -500,6 +524,34 @@ export default function TripDetailScreen({ route, navigation }) {
     } catch {}
   };
 
+  const handleEditLeg = (leg) => {
+    navigation.navigate("AddTrip", { editLeg: leg, tripId: trip.id });
+  };
+
+  const handleDeleteLeg = (leg) => {
+    Alert.alert(
+      "Remove booking",
+      `Remove "${leg.carrier || leg.destination || "this booking"}" from your trip?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove", style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteLeg(trip.id, leg.id);
+              setTrip(prev => ({
+                ...prev,
+                legs: (prev.legs || []).filter(l => l.id !== leg.id),
+              }));
+            } catch (e) {
+              Alert.alert("Error", e.message || "Could not remove booking.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   // ── Build prose briefing for the header
   const dest = firstFlight?.destination || trip.destination_city || null;
   const daysAway = tripStartDate
@@ -598,6 +650,8 @@ export default function TripDetailScreen({ route, navigation }) {
                 isCompleted={isCompleted}
                 tripId={trip.id}
                 navigation={navigation}
+                onEdit={handleEditLeg}
+                onDelete={handleDeleteLeg}
               />
             ))}
           </>
@@ -608,7 +662,12 @@ export default function TripDetailScreen({ route, navigation }) {
           <>
             <Text style={s.sectionLabel}>BOOKINGS</Text>
             {otherLegs.map((leg, i) => (
-              <OtherLegRow key={i} leg={leg} />
+              <OtherLegRow
+                key={i}
+                leg={leg}
+                onEdit={handleEditLeg}
+                onDelete={handleDeleteLeg}
+              />
             ))}
           </>
         )}
@@ -811,6 +870,94 @@ export default function TripDetailScreen({ route, navigation }) {
               <View style={s.actionDivider} />
             </>
           )}
+          {/* Export to Calendar */}
+          <>
+            <Pressable
+              style={s.actionRow}
+              onPress={async () => {
+                tap();
+                try {
+                  const { status } = await Calendar.requestCalendarPermissionsAsync();
+                  if (status !== "granted") {
+                    Alert.alert("Permission denied", "Wingman needs calendar access to add events.");
+                    return;
+                  }
+                  // Find or create a Wingman calendar
+                  const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
+                  let calId = calendars.find(c => c.title === "Wingman")?.id;
+                  if (!calId) {
+                    const defaultCal = await Calendar.getDefaultCalendarAsync();
+                    calId = await Calendar.createCalendarAsync({
+                      title: "Wingman",
+                      color: "#C9A84C",
+                      entityType: Calendar.EntityTypes.EVENT,
+                      sourceId: defaultCal?.source?.id,
+                      source: defaultCal?.source,
+                      name: "Wingman",
+                      ownerAccount: "personal",
+                      accessLevel: Calendar.CalendarAccessLevel.OWNER,
+                    });
+                  }
+                  // Add each leg as a calendar event
+                  const legs = trip.legs || [];
+                  let added = 0;
+                  for (const leg of legs) {
+                    const start = leg.dep_time || leg.start_time || leg.date;
+                    const end = leg.arr_time || leg.end_time || start;
+                    if (!start) continue;
+                    const startDate = new Date(start);
+                    const endDate = new Date(end);
+                    if (isNaN(startDate.getTime())) continue;
+                    if (isNaN(endDate.getTime()) || endDate <= startDate) {
+                      endDate.setTime(startDate.getTime() + 2 * 60 * 60 * 1000);
+                    }
+                    const title = leg.type === "flight"
+                      ? `✈ ${leg.flight_number || "Flight"} ${leg.origin || ""} → ${leg.destination || ""}`
+                      : leg.type === "hotel"
+                      ? `🏨 ${leg.hotel_name || leg.title || "Hotel"}`
+                      : leg.type === "event" || leg.type === "show"
+                      ? `🎭 ${leg.event_name || leg.title || "Event"}`
+                      : leg.title || leg.type || "Booking";
+                    const location = leg.type === "flight"
+                      ? `${leg.origin || ""} → ${leg.destination || ""}`
+                      : leg.venue || leg.hotel_name || "";
+                    await Calendar.createEventAsync(calId, {
+                      title,
+                      startDate,
+                      endDate,
+                      location,
+                      notes: `Wingman trip: ${trip.title}`,
+                      timeZone: leg.timezone || "UTC",
+                    });
+                    added++;
+                  }
+                  Alert.alert(
+                    "Added to Calendar",
+                    added > 0
+                      ? `${added} event${added !== 1 ? "s" : ""} added to your Wingman calendar.`
+                      : "No events with dates found to add."
+                  );
+                } catch (e) {
+                  Alert.alert("Export failed", e.message);
+                }
+              }}
+            >
+              <Text style={s.actionRowLabel}>Export to Calendar</Text>
+              <Text style={s.actionRowArrow}>›</Text>
+            </Pressable>
+            <View style={s.actionDivider} />
+          </>
+          {/* Add booking */}
+          <>
+            <Pressable
+              style={s.actionRow}
+              onPress={() => { tap(); navigation.navigate("AddTrip", { tripId: trip.id, addLegMode: true }); }}
+            >
+              <Text style={s.actionRowLabel}>Add booking</Text>
+              <Text style={s.actionRowArrow}>›</Text>
+            </Pressable>
+            <View style={s.actionDivider} />
+          </>
           {/* Share */}
           <Pressable style={s.actionRow} onPress={() => { tap(); handleShareTrip(); }}>
             <Text style={s.actionRowLabel}>Share trip</Text>
@@ -1148,9 +1295,17 @@ const s = StyleSheet.create({
     fontFamily: T.sansM,
     fontSize: 11,
     color: C.mut,
-    letterSpacing: 0.3,
   },
-
+  legActionDanger: {
+    borderColor: "rgba(217,95,95,0.25)",
+    backgroundColor: "rgba(217,95,95,0.04)",
+  },
+  otherActions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 8,
+  },
   // ── Other leg row ──
   otherRow: {
     flexDirection: "row",

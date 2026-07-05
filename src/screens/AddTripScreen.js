@@ -2,13 +2,13 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, TextInput, Pressable,
   StyleSheet, Alert, ActivityIndicator, TouchableOpacity, Animated,
-  KeyboardAvoidingView, Platform, Share, Clipboard, Modal,
+  KeyboardAvoidingView, Platform, Share, Clipboard,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { C, T } from "../theme";
 import { BackBar, Btn, g, tap } from "../components";
-import { createTrip, getFlightStatus, draftTripFromText } from "../api";
+import { createTrip, getFlightStatus, draftTripFromText, importPasteItinerary } from "../api";
 
 // ── Trip mode ────────────────────────────────────────────────────────────────
 const MODES = [
@@ -19,13 +19,13 @@ const MODES = [
 
 // ── Leg types ────────────────────────────────────────────────────────────────
 const LEG_TYPES = [
-  { id: "flight",   label: "Flight",   icon: "✈" },
-  { id: "hotel",    label: "Hotel",    icon: "⌂" },
-  { id: "airbnb",   label: "Airbnb",   icon: "◎" },
-  { id: "train",    label: "Train",    icon: "⊟" },
-  { id: "car",      label: "Car",      icon: "◉" },
-  { id: "ferry",    label: "Ferry",    icon: "⊕" },
-  { id: "activity", label: "Activity", icon: "◈" },
+  { id: "flight",   label: "Flight",       icon: "✈" },
+  { id: "hotel",    label: "Hotel",        icon: "⌂" },
+  { id: "airbnb",   label: "Airbnb",       icon: "◎" },
+  { id: "train",    label: "Train",        icon: "⊟" },
+  { id: "car",      label: "Car",          icon: "◉" },
+  { id: "ferry",    label: "Ferry",        icon: "⊕" },
+  { id: "activity", label: "Activity",     icon: "◈" },
   { id: "event",    label: "Show / Event", icon: "◆" },
 ];
 
@@ -37,6 +37,113 @@ function parseFlightInput(raw) {
   return null;
 }
 
+function legSummary(leg) {
+  const t = LEG_TYPES.find(l => l.id === leg.type);
+  const icon = t ? t.icon : "·";
+  switch (leg.type) {
+    case "flight":
+      return `${icon} ${leg.carrier || ""}${leg.flight_number || ""} · ${leg.origin || "?"} → ${leg.destination || "?"}`;
+    case "hotel":
+    case "airbnb":
+      return `${icon} ${leg.property_name || "Hotel"} · ${leg.departs_at ? new Date(leg.departs_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : ""}`;
+    case "train":
+      return `${icon} ${leg.carrier || "Train"} · ${leg.station_from || "?"} → ${leg.station_to || "?"}`;
+    case "car":
+      return `${icon} ${leg.carrier || "Car"} · ${leg.pickup_location || "?"}`;
+    case "event":
+      return `${icon} ${leg.property_name || "Show"} · ${leg.departs_at ? new Date(leg.departs_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : ""}`;
+    default:
+      return `${icon} ${leg.property_name || leg.carrier || leg.type}`;
+  }
+}
+
+function blankLeg() {
+  return {
+    flightQuery: "", origin: "", destination: "", carrier: "",
+    flightNum: "", cabinClass: "", seat: "", depDate: "", arrDate: "",
+    confirmation: "", propertyName: "", address: "", checkIn: "", checkOut: "",
+    nights: "", guests: "", stationFrom: "", stationTo: "", vehicleClass: "",
+    pickupLocation: "", dropoffLocation: "",
+  };
+}
+
+function buildPayload(legType, leg) {
+  const base = { type: legType, confirmation: leg.confirmation.trim() || null };
+  switch (legType) {
+    case "flight":
+      return {
+        ...base,
+        carrier: leg.carrier.trim().toUpperCase() || null,
+        flight_number: leg.flightNum.trim() || null,
+        origin: leg.origin.trim().toUpperCase() || null,
+        destination: leg.destination.trim().toUpperCase() || null,
+        departs_at: leg.depDate.trim() ? new Date(leg.depDate.trim()).toISOString() : null,
+        cabin_class: leg.cabinClass.trim() || null,
+        seat: leg.seat.trim() || null,
+      };
+    case "hotel":
+    case "airbnb":
+      return {
+        ...base,
+        property_name: leg.propertyName.trim() || null,
+        property_address: leg.address.trim() || null,
+        departs_at: leg.checkIn.trim() ? new Date(leg.checkIn.trim()).toISOString() : null,
+        arrives_at: leg.checkOut.trim() ? new Date(leg.checkOut.trim()).toISOString() : null,
+        nights: leg.nights ? parseInt(leg.nights, 10) : null,
+        guests: leg.guests ? parseInt(leg.guests, 10) : null,
+      };
+    case "train":
+      return {
+        ...base,
+        carrier: leg.carrier.trim() || null,
+        station_from: leg.stationFrom.trim() || null,
+        station_to: leg.stationTo.trim() || null,
+        departs_at: leg.depDate.trim() ? new Date(leg.depDate.trim()).toISOString() : null,
+        arrives_at: leg.arrDate.trim() ? new Date(leg.arrDate.trim()).toISOString() : null,
+        seat: leg.seat.trim() || null,
+      };
+    case "car":
+      return {
+        ...base,
+        carrier: leg.carrier.trim() || null,
+        vehicle_class: leg.vehicleClass.trim() || null,
+        pickup_location: leg.pickupLocation.trim() || null,
+        dropoff_location: leg.dropoffLocation.trim() || null,
+        departs_at: leg.depDate.trim() ? new Date(leg.depDate.trim()).toISOString() : null,
+        arrives_at: leg.arrDate.trim() ? new Date(leg.arrDate.trim()).toISOString() : null,
+      };
+    case "ferry":
+      return {
+        ...base,
+        carrier: leg.carrier.trim() || null,
+        origin: leg.origin.trim() || null,
+        destination: leg.destination.trim() || null,
+        departs_at: leg.depDate.trim() ? new Date(leg.depDate.trim()).toISOString() : null,
+        arrives_at: leg.arrDate.trim() ? new Date(leg.arrDate.trim()).toISOString() : null,
+      };
+    case "activity":
+      return {
+        ...base,
+        property_name: leg.propertyName.trim() || null,
+        carrier: leg.carrier.trim() || null,
+        property_address: leg.address.trim() || null,
+        departs_at: leg.depDate.trim() ? new Date(leg.depDate.trim()).toISOString() : null,
+        guests: leg.guests ? parseInt(leg.guests, 10) : null,
+      };
+    case "event":
+      return {
+        ...base,
+        property_name: leg.propertyName.trim() || null,
+        property_address: leg.address.trim() || null,
+        departs_at: leg.depDate.trim() ? new Date(leg.depDate.trim()).toISOString() : null,
+        guests: leg.guests ? parseInt(leg.guests, 10) : null,
+      };
+    default:
+      return base;
+  }
+}
+
+// ── Field components ──────────────────────────────────────────────────────────
 function Field({ label, value, onChangeText, placeholder, keyboardType, autoCapitalize, editable = true, right, multiline }) {
   return (
     <View style={s.field}>
@@ -62,7 +169,6 @@ function Field({ label, value, onChangeText, placeholder, keyboardType, autoCapi
   );
 }
 
-// ── DateField — tap to open native date+time picker ─────────────────────────
 function DateField({ label, value, onChange, mode = "datetime" }) {
   const [show, setShow] = useState(false);
   const parsed = value ? new Date(value) : new Date();
@@ -90,10 +196,7 @@ function DateField({ label, value, onChange, mode = "datetime" }) {
   return (
     <View style={s.field}>
       <Text style={s.label}>{label}</Text>
-      <Pressable
-        style={[s.input, s.dateBtn]}
-        onPress={() => { tap(); setShow(true); }}
-      >
+      <Pressable style={[s.input, s.dateBtn]} onPress={() => { tap(); setShow(true); }}>
         <Text style={[s.dateBtnT, !display && { color: C.mut }]}>
           {display || (mode === "date" ? "Select date" : "Select date & time")}
         </Text>
@@ -113,8 +216,7 @@ function DateField({ label, value, onChange, mode = "datetime" }) {
   );
 }
 
-// ── Type-specific form sections ───────────────────────────────────────────────
-
+// ── Type-specific field groups ────────────────────────────────────────────────
 function FlightFields({ state, set, lookingUp, looked, onFlightQueryChange }) {
   return (
     <View style={g.group}>
@@ -273,117 +375,14 @@ function EventFields({ state, set }) {
   );
 }
 
-// ── Main screen ────────────────────────────────────────────────────────────────
-export default function AddTripScreen({ navigation, route }) {
-  const [title, setTitle]   = useState("");
-  const [mode, setMode]     = useState("solo");
-    const [tab, setTab] = useState("ai"); // AI is always the default entry point
-  const [legType, setLegType] = useState("flight");
-
-  // AI / NL drafting
-  const [nlText, setNlText]   = useState("");
-  const [drafting, setDrafting] = useState(false);
-  const [drafted, setDrafted]   = useState(false);
-
-  // ── prefillPlan: populate from concierge plan card ──────────────────────────
-  useEffect(() => {
-    const plan = route?.params?.prefillPlan;
-    if (!plan) return;
-    // Set trip title from plan
-    if (plan.title) setTitle(plan.title);
-    // Pre-fill the NL text with a description so the user can see what was planned
-    const cityList = Array.isArray(plan.cities) ? plan.cities.join(" → ") : "";
-    const nights = plan.nights ? `${plan.nights} nights` : "";
-    const desc = [plan.title, cityList, nights].filter(Boolean).join(" · ");
-    if (desc) setNlText(desc);
-    // Switch to manual tab so the user can review and save
-    setTab("manual");
-    setDrafted(true);
-  }, [route?.params?.prefillPlan]);
-
-  // Flight lookup
+// ── LegFormPanel — inline form for adding/editing a single leg ────────────────
+function LegFormPanel({ onAdd, onCancel, editPayload }) {
+  const [legType, setLegType] = useState(editPayload?.type || "flight");
+  const [leg, setLegState] = useState(blankLeg());
   const [lookingUp, setLookingUp] = useState(false);
-  const [looked, setLooked]       = useState(false);
+  const [looked, setLooked] = useState(false);
+  const setF = (key, val) => setLegState(prev => ({ ...prev, [key]: val }));
 
-  // Shared leg state (all types share the same flat object; unused fields are ignored on save)
-  const [leg, setLeg] = useState({
-    flightQuery: "", origin: "", destination: "", carrier: "",
-    flightNum: "", cabinClass: "", seat: "", depDate: "", arrDate: "",
-    confirmation: "", propertyName: "", address: "", checkIn: "", checkOut: "",
-    nights: "", guests: "", stationFrom: "", stationTo: "", vehicleClass: "",
-    pickupLocation: "", dropoffLocation: "",
-  });
-  const setF = (key, val) => setLeg(prev => ({ ...prev, [key]: val }));
-
-  const [loading, setLoading] = useState(false);
-  const shake = useRef(new Animated.Value(0)).current;
-  const doShake = () => {
-    Animated.sequence([
-      Animated.timing(shake, { toValue: 8, duration: 60, useNativeDriver: true }),
-      Animated.timing(shake, { toValue: -8, duration: 60, useNativeDriver: true }),
-      Animated.timing(shake, { toValue: 6, duration: 50, useNativeDriver: true }),
-      Animated.timing(shake, { toValue: 0, duration: 50, useNativeDriver: true }),
-    ]).start();
-  };
-
-  // ── AI draft ────────────────────────────────────────────────────────────────
-  const draftFromNL = async () => {
-    if (!nlText.trim()) return;
-    setDrafting(true);
-    try {
-      const data = await draftTripFromText(nlText.trim());
-      if (data.title) setTitle(data.title);
-      const updates = {};
-      const draftType = data.type && LEG_TYPES.find(t => t.id === data.type) ? data.type : "flight";
-      // Route fields by booking type — never put hotel/city names into flight airport fields
-      if (draftType === "flight" || draftType === "ferry") {
-        if (data.origin)        updates.origin      = data.origin.toUpperCase();
-        if (data.destination)   updates.destination = data.destination.toUpperCase();
-        if (data.carrier)       updates.carrier     = data.carrier.toUpperCase();
-        if (data.flight_number) updates.flightNum   = String(data.flight_number);
-      } else if (draftType === "train") {
-        if (data.station_from)  updates.stationFrom = data.station_from;
-        if (data.station_to)    updates.stationTo   = data.station_to;
-        if (data.carrier)       updates.carrier     = data.carrier;
-      } else if (draftType === "car") {
-        if (data.pickup_location)  updates.pickupLocation  = data.pickup_location;
-        if (data.dropoff_location) updates.dropoffLocation = data.dropoff_location;
-        if (data.carrier)          updates.carrier         = data.carrier;
-        if (data.vehicle_class)    updates.vehicleClass    = data.vehicle_class;
-      } else {
-        // hotel / airbnb / activity / cruise / other — carrier is the property/operator name
-        if (data.carrier)       updates.carrier     = data.carrier;
-      }
-      // Fields common to all types
-      if (data.departs_at) {
-        const d = new Date(data.departs_at);
-        if (!isNaN(d)) updates.depDate = d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-      }
-      if (data.confirmation)      updates.confirmation = data.confirmation.toUpperCase();
-      if (data.property_name)     updates.propertyName = data.property_name;
-      if (data.property_address)  updates.address      = data.property_address;
-      else if (data.address)      updates.address      = data.address;
-      if (data.check_in)          updates.checkIn      = data.check_in;
-      if (data.check_out)         updates.checkOut     = data.check_out;
-      if (data.nights)            updates.nights       = String(data.nights);
-      if (data.guests)            updates.guests       = String(data.guests);
-      if (data.cabin_class)       updates.cabinClass   = data.cabin_class;
-      if (data.seat)              updates.seat         = data.seat;
-      // Set leg type AFTER building updates so the correct form renders
-      if (draftType) setLegType(draftType);
-      setLeg(prev => ({ ...prev, ...updates }));
-      setDrafted(true);
-      setTab("manual");
-      tap("medium");
-      // No Alert — the form fills in and the user can see the result immediately
-    } catch (e) {
-      Alert.alert("Couldn't draft trip", e.message || "Try being more specific.");
-    } finally {
-      setDrafting(false);
-    }
-  };
-
-  // ── Flight auto-lookup ───────────────────────────────────────────────────────
   const onFlightQueryChange = async (text) => {
     setF("flightQuery", text);
     setLooked(false);
@@ -403,112 +402,295 @@ export default function AddTripScreen({ navigation, route }) {
           updates.depDate = d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) + " " +
             d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
         }
-        if (!title && data.origin && data.destination) setTitle(`${data.origin} → ${data.destination}`);
-        setLeg(prev => ({ ...prev, ...updates }));
+        setLegState(prev => ({ ...prev, ...updates }));
         setLooked(true);
       }
     } catch (_) {
-      setLeg(prev => ({ ...prev, carrier: parsed.carrier, flightNum: parsed.number }));
+      setLegState(prev => ({ ...prev, carrier: parsed.carrier, flightNum: parsed.number }));
     } finally {
       setLookingUp(false);
     }
   };
 
-  // ── Build leg payload from current state ─────────────────────────────────────
-  const buildLegPayload = () => {
-    const base = {
-      type: legType,
-      confirmation: leg.confirmation.trim() || null,
-    };
-    switch (legType) {
-      case "flight":
-        return {
-          ...base,
-          carrier: leg.carrier.trim().toUpperCase() || null,
-          flight_number: leg.flightNum.trim() || null,
-          origin: leg.origin.trim().toUpperCase() || null,
-          destination: leg.destination.trim().toUpperCase() || null,
-          departs_at: leg.depDate.trim() ? new Date(leg.depDate.trim()).toISOString() : null,
-          cabin_class: leg.cabinClass.trim() || null,
-          seat: leg.seat.trim() || null,
-        };
-      case "hotel":
-      case "airbnb":
-        return {
-          ...base,
-          property_name: leg.propertyName.trim() || null,
-          property_address: leg.address.trim() || null,
-          departs_at: leg.checkIn.trim() ? new Date(leg.checkIn.trim()).toISOString() : null,
-          arrives_at: leg.checkOut.trim() ? new Date(leg.checkOut.trim()).toISOString() : null,
-          nights: leg.nights ? parseInt(leg.nights, 10) : null,
-          guests: leg.guests ? parseInt(leg.guests, 10) : null,
-          destination_city: title.trim() || null,
-        };
-      case "train":
-        return {
-          ...base,
-          carrier: leg.carrier.trim() || null,
-          station_from: leg.stationFrom.trim() || null,
-          station_to: leg.stationTo.trim() || null,
-          departs_at: leg.depDate.trim() ? new Date(leg.depDate.trim()).toISOString() : null,
-          arrives_at: leg.arrDate.trim() ? new Date(leg.arrDate.trim()).toISOString() : null,
-          seat: leg.seat.trim() || null,
-        };
-      case "car":
-        return {
-          ...base,
-          carrier: leg.carrier.trim() || null,
-          vehicle_class: leg.vehicleClass.trim() || null,
-          pickup_location: leg.pickupLocation.trim() || null,
-          dropoff_location: leg.dropoffLocation.trim() || null,
-          departs_at: leg.depDate.trim() ? new Date(leg.depDate.trim()).toISOString() : null,
-          arrives_at: leg.arrDate.trim() ? new Date(leg.arrDate.trim()).toISOString() : null,
-        };
-      case "ferry":
-        return {
-          ...base,
-          carrier: leg.carrier.trim() || null,
-          origin: leg.origin.trim() || null,
-          destination: leg.destination.trim() || null,
-          departs_at: leg.depDate.trim() ? new Date(leg.depDate.trim()).toISOString() : null,
-          arrives_at: leg.arrDate.trim() ? new Date(leg.arrDate.trim()).toISOString() : null,
-        };
-      case "activity":
-        return {
-          ...base,
-          property_name: leg.propertyName.trim() || null,
-          carrier: leg.carrier.trim() || null,
-          property_address: leg.address.trim() || null,
-          departs_at: leg.depDate.trim() ? new Date(leg.depDate.trim()).toISOString() : null,
-          guests: leg.guests ? parseInt(leg.guests, 10) : null,
-        };
-      case "event":
-        return {
-          ...base,
-          property_name: leg.propertyName.trim() || null,
-          property_address: leg.address.trim() || null,
-          departs_at: leg.depDate.trim() ? new Date(leg.depDate.trim()).toISOString() : null,
-          guests: leg.guests ? parseInt(leg.guests, 10) : null,
-        };
-      default:
-        return base;
+  const handleAdd = () => {
+    const payload = buildPayload(legType, leg);
+    const hasContent = payload.carrier || payload.property_name || payload.station_from ||
+      payload.pickup_location || payload.origin || payload.departs_at || payload.property_address;
+    if (!hasContent) {
+      Alert.alert("Add some details", "Fill in at least one field before adding this leg.");
+      return;
+    }
+    tap("medium");
+    onAdd(payload);
+  };
+
+  return (
+    <View style={s.legFormPanel}>
+      {/* Leg type selector */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14 }}>
+        <View style={{ flexDirection: "row", gap: 8, paddingBottom: 4 }}>
+          {LEG_TYPES.map(lt => (
+            <Pressable
+              key={lt.id}
+              style={[s.typeChip, legType === lt.id && s.typeChipOn]}
+              onPress={() => { tap(); setLegType(lt.id); setLooked(false); }}
+            >
+              <Text style={[s.typeChipIcon, legType === lt.id && { color: C.gold }]}>{lt.icon}</Text>
+              <Text style={[s.typeChipT, legType === lt.id && s.typeChipTOn]}>{lt.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </ScrollView>
+
+      {/* Type-specific fields */}
+      {legType === "flight"   && <FlightFields state={leg} set={setF} lookingUp={lookingUp} looked={looked} onFlightQueryChange={onFlightQueryChange} />}
+      {legType === "hotel"    && <HotelFields   state={leg} set={setF} />}
+      {legType === "airbnb"   && <AirbnbFields  state={leg} set={setF} />}
+      {legType === "train"    && <TrainFields    state={leg} set={setF} />}
+      {legType === "car"      && <CarFields      state={leg} set={setF} />}
+      {legType === "ferry"    && <FerryFields    state={leg} set={setF} />}
+      {legType === "activity" && <ActivityFields state={leg} set={setF} />}
+      {legType === "event"    && <EventFields    state={leg} set={setF} />}
+
+      <View style={s.legFormActions}>
+        <Pressable style={s.legFormCancel} onPress={() => { tap(); onCancel(); }}>
+          <Text style={s.legFormCancelT}>Cancel</Text>
+        </Pressable>
+        <Pressable style={s.legFormAdd} onPress={handleAdd}>
+          <Text style={s.legFormAddT}>Add leg →</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+// ── Paste Import Screen (shown as inline panel) ───────────────────────────────
+function PasteImportPanel({ onImported, onCancel }) {
+  const [text, setText] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleImport = async () => {
+    if (!text.trim()) return;
+    setLoading(true);
+    try {
+      const result = await importPasteItinerary(text.trim(), 1, null);
+      tap("medium");
+      onImported(result);
+    } catch (e) {
+      Alert.alert("Import failed", e.message || "Wingman couldn't parse that. Try a different format.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <View style={s.pastePanel}>
+      <Text style={s.pastePanelTitle}>Paste your itinerary</Text>
+      <Text style={s.pastePanelSub}>
+        Paste anything — a Claude plan, TripIt export, forwarded email chain, Google Docs itinerary, or a list of confirmations. Wingman will extract all legs automatically.
+      </Text>
+      <TextInput
+        style={s.pasteInput}
+        value={text}
+        onChangeText={setText}
+        placeholder={"Paste your full itinerary here…\n\ne.g. Sep 20 — BA178 LHR→JFK, departs 11:00\nSep 20 — The Whitby Hotel, New York, check-in\n…"}
+        placeholderTextColor={C.mut}
+        multiline
+        autoCapitalize="sentences"
+        autoCorrect
+        keyboardAppearance="dark"
+        textAlignVertical="top"
+      />
+      <View style={s.legFormActions}>
+        <Pressable style={s.legFormCancel} onPress={() => { tap(); onCancel(); }}>
+          <Text style={s.legFormCancelT}>Cancel</Text>
+        </Pressable>
+        <Pressable
+          style={[s.legFormAdd, (!text.trim() || loading) && { opacity: 0.5 }]}
+          onPress={handleImport}
+          disabled={!text.trim() || loading}
+        >
+          {loading
+            ? <ActivityIndicator color={C.bg} size="small" />
+            : <Text style={s.legFormAddT}>Import legs →</Text>
+          }
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+// ── Main screen ────────────────────────────────────────────────────────────────
+export default function AddTripScreen({ navigation, route }) {
+  const addLegMode = route?.params?.addLegMode === true;
+  const editLegParam = route?.params?.editLeg || null;   // { tripId, legId, leg }
+  const existingTripId = route?.params?.tripId || null;
+
+  const [title, setTitle]   = useState("");
+  const [mode, setMode]     = useState("solo");
+  const [tab, setTab]       = useState(addLegMode ? "manual" : "ai");
+
+  // Multi-leg list
+  const [legs, setLegs]           = useState([]);
+  const [showLegForm, setShowLegForm] = useState(false);
+  const [showPaste, setShowPaste]     = useState(false);
+
+  // AI / NL drafting
+  const [nlText, setNlText]   = useState("");
+  const [drafting, setDrafting] = useState(false);
+  const [drafted, setDrafted]   = useState(false);
+
+  const [loading, setLoading] = useState(false);
+  const shake = useRef(new Animated.Value(0)).current;
+  const doShake = () => {
+    Animated.sequence([
+      Animated.timing(shake, { toValue: 8, duration: 60, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: -8, duration: 60, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: 6, duration: 50, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: 0, duration: 50, useNativeDriver: true }),
+    ]).start();
+  };
+
+  // ── prefillPlan from concierge plan card ─────────────────────────────────────
+  useEffect(() => {
+    const plan = route?.params?.prefillPlan;
+    if (!plan) return;
+    if (plan.title) setTitle(plan.title);
+    // If the plan has pre-parsed legs, add them directly
+    if (Array.isArray(plan.legs) && plan.legs.length > 0) {
+      setLegs(plan.legs);
+      setDrafted(true);
+      setTab("manual");
+    } else {
+      // Otherwise pre-fill the NL text so the user can draft from it
+      const cityList = Array.isArray(plan.cities) ? plan.cities.join(" → ") : "";
+      const nights = plan.nights ? `${plan.nights} nights` : "";
+      const desc = [plan.title, cityList, nights].filter(Boolean).join(" · ");
+      if (desc) setNlText(desc);
+      setTab("ai");
+    }
+  }, [route?.params?.prefillPlan]);
+
+  // ── AI draft ────────────────────────────────────────────────────────────────
+  const draftFromNL = async () => {
+    if (!nlText.trim()) return;
+    setDrafting(true);
+    try {
+      const data = await draftTripFromText(nlText.trim());
+      if (data.title) setTitle(data.title);
+      const draftType = data.type && LEG_TYPES.find(t => t.id === data.type) ? data.type : "flight";
+      const legState = blankLeg();
+      if (draftType === "flight" || draftType === "ferry") {
+        if (data.origin)        legState.origin      = data.origin.toUpperCase();
+        if (data.destination)   legState.destination = data.destination.toUpperCase();
+        if (data.carrier)       legState.carrier     = data.carrier.toUpperCase();
+        if (data.flight_number) legState.flightNum   = String(data.flight_number);
+      } else if (draftType === "train") {
+        if (data.station_from)  legState.stationFrom = data.station_from;
+        if (data.station_to)    legState.stationTo   = data.station_to;
+        if (data.carrier)       legState.carrier     = data.carrier;
+      } else if (draftType === "car") {
+        if (data.pickup_location)  legState.pickupLocation  = data.pickup_location;
+        if (data.dropoff_location) legState.dropoffLocation = data.dropoff_location;
+        if (data.carrier)          legState.carrier         = data.carrier;
+        if (data.vehicle_class)    legState.vehicleClass    = data.vehicle_class;
+      } else {
+        if (data.carrier) legState.carrier = data.carrier;
+      }
+      if (data.departs_at) {
+        const d = new Date(data.departs_at);
+        if (!isNaN(d)) legState.depDate = d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+      }
+      if (data.confirmation)     legState.confirmation = data.confirmation.toUpperCase();
+      if (data.property_name)    legState.propertyName = data.property_name;
+      if (data.property_address) legState.address      = data.property_address;
+      else if (data.address)     legState.address      = data.address;
+      if (data.check_in)         legState.checkIn      = data.check_in;
+      if (data.check_out)        legState.checkOut     = data.check_out;
+      if (data.nights)           legState.nights       = String(data.nights);
+      if (data.guests)           legState.guests       = String(data.guests);
+      if (data.cabin_class)      legState.cabinClass   = data.cabin_class;
+      if (data.seat)             legState.seat         = data.seat;
+
+      const payload = buildPayload(draftType, legState);
+      setLegs(prev => [...prev, payload]);
+      setDrafted(true);
+      setTab("manual");
+      tap("medium");
+    } catch (e) {
+      Alert.alert("Couldn't draft trip", e.message || "Try being more specific.");
+    } finally {
+      setDrafting(false);
+    }
+  };
+
+  // ── Leg management ───────────────────────────────────────────────────────────
+  const handleAddLeg = (payload) => {
+    setLegs(prev => [...prev, payload]);
+    setShowLegForm(false);
+  };
+
+  const handleRemoveLeg = (idx) => {
+    Alert.alert("Remove leg", "Remove this leg from the trip?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Remove", style: "destructive", onPress: () => setLegs(prev => prev.filter((_, i) => i !== idx)) },
+    ]);
+  };
+
+  const handlePasteImported = (result) => {
+    if (result.title && !title.trim()) setTitle(result.title);
+    if (Array.isArray(result.legs) && result.legs.length > 0) {
+      setLegs(prev => [...prev, ...result.legs]);
+      setDrafted(true);
+      setTab("manual");
+      setShowPaste(false);
+      tap("medium");
+    } else {
+      Alert.alert("No legs found", "Wingman couldn't extract any bookings. Try pasting a more detailed itinerary.");
     }
   };
 
   // ── Save ─────────────────────────────────────────────────────────────────────
   const save = async () => {
-    if (!title.trim()) {
-      doShake();
-      Alert.alert("Trip name required", "Give your trip a name like 'Scotland' or 'Tokyo Client Trip'.");
-      return;
-    }
     setLoading(true);
     try {
-      const legPayload = buildLegPayload();
-      // Only include the leg if at least one meaningful field is filled
-      const hasContent = legPayload.carrier || legPayload.property_name || legPayload.station_from ||
-        legPayload.pickup_location || legPayload.origin || legPayload.departs_at;
-      const legs = hasContent ? [legPayload] : [];
+      // ── Mode A: append legs to an existing trip ──────────────────────────────
+      if (addLegMode && existingTripId) {
+        if (legs.length === 0) {
+          Alert.alert("Add a booking", "Add at least one leg before saving.");
+          setLoading(false);
+          return;
+        }
+        const { addLeg } = await import("../api");
+        for (const leg of legs) {
+          await addLeg(existingTripId, leg);
+        }
+        tap("medium");
+        navigation.goBack();
+        return;
+      }
+
+      // ── Mode B: edit a single leg on an existing trip ────────────────────────
+      if (editLegParam && existingTripId) {
+        if (legs.length === 0) {
+          Alert.alert("Add a booking", "Add at least one leg before saving.");
+          setLoading(false);
+          return;
+        }
+        const { editLeg } = await import("../api");
+        await editLeg(existingTripId, editLegParam.legId, legs[0]);
+        tap("medium");
+        navigation.goBack();
+        return;
+      }
+
+      // ── Mode C: create a brand-new trip ──────────────────────────────────────
+      if (!title.trim()) {
+        doShake();
+        Alert.alert("Trip name required", "Give your trip a name like 'Scotland' or 'Tokyo Client Trip'.");
+        setLoading(false);
+        return;
+      }
       const result = await createTrip({ title: title.trim(), legs, mode });
       tap("medium");
       const tripId = result?.trip?.id;
@@ -529,7 +711,7 @@ export default function AddTripScreen({ navigation, route }) {
     <SafeAreaView style={s.app}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={g.scroll} keyboardShouldPersistTaps="handled">
-        <BackBar nav={navigation} label="Add Trip" />
+        <BackBar nav={navigation} label={addLegMode ? "Add Booking" : editLegParam ? "Edit Booking" : "Add Trip"} />
 
         {/* Tab switcher */}
         <View style={s.tabRow}>
@@ -537,9 +719,20 @@ export default function AddTripScreen({ navigation, route }) {
             <Text style={[s.tabT, tab === "ai" && s.tabTOn]}>Ask Wingman</Text>
           </Pressable>
           <Pressable style={[s.tabBtn, tab === "manual" && s.tabBtnOn]} onPress={() => { tap(); setTab("manual"); }}>
-            <Text style={[s.tabT, tab === "manual" && s.tabTOn]}>Enter manually</Text>
+            <Text style={[s.tabT, tab === "manual" && s.tabTOn]}>Build manually</Text>
+          </Pressable>
+          <Pressable style={[s.tabBtn, tab === "paste" && s.tabBtnOn]} onPress={() => { tap(); setTab("paste"); setShowPaste(true); }}>
+            <Text style={[s.tabT, tab === "paste" && s.tabTOn]}>Paste plan</Text>
           </Pressable>
         </View>
+
+        {/* ── Paste import tab ─────────────────────────────────────────────── */}
+        {tab === "paste" && (
+          <PasteImportPanel
+            onImported={handlePasteImported}
+            onCancel={() => { setTab("ai"); setShowPaste(false); }}
+          />
+        )}
 
         {/* ── AI / NL drafting tab ─────────────────────────────────────────── */}
         {tab === "ai" && (
@@ -575,7 +768,7 @@ export default function AddTripScreen({ navigation, route }) {
               "Flying BA 112 from JFK to LHR on July 15th, business class",
               "5 nights at The Hoxton Edinburgh from July 3rd",
               "ScotRail from Edinburgh to Inverness on July 5th at 10am",
-              "Hertz SUV pickup at Edinburgh Airport on July 3rd for 5 days",
+              "Hertz SUV pickup at Edinburgh Airport on July 3rd",
               "Whisky distillery tour in Speyside on July 6th for 2 people",
             ].map((ex, i) => (
               <Pressable key={i} style={s.exRow} onPress={() => { tap(); setNlText(ex); }}>
@@ -586,7 +779,7 @@ export default function AddTripScreen({ navigation, route }) {
           </View>
         )}
 
-        {/* ── Manual tab ───────────────────────────────────────────────────── */}
+        {/* ── Manual build tab ─────────────────────────────────────────────── */}
         {tab === "manual" && (
           <View>
             {drafted && (
@@ -627,35 +820,45 @@ export default function AddTripScreen({ navigation, route }) {
               ))}
             </View>
 
-            {/* Booking Type */}
-            <Text style={g.sectionT}>BOOKING TYPE</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
-              <View style={{ flexDirection: "row", gap: 8, paddingBottom: 4 }}>
-                {LEG_TYPES.map(lt => (
-                  <Pressable
-                    key={lt.id}
-                    style={[s.typeChip, legType === lt.id && s.typeChipOn]}
-                    onPress={() => { tap(); setLegType(lt.id); setLooked(false); }}
-                  >
-                    <Text style={[s.typeChipIcon, legType === lt.id && { color: C.gold }]}>{lt.icon}</Text>
-                    <Text style={[s.typeChipT, legType === lt.id && s.typeChipTOn]}>{lt.label}</Text>
-                  </Pressable>
-                ))}
+            {/* Legs list */}
+            <Text style={g.sectionT}>LEGS {legs.length > 0 ? `(${legs.length})` : ""}</Text>
+            {legs.length === 0 && !showLegForm && (
+              <View style={s.emptyLegs}>
+                <Text style={s.emptyLegsT}>No legs yet — add flights, hotels, shows, and more.</Text>
               </View>
-            </ScrollView>
+            )}
+            {legs.map((leg, idx) => (
+              <View key={idx} style={s.legRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.legRowT}>{legSummary(leg)}</Text>
+                </View>
+                <Pressable style={s.legRemoveBtn} onPress={() => handleRemoveLeg(idx)}>
+                  <Text style={s.legRemoveT}>✕</Text>
+                </Pressable>
+              </View>
+            ))}
 
-            {/* Type-specific fields */}
-            {legType === "flight"   && <FlightFields state={leg} set={setF} lookingUp={lookingUp} looked={looked} onFlightQueryChange={onFlightQueryChange} />}
-            {legType === "hotel"    && <HotelFields   state={leg} set={setF} />}
-            {legType === "airbnb"   && <AirbnbFields  state={leg} set={setF} />}
-            {legType === "train"    && <TrainFields    state={leg} set={setF} />}
-            {legType === "car"      && <CarFields      state={leg} set={setF} />}
-            {legType === "ferry"    && <FerryFields    state={leg} set={setF} />}
-            {legType === "activity" && <ActivityFields state={leg} set={setF} />}
-            {legType === "event"    && <EventFields    state={leg} set={setF} />}
+            {/* Inline leg form */}
+            {showLegForm && (
+              <LegFormPanel
+                onAdd={handleAddLeg}
+                onCancel={() => setShowLegForm(false)}
+              />
+            )}
+
+            {!showLegForm && (
+              <Pressable style={s.addLegBtn} onPress={() => { tap(); setShowLegForm(true); }}>
+                <Text style={s.addLegBtnT}>+ Add a leg</Text>
+              </Pressable>
+            )}
 
             <Btn
-              title={loading ? "Saving…" : "Save Trip"}
+              title={
+                loading ? "Saving…" :
+                addLegMode ? (legs.length > 0 ? `Add ${legs.length} booking${legs.length !== 1 ? "s" : ""} →` : "Add booking") :
+                editLegParam ? "Save changes →" :
+                legs.length > 0 ? `Save trip (${legs.length} leg${legs.length !== 1 ? "s" : ""})` : "Save trip"
+              }
               onPress={save}
               style={{ marginTop: 20 }}
             />
@@ -691,10 +894,7 @@ export default function AddTripScreen({ navigation, route }) {
             <View style={s.importDivider} />
             <Pressable
               style={s.importActionBtn}
-              onPress={() => {
-                tap();
-                Share.share({ message: "import@wingmantravel.app" });
-              }}
+              onPress={() => { tap(); Share.share({ message: "import@wingmantravel.app" }); }}
             >
               <Text style={s.importActionT}>Share</Text>
             </Pressable>
@@ -721,7 +921,7 @@ const s = StyleSheet.create({
   tabRow:   { flexDirection: "row", gap: 8, marginBottom: 20 },
   tabBtn:   { flex: 1, paddingVertical: 10, borderRadius: 12, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, alignItems: "center" },
   tabBtnOn: { borderColor: C.gold, backgroundColor: "rgba(201,169,110,0.08)" },
-  tabT:     { color: C.mut, fontSize: 12, fontFamily: T.sansM, letterSpacing: 0.3 },
+  tabT:     { color: C.mut, fontSize: 11, fontFamily: T.sansM, letterSpacing: 0.3 },
   tabTOn:   { color: C.gold },
 
   // AI card
@@ -772,6 +972,30 @@ const s = StyleSheet.create({
   dateBtn:     { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   dateBtnT:    { color: C.fg, fontSize: 15, fontFamily: T.sans, flex: 1 },
   dateBtnIcon: { color: C.gold, fontSize: 10, marginLeft: 8 },
+
+  // Leg list
+  emptyLegs:   { backgroundColor: C.card, borderRadius: 14, padding: 18, marginBottom: 12, borderWidth: 1, borderColor: C.line, alignItems: "center" },
+  emptyLegsT:  { color: C.mut, fontSize: 13, textAlign: "center" },
+  legRow:      { flexDirection: "row", alignItems: "center", backgroundColor: C.card, borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: C.line },
+  legRowT:     { color: C.ink, fontSize: 14, fontFamily: T.sansM, lineHeight: 20 },
+  legRemoveBtn:{ width: 28, height: 28, borderRadius: 14, backgroundColor: "rgba(255,80,80,0.1)", alignItems: "center", justifyContent: "center", marginLeft: 10 },
+  legRemoveT:  { color: "#ff5050", fontSize: 12, fontFamily: T.sansB },
+  addLegBtn:   { borderRadius: 14, borderWidth: 1.5, borderColor: C.gold, borderStyle: "dashed", padding: 16, alignItems: "center", marginBottom: 4 },
+  addLegBtnT:  { color: C.gold, fontSize: 14, fontFamily: T.sansM },
+
+  // Leg form panel
+  legFormPanel:    { backgroundColor: C.card, borderRadius: 18, padding: 18, marginBottom: 12, borderWidth: 1, borderColor: C.line },
+  legFormActions:  { flexDirection: "row", gap: 10, marginTop: 16 },
+  legFormCancel:   { flex: 1, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: C.line, alignItems: "center" },
+  legFormCancelT:  { color: C.mut, fontSize: 14, fontFamily: T.sansM },
+  legFormAdd:      { flex: 2, padding: 14, borderRadius: 12, backgroundColor: C.gold, alignItems: "center" },
+  legFormAddT:     { color: C.bg, fontSize: 14, fontFamily: T.sansB },
+
+  // Paste panel
+  pastePanel:      { backgroundColor: C.card, borderRadius: 18, padding: 18, marginBottom: 12, borderWidth: 1, borderColor: C.line },
+  pastePanelTitle: { color: C.ink, fontSize: 18, fontFamily: T.serifB, marginBottom: 8 },
+  pastePanelSub:   { color: C.mut, fontSize: 13, lineHeight: 19, marginBottom: 16 },
+  pasteInput:      { color: C.ink, fontSize: 14, lineHeight: 22, minHeight: 160, backgroundColor: C.bg, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: C.line, marginBottom: 4 },
 
   // Email forward card
   importCard:      { marginTop: 28, borderRadius: 20, borderWidth: 1, borderColor: C.line, overflow: "hidden" },

@@ -284,6 +284,7 @@ export default function ConciergeScreen({ route, navigation }) {
         weather: data.weather || null,
         transit: data.transit || null,
         action: data.action || null,
+        plan: data.plan || null,
       };
       const updated = [...newMessages, aiMsg];
       setMessages(updated);
@@ -422,6 +423,35 @@ export default function ConciergeScreen({ route, navigation }) {
               <Text style={s.actionBtnT}>{item.action.label || "Open"}</Text>
             </LinearGradient>
           </Pressable>
+        )}
+
+        {/* Plan card — shown when Claude returns a structured trip plan */}
+        {!isUser && item.plan && (
+          <View style={s.planCard}>
+            <Text style={s.planCardLabel}>TRIP PLAN</Text>
+            <Text style={s.planCardTitle}>{item.plan.title || "Your trip"}</Text>
+            {item.plan.cities && item.plan.cities.length > 0 && (
+              <Text style={s.planCardRoute}>{item.plan.cities.join(" → ")}</Text>
+            )}
+            {item.plan.nights && (
+              <Text style={s.planCardMeta}>{item.plan.nights} nights · {item.plan.legs?.length || 0} legs</Text>
+            )}
+            {item.plan.highlights && item.plan.highlights.length > 0 && (
+              <View style={s.planHighlights}>
+                {item.plan.highlights.slice(0, 3).map((h, i) => (
+                  <Text key={i} style={s.planHighlight}>• {h}</Text>
+                ))}
+              </View>
+            )}
+            <Pressable
+              style={s.planCreateBtn}
+              onPress={() => { tap(); navigation.navigate("AddTrip", { prefillPlan: item.plan }); }}
+            >
+              <LinearGradient colors={[C.gold, C.goldD || "#b8924a"]} style={s.planCreateBtnGrad}>
+                <Text style={s.planCreateBtnT}>Create this trip ›</Text>
+              </LinearGradient>
+            </Pressable>
+          </View>
         )}
       </View>
     );
@@ -651,6 +681,55 @@ const s = StyleSheet.create({
   actionBtn: { marginTop: 14, borderRadius: 12, overflow: "hidden" },
   actionBtnGrad: { paddingVertical: 13, paddingHorizontal: 18, alignItems: "center" },
   actionBtnT: { color: C.inkD, fontSize: 14, fontFamily: T.sansB, letterSpacing: 0.5 },
+
+  // ── Plan card ──
+  planCard: {
+    marginTop: 14,
+    backgroundColor: "rgba(201,169,110,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(201,169,110,0.22)",
+    borderRadius: 14,
+    padding: 16,
+  },
+  planCardLabel: {
+    fontFamily: T.sansM,
+    fontSize: 9,
+    letterSpacing: 2.5,
+    color: C.gold,
+    marginBottom: 6,
+    opacity: 0.8,
+  },
+  planCardTitle: {
+    fontFamily: T.garamondSI,
+    fontSize: 22,
+    color: C.ink,
+    letterSpacing: -0.2,
+    marginBottom: 4,
+  },
+  planCardRoute: {
+    fontFamily: T.sans,
+    fontSize: 13,
+    color: C.mut,
+    marginBottom: 4,
+  },
+  planCardMeta: {
+    fontFamily: T.sansM,
+    fontSize: 11,
+    color: C.gold,
+    marginBottom: 10,
+    opacity: 0.8,
+  },
+  planHighlights: { marginBottom: 14, gap: 4 },
+  planHighlight: {
+    fontFamily: T.sans,
+    fontSize: 12,
+    color: C.ink,
+    lineHeight: 18,
+    opacity: 0.75,
+  },
+  planCreateBtn: { borderRadius: 22, overflow: "hidden" },
+  planCreateBtnGrad: { paddingVertical: 11, paddingHorizontal: 20, alignItems: "center" },
+  planCreateBtnT: { fontFamily: T.sansB, fontSize: 13, color: C.inkD, letterSpacing: 0.4 },
   transitCard: {
     marginTop: 14,
     backgroundColor: C.card2,

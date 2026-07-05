@@ -446,3 +446,30 @@ export const updateBriefingTime = (hour) =>
 export const getInstructions = () => req("/me/instructions");
 export const deleteInstruction = (id) =>
   req(`/me/instructions/${encodeURIComponent(id)}`, { method: "DELETE" });
+
+// ── Pre-trip checklist ────────────────────────────────────────────────────────
+export const generateChecklist = (tripId) =>
+  req(`/trips/${tripId}/checklist/generate`, { method: "POST" });
+export const getChecklist = (tripId) =>
+  req(`/trips/${tripId}/checklist`);
+export const updateChecklistItem = (tripId, itemId, completed) =>
+  req(`/trips/${tripId}/checklist/${itemId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ completed }),
+  });
+export const addChecklistItem = (tripId, item, category) =>
+  req(`/trips/${tripId}/checklist`, {
+    method: "POST",
+    body: JSON.stringify({ item, category }),
+  });
+
+// ── Trip companions metadata ──────────────────────────────────────────────────
+export const updateCompanionsMeta = (tripId, companionsCount, companionNames) =>
+  req(`/trips/${tripId}/companions/meta`, {
+    method: "PATCH",
+    body: JSON.stringify({ companions_count: companionsCount, companion_names: companionNames }),
+  });
+
+// ── Show nights ───────────────────────────────────────────────────────────────
+export const getShowNights = (tripId) =>
+  req(`/trips/${tripId}/show-nights`);

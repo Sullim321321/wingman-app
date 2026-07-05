@@ -14,6 +14,8 @@ import {
   getFlightStatus, getPrediction, refreshTrip, getTripRisk,
   recordTripOutcome, shareTripLink, getDestinationIntel,
   inviteCompanion, getCompanions, getTrips,
+  getChecklist, generateChecklist, updateChecklistItem, addChecklistItem,
+  getShowNights, updateCompanionsMeta, getDisruptionAlternatives,
 } from "../api";
 import { API_BASE } from "../config";
 
@@ -291,6 +293,16 @@ export default function TripDetailScreen({ route, navigation }) {
   const [companions,    setCompanions]    = useState([]);
   const [inviteEmail,   setInviteEmail]   = useState("");
   const [inviting,      setInviting]      = useState(false);
+  // New feature state
+  const [checklist,        setChecklist]        = useState(null);
+  const [checklistLoading, setChecklistLoading] = useState(false);
+  const [newCheckItem,     setNewCheckItem]     = useState("");
+  const [showNights,       setShowNights]       = useState([]);
+  const [disruption,       setDisruption]       = useState(null);
+  const [disruptionLeg,    setDisruptionLeg]    = useState(null);
+  const [disruptionLoading,setDisruptionLoading]= useState(false);
+  const [companionsCount,  setCompanionsCount]  = useState(initialTrip?.companions_count || 1);
+  const [companionNames,   setCompanionNames]   = useState(initialTrip?.companion_names || []);
 
   // Fetch trip by ID if only ID was passed (deep-link / Concierge path)
   useEffect(() => {
@@ -323,6 +335,17 @@ export default function TripDetailScreen({ route, navigation }) {
     getCompanions(trip.id)
       .then(d => { if (d?.companions) setCompanions(d.companions); })
       .catch(() => {});
+    // Load checklist (silent — don't block UI)
+    getChecklist(trip.id)
+      .then(d => { if (d?.checklist) setChecklist(d.checklist); })
+      .catch(() => {});
+    // Load show nights
+    getShowNights(trip.id)
+      .then(d => { if (d?.show_nights?.length) setShowNights(d.show_nights); })
+      .catch(() => {});
+    // Sync companions count from trip object
+    if (trip.companions_count) setCompanionsCount(trip.companions_count);
+    if (trip.companion_names)  setCompanionNames(trip.companion_names);
   }, [trip?.id]);
 
   if (loadingTrip || !trip) {
@@ -419,7 +442,65 @@ export default function TripDetailScreen({ route, navigation }) {
     }
   };
 
-  // Build prose briefing for the header
+  // ── New feature handlers ──────────────────────────────────────────────────
+
+  const handleGenerateChecklist = async () => {
+    setChecklistLoading(true);
+    try {
+      const d = await generateChecklist(trip.id);
+      if (d?.checklist) setChecklist(d.checklist);
+    } catch (e) {
+      Alert.alert("Checklist", e.message || "Could not generate checklist.");
+    } finally {
+      setChecklistLoading(false);
+    }
+  };
+
+  const handleToggleCheckItem = async (itemId, current) => {
+    // Optimistic update
+    setChecklist(prev => prev?.map(it => it.id === itemId ? { ...it, completed: !current } : it));
+    try {
+      await updateChecklistItem(trip.id, itemId, !current);
+    } catch {
+      // Revert on failure
+      setChecklist(prev => prev?.map(it => it.id === itemId ? { ...it, completed: current } : it));
+    }
+  };
+
+  const handleAddCheckItem = async () => {
+    if (!newCheckItem.trim()) return;
+    const text = newCheckItem.trim();
+    setNewCheckItem("");
+    try {
+      const d = await addChecklistItem(trip.id, text, "general");
+      if (d?.item) setChecklist(prev => [...(prev || []), d.item]);
+    } catch {}
+  };
+
+  const handleOpenDisruption = async (leg) => {
+    setDisruptionLeg(leg);
+    setDisruptionLoading(true);
+    setDisruption(null);
+    try {
+      const d = await getDisruptionAlternatives(trip.id, leg.id);
+      setDisruption(d);
+    } catch (e) {
+      Alert.alert("Disruption", e.message || "Could not load disruption data.");
+      setDisruptionLeg(null);
+    } finally {
+      setDisruptionLoading(false);
+    }
+  };
+
+  const handleSaveCompanions = async (count, names) => {
+    setCompanionsCount(count);
+    setCompanionNames(names);
+    try {
+      await updateCompanionsMeta(trip.id, count, names);
+    } catch {}
+  };
+
+  // ── Build prose briefing for the header
   const dest = firstFlight?.destination || trip.destination_city || null;
   const daysAway = tripStartDate
     ? Math.ceil((new Date(tripStartDate).getTime() - Date.now()) / 86400000)
@@ -538,6 +619,146 @@ export default function TripDetailScreen({ route, navigation }) {
           </View>
         )}
 
+        {/* ── Show nights ── */}
+        {showNights.length > 0 && (
+          <>
+            <Text style={s.sectionLabel}>SHOW NIGHTS</Text>
+            <View style={s.intelBlock}>
+              {showNights.map((sn, i) => {
+                const snDate = fmt(sn.departs_at || sn.date);
+                const snTime = fmtTime(sn.departs_at || sn.date);
+                const isToday = snDate === fmt(new Date().toISOString());
+                return (
+                  <View key={i} style={[s.intelRow, i < showNights.length - 1 && s.intelRowBorder]}>
+                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                      <Text style={s.intelLabel}>{snDate}{snTime ? ` · ${snTime}` : ""}</Text>
+                      {isToday && (
+                        <View style={[s.pill, s.pillTeal]}>
+                          <View style={s.pillDot} />
+                          <Text style={[s.pillT, { color: C.teal }]}>TONIGHT</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={s.intelText}>{sn.carrier || sn.title || "Show"}</Text>
+                    {sn.venue && <Text style={[s.intelText, { color: C.mut, fontSize: 12, marginTop: 2 }]}>{sn.venue}</Text>}
+                    {sn.travel_time_mins && (
+                      <Text style={[s.intelText, { color: C.gold, fontSize: 12, marginTop: 4 }]}>
+                        Allow {sn.travel_time_mins} min from hotel · depart by {sn.recommended_depart_time || "TBC"}
+                      </Text>
+                    )}
+                    {sn.tip && <Text style={[s.intelText, { color: C.mut, fontSize: 12, marginTop: 4, fontStyle: "italic" }]}>{sn.tip}</Text>}
+                  </View>
+                );
+              })}
+            </View>
+          </>
+        )}
+
+        {/* ── Disruption impact panel ── */}
+        {disruptionLoading && (
+          <View style={s.riskLoading}>
+            <ActivityIndicator size="small" color={C.gold} />
+            <Text style={s.riskLoadingT}>Calculating cascade impact…</Text>
+          </View>
+        )}
+        {disruption && disruptionLeg && (
+          <>
+            <Text style={s.sectionLabel}>DISRUPTION IMPACT</Text>
+            <View style={[s.connRiskRow, { borderColor: "rgba(217,95,95,0.2)", marginBottom: 4 }]}>
+              <Text style={[s.connRiskLabel, { color: C.coral }]}>
+                {disruptionLeg.carrier}{disruptionLeg.flight_number} AFFECTED
+              </Text>
+              <Text style={s.connRiskRec}>
+                {disruption.cascade_actions?.length || 0} downstream booking{disruption.cascade_actions?.length !== 1 ? "s" : ""} may need attention.
+              </Text>
+            </View>
+            {(disruption.cascade_actions || []).map((action, i) => {
+              const isEvent = action.type === "event_at_risk";
+              const isConn  = action.type === "connection_at_risk";
+              const color   = isEvent || isConn ? C.coral : C.amber;
+              return (
+                <View key={i} style={[s.connRiskRow, { borderColor: isEvent || isConn ? "rgba(217,95,95,0.2)" : "rgba(212,144,42,0.2)", marginBottom: 4 }]}>
+                  <Text style={[s.connRiskLabel, { color }]}>{(action.type || "").replace(/_/g, " ").toUpperCase()}</Text>
+                  <Text style={s.connRiskRec}>{action.message || action.description}</Text>
+                  {action.cta && (
+                    <Pressable
+                      style={[s.intelCta, { paddingHorizontal: 0, paddingVertical: 8, borderTopWidth: 0, marginTop: 6 }]}
+                      onPress={() => { tap(); navigation.navigate("Disruption", { tripId: trip.id, legId: disruptionLeg.id, leg: disruptionLeg }); }}
+                    >
+                      <Text style={s.intelCtaT}>{action.cta}  ›</Text>
+                    </Pressable>
+                  )}
+                </View>
+              );
+            })}
+            <Pressable
+              style={[s.intelCta, { paddingHorizontal: 24, paddingVertical: 12, borderTopWidth: 0 }]}
+              onPress={() => { tap(); navigation.navigate("Disruption", { tripId: trip.id, legId: disruptionLeg.id, leg: disruptionLeg }); }}
+            >
+              <Text style={s.intelCtaT}>See all alternatives  ›</Text>
+            </Pressable>
+          </>
+        )}
+
+        {/* ── Pre-trip checklist ── */}
+        <>
+          <Text style={s.sectionLabel}>PRE-TRIP CHECKLIST</Text>
+          <View style={s.intelBlock}>
+            {!checklist && !checklistLoading && (
+              <Pressable
+                style={s.intelCta}
+                onPress={() => { tap(); handleGenerateChecklist(); }}
+              >
+                <Text style={s.intelCtaT}>Generate personalised checklist  ›</Text>
+              </Pressable>
+            )}
+            {checklistLoading && (
+              <View style={[s.riskLoading, { paddingHorizontal: 18, paddingVertical: 14 }]}>
+                <ActivityIndicator size="small" color={C.gold} />
+                <Text style={s.riskLoadingT}>Building your checklist…</Text>
+              </View>
+            )}
+            {checklist && checklist.length > 0 && (
+              <>
+                {checklist.map((item, i) => (
+                  <Pressable
+                    key={item.id || i}
+                    style={[s.intelRow, i < checklist.length - 1 && s.intelRowBorder, { flexDirection: "row", alignItems: "flex-start", gap: 12 }]}
+                    onPress={() => { tap(); handleToggleCheckItem(item.id, item.completed); }}
+                  >
+                    <View style={[s.checkBox, item.completed && s.checkBoxDone]}>
+                      {item.completed && <Text style={s.checkMark}>✓</Text>}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      {item.category && <Text style={s.intelLabel}>{item.category.toUpperCase()}</Text>}
+                      <Text style={[s.intelText, item.completed && { opacity: 0.4, textDecorationLine: "line-through" }]}>{item.item}</Text>
+                      {item.due_date && <Text style={[s.intelText, { color: C.gold, fontSize: 11, marginTop: 2 }]}>Due {fmt(item.due_date)}</Text>}
+                    </View>
+                  </Pressable>
+                ))}
+                <View style={[s.companionInputRow, { borderTopWidth: 1, borderTopColor: C.line }]}>
+                  <TextInput
+                    style={s.companionInput}
+                    value={newCheckItem}
+                    onChangeText={setNewCheckItem}
+                    placeholder="Add item…"
+                    placeholderTextColor={C.mut}
+                    returnKeyType="done"
+                    onSubmitEditing={handleAddCheckItem}
+                  />
+                  <Pressable
+                    style={[s.inviteBtn, !newCheckItem.trim() && { opacity: 0.4 }]}
+                    onPress={handleAddCheckItem}
+                    disabled={!newCheckItem.trim()}
+                  >
+                    <Text style={s.inviteBtnT}>Add</Text>
+                  </Pressable>
+                </View>
+              </>
+            )}
+          </View>
+        </>
+
         {/* ── Three primary action rows ── */}
         <View style={s.actionsBlock}>
           {/* Ask Wingman */}
@@ -546,6 +767,19 @@ export default function TripDetailScreen({ route, navigation }) {
             <Text style={s.actionRowArrow}>›</Text>
           </Pressable>
           <View style={s.actionDivider} />
+          {/* Check disruptions */}
+          {firstFlight?.id && !isCompleted && (
+            <>
+              <Pressable
+                style={s.actionRow}
+                onPress={() => { tap(); handleOpenDisruption(firstFlight); }}
+              >
+                <Text style={s.actionRowLabel}>Check disruptions</Text>
+                <Text style={s.actionRowArrow}>›</Text>
+              </Pressable>
+              <View style={s.actionDivider} />
+            </>
+          )}
           {/* Upgrade bid */}
           {firstFlight?.id && !isCompleted && (
             <>
@@ -623,6 +857,28 @@ export default function TripDetailScreen({ route, navigation }) {
         {/* ── Travel companions ── */}
         <Text style={s.sectionLabel}>TRAVEL COMPANIONS</Text>
         <View style={s.companionBlock}>
+          {/* Companions count quick-set */}
+          <View style={[s.companionRow, { justifyContent: "space-between" }]}>
+            <Text style={[s.companionEmail, { fontSize: 13, color: C.mut }]}>
+              Travelling with {companionsCount === 1 ? "no one else" : `${companionsCount - 1} other${companionsCount > 2 ? "s" : ""}`} · {companionsCount} room{companionsCount > 1 ? "s" : ""}
+            </Text>
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <Pressable
+                style={[s.inviteBtn, { paddingHorizontal: 12, paddingVertical: 6 }, companionsCount <= 1 && { opacity: 0.3 }]}
+                onPress={() => { if (companionsCount > 1) { tap(); handleSaveCompanions(companionsCount - 1, companionNames); } }}
+                disabled={companionsCount <= 1}
+              >
+                <Text style={s.inviteBtnT}>−</Text>
+              </Pressable>
+              <Pressable
+                style={[s.inviteBtn, { paddingHorizontal: 12, paddingVertical: 6 }]}
+                onPress={() => { tap(); handleSaveCompanions(companionsCount + 1, companionNames); }}
+              >
+                <Text style={s.inviteBtnT}>+</Text>
+              </Pressable>
+            </View>
+          </View>
+          <View style={s.actionDivider} />
           {companions.length > 0 && companions.map((c, i) => (
             <View key={i} style={[s.companionRow, i > 0 && s.companionRowBorder]}>
               <View style={s.companionAvatar}>
@@ -1113,6 +1369,30 @@ const s = StyleSheet.create({
     fontFamily: T.sansB,
     fontSize: 12,
     color: C.bg,
+  },
+
+  // ── Checklist ──
+  checkBox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    borderColor: C.line,
+    backgroundColor: C.card,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
+    flexShrink: 0,
+  },
+  checkBoxDone: {
+    backgroundColor: C.teal,
+    borderColor: C.teal,
+  },
+  checkMark: {
+    fontFamily: T.sansB,
+    fontSize: 11,
+    color: C.bg,
+    lineHeight: 14,
   },
 
   // ── Outcome card ──

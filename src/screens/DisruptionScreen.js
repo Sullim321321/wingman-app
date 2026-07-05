@@ -84,9 +84,13 @@ function EC261Card({ ec261 }) {
 
 function CascadeActionCard({ action, onPress, executing, done }) {
   const icons = {
-    hotel_delay:      "◈",
-    restaurant_delay: "◈",
-    lounge_access:    "🛋",
+    hotel_delay:        "◈",
+    restaurant_delay:   "◈",
+    lounge_access:      "🛋",
+    event_at_risk:      "🎫",
+    connection_at_risk: "⚠️",
+    transfer_at_risk:   "🚕",
+    visa_check:         "📋",
   };
   return (
     <Pressable
@@ -153,9 +157,20 @@ export default function DisruptionScreen({ route, navigation }) {
     // hotel_delay and restaurant_delay hit real backend endpoints via Twilio SMS.
     // lounge_access and unknown types fall back gracefully to the concierge chat.
     const REAL_ENDPOINTS = {
-      hotel_delay:      "hotel-notify",
-      restaurant_delay: "restaurant-reschedule",
+      hotel_delay:        "hotel-notify",
+      restaurant_delay:   "restaurant-reschedule",
     };
+    // Types that always go to concierge with a smart prefill
+    const CONCIERGE_PREFILLS = {
+      event_at_risk:      `My flight was ${isCancelled ? "cancelled" : "delayed"}. I have a show/event that may be at risk — can you help me work out if I'll make it and what my options are?`,
+      connection_at_risk: `My flight was ${isCancelled ? "cancelled" : "delayed"}. I have a tight connection that's now at risk — what are my options?`,
+      transfer_at_risk:   `My flight was ${isCancelled ? "cancelled" : "delayed"}. My ground transfer may need to be rescheduled — can you help?`,
+      visa_check:         `My itinerary has changed. Can you check whether my visa or entry requirements are still valid for the new routing?`,
+    };
+    if (CONCIERGE_PREFILLS[action.type]) {
+      handleConcierge(CONCIERGE_PREFILLS[action.type]);
+      return;
+    }
     const endpoint = REAL_ENDPOINTS[action.type];
 
     if (endpoint && tripId) {

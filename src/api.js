@@ -102,7 +102,7 @@ export const triggerGmailImport = () =>
   req("/auth/gmail/import", { method: "POST" });
 
 // Trips
-export const getTrips = () => req("/trips");
+export const getTrips = (opts = {}) => req("/trips" + (opts.all ? "?all=true" : ""));
 export const createTrip = (data) =>
   req("/trips", { method: "POST", body: JSON.stringify(data) });
 export const deleteTrip = (id) =>

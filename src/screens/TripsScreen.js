@@ -250,6 +250,9 @@ export default function TripsScreen({ navigation }) {
   const [trips,      setTrips]      = useState([]);
   const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showPast,   setShowPast]   = useState(false);
+  const [pastTrips,  setPastTrips]  = useState([]);
+  const [pastLoading, setPastLoading] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -263,22 +266,46 @@ export default function TripsScreen({ navigation }) {
     }
   }, []);
 
+  const loadPast = useCallback(async () => {
+    setPastLoading(true);
+    try {
+      const result = await getTrips({ all: true });
+      const all = result?.trips || [];
+      // Past = trips whose latest leg is in the past
+      const now = Date.now();
+      const past = all.filter(t => {
+        const end = tripEndTime(t);
+        return end > 0 && end < now - 86400000;
+      }).sort((a, b) => tripStartTime(b) - tripStartTime(a));
+      setPastTrips(past);
+    } catch (e) {
+      console.error("[trips/past]", e.message);
+    } finally {
+      setPastLoading(false);
+    }
+  }, []);
+
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const handleDelete = async (id) => {
     try {
       await deleteTrip(id);
       setTrips(prev => prev.filter(t => t.id !== id));
+      setPastTrips(prev => prev.filter(t => t.id !== id));
     } catch (e) {
       Alert.alert("Error", e.message);
     }
   };
 
+  const handleTogglePast = () => {
+    const next = !showPast;
+    setShowPast(next);
+    if (next && pastTrips.length === 0) loadPast();
+  };
+
   const visible = trips.filter(isVisible);
   const upcoming = visible.filter(t => statusForTrip(t) !== "past")
     .sort((a, b) => tripStartTime(a) - tripStartTime(b));
-  const past = visible.filter(t => statusForTrip(t) === "past")
-    .sort((a, b) => tripStartTime(b) - tripStartTime(a)); // most recent first
 
   return (
     <SafeAreaView style={s.root}>
@@ -320,12 +347,10 @@ export default function TripsScreen({ navigation }) {
               </View>
             ))}
           </View>
-        ) : visible.length === 0 ? (
-          <EmptyState navigation={navigation} />
         ) : (
           <>
             {/* ── Upcoming trips ── */}
-            {upcoming.length > 0 && (
+            {upcoming.length > 0 ? (
               <>
                 <Text style={s.sectionLabel}>UPCOMING</Text>
                 {upcoming.map(trip => (
@@ -337,6 +362,8 @@ export default function TripsScreen({ navigation }) {
                   />
                 ))}
               </>
+            ) : (
+              <EmptyState navigation={navigation} />
             )}
 
             {/* ── Import CTA ── */}
@@ -351,23 +378,37 @@ export default function TripsScreen({ navigation }) {
               <Text style={s.importArrow}>›</Text>
             </Pressable>
 
-            {/* ── Past trips ── */}
-            {past.length > 0 && (
-              <>
-                <View style={s.pastRule}>
-                  <View style={s.pastRuleLine} />
-                  <Text style={s.pastRuleLabel}>EARLIER</Text>
-                  <View style={s.pastRuleLine} />
-                </View>
-                {past.map(trip => (
-                  <TripRow
-                    key={trip.id}
-                    trip={trip}
-                    navigation={navigation}
-                    onDelete={handleDelete}
-                  />
-                ))}
-              </>
+            {/* ── Past trips toggle ── */}
+            <Pressable style={s.pastToggle} onPress={handleTogglePast}>
+              <Text style={s.pastToggleT}>
+                {showPast ? "Hide past trips" : "Show past trips"}
+              </Text>
+              <Text style={s.pastToggleArrow}>{showPast ? "▲" : "▼"}</Text>
+            </Pressable>
+
+            {/* ── Past trips list ── */}
+            {showPast && (
+              pastLoading ? (
+                <ActivityIndicator color={C.gold} style={{ marginVertical: 24 }} />
+              ) : pastTrips.length > 0 ? (
+                <>
+                  <View style={s.pastRule}>
+                    <View style={s.pastRuleLine} />
+                    <Text style={s.pastRuleLabel}>EARLIER</Text>
+                    <View style={s.pastRuleLine} />
+                  </View>
+                  {pastTrips.filter(isVisible).map(trip => (
+                    <TripRow
+                      key={trip.id}
+                      trip={trip}
+                      navigation={navigation}
+                      onDelete={handleDelete}
+                    />
+                  ))}
+                </>
+              ) : (
+                <Text style={s.pastEmpty}>No past trips found.</Text>
+              )
             )}
           </>
         )}
@@ -653,7 +694,40 @@ const s = StyleSheet.create({
     color: C.mut,
     opacity: 0.5,
   },
-
+  // ── Past trips toggle ──
+  pastToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    marginTop: 8,
+    marginHorizontal: 24,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 8,
+  },
+  pastToggleT: {
+    fontFamily: T.sansM,
+    fontSize: 12,
+    letterSpacing: 0.8,
+    color: C.mut,
+  },
+  pastToggleArrow: {
+    fontFamily: T.sansM,
+    fontSize: 10,
+    color: C.mut,
+    opacity: 0.6,
+  },
+  pastEmpty: {
+    fontFamily: T.garamondI,
+    fontSize: 15,
+    color: C.mut,
+    textAlign: "center",
+    paddingVertical: 24,
+    paddingHorizontal: 24,
+  },
   // ── Empty state ──
   emptyWrap: {
     paddingHorizontal: 24,

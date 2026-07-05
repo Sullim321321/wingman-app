@@ -399,7 +399,10 @@ export default function HomeScreen({ navigation }) {
       const lng = userLocation?.lng;
       if (lat && lng) {
         const hs = await getHomeState({ lat, lng });
-        if (hs?.ok) setHomeState(hs);
+        if (hs?.ok) {
+          setHomeState(hs);
+          if (hs.headline || hs.prose) setLoadedAt(new Date());
+        }
         const ws = await getWeather({ lat, lng });
         if (ws?.ok) setWeather(ws);
       }
@@ -479,13 +482,15 @@ export default function HomeScreen({ navigation }) {
           if (w.status === "fulfilled" && w.value?.ok) setWeather(w.value);
           if (!cancelled) {
           setBriefingLoading(false);
-          setLoadedAt(new Date());
+          // Only stamp timestamp when there is real briefing content
+          const hasBriefing = !!(hs.value?.headline || hs.value?.prose);
+          if (hasBriefing) setLoadedAt(new Date());
         }
         }
       } catch {
         if (!cancelled) {
           setBriefingLoading(false);
-          setLoadedAt(new Date());
+          // Don't stamp timestamp on error — no content to show
         }
       }
     })();
@@ -907,8 +912,8 @@ export default function HomeScreen({ navigation }) {
             </>
           )}
 
-          {/* Last updated timestamp */}
-          {lastUpdatedStr && !briefingLoading ? (
+          {/* Last updated timestamp — only when there is headline content */}
+          {lastUpdatedStr && headline && !briefingLoading ? (
             <Text style={s.lastUpdated}>{lastUpdatedStr}</Text>
           ) : null}
 

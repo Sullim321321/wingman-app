@@ -14,6 +14,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
 import { useFocusEffect } from "@react-navigation/native";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { C, T } from "../theme";
 import { tap } from "../components";
 import {
@@ -376,15 +377,17 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPr
     const timeGreet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
     const name = firstName || null;
     const city = w?.city || null;
-    // Headline: personalised time-aware greeting
-    if (name) {
+    // Headline: personalised time-aware greeting — name + city when both known
+    if (name && city) {
+      headline = `${timeGreet}, ${name}\nin ${city}.`;
+    } else if (name) {
       headline = `${timeGreet},\n${name}.`;
     } else if (city) {
       headline = `${timeGreet}\nin ${city}.`;
     } else {
       headline = `${timeGreet}.\nHow can I help?`;
     }
-    // Prose: weather + traffic + today's events + top news headline + open-ended offer
+    // Prose: weather + traffic + today's events + open-ended offer
     const weatherDetail = w && w.temp != null
       ? `It's ${w.temp}°${w.description ? ` and ${w.description.toLowerCase()}` : ""}.`
       : null;
@@ -407,19 +410,13 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPr
         }).join(" · ")
       : null;
 
-    // Build prose from contextual signals — NO raw news headlines
+    // Build prose from contextual signals
     const proseParts = [];
     if (weatherDetail) proseParts.push(weatherDetail);
     if (trafficLine) proseParts.push(trafficLine);
     if (eventsLine) proseParts.push(`You have ${eventsLine}`);
-    // Closing offer — personalised with name and city
-    if (name && city) {
-      proseParts.push(`I see you're in ${city}. What can I help you with?`);
-    } else if (city) {
-      proseParts.push(`What can I help you with in ${city}?`);
-    } else {
-      proseParts.push("What can I help you with?");
-    }
+    // Closing offer — just ask, don't repeat the city (already in headline)
+    proseParts.push("What can I help you with?");
     prose = proseParts.join(" ");
   }
 
@@ -955,12 +952,14 @@ export default function HomeScreen({ navigation }) {
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
+  const tabBarHeight = useBottomTabBarHeight();
+
   return (
     <SafeAreaView style={s.root}>
         <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 88 : 0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? tabBarHeight : 0}
       >
         {/* ── Masthead ──────────────────────────────────────────────────── */}
         <View style={s.masthead}>

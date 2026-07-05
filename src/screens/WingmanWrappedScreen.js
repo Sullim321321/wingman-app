@@ -77,6 +77,8 @@ export default function WingmanWrappedScreen({ navigation }) {
   }
 
   const name = data.first_name ? `, ${data.first_name}` : "";
+  const hasDisruptions = data.disruptions_handled > 0;
+  const hasValue = data.total_value_saved > 0;
 
   return (
     <SafeAreaView style={s.app}>
@@ -87,30 +89,43 @@ export default function WingmanWrappedScreen({ navigation }) {
         <WrappedCard gradient={["#1A1209", "#2C1F0A"]}>
           <Text style={s.heroEye}>{YEAR} WRAPPED</Text>
           <Text style={s.heroTitle}>Another year{name},{"\n"}protected.</Text>
-          <Text style={s.heroSub}>Here's what Wingman did for you this year.</Text>
+          <Text style={s.heroSub}>Here’s everything Wingman did for you this year.</Text>
         </WrappedCard>
 
         {/* Trips + Flights */}
         <View style={s.twoCol}>
           <WrappedCard gradient={[C.card, C.card2]}>
             <Text style={s.bigNum}>{data.total_trips}</Text>
-            <Text style={s.bigLabel}>Trips</Text>
-            <Text style={s.bigSub}>protected by Wingman</Text>
+            <Text style={s.bigLabel}>{data.total_trips === 1 ? "Trip" : "Trips"}</Text>
+            <Text style={s.bigSub}>protected end-to-end</Text>
           </WrappedCard>
           <WrappedCard gradient={[C.card, C.card2]}>
             <Text style={s.bigNum}>{data.total_flights}</Text>
-            <Text style={s.bigLabel}>Flights</Text>
+            <Text style={s.bigLabel}>{data.total_flights === 1 ? "Flight" : "Flights"}</Text>
             <Text style={s.bigSub}>monitored in real time</Text>
           </WrappedCard>
         </View>
 
+        {/* Disruptions handled */}
+        {hasDisruptions && (
+          <WrappedCard gradient={["rgba(201,169,110,0.08)", "rgba(201,169,110,0.02)"]}>
+            <Text style={s.roiEye}>DISRUPTIONS HANDLED</Text>
+            <Text style={s.roiNum}>{data.disruptions_handled}</Text>
+            <Text style={s.roiSub}>
+              {data.disruptions_handled === 1
+                ? "Wingman stepped in once so you didn’t have to."
+                : `Wingman stepped in ${data.disruptions_handled} times so you didn’t have to.`}
+            </Text>
+          </WrappedCard>
+        )}
+
         {/* Value saved */}
-        {data.total_value_saved > 0 && (
-          <WrappedCard gradient={["rgba(201,169,110,0.12)", "rgba(201,169,110,0.04)"]}>
+        {hasValue && (
+          <WrappedCard gradient={["rgba(201,169,110,0.14)", "rgba(201,169,110,0.04)"]}>
             <Text style={s.roiEye}>VALUE PROTECTED</Text>
             <Text style={s.roiNum}>${Number(data.total_value_saved).toLocaleString()}</Text>
             <Text style={s.roiSub}>
-              Across {data.disruptions_handled} disruption{data.disruptions_handled !== 1 ? "s" : ""} Wingman handled for you
+              In rebooking fees, lounge access, and upgrades Wingman secured for you
             </Text>
           </WrappedCard>
         )}
@@ -132,6 +147,15 @@ export default function WingmanWrappedScreen({ navigation }) {
             )}
           </WrappedCard>
         )}
+
+        {/* Closing card */}
+        <WrappedCard gradient={["#1A1209", "#2C1F0A"]}>
+          <Text style={s.heroEye}>LOOKING AHEAD</Text>
+          <Text style={[s.heroTitle, { fontSize: 26, lineHeight: 34 }]}>
+            Every trip in {YEAR + 1},{"\n"}covered.
+          </Text>
+          <Text style={s.heroSub}>Wingman’s already watching your next flight.</Text>
+        </WrappedCard>
 
         {/* Share CTA */}
         <Pressable style={s.shareBtn} onPress={handleShare}>

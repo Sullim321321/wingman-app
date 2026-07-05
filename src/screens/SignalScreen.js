@@ -97,19 +97,41 @@ export default function SignalScreen({ navigation }) {
         )}
 
         {!loading && !error && signals.length === 0 && imports.length === 0 && (
-          <View style={s.emptyCard}>
-            <Text style={{ color: C.ink, fontSize: 15, fontFamily: T.sansB, marginBottom: 6 }}>
-              No signals yet
-            </Text>
-            <Text style={{ color: C.mut, fontSize: 13, textAlign: "center", lineHeight: 19 }}>
-              Connect Gmail, Calendar, or Messages to let Wingman catch travel signals automatically.
-            </Text>
-            <Btn
-              title="Connect sources"
-              kind="accent"
-              onPress={() => { tap(); navigation.navigate("Connections"); }}
-              style={{ marginTop: 14 }}
-            />
+          <View>
+            <View style={s.emptyCard}>
+              <Text style={{ color: C.ink, fontSize: 15, fontFamily: T.sansB, marginBottom: 6 }}>
+                No signals yet
+              </Text>
+              <Text style={{ color: C.mut, fontSize: 13, textAlign: "center", lineHeight: 19 }}>
+                Connect Gmail or Calendar and Wingman will catch things like these automatically — before they become problems.
+              </Text>
+              <Btn
+                title="Connect sources"
+                kind="accent"
+                onPress={() => { tap(); navigation.navigate("Connections"); }}
+                style={{ marginTop: 14 }}
+              />
+            </View>
+
+            {/* Sample signal cards — greyed out to show what’s possible */}
+            <Text style={[g.sectionT, { opacity: 0.5 }]}>EXAMPLE SIGNALS</Text>
+            {[
+              { icon: "✉️", source: "Gmail", title: "BA178 check-in is now open", body: "Online check-in for your London → New York flight opens now. Select your seat before they go.", cta: "Check in now" },
+              { icon: "⚠️", source: "Flight alert", title: "LHR T5 security wait: 35 min", body: "Heathrow Terminal 5 security is running 35 minutes. Leave 15 minutes earlier than planned.", cta: "Adjust plan" },
+              { icon: "🏨", source: "Gmail", title: "Hotel confirmation: The Ned London", body: "Your reservation at The Ned is confirmed for 3 nights from 12 Jul. Check-in from 3pm.", cta: "Add to trip" },
+            ].map((ex, i) => (
+              <View key={i} style={[s.signalCard, { opacity: 0.4 }]}>
+                <View style={s.signalHeader}>
+                  <Text style={s.signalIcon}>{ex.icon}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.signalSource}>{ex.source}</Text>
+                  </View>
+                </View>
+                <Text style={s.signalTitle}>{ex.title}</Text>
+                <Text style={s.signalBody} numberOfLines={2}>{ex.body}</Text>
+                <Text style={s.signalCta}>{ex.cta} →</Text>
+              </View>
+            ))}
           </View>
         )}
 

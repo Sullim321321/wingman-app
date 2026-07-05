@@ -136,6 +136,20 @@ function TripRow({ trip, navigation, onDelete }) {
     ? (daysAway <= 0 ? "Today" : daysAway === 1 ? "Tomorrow" : `${daysAway}d`)
     : null;
 
+  // Next-action nudge — one proactive prompt per trip
+  const nextNudge = (() => {
+    if (status === "past") return null;
+    if (status === "active") return "In progress — tap for live status";
+    if (daysAway === 0) return "Check-in may be open — tap to check";
+    if (daysAway === 1) return "Flight tomorrow — check gate & lounge";
+    if (daysAway != null && daysAway <= 3) return "Check-in opens soon — Wingman is watching";
+    if (daysAway != null && daysAway <= 7) {
+      if (riskScore != null && riskScore >= 40) return `${riskScore}% disruption risk — tap to see options`;
+      return "Wingman is monitoring for delays & price drops";
+    }
+    return null;
+  })();
+
   const renderRightActions = (progress, dragX) => {
     const scale = dragX.interpolate({
       inputRange: [-80, 0],
@@ -199,6 +213,9 @@ function TripRow({ trip, navigation, onDelete }) {
           )}
           <StatusPill status={status} riskScore={riskScore} />
         </View>
+        {nextNudge && (
+          <Text style={s.tripNudge} numberOfLines={1}>{nextNudge}</Text>
+        )}
       </View>
 
       {/* Chevron */}
@@ -506,6 +523,14 @@ const s = StyleSheet.create({
     fontSize: 10,
     color: C.gold,
     letterSpacing: 0.5,
+  },
+  tripNudge: {
+    fontFamily: T.sans,
+    fontSize: 11,
+    color: C.mut,
+    letterSpacing: 0.2,
+    marginTop: 4,
+    fontStyle: "italic",
   },
 
   // Chevron

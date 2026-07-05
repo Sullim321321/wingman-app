@@ -5,11 +5,13 @@ import React, { useState, useEffect, useCallback } from "react";
 import { SafeAreaView, ScrollView, View, Text, Switch, StyleSheet, ActivityIndicator, TouchableOpacity, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
+import * as Notifications from "expo-notifications";
 import { C, T } from "../theme";
 import { useTheme } from "../ThemeContext";
 import { BackBar, Segmented, SetRow, Chip, Btn, g } from "../components";
 import { useAuth } from "../auth";
-import { getPolicy, updatePolicy, updateLocale, getHotelAffinity, removeHotelAffinity, updateBriefingTime } from "../api";
+import { getPolicy, updatePolicy, updateLocale, getHotelAffinity, removeHotelAffinity, updateBriefingTime, getInstructions, deleteInstruction } from "../api";
+import { registerForPush } from "../notify";
 
 export const LOCATION_OPT_IN_KEY = "wingman_location_opt_in";
 
@@ -127,6 +129,77 @@ function HotelAffinitySection() {
   );
 }
 
+// ── Concierge Memory Section ─────────────────────────────────────────────────
+function ConciergeMemorySection() {
+  const [instructions, setInstructions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    try {
+      const data = await getInstructions();
+      setInstructions(data?.instructions || []);
+    } catch {}
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  function confirmDelete(id, text) {
+    Alert.alert(
+      "Forget this?",
+      `Remove "${text}" from Wingman's memory? It will no longer apply to future conversations.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Forget", style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteInstruction(id);
+              setInstructions(prev => prev.filter(i => i.id !== id));
+            } catch {
+              Alert.alert("Error", "Couldn't remove — try again.");
+            }
+          },
+        },
+      ]
+    );
+  }
+
+  if (loading) {
+    return (
+      <View style={s.memoryWrap}>
+        <ActivityIndicator color={C.gold} size="small" />
+      </View>
+    );
+  }
+
+  if (instructions.length === 0) {
+    return (
+      <View style={s.memoryWrap}>
+        <Text style={s.memoryEmpty}>
+          When you tell Wingman something like "always book me an aisle seat" or "never suggest economy," it remembers and applies it automatically. Nothing remembered yet.
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={s.memoryWrap}>
+      <Text style={s.memoryIntro}>
+        Wingman applies these automatically in every conversation.
+      </Text>
+      {instructions.map((item, i) => (
+        <View key={item.id} style={[s.memoryRow, i === instructions.length - 1 && { borderBottomWidth: 0 }]}>
+          <Text style={s.memoryText} numberOfLines={2}>{item.instruction}</Text>
+          <TouchableOpacity onPress={() => confirmDelete(item.id, item.instruction)} style={s.memoryRemove}>
+            <Text style={s.memoryRemoveT}>✕</Text>
+          </TouchableOpacity>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 export default function SettingsScreen({ navigation }) {
   const { email, signOut } = useAuth();
   const { appearance, setAppearance } = useTheme();
@@ -138,6 +211,10 @@ export default function SettingsScreen({ navigation }) {
 
   // Location opt-in
   const [locationEnabled, setLocationEnabled] = useState(false);
+
+  // Push notifications
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading]  = useState(false);
 
   // Locale
   const [locale,   setLocale]   = useState("en");
@@ -155,6 +232,10 @@ export default function SettingsScreen({ navigation }) {
     loadPolicy();
     AsyncStorage.getItem(LOCATION_OPT_IN_KEY).then(v => {
       if (v === "true") setLocationEnabled(true);
+    }).catch(() => {});
+    // Check current push permission status
+    Notifications.getPermissionsAsync().then(({ status }) => {
+      setPushEnabled(status === "granted");
     }).catch(() => {});
   }, []);
 
@@ -187,6 +268,36 @@ export default function SettingsScreen({ navigation }) {
       if (field === "price_alerts")   setDrops(!value);
       if (field === "quiet_hours")    setQuiet(!value);
       console.warn("SettingsScreen toggle save failed:", e.message);
+    }
+  }
+
+  async function handlePushToggle(value) {
+    if (pushLoading) return;
+    setPushLoading(true);
+    try {
+      if (value) {
+        const token = await registerForPush();
+        if (token) {
+          setPushEnabled(true);
+        } else {
+          Alert.alert(
+            "Notifications blocked",
+            "To receive flight alerts and your morning briefing, enable notifications in Settings › Notifications › Wingman.",
+            [{ text: "OK" }]
+          );
+        }
+      } else {
+        // Can't revoke programmatically — direct to Settings
+        Alert.alert(
+          "Turn off notifications",
+          "To disable notifications, go to Settings › Notifications › Wingman and turn off Allow Notifications.",
+          [{ text: "OK" }]
+        );
+      }
+    } catch (e) {
+      console.warn("[Settings] push toggle error:", e.message);
+    } finally {
+      setPushLoading(false);
     }
   }
 
@@ -367,6 +478,29 @@ export default function SettingsScreen({ navigation }) {
           </View>
         </View>
 
+        <Text style={g.sectionT}>NOTIFICATIONS</Text>
+        <View style={g.group}>
+          <View style={{ borderBottomWidth: 0 }}>
+            <SetRow
+              ic="🔔"
+              iconColor={C.gold}
+              t="Flight alerts & morning briefing"
+              sub={pushEnabled ? "Notifications are on — you’ll hear about delays, gate changes, and your daily brief" : "Turn on to get flight alerts, gate changes, and your morning briefing"}
+              right={
+                pushLoading
+                  ? <ActivityIndicator color={C.gold} size="small" />
+                  : <Switch
+                      value={pushEnabled}
+                      onValueChange={handlePushToggle}
+                      trackColor={{ true: C.gold, false: C.card2 }}
+                      thumbColor={pushEnabled ? C.inkD : C.mut}
+                      ios_backgroundColor={C.card2}
+                    />
+              }
+            />
+          </View>
+        </View>
+
         <Text style={g.sectionT}>MONITORING</Text>
         <View style={g.group}>
           <SetRow ic="~" iconColor={C.gold} t="Weather & delay watch" sub="Predict disruptions before the airline" right={sw(weather, "weather_alerts")} />
@@ -437,6 +571,9 @@ export default function SettingsScreen({ navigation }) {
 
         <Text style={g.sectionT}>WHAT WINGMAN KNOWS ABOUT YOU</Text>
         <HotelAffinitySection />
+
+        <Text style={[g.sectionT, { marginTop: 4 }]}>REMEMBERED INSTRUCTIONS</Text>
+        <ConciergeMemorySection />
 
         <Text style={g.sectionT}>LOYALTY PROGRAMS</Text>
         <View style={g.group}>
@@ -545,6 +682,54 @@ const s = StyleSheet.create({
     marginLeft: 8,
   },
   affinityRemoveT: {
+    color: C.mut,
+    fontSize: 14,
+    fontFamily: T.sans,
+  },
+  // Concierge memory
+  memoryWrap: {
+    backgroundColor: C.card,
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    overflow: "hidden",
+  },
+  memoryIntro: {
+    color: C.mut,
+    fontSize: 13,
+    fontFamily: T.sans,
+    lineHeight: 19,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 10,
+  },
+  memoryEmpty: {
+    color: C.mut,
+    fontSize: 13,
+    fontFamily: T.sans,
+    lineHeight: 19,
+    padding: 16,
+  },
+  memoryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: C.line,
+  },
+  memoryText: {
+    flex: 1,
+    color: C.ink,
+    fontSize: 14,
+    fontFamily: T.sans,
+    lineHeight: 20,
+  },
+  memoryRemove: {
+    padding: 8,
+    marginLeft: 8,
+  },
+  memoryRemoveT: {
     color: C.mut,
     fontSize: 14,
     fontFamily: T.sans,

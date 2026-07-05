@@ -46,7 +46,12 @@ async function req(path, opts = {}) {
     if (_on401) _on401();
     throw new Error("Session expired — please sign in again.");
   }
-  if (!r.ok) throw new Error(body.error || "HTTP " + r.status);
+  if (!r.ok) {
+    const err = new Error(body.error || "HTTP " + r.status);
+    err.status = r.status;
+    err.detail = body.detail || null;
+    throw err;
+  }
   return body;
 }
 
@@ -436,3 +441,8 @@ export const getTodayEvents = () => req("/today-events");
 export const updateBriefingTime = (hour) =>
   req("/me/briefing-time", { method: "PATCH", body: JSON.stringify({ briefing_hour: hour }) });
 
+
+// ── Concierge memory — remembered instructions ────────────────────────────────
+export const getInstructions = () => req("/me/instructions");
+export const deleteInstruction = (id) =>
+  req(`/me/instructions/${encodeURIComponent(id)}`, { method: "DELETE" });

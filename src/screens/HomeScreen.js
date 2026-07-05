@@ -401,7 +401,7 @@ export default function HomeScreen({ navigation }) {
         const hs = await getHomeState({ lat, lng });
         if (hs?.ok) {
           setHomeState(hs);
-          if (hs.headline || hs.prose) setLoadedAt(new Date());
+          setLoadedAt(new Date());
         }
         const ws = await getWeather({ lat, lng });
         if (ws?.ok) setWeather(ws);
@@ -482,9 +482,8 @@ export default function HomeScreen({ navigation }) {
           if (w.status === "fulfilled" && w.value?.ok) setWeather(w.value);
           if (!cancelled) {
           setBriefingLoading(false);
-          // Only stamp timestamp when there is real briefing content
-          const hasBriefing = !!(hs.value?.headline || hs.value?.prose);
-          if (hasBriefing) setLoadedAt(new Date());
+          // Stamp timestamp whenever homeState loaded successfully (briefing is derived client-side)
+          if (hs.value?.ok) setLoadedAt(new Date());
         }
         }
       } catch {
@@ -673,12 +672,18 @@ export default function HomeScreen({ navigation }) {
       scheduleSave(updated);
     } catch (err) {
       const isTimeout = err?.name === "TimeoutError" || err?.name === "AbortError";
-      const isOffline = err?.message?.includes("No connection");
+      const isOffline = err?.message?.includes("No connection") || err?.message?.includes("Network request failed");
+      const isServerError = err?.status >= 500 || err?.message?.includes("500") || err?.message?.includes("502") || err?.message?.includes("503");
+      const isAuthError = err?.status === 401 || err?.message?.includes("401") || err?.message?.includes("unauthorized");
       const errMsg = isOffline
         ? "No internet connection — check your signal and try again."
         : isTimeout
-        ? "That took too long to respond. The server may be waking up — try again in a few seconds."
-        : "Something went wrong. Try again in a moment.";
+        ? "That took a little longer than usual. Try again — I'm ready."
+        : isAuthError
+        ? "Your session has expired. Please sign out and back in."
+        : isServerError
+        ? "I'm having a moment. Try again in a few seconds."
+        : "I didn't quite catch that. Try again."
       setMessages(prev => [...prev, { role: "assistant", content: errMsg }]);
     } finally {
       setChatLoading(false);

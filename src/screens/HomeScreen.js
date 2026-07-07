@@ -815,7 +815,12 @@ export default function HomeScreen({ navigation }) {
         transit: data.transit || null,
         action:  data.action  || null,
         plan:    data.plan    || null,
+        write:   data.write   || null,
       };
+      // If the concierge made a write-back change, silently refresh the trips list
+      if (data.write) {
+        getTrips().then(d => setTrips(d.trips || [])).catch(() => {});
+      }
       const updated = [...newMessages, aiMsg];
       setMessages(updated);
       scheduleSave(updated);

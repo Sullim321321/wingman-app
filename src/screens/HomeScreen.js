@@ -17,11 +17,13 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { C, T } from "../theme";
 import { tap } from "../components";
+import { PlanCard } from "../components/PlanCard";
 import {
   getTrips, getHomeState, getWeather, getMe,
   sendConciergeMessage, getConciergeThread, saveConciergeThread, clearConciergeThread,
   getTripBriefing, getPrediction, triggerGmailScan, getTravelProfile,
   getLocalNews, getLocalTraffic, getTodayEvents, getTravelStats,
+  createTrip, addLeg,
 } from "../api";
 import { scheduleDisruption, schedulePreDepartureBriefing, schedulePostTripDebrief } from "../notify";
 import * as Speech from "expo-speech";
@@ -738,6 +740,46 @@ export default function HomeScreen({ navigation }) {
     }
   }
 
+  // ── Save a plan from the concierge as a real trip ────────────────────────────
+  const savePlanAsTrip = async (plan) => {
+    // Create the trip
+    const tripData = await createTrip({
+      title: plan.title || (plan.cities || []).join(' → '),
+      status: 'upcoming',
+      companions_count: 0,
+    });
+    const tripId = tripData?.id || tripData?.trip?.id;
+    if (!tripId) throw new Error('No trip ID returned');
+
+    // Add legs in order
+    const legs = plan.legs || [];
+    for (const leg of legs) {
+      if (leg.type === 'flight') {
+        await addLeg(tripId, {
+          type: 'flight',
+          origin: leg.from,
+          destination: leg.to,
+          departs_at: leg.date ? leg.date + 'T00:00:00Z' : null,
+          notes: leg.routing || null,
+        }).catch(() => {});
+      } else if (leg.hotel) {
+        await addLeg(tripId, {
+          type: 'hotel',
+          carrier: leg.hotel,
+          destination: leg.city || null,
+          departs_at: leg.check_in ? leg.check_in + 'T14:00:00Z' : null,
+          arrives_at: (leg.check_in && leg.nights)
+            ? new Date(new Date(leg.check_in + 'T12:00:00Z').getTime() + leg.nights * 86400000).toISOString()
+            : null,
+          notes: leg.why || null,
+        }).catch(() => {});
+      }
+    }
+
+    // Refresh trips list
+    getTrips().then(d => setTrips(d.trips || [])).catch(() => {});
+  };
+
   function scheduleSave(msgs) {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
@@ -772,6 +814,7 @@ export default function HomeScreen({ navigation }) {
         places:  data.places  || null,
         transit: data.transit || null,
         action:  data.action  || null,
+        plan:    data.plan    || null,
       };
       const updated = [...newMessages, aiMsg];
       setMessages(updated);
@@ -837,7 +880,7 @@ export default function HomeScreen({ navigation }) {
 
   function renderMessage({ item, index }) {
     const isUser = item.role === "user";
-    if (!item.content && !item.transit && !item.places && !item.action) return null;
+    if (!item.content && !item.transit && !item.places && !item.action && !item.plan) return null;
     return (
       <View style={[s.msgRow, isUser ? s.msgRowUser : s.msgRowWing]}>
         {!isUser && (
@@ -845,9 +888,14 @@ export default function HomeScreen({ navigation }) {
             <Text style={s.wingMarkT}>W</Text>
           </View>
         )}
-        <View style={[s.bubble, isUser ? s.bubbleUser : s.bubbleWing]}>
-          {item.content ? (
-            <Text style={[s.bubbleT, isUser && s.bubbleTUser]}>{item.content}</Text>
+        <View style={{ flex: 1, maxWidth: '85%' }}>
+          <View style={[s.bubble, isUser ? s.bubbleUser : s.bubbleWing]}>
+            {item.content ? (
+              <Text style={[s.bubbleT, isUser && s.bubbleTUser]}>{item.content}</Text>
+            ) : null}
+          </View>
+          {item.plan && !isUser ? (
+            <PlanCard plan={item.plan} onSave={savePlanAsTrip} />
           ) : null}
         </View>
       </View>

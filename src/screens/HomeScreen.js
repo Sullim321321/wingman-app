@@ -1049,6 +1049,33 @@ export default function HomeScreen({ navigation }) {
             </View>
           </View>
 
+          {/* ── Disruption alert banner ── */}
+          {(() => {
+            const disrupted = (trips || []).flatMap(t => (t.legs || []).filter(l =>
+              l.type === 'flight' && (l.status === 'Cancelled' || l.status === 'Delayed') &&
+              l.departs_at && new Date(l.departs_at) > new Date()
+            ).map(l => ({ ...l, tripId: t.id, tripTitle: t.title })));
+            if (!disrupted.length) return null;
+            const leg = disrupted[0];
+            const isCancelled = leg.status === 'Cancelled';
+            const ident = (leg.carrier || '') + (leg.flight_number || '');
+            return (
+              <Pressable
+                style={[s.disruptionBanner, { borderColor: isCancelled ? C.coral + '60' : C.amber + '60', backgroundColor: isCancelled ? C.coral + '12' : C.amber + '10' }]}
+                onPress={() => { tap(); navigation.navigate('Disruption', { tripId: String(leg.tripId), legId: String(leg.id), ident }); }}
+              >
+                <Text style={[s.disruptionBannerIcon, { color: isCancelled ? C.coral : C.amber }]}>{isCancelled ? '⚠' : '⏱'}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.disruptionBannerTitle, { color: isCancelled ? C.coral : C.amber }]}>
+                    {isCancelled ? `${ident} cancelled` : `${ident} delayed`}
+                  </Text>
+                  <Text style={s.disruptionBannerSub}>{leg.origin} → {leg.destination} · Tap to see options</Text>
+                </View>
+                <Text style={[s.disruptionBannerArrow, { color: isCancelled ? C.coral : C.amber }]}>›</Text>
+              </Pressable>
+            );
+          })()}
+
           {/* Skeleton loading state */}
           {briefingLoading ? (
             <View style={s.skeletonWrap}>
@@ -1849,5 +1876,39 @@ const s = StyleSheet.create({
     fontFamily: T.sans,
     fontSize: 13,
     color: C.mut,
+  },
+
+  // ── Disruption alert banner ──
+  disruptionBanner: {
+    marginHorizontal: 24,
+    marginTop: 12,
+    marginBottom: 4,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  disruptionBannerIcon: {
+    fontSize: 20,
+    flexShrink: 0,
+  },
+  disruptionBannerTitle: {
+    fontFamily: T.sansM,
+    fontSize: 14,
+    letterSpacing: 0.2,
+  },
+  disruptionBannerSub: {
+    fontFamily: T.sans,
+    fontSize: 12,
+    color: C.mut,
+    marginTop: 2,
+  },
+  disruptionBannerArrow: {
+    fontFamily: T.sansB,
+    fontSize: 22,
+    flexShrink: 0,
   },
 });

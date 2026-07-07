@@ -275,6 +275,7 @@ function Root() {
         "AirportDining", "AirportNavigation", "GroundTransport",
         "Destination", "WingmanPoints", "InsightsFull",
         "Compensation", "UpgradeBid",
+        "Disruption",
       ];
       if (PARAM_ROUTES.includes(route)) {
         navRef.navigate(route, Object.keys(params).length ? params : undefined);
@@ -293,10 +294,21 @@ function Root() {
         if (data.tripId)      params.tripId      = data.tripId;
         if (data.legId)       params.legId       = data.legId;
         if (data.flightIdent) params.flightIdent = data.flightIdent;
+        if (data.ident)       params.ident       = data.ident;
         if (data.iata)        params.iata        = data.iata;
         if (data.gate)        params.gate        = data.gate;
         if (data.prefill)     params.prefill     = data.prefill;
-        navRef.navigate(route, Object.keys(params).length ? params : undefined);
+        const FG_PARAM_ROUTES = [
+          "Alert", "TripDetail", "Concierge",
+          "AirportDining", "AirportNavigation", "GroundTransport",
+          "Destination", "WingmanPoints", "InsightsFull",
+          "Compensation", "UpgradeBid", "Disruption",
+        ];
+        if (FG_PARAM_ROUTES.includes(route)) {
+          navRef.navigate(route, Object.keys(params).length ? params : undefined);
+        } else {
+          navRef.navigate(route);
+        }
       }, 600);
     });
 

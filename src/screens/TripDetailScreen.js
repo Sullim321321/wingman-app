@@ -623,6 +623,57 @@ export default function TripDetailScreen({ route, navigation }) {
 
         <View style={s.rule} />
 
+        {/* ── Day-by-day itinerary timeline ── */}
+        {legs.length > 0 && (() => {
+          // Sort all legs chronologically
+          const sorted = [...legs].sort((a, b) => {
+            const ta = a.departs_at || a.arrives_at || '';
+            const tb = b.departs_at || b.arrives_at || '';
+            return ta < tb ? -1 : ta > tb ? 1 : 0;
+          });
+          // Group by date
+          const groups = {};
+          for (const leg of sorted) {
+            const d = fmt(leg.departs_at || leg.arrives_at) || 'TBD';
+            if (!groups[d]) groups[d] = [];
+            groups[d].push(leg);
+          }
+          const TYPE_ICON = { flight: '✈', hotel: '🏨', airbnb: '🏠', train: '🚄', car: '🚗', ferry: '⛴', activity: '🎭', transfer: '🚖', cruise: '🚢', other: '📌' };
+          return (
+            <>
+              <Text style={s.sectionLabel}>ITINERARY</Text>
+              {Object.entries(groups).map(([date, dayLegs], gi) => (
+                <View key={gi} style={s.dayGroup}>
+                  <Text style={s.dayLabel}>{date}</Text>
+                  {dayLegs.map((leg, li) => {
+                    const icon = TYPE_ICON[leg.type] || '📌';
+                    const name = leg.type === 'flight'
+                      ? `${leg.carrier || ''}${leg.flight_number || ''} · ${leg.origin || '?'} → ${leg.destination || '?'}`
+                      : leg.carrier || leg.destination || leg.type;
+                    const time = fmtTime(leg.departs_at);
+                    const endTime = fmtTime(leg.arrives_at);
+                    const conf = leg.confirmation;
+                    return (
+                      <View key={li} style={[s.timelineRow, li < dayLegs.length - 1 && s.timelineRowBorder]}>
+                        <Text style={s.timelineIcon}>{icon}</Text>
+                        <View style={{ flex: 1 }}>
+                          <Text style={s.timelineName}>{name}</Text>
+                          {(time || endTime) && (
+                            <Text style={s.timelineMeta}>
+                              {time}{endTime && endTime !== time ? ` – ${endTime}` : ''}
+                            </Text>
+                          )}
+                          {conf && <Text style={s.timelineMeta}>Ref: {conf}</Text>}
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+              ))}
+            </>
+          );
+        })()}
+
         {/* ── Flights ── */}
         {flightLegs.length > 0 && (
           <>
@@ -958,6 +1009,47 @@ export default function TripDetailScreen({ route, navigation }) {
             </Pressable>
             <View style={s.actionDivider} />
           </>
+          {/* Export itinerary */}
+          <>
+            <Pressable
+              style={s.actionRow}
+              onPress={async () => {
+                tap();
+                try {
+                  const sorted = [...(trip.legs || [])].sort((a, b) => {
+                    const ta = a.departs_at || a.arrives_at || '';
+                    const tb = b.departs_at || b.arrives_at || '';
+                    return ta < tb ? -1 : ta > tb ? 1 : 0;
+                  });
+                  const TYPE_LABEL = { flight: '\u2708 Flight', hotel: '\ud83c\udfe8 Hotel', airbnb: '\ud83c\udfe0 Stay', train: '\ud83d\ude84 Train', car: '\ud83d\ude97 Car', ferry: '\u26f4 Ferry', activity: '\ud83c\udfad Activity', transfer: '\ud83d\ude96 Transfer', cruise: '\ud83d\udea2 Cruise' };
+                  const lines = [`${trip.title}`, ``, `ITINERARY`, `${'─'.repeat(40)}`];
+                  let lastDate = null;
+                  for (const leg of sorted) {
+                    const d = fmt(leg.departs_at || leg.arrives_at);
+                    if (d && d !== lastDate) { lines.push(``); lines.push(d.toUpperCase()); lastDate = d; }
+                    const typeLabel = TYPE_LABEL[leg.type] || leg.type?.toUpperCase() || 'BOOKING';
+                    const name = leg.type === 'flight'
+                      ? `${leg.carrier || ''}${leg.flight_number || ''} · ${leg.origin || '?'} → ${leg.destination || '?'}`
+                      : leg.carrier || leg.destination || '';
+                    const time = fmtTime(leg.departs_at);
+                    const endTime = fmtTime(leg.arrives_at);
+                    const timeStr = time ? ` · ${time}${endTime && endTime !== time ? ` – ${endTime}` : ''}` : '';
+                    const conf = leg.confirmation ? ` (Ref: ${leg.confirmation})` : '';
+                    lines.push(`  ${typeLabel}: ${name}${timeStr}${conf}`);
+                  }
+                  lines.push(``);
+                  lines.push(`Tracked by Wingman — wingmantravel.app`);
+                  await Share.share({ message: lines.join('\n') });
+                } catch (e) {
+                  Alert.alert('Export failed', e.message);
+                }
+              }}
+            >
+              <Text style={s.actionRowLabel}>Export itinerary</Text>
+              <Text style={s.actionRowArrow}>›</Text>
+            </Pressable>
+            <View style={s.actionDivider} />
+          </>
           {/* Share */}
           <Pressable style={s.actionRow} onPress={() => { tap(); handleShareTrip(); }}>
             <Text style={s.actionRowLabel}>Share trip</Text>
@@ -1162,6 +1254,58 @@ const s = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 6,
     opacity: 0.7,
+  },
+
+  // ── Itinerary timeline ──
+  dayGroup: {
+    marginHorizontal: 24,
+    marginBottom: 4,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  dayLabel: {
+    fontFamily: T.sansM,
+    fontSize: 9,
+    letterSpacing: 2,
+    color: C.gold,
+    textTransform: 'uppercase',
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 6,
+    backgroundColor: 'rgba(201,168,76,0.06)',
+    borderBottomWidth: 1,
+    borderBottomColor: C.line,
+  },
+  timelineRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 10,
+  },
+  timelineRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: C.line,
+  },
+  timelineIcon: {
+    fontSize: 16,
+    lineHeight: 22,
+    width: 22,
+    textAlign: 'center',
+  },
+  timelineName: {
+    fontFamily: T.sans,
+    fontSize: 13,
+    color: C.ink,
+    lineHeight: 18,
+  },
+  timelineMeta: {
+    fontFamily: T.sans,
+    fontSize: 11,
+    color: C.mut,
+    marginTop: 2,
   },
 
   // ── Status pills ──

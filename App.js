@@ -83,6 +83,7 @@ import LoungeCardsScreen from "./src/screens/LoungeCardsScreen";
 import DisruptionScreen from "./src/screens/DisruptionScreen";
 import JourneySimulatorScreen from "./src/screens/JourneySimulatorScreen";
 import TravelProfileScreen from "./src/screens/TravelProfileScreen";
+import MemoryScreen from "./src/screens/MemoryScreen";
 import PassengerProfileScreen from "./src/screens/PassengerProfileScreen";
 
 export const navRef = createNavigationContainerRef();
@@ -385,6 +386,7 @@ function Root() {
             <Stack.Screen name="Disruption"           component={DisruptionScreen} />
             <Stack.Screen name="JourneySimulator"     component={JourneySimulatorScreen} />
             <Stack.Screen name="TravelProfile"        component={TravelProfileScreen} />
+            <Stack.Screen name="Memory"               component={MemoryScreen} />
             <Stack.Screen name="Main"         component={Tabs} />
           </>
         ) : (

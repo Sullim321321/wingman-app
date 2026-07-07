@@ -551,3 +551,8 @@ export const importPdfOcr = async (fileUri, mimeType = "application/pdf") => {
 
 // ─── TRAVEL STATS ─────────────────────────────────────────────────────────────
 export const getTravelStats = () => req("/me/stats");
+
+// ─── USER MEMORY ──────────────────────────────────────────────────────────────
+export const getMemory         = ()       => req("/me/memory");
+export const updateMemory      = (fields) => req("/me/memory", { method: "PATCH", body: JSON.stringify(fields) });
+export const deleteMemoryField = (field)  => req(`/me/memory/${encodeURIComponent(field)}`, { method: "DELETE" });

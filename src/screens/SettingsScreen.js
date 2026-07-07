@@ -570,6 +570,11 @@ export default function SettingsScreen({ navigation }) {
         </View>
 
         <Text style={g.sectionT}>WHAT WINGMAN KNOWS ABOUT YOU</Text>
+        <View style={g.group}>
+          <View style={{ borderBottomWidth: 0 }}>
+            <SetRow ic="◎" iconColor={C.gold} t="About me" sub="Your identity, preferences and context — review and correct" right={<Chip color={C.gold}>View ›</Chip>} onPress={() => navigation.navigate("Memory")} />
+          </View>
+        </View>
         <HotelAffinitySection />
 
         <Text style={[g.sectionT, { marginTop: 4 }]}>REMEMBERED INSTRUCTIONS</Text>

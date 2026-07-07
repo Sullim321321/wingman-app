@@ -140,9 +140,20 @@ export default function ActivityScreen({ navigation }) {
     navigation.navigate("Alert", { flight });
   };
 
-  const activeSignals = events.filter(isActive);
-  const olderSignals  = events.filter(e => !isActive(e));
-  const disruptionCount = events.filter(e =>
+  // Collapse duplicate import spam (same title + body) — keep the most recent of each
+  const _seenImport = new Set();
+  const dedupedEvents = events.filter((e) => {
+    const isImport = e.type === "import" || /imported|new trip created/i.test(`${e.title || ""} ${e.body || ""}`);
+    if (!isImport) return true;
+    const key = `${(e.title || "").trim()}|${(e.body || "").trim()}`;
+    if (_seenImport.has(key)) return false;
+    _seenImport.add(key);
+    return true;
+  });
+
+  const activeSignals = dedupedEvents.filter(isActive);
+  const olderSignals  = dedupedEvents.filter(e => !isActive(e));
+  const disruptionCount = dedupedEvents.filter(e =>
     e.type === "disruption" || e.type === "delay" || e.type === "weather"
   ).length;
   const activeCount = activeSignals.length;

@@ -194,7 +194,7 @@ function seatLabel(seatPref) {
   return null;
 }
 
-// Build the editorial headline and prose briefing from home state + trip data
+// Build the chief-of-staff briefing (greeting + upright opening + prose) from home state + trip data
 function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPrefs, newsData, trafficData, todayEvents, restaurantSuggestion }) {
   const hs    = homeState;
   const leg   = hs?.active_leg;
@@ -204,225 +204,136 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPr
   const next  = findNextFlight(trips);
 
   const weatherCity = w?.city || trip?.destination_city || null;
-  const weatherStr  = w ? `${w.temp}°${weatherCity ? ` in ${weatherCity}` : ""}` : null;
 
-  // ── Status dot colour ──────────────────────────────────────────────────────
-  let statusDotColor = C.mut;   // grey = no trip
+  const hour = new Date().getHours();
+  const timeGreet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const name = firstName || null;
+  const greeting = name ? `${timeGreet}, ${name}.` : `${timeGreet}.`;
+
+  let statusDotColor = C.mut;
   let statusLabel    = "No trips";
+  let headline = null;   // upright opening line (no line breaks)
+  let prose    = null;   // chief-of-staff body
+  let editionSuffix = "";
 
-  // ── Headline ──────────────────────────────────────────────────────────────
-  let headline = null;
-  // ── Prose briefing ────────────────────────────────────────────────────────
-  let prose    = null;
+  const suffix = (d) => (d ? ` · ${String(d).toUpperCase()} BRIEFING` : "");
 
   if (hs?.state === "in_transit" && leg) {
     statusDotColor = C.gold;
     statusLabel    = `Airborne · ${[leg.carrier, leg.flight_number].filter(Boolean).join("")}`;
-    const landMins = leg.arrives_at
-      ? Math.round((new Date(leg.arrives_at).getTime() - Date.now()) / 60000)
-      : null;
+    const landMins = leg.arrives_at ? Math.round((new Date(leg.arrives_at).getTime() - Date.now()) / 60000) : null;
     const timeToLand = landMins && landMins > 0
       ? (landMins >= 60 ? `${Math.floor(landMins / 60)} hour${Math.floor(landMins / 60) !== 1 ? "s" : ""}` : `${landMins} minutes`)
       : null;
     const dest = leg.destination || trip?.destination_city || "your destination";
-    headline = timeToLand
-      ? `${timeToLand}\nto ${dest}.`
-      : `En route\nto ${dest}.`;
-    const parts = [];
-    if (w) parts.push(`${dest} is ${w.temp}° at landing time`);
-    if (hotel) parts.push(`${hotel.name} has confirmed your room`);
-    if (leg.arrives_at) {
-      const arrivalsDelay = hs?.arrivals_delay_mins;
-      if (arrivalsDelay && arrivalsDelay > 5) {
-        parts.push(`arrivals at ${leg.destination} are running ${arrivalsDelay} minutes slow`);
-      }
-    }
-    prose = parts.length
-      ? `You're on schedule. ${parts.join(". ")}. Anything you need before you land?`
-      : `You're on schedule. I'll send you the latest on the ground 30 minutes before landing.`;
+    editionSuffix = suffix(dest);
+    headline = timeToLand ? `${timeToLand} to ${dest}.` : `En route to ${dest}.`;
+    const parts = ["You're on schedule."];
+    if (w) parts.push(`${dest} is ${w.temp}° when you land`);
+    if (hotel) parts.push(`your room at ${hotel.name} is ready`);
+    const arrivalsDelay = hs?.arrivals_delay_mins;
+    if (arrivalsDelay && arrivalsDelay > 5) parts.push(`arrivals at ${dest} are running ${arrivalsDelay} minutes slow`);
+    prose = `${parts.join(". ")}. Anything you need before you land?`;
 
   } else if (hs?.state === "at_airport" && leg) {
     statusDotColor = C.teal;
     statusLabel    = "On time";
     const ident = [leg.carrier, leg.flight_number].filter(Boolean).join("");
     const minsAway = hs.hours_to_depart != null ? Math.round(hs.hours_to_depart * 60) : null;
-    const timeStr  = minsAway != null
-      ? (minsAway >= 120 ? `in ${Math.round(minsAway / 60)} hours` : `in ${minsAway} minutes`)
-      : null;
-    headline = ident && timeStr
-      ? `${ident} departs\n${timeStr}.`
-      : `Departure\napproaching.`;
-    const parts = [];
-    if (leg.gate) parts.push(`Gate ${leg.gate}`);
-    if (leg.terminal) parts.push(`Terminal ${leg.terminal}`);
+    const timeStr  = minsAway != null ? (minsAway >= 120 ? `in ${Math.round(minsAway / 60)} hours` : `in ${minsAway} minutes`) : null;
+    editionSuffix = suffix(weatherCity || leg.destination);
+    headline = ident && timeStr ? `${ident} departs ${timeStr}.` : `Departure approaching.`;
+    const parts = ["You're set to board."];
+    const gate = [leg.gate ? `Gate ${leg.gate}` : null, leg.terminal ? `Terminal ${leg.terminal}` : null].filter(Boolean).join(", ");
+    if (gate) parts.push(gate);
     if (w && weatherCity) parts.push(`${weatherCity} is ${w.temp}° when you land`);
     if (riskScore != null && riskScore >= 30) {
       statusDotColor = riskScore >= 60 ? C.coral : C.amber;
       statusLabel    = riskScore >= 60 ? "Disruption risk" : "Moderate risk";
-      parts.push(`${riskScore}% disruption risk — I'm watching it`);
+      parts.push(riskScore >= 60
+        ? `there's real disruption risk here — I'm on it and you'll have options the moment it moves`
+        : `I'm keeping an eye on a ${riskScore}% chance of disruption`);
     }
-    // Preference-aware additions
     const cabin = userPrefs?.cabin_preference;
     const seat  = seatLabel(userPrefs?.seat_preference);
     const loungeCards = userPrefs?.lounge_cards || [];
-    if (cabin && (cabin === "business" || cabin === "first")) {
-      const loungeLine = loungeCards.length > 0
-        ? `Your ${loungeCards[0].replace(/_/g, " ")} card gets you into the lounge`
-        : `Check the lounge before you board`;
-      parts.push(loungeLine);
-    }
-    if (seat) parts.push(`I'll flag if your ${seat} is available at check-in`);
-    prose = parts.length
-      ? `${parts.join(". ")}. What do you need before you board?`
-      : `I'm watching your flight. What do you need before you board?`;
+    if ((cabin === "business" || cabin === "first") && loungeCards.length > 0) parts.push(`your ${loungeCards[0].replace(/_/g, " ")} card covers the lounge`);
+    if (seat) parts.push(`I'll flag your ${seat} at check-in`);
+    prose = `${parts.join(". ")}. What do you need before you board?`;
 
   } else if (hs?.state === "at_destination" && trip) {
     statusDotColor = C.gold;
     statusLabel    = "At destination";
     const city = trip.destination_city || leg?.destination || "your destination";
-    const _destHour = new Date().getHours();
-    const _destGreet = _destHour < 12 ? "Good morning" : _destHour < 17 ? "Good afternoon" : "Good evening";
-    headline = `${_destGreet} in\n${city}.`;
+    editionSuffix = suffix(city);
+    headline = `You're in ${city}.`;
     const parts = [];
     if (hotel) {
-      const checkinTime = hotel.checkin_at
-        ? new Date(hotel.checkin_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
-        : null;
+      const checkinTime = hotel.checkin_at ? new Date(hotel.checkin_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : null;
       parts.push(`${hotel.name} checks in at ${checkinTime || "3:00 PM"}`);
     }
-    if (w) parts.push(`${city} is ${w.temp}°${w.description ? `, ${w.description.toLowerCase()}` : ""}`);
-    // Preference-aware additions at destination
-    const destCabin = userPrefs?.cabin_preference;
-    const destSeat  = seatLabel(userPrefs?.seat_preference);
-    const destPace  = userPrefs?.travel_pace;
-    if (destCabin === "business" || destCabin === "first") {
-      parts.push("I can check upgrade availability on your return flight now");
-    }
-    if (destPace === "tight") {
-      parts.push("You like to cut it close — I'll remind you when it's time to leave for the airport");
-    } else if (destPace === "generous") {
-      parts.push("I'll build in extra buffer time for your return journey");
-    }
+    if (w) parts.push(`it's ${w.temp}°${w.description ? `, ${w.description.toLowerCase()}` : ""}`);
+    const destPace = userPrefs?.travel_pace;
+    if (destPace === "tight") parts.push("I'll remind you when it's time to leave for the airport");
+    else if (destPace === "generous") parts.push("I'll build extra buffer into your return");
     if (restaurantSuggestion?.name) {
       const stars = restaurantSuggestion.rating ? ` (${restaurantSuggestion.rating}★)` : "";
-      parts.push(`${restaurantSuggestion.name}${stars} is worth a visit`);
+      parts.push(`${restaurantSuggestion.name}${stars} is worth booking`);
     }
-    prose = parts.length
-      ? `${parts.join(". ")}. What can I arrange for you?`
-      : `You've arrived. What can I arrange for you?`;
+    prose = parts.length ? `${parts.join(". ")}. What can I arrange for you?` : `You've arrived. What can I arrange for you?`;
 
   } else if ((hs?.state === "pre_departure" || !hs?.state) && next) {
     const daysAway  = Math.ceil((new Date(next.departs_at).getTime() - Date.now()) / 86400000);
-    const hoursAway = Math.round((new Date(next.departs_at).getTime() - Date.now()) / 3600000);
     const ident     = [next.carrier, next.flight_number].filter(Boolean).join("");
     const dest      = next.destination || "your destination";
+    editionSuffix = suffix(dest);
+    if (daysAway <= 0) { statusDotColor = C.teal; statusLabel = "Today"; headline = `${dest} today.`; }
+    else if (daysAway === 1) { statusDotColor = C.amber; statusLabel = "Tomorrow"; headline = `${dest} tomorrow.`; }
+    else if (daysAway <= 7) { statusDotColor = C.amber; statusLabel = `${daysAway} days out`; headline = `${dest} in ${daysAway} days.`; }
+    else { statusDotColor = C.mut; statusLabel = `${daysAway} days away`; headline = `${dest} in ${daysAway} days.`; }
 
-    if (daysAway <= 0) {
-      statusDotColor = C.teal;
-      statusLabel    = "Today";
-      headline       = `${ident || "Your flight"}\nis today.`;
-    } else if (daysAway === 1) {
-      statusDotColor = C.amber;
-      statusLabel    = "Tomorrow";
-      headline       = `${dest}\ntomorrow.`;
-    } else if (daysAway <= 7) {
-      statusDotColor = C.amber;
-      statusLabel    = `${daysAway} days to departure`;
-      const destName = dest.length <= 4 ? dest : dest; // IATA or city
-      headline       = `${destName} in\n${daysAway === 1 ? "one day" : `${daysAway} days`}.`;
+    // Lead with a read
+    let read;
+    if (riskScore != null && riskScore >= 60) {
+      statusDotColor = C.coral; statusLabel = "Disruption risk";
+      read = `There's real disruption risk on this one — I'm on it, and you'll have rescue options the moment it moves.`;
+    } else if (riskScore != null && riskScore >= 30) {
+      statusDotColor = C.amber; statusLabel = `${riskScore}% risk`;
+      read = `You're in good shape, though I'm keeping an eye on a ${riskScore}% chance of disruption.`;
     } else {
-      statusDotColor = C.mut;
-      statusLabel    = `${daysAway} days away`;
-      headline       = `${dest} in\n${daysAway} days.`;
+      read = `You're in good shape.`;
     }
-
-    const parts = [];
-    if (ident) parts.push(`${ident} on ${new Date(next.departs_at).toLocaleDateString("en-US", { month: "long", day: "numeric" })}`);
-    if (riskScore != null && riskScore >= 30) {
-      statusDotColor = riskScore >= 60 ? C.coral : C.amber;
-      statusLabel    = riskScore >= 60 ? "Disruption risk" : `${riskScore}% risk`;
-      parts.push(`${riskScore}% disruption risk this week — I'll alert you the moment anything changes, with a rescue plan ready`);
-    }
+    const parts = [read];
+    if (ident) parts.push(`${ident} departs ${new Date(next.departs_at).toLocaleDateString("en-US", { month: "long", day: "numeric" })}`);
     if (w && weatherCity) parts.push(`${weatherCity} will be ${w.temp}° when you land`);
-    // Local weather context
-    const localW = weather;
-    if (localW && localW.city && localW.temp != null && localW.city !== weatherCity) {
-      parts.push(`It's ${localW.temp}° here in ${localW.city} right now`);
-    }
-    // Preference-aware additions pre-departure
     const preCabin = userPrefs?.cabin_preference;
     const preSeat  = seatLabel(userPrefs?.seat_preference);
-    const prePace  = userPrefs?.travel_pace;
-    const preLounge = userPrefs?.lounge_cards || [];
-    if (preCabin) {
-      const cabinLabel = CABIN_LABELS[preCabin] || preCabin;
-      if (next.cabin_class && next.cabin_class.toLowerCase() !== preCabin) {
-        parts.push(`You're booked in ${next.cabin_class} — upgrade availability is worth checking`);
-      } else {
-        parts.push(`${cabinLabel} confirmed`);
-      }
-    }
-    if (preSeat) parts.push(`I'll watch for a ${preSeat} at check-in`);
-    if ((preCabin === "business" || preCabin === "first") && preLounge.length > 0) {
-      parts.push(`Your ${preLounge[0].replace(/_/g, " ")} card covers the lounge`);
-    }
-    if (prePace === "tight") parts.push("You like to cut it close — I'll alert you at the last safe moment to leave");
-    prose = parts.length
-      ? `${parts.join(". ")}. Ask me anything about the trip.`
-      : `I'm watching it. Ask me anything about the trip.`;
+    if (preCabin && next.cabin_class && next.cabin_class.toLowerCase() !== preCabin) parts.push(`you're in ${next.cabin_class} — an upgrade is worth a look`);
+    if (preSeat) parts.push(`I'll watch for your ${preSeat} at check-in`);
+    prose = `${parts.join(". ")}. Anything you'd like handled before you go?`;
 
   } else {
-    // No trips at all — city-specific intelligence briefing
     statusDotColor = C.mut;
     statusLabel    = "Standing by";
-    const hour = new Date().getHours();
-    const timeGreet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-    const name = firstName || null;
     const city = w?.city || null;
-    // Headline: personalised time-aware greeting — name + city when both known
-    if (name && city) {
-      headline = `${timeGreet}, ${name}\nin ${city}.`;
-    } else if (name) {
-      headline = `${timeGreet},\n${name}.`;
-    } else if (city) {
-      headline = `${timeGreet}\nin ${city}.`;
-    } else {
-      headline = `${timeGreet}.\nHow can I help?`;
-    }
-    // Prose: weather + traffic + today's events + open-ended offer
-    const weatherDetail = w && w.temp != null
-      ? `It's ${w.temp}°${w.description ? ` and ${w.description.toLowerCase()}` : ""}.`
-      : null;
-
-    // Traffic line — only if there's a notable delay
-    const trafficLine = trafficData?.summary && trafficData?.delay_mins > 5
-      ? trafficData.summary
-      : null;
-
-    // Today's calendar events — show first 2 upcoming
+    headline = city ? `All quiet in ${city}.` : `Nothing on your calendar yet.`;
+    const parts = [];
+    if (w && w.temp != null) parts.push(`It's ${w.temp}°${w.description ? ` and ${w.description.toLowerCase()}` : ""}.`);
+    if (trafficData?.summary && trafficData?.delay_mins > 5) parts.push(trafficData.summary);
     const now = new Date();
-    const upcomingEvents = (todayEvents || []).filter(e => {
-      if (!e.time) return true;
-      return new Date(e.time) > now;
-    }).slice(0, 2);
-    const eventsLine = upcomingEvents.length > 0
-      ? upcomingEvents.map(e => {
-          const timeStr = e.time ? new Date(e.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : null;
-          return timeStr ? `${timeStr} — ${e.title}` : e.title;
-        }).join(" · ")
-      : null;
-
-    // Build prose from contextual signals
-    const proseParts = [];
-    if (weatherDetail) proseParts.push(weatherDetail);
-    if (trafficLine) proseParts.push(trafficLine);
-    if (eventsLine) proseParts.push(`You have ${eventsLine}`);
-    // Closing offer — just ask, don't repeat the city (already in headline)
-    proseParts.push("What can I help you with?");
-    prose = proseParts.join(" ");
+    const upcomingEvents = (todayEvents || []).filter(e => !e.time || new Date(e.time) > now).slice(0, 2);
+    if (upcomingEvents.length) {
+      const eventsLine = upcomingEvents.map(e => {
+        const timeStr = e.time ? new Date(e.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : null;
+        return timeStr ? `${timeStr} — ${e.title}` : e.title;
+      }).join(" · ");
+      parts.push(`You have ${eventsLine}.`);
+    }
+    parts.push("Forward a booking or tell me where you're headed, and I'll take it from there.");
+    prose = parts.join(" ");
   }
 
-  return { headline, prose, statusDotColor, statusLabel };
+  return { greeting, headline, prose, statusDotColor, statusLabel, editionSuffix };
 }
 
 // Build the welcome message for the chat thread
@@ -868,7 +779,7 @@ export default function HomeScreen({ navigation }) {
 
   // ── Derived briefing ─────────────────────────────────────────────────────────
 
-  const { headline, prose, statusDotColor, statusLabel } = useMemo(
+  const { greeting, headline, prose, statusDotColor, statusLabel, editionSuffix } = useMemo(
     () => buildBriefing({ homeState, trips, weather, firstName, riskScore, userPrefs, newsData, trafficData, todayEvents, restaurantSuggestion }),
     [homeState, trips, weather, firstName, riskScore, userPrefs, newsData, trafficData, todayEvents, restaurantSuggestion]
   );
@@ -990,7 +901,7 @@ export default function HomeScreen({ navigation }) {
       setIsSpeaking(false);
       return;
     }
-    const text = [headline?.replace(/\n/g, " "), prose].filter(Boolean).join(" ");
+    const text = [greeting, headline?.replace(/\n/g, " "), prose].filter(Boolean).join(" ");
     if (!text) return;
     setIsSpeaking(true);
     Speech.speak(text, {
@@ -1042,7 +953,7 @@ export default function HomeScreen({ navigation }) {
         <View style={s.heroWrap}>
           {/* Edition line */}
           <View style={s.edition}>
-            <Text style={s.editionDate}>{formatEditionDate()}</Text>
+            <Text style={s.editionDate}>{formatEditionDate()}{editionSuffix || ""}</Text>
             <View style={s.editionStatus}>
               <View style={[s.editionDot, { backgroundColor: briefingLoading ? C.mut : statusDotColor }]} />
               <Text style={s.editionStatusText}>{briefingLoading ? "LOADING" : statusLabel.toUpperCase()}</Text>
@@ -1087,10 +998,13 @@ export default function HomeScreen({ navigation }) {
             </View>
           ) : (
             <>
-              {/* Headline — large serif, takes up space */}
-              {headline ? (
+              {/* Greeting (italic) + upright opening — editorial chief-of-staff briefing */}
+              {(greeting || headline) ? (
                 <View style={s.headlineWrap}>
-                  <HeadlineText text={headline} />
+                  <Text style={s.hedPara}>
+                    {greeting ? <Text style={s.hedGreet}>{greeting} </Text> : null}
+                    {headline || ""}
+                  </Text>
                 </View>
               ) : null}
 
@@ -1510,6 +1424,19 @@ const s = StyleSheet.create({
   hedGold: {
     color: C.goldL,
     fontFamily: T.garamondSI,
+  },
+  hedPara: {
+    fontFamily: T.garamond,
+    fontSize: 25,
+    color: C.ink,
+    lineHeight: 33,
+    letterSpacing: -0.2,
+  },
+  hedGreet: {
+    fontFamily: T.garamondMI,
+    fontSize: 25,
+    color: C.ink,
+    letterSpacing: -0.2,
   },
 
   // ── Skeleton loading ──

@@ -16,7 +16,7 @@ import { getCachedTrips } from "../offlineCache";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const GENERIC_TITLE = /^(Unknown Trip|Unknown|Trip|Imported Trip)$/i;
+const GENERIC_TITLE = /^(Unknown Trip|Unknown|Trip|Imported Trip|Reservations|Needs review)$/i;
 const CARRIER_ONLY  = /^(United Airlines|Delta Air Lines|American Airlines|British Airways|Lufthansa|Air France|Emirates|Qantas|Southwest Airlines|JetBlue|Alaska Airlines|Spirit Airlines|Frontier Airlines|Ryanair|easyJet|Wizz Air|Turkish Airlines|Singapore Airlines|Cathay Pacific|Air Canada|KLM|Iberia|Virgin Atlantic|Air New Zealand|Etihad Airways|Southwest|JetBlue Airways|Alaska) (Flight|Booking|Confirmation|Reservation|Trip)$/i;
 // General catch: any "<Something> Airlines/Airways Trip" style junk title
 const CARRIER_GENERIC = /(Airlines|Air Lines|Airways|Airline)\s+(Trip|Flight|Booking|Confirmation|Reservation)$/i;

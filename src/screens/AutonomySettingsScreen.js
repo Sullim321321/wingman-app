@@ -99,6 +99,8 @@ export default function AutonomySettingsScreen({ navigation }) {
     );
   }
 
+  const dialIndex = Math.max(0, MODES.findIndex((m) => m.id === autonomyMode));
+
   return (
     <SafeAreaView style={s.app}>
       <ScrollView contentContainerStyle={g.scroll}>
@@ -106,14 +108,33 @@ export default function AutonomySettingsScreen({ navigation }) {
 
         {/* Hero */}
         <View style={s.hero}>
-          <Text style={s.heroH}>Fully autonomous.{"\n"}Always in control.</Text>
+          <Text style={s.heroH}>You decide how much{"\n"}to delegate.</Text>
           <Text style={s.heroSub}>
-            Set a policy threshold and Wingman executes instantly — or waits for your approval. You decide how much autonomy to grant.
+            Move the dial to match your comfort. Wingman waits for your word — or handles it silently within the limits you set. Every autonomous action is logged and reversible.
           </Text>
         </View>
 
-        {/* Autonomy mode */}
-        <Text style={g.sectionT}>AUTONOMY MODE</Text>
+        {/* Delegation dial */}
+        <View style={s.dialWrap}>
+          <View style={s.dialLabels}>
+            <Text style={s.dialLabelL}>ASK ME{"\n"}EVERY TIME</Text>
+            <Text style={s.dialLabelR}>HANDLE IT{"\n"}SILENTLY</Text>
+          </View>
+          <View style={s.dialTrack}>
+            <View style={s.dialLine} />
+            {MODES.map((m, i) => (
+              <Pressable key={m.id} style={s.dialStop} onPress={() => { tap(); setAutonomyMode(m.id); }}>
+                {dialIndex === i
+                  ? <View style={s.dialKnob}><View style={s.dialKnobDot} /></View>
+                  : <View style={s.dialDot} />}
+              </Pressable>
+            ))}
+          </View>
+          <Text style={s.dialCurrent}>{MODES[dialIndex].title}</Text>
+        </View>
+
+        {/* Autonomy mode detail */}
+        <Text style={g.sectionT}>WHAT EACH LEVEL DOES</Text>
         <View style={g.group}>
           {MODES.map((m, i) => (
             <Pressable
@@ -240,9 +261,21 @@ export default function AutonomySettingsScreen({ navigation }) {
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
 
-  hero: { marginBottom: 24 },
+  hero: { marginBottom: 20 },
   heroH: { color: C.ink, fontSize: 28, fontFamily: T.serifB, lineHeight: 36, marginBottom: 10 },
   heroSub: { color: C.mut, fontSize: 14, lineHeight: 21 },
+
+  dialWrap: { marginBottom: 26 },
+  dialLabels: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
+  dialLabelL: { color: C.gold, fontSize: 10, letterSpacing: 2, fontFamily: T.sansM, lineHeight: 14 },
+  dialLabelR: { color: C.mut, fontSize: 10, letterSpacing: 2, fontFamily: T.sansM, lineHeight: 14, textAlign: "right" },
+  dialTrack: { flexDirection: "row", alignItems: "center", height: 40, position: "relative" },
+  dialLine: { position: "absolute", left: 12, right: 12, height: 1, backgroundColor: "rgba(201,169,110,0.35)" },
+  dialStop: { flex: 1, alignItems: "center", justifyContent: "center" },
+  dialDot: { width: 12, height: 12, borderRadius: 6, borderWidth: 1, borderColor: C.mut, backgroundColor: C.bg },
+  dialKnob: { width: 26, height: 26, borderRadius: 13, borderWidth: 1, borderColor: C.gold, backgroundColor: C.bg, alignItems: "center", justifyContent: "center" },
+  dialKnobDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: C.gold },
+  dialCurrent: { color: C.gold, fontSize: 15, fontFamily: T.serifB, textAlign: "center", marginTop: 10 },
 
   modeRow: { flexDirection: "row", alignItems: "flex-start", gap: 14, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.line },
   modeRadio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: C.line, alignItems: "center", justifyContent: "center", marginTop: 2 },

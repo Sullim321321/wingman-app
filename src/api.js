@@ -77,8 +77,11 @@ export const verifyCode = (email, code) =>
 export const getPrediction = ({ dep = "DEN", arr = "ASE" } = {}) =>
   req("/predict?dep=" + encodeURIComponent(dep) + "&arr=" + encodeURIComponent(arr));
 
-export const registerPushToken = (pushToken) =>
-  req("/push-token", { method: "POST", body: JSON.stringify({ pushToken }) });
+export const registerPushToken = (pushToken) => {
+  let timezone = null;
+  try { timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || null; } catch {}
+  return req("/push-token", { method: "POST", body: JSON.stringify({ pushToken, timezone }) });
+};
 
 export const getMe = () => req("/me");
 export const getProfile = () => req("/me");

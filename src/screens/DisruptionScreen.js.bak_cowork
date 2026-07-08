@@ -267,10 +267,10 @@ export default function DisruptionScreen({ route, navigation }) {
       setShowConfirm(false);
       if (result?.ok || result?.booking || result?.booked) {
         Alert.alert(
-          "Done ✓",
+          "Booked ✓",
           result.booking_reference
-            ? `You're rebooked. Reference: ${result.booking_reference} — confirmation is on its way to your email.`
-            : "You're rebooked. Confirmation is on its way to your email — nothing else you need to do.",
+            ? `Booking confirmed. Reference: ${result.booking_reference}`
+            : "Your new flight has been booked. Check your email for confirmation.",
           [{ text: "View trip", onPress: () => navigation.navigate("TripDetail", { tripId }) }]
         );
       } else {
@@ -415,7 +415,7 @@ export default function DisruptionScreen({ route, navigation }) {
 
           <Pressable style={s.missedOption} onPress={() => handleConcierge(`I missed my ${ident || "flight"} from ${flight?.origin || "origin"} to ${flight?.destination || "destination"}. What are the next available flights and what are my rights?`)}>
             <Text style={s.missedOptionTitle}>Find next available flights</Text>
-            <Text style={s.missedOptionSub}>I'll search alternatives and check what you're owed</Text>
+            <Text style={s.missedOptionSub}>Wingman will search alternatives and check your rights</Text>
             <Text style={s.missedOptionArrow}>→</Text>
           </Pressable>
 
@@ -478,8 +478,8 @@ export default function DisruptionScreen({ route, navigation }) {
             </Text>
             <Text style={s.connectionRiskSub}>
               {connectionRisk.level === "MISSED"
-                ? "Your connection's gone — I'm already finding alternatives for the whole journey."
-                : "It's a very tight connection. I've lined up rebooking options for the whole journey below."}
+                ? "Your connecting flight has departed. Wingman is finding alternatives for the full journey."
+                : "This is a very tight connection. Tap below to see rebooking options for the full journey."}
             </Text>
           </View>
         )}
@@ -506,7 +506,7 @@ export default function DisruptionScreen({ route, navigation }) {
             ))}
             {selectedAlt && (
               <Pressable style={s.bookBtn} onPress={() => { tap(); setShowConfirm(true); }}>
-                <Text style={s.bookBtnT}>Rebook me on this  →</Text>
+                <Text style={s.bookBtnT}>Rebook this flight  →</Text>
               </Pressable>
             )}
           </>
@@ -519,8 +519,8 @@ export default function DisruptionScreen({ route, navigation }) {
             onPress={() => handleConcierge(`My ${ident || "flight"} was ${isCancelled ? "cancelled" : "delayed"}. What are my options?`)}
           >
             <LinearGradient colors={[C.gold + "0A", "transparent"]} style={StyleSheet.absoluteFill} />
-            <Text style={s.conciergeTitle}>Let me find your options</Text>
-            <Text style={s.conciergeSub}>I'll search alternatives, check what you're owed, and rebook for you.</Text>
+            <Text style={s.conciergeTitle}>Ask Wingman for options</Text>
+            <Text style={s.conciergeSub}>Wingman can search alternatives, check your rights, and help you rebook.</Text>
             <Text style={s.conciergeArrow}>Open Concierge  →</Text>
           </Pressable>
         )}

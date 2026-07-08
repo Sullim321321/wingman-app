@@ -274,11 +274,14 @@ export default function TripsScreen({ navigation }) {
     try {
       const result = await getTrips({ all: true });
       const all = result?.trips || [];
-      // Past = trips whose latest leg is in the past
+      // Past = trips whose latest leg is in the past, but only within the last 30
+      // days — the screen stays tidy and recent. (Full history is still kept in the
+      // database and used by the concierge + memory; this is display-only.)
       const now = Date.now();
+      const THIRTY_DAYS = 30 * 86400000;
       const past = all.filter(t => {
         const end = tripEndTime(t);
-        return end > 0 && end < now - 86400000;
+        return end > 0 && end < now - 86400000 && end >= now - THIRTY_DAYS;
       }).sort((a, b) => tripStartTime(b) - tripStartTime(a));
       setPastTrips(past);
     } catch (e) {
@@ -307,8 +310,14 @@ export default function TripsScreen({ navigation }) {
   };
 
   const visible = trips.filter(isVisible);
-  const upcoming = visible.filter(t => statusForTrip(t) !== "past")
-    .sort((a, b) => tripStartTime(a) - tripStartTime(b));
+  const upcoming = visible.filter(t => {
+    if (statusForTrip(t) === "past") return false;
+    // A trip with NO date can't be "upcoming" — undated bookings are almost always
+    // stray past items (an old hotel or dinner whose email had no parseable date).
+    // Keep them out of the prominent Upcoming list instead of floating them to the top.
+    if (tripStartTime(t) === 0 && tripEndTime(t) === 0) return false;
+    return true;
+  }).sort((a, b) => tripStartTime(a) - tripStartTime(b));
 
   return (
     <SafeAreaView style={s.root}>

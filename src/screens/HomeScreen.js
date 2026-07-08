@@ -736,6 +736,7 @@ export default function HomeScreen({ navigation }) {
       setMessages(updated);
       scheduleSave(updated);
     } catch (err) {
+      console.log("[CONCIERGE ERROR]", "status:", err?.status, "message:", err?.message, "detail:", err?.detail);
       const isTimeout = err?.name === "TimeoutError" || err?.name === "AbortError";
       const isOffline = err?.message?.includes("No connection") || err?.message?.includes("Network request failed");
       const isServerError = err?.status >= 500 || err?.message?.includes("500") || err?.message?.includes("502") || err?.message?.includes("503");
@@ -918,13 +919,11 @@ export default function HomeScreen({ navigation }) {
 
   const tabBarHeight = useBottomTabBarHeight();
 
-  return (
-    <SafeAreaView style={s.root}>
-        <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? tabBarHeight : 0}
-      >
+  // Masthead + hero briefing + section divider live INSIDE the FlatList as its
+  // scrollable header. This keeps the message list the only flex element, so the
+  // input bar reliably sits above the keyboard (the tall hero no longer pins it down).
+  const listHeader = (
+    <>
         {/* ── Masthead ──────────────────────────────────────────────────── */}
         <View style={s.masthead}>
           <Pressable onPress={() => { tap(); speakBriefing(); }} hitSlop={8}>
@@ -1094,8 +1093,17 @@ export default function HomeScreen({ navigation }) {
           <Text style={s.sectionRuleLabel}>CONVERSATION</Text>
           <View style={s.sectionRuleLine} />
         </View>
+    </>
+  );
 
-        {/* ── Scrollable conversation thread ────────────────────────────── */}
+  return (
+    <SafeAreaView style={s.root}>
+        <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={0}
+      >
+        {/* ── Scrollable conversation thread (masthead + hero ride in the header) ── */}
         <FlatList
           ref={listRef}
           style={{ flex: 1 }}
@@ -1105,8 +1113,7 @@ export default function HomeScreen({ navigation }) {
           renderItem={renderMessage}
           refreshing={isRefreshing}
           onRefresh={handleRefresh}
-          ListHeaderComponent={null}
-          ListHeaderComponentStyle={null}
+          ListHeaderComponent={listHeader}
           ListFooterComponent={() => (
             <>
               {chatLoading && (

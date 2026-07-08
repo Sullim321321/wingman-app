@@ -375,7 +375,7 @@ export default function AlertScreen({ navigation, route }) {
             </View>
             <Text style={s.emptyH}>No upcoming flights</Text>
             <Text style={s.emptyBody}>
-              Add a trip with at least one flight, and I'll watch it for delays, cancellations, and gate changes — with rescue options ready here if anything goes wrong.
+              Add a trip with at least one flight leg and Wingman will monitor it for delays, cancellations, and gate changes — and surface rescue options here if anything goes wrong.
             </Text>
             <Btn
               title="+ Add a trip"
@@ -473,7 +473,7 @@ export default function AlertScreen({ navigation, route }) {
               <>
                 <Text style={s.groupLabel}>REDEEM POINTS</Text>
                 <Text style={s.pointsNote}>
-                  I'll transfer your points and book the seat — one tap, no hold music.
+                  Wingman will transfer your points and book the seat — one tap, no hold music.
                 </Text>
                 {rescueData.options.filter(o => o.type === "points").map((opt, i) => (
                   <RescueRow
@@ -516,7 +516,7 @@ export default function AlertScreen({ navigation, route }) {
           <>
             <Text style={g.sectionT}>ALSO AFFECTED</Text>
             <Text style={s.rescueNote}>
-              I'll draft and send a note to each affected reservation on your behalf.
+              Wingman will draft and send a notification to each affected reservation on your behalf.
             </Text>
             {rescueData.downstream_legs_detail.map((leg) => {
               const isDone = !!notifyDone[leg.id];
@@ -583,7 +583,7 @@ export default function AlertScreen({ navigation, route }) {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[s.approveBtnT, { color: C.ink }]}>
-                    {accepting ? "Handling it…" : "Rebook me"}
+                    {accepting ? "Handling it…" : "Approve Rebooking"}
                   </Text>
                   {selectedOption?.cost_usd != null && (
                     <Text style={[s.approveBtnS, { color: C.mut }]}>

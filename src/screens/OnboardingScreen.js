@@ -173,6 +173,7 @@ function SlideSignUp({ onDone }) {
   const [step,       setStep]       = useState("choose"); // choose | email | code
   const [loading,    setLoading]    = useState(false);
   const [error,      setError]      = useState("");
+  const [invite,     setInvite]     = useState("");   // optional referral code
   const [appleAvail, setAppleAvail] = useState(false);
 
   useEffect(() => {
@@ -217,7 +218,13 @@ function SlideSignUp({ onDone }) {
     if (!trimmed || trimmed.length < 4) { setError("Enter the 6-digit code from your email."); return; }
     setLoading(true); setError("");
     try {
-      const data = await verifyCode(email.trim().toLowerCase(), trimmed);
+      // Invite code is optional; a wrong one is ignored server-side rather than
+      // blocking sign-up.
+      const data = await verifyCode(
+        email.trim().toLowerCase(),
+        trimmed,
+        invite.trim().toUpperCase() || undefined,
+      );
       const token = data.token || data.access_token;
       if (!token) throw new Error("No token received.");
       setToken(token);
@@ -273,20 +280,37 @@ function SlideSignUp({ onDone }) {
 
           {/* Email input */}
           {step === "email" && (
-            <TextInput
-              style={s.codeInput}
-              value={email}
-              onChangeText={t => { setEmail(t); setError(""); }}
-              placeholder="your@email.com"
-              placeholderTextColor={C.mut}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="email"
-              returnKeyType="done"
-              onSubmitEditing={sendCode}
-              autoFocus
-            />
+            <>
+              <TextInput
+                style={s.codeInput}
+                value={email}
+                onChangeText={t => { setEmail(t); setError(""); }}
+                placeholder="your@email.com"
+                placeholderTextColor={C.mut}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="email"
+                returnKeyType="next"
+                onSubmitEditing={sendCode}
+                autoFocus
+                accessibilityLabel="Email address"
+              />
+              {/* Optional — quiet by design. An invite code is a nice-to-have, not
+                  a hurdle, so it never blocks anyone who doesn't have one. */}
+              <TextInput
+                style={[s.codeInput, { marginTop: 10, letterSpacing: 3, textAlign: "center" }]}
+                value={invite}
+                onChangeText={t => setInvite(t.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 6))}
+                placeholder="INVITE CODE (OPTIONAL)"
+                placeholderTextColor={C.mut}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                returnKeyType="done"
+                onSubmitEditing={sendCode}
+                accessibilityLabel="Invite code, optional"
+              />
+            </>
           )}
 
           {/* Code input */}

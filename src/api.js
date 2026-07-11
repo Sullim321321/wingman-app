@@ -73,8 +73,16 @@ export async function req(path, opts = {}) {
 export const requestCode = (email) =>
   req("/auth/request", { method: "POST", body: JSON.stringify({ email }) });
 
-export const verifyCode = (email, code) =>
-  req("/auth/verify", { method: "POST", body: JSON.stringify({ email, code }) });
+// referralCode is optional and only ever honoured for brand-new accounts. A bad
+// code is ignored server-side rather than failing the sign-in.
+export const verifyCode = (email, code, referralCode) =>
+  req("/auth/verify", {
+    method: "POST",
+    body: JSON.stringify({ email, code, ...(referralCode ? { referralCode } : {}) }),
+  });
+
+// ─── REFERRAL ────────────────────────────────────────────────────────────────
+export const getReferral = () => req("/referral");
 
 export const getPrediction = ({ dep = "DEN", arr = "ASE" } = {}) =>
   req("/predict?dep=" + encodeURIComponent(dep) + "&arr=" + encodeURIComponent(arr));

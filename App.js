@@ -89,6 +89,7 @@ import MemoryScreen from "./src/screens/MemoryScreen";
 import PassengerProfileScreen from "./src/screens/PassengerProfileScreen";
 import DecisionsScreen from "./src/screens/DecisionsScreen";
 import ExpensesScreen from "./src/screens/ExpensesScreen";
+import InviteScreen from "./src/screens/InviteScreen";
 
 export const navRef = createNavigationContainerRef();
 const Stack = createNativeStackNavigator();
@@ -447,6 +448,7 @@ function Root() {
             <Stack.Screen name="Memory"               component={MemoryScreen} />
             <Stack.Screen name="Decisions"            component={DecisionsScreen} />
             <Stack.Screen name="Expenses"             component={ExpensesScreen} />
+            <Stack.Screen name="Invite"               component={InviteScreen} />
             <Stack.Screen name="Main"         component={Tabs} />
           </>
         ) : (

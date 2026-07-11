@@ -4,7 +4,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   SafeAreaView, KeyboardAvoidingView, View, Text, TextInput,
-  Platform, StyleSheet, Animated, Easing, Pressable, ActivityIndicator,
+  Platform, StyleSheet, Animated, Easing, Pressable, ActivityIndicator, Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import * as LocalAuthentication from "expo-local-authentication";
@@ -167,7 +167,28 @@ export default function SignInScreen() {
     }
     setErr(""); setErrType(""); setBusy(true);
     try {
-      await requestCode(trimmed);
+      const r = await requestCode(trimmed);
+
+      // Signing in with an address we've never seen doesn't fail — it creates a
+      // brand-new empty account. Someone who typos, or reaches for their work
+      // address instead of their personal one, lands in a pristine Wingman and
+      // reasonably concludes their trips are gone. Make the fork explicit.
+      if (r?.is_new_user) {
+        setBusy(false);
+        Alert.alert(
+          "Create a new account?",
+          `We don't have a Wingman account for ${trimmed}.\n\nIf you meant to sign in to an existing account, check the address — you may have used a different one.`,
+          [
+            { text: "Check the address", style: "cancel" },
+            {
+              text: "Create account",
+              onPress: () => { setStage("code"); setAttempts(0); startResendTimer(); },
+            },
+          ],
+        );
+        return;
+      }
+
       setStage("code");
       setAttempts(0);
       startResendTimer();

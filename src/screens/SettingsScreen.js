@@ -482,8 +482,9 @@ export default function SettingsScreen({ navigation }) {
 
         <Text style={g.sectionT}>SUBSCRIPTION</Text>
         <View style={g.group}>
+          <SetRow icon="diamond-outline" iconColor={C.gold} t="Wingman Pro / Elite" sub="Subscription, payment & billing" right={<Chip color={C.gold}>Manage ›</Chip>} onPress={() => navigation.navigate("Subscription")} />
           <View style={{ borderBottomWidth: 0 }}>
-            <SetRow icon="diamond-outline" iconColor={C.gold} t="Wingman Pro / Elite" sub="Subscription, payment & billing" right={<Chip color={C.gold}>Manage ›</Chip>} onPress={() => navigation.navigate("Subscription")} />
+            <SetRow icon="gift-outline" iconColor={C.gold} t="Invite a friend" sub="They start with points. So do you, once they travel." right={<Chip color={C.teal}>Invite ›</Chip>} onPress={() => navigation.navigate("Invite")} />
           </View>
         </View>
 

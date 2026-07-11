@@ -14,7 +14,10 @@
  *     propagate across dispatch queue boundaries.
  *     See: https://github.com/reactwg/react-native-new-architecture/discussions/276
  */
-const { withDangerousMod } = require("@expo/config-plugins");
+// SDK 54: @expo/config-plugins must not be a direct dependency — use the
+// sub-export of `expo` instead, so the plugin API always matches the installed SDK
+// rather than drifting against a separately-pinned copy. (expo-doctor flags this.)
+const { withDangerousMod } = require("expo/config-plugins");
 const fs = require("fs");
 const path = require("path");
 

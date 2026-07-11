@@ -7,7 +7,11 @@ import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet, Alert, Share, Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as FileSystem from "expo-file-system";
+// SDK 54 swapped expo-file-system's default export to the NEW API and moved the
+// old one to /legacy. cacheDirectory, writeAsStringAsync and EncodingType (all
+// used below) live in the legacy API — importing the default here would compile
+// fine and then fail at runtime, silently breaking the CSV export.
+import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { C, T, SHADOW, litEdge } from "../theme";
 import { BackBar, FadeRise, tap } from "../components";

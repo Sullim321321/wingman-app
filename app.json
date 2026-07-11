@@ -62,7 +62,9 @@
       "./plugins/withRCTTurboModuleFix",
       "expo-local-authentication",
       "expo-apple-authentication",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-asset",
+      "expo-secure-store"
     ],
     "extra": {
       "eas": {

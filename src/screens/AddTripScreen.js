@@ -144,6 +144,44 @@ function buildPayload(legType, leg) {
   }
 }
 
+// Reverse of buildPayload: load a saved booking (a trip_leg row) back into the
+// editable form state so "Edit" pre-fills instead of opening blank.
+function payloadToLegState(p) {
+  const L = blankLeg();
+  if (!p) return L;
+  const fmtDT = (iso) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (isNaN(d)) return "";
+    return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) +
+      " " + d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  };
+  L.confirmation     = p.confirmation || "";
+  L.carrier          = p.carrier || "";
+  L.flightNum        = p.flight_number || "";
+  L.origin           = p.origin || "";
+  L.destination      = p.destination || "";
+  L.cabinClass       = p.cabin_class || "";
+  L.seat             = p.seat || "";
+  L.propertyName     = p.property_name || "";
+  L.address          = p.property_address || "";
+  L.nights           = p.nights != null ? String(p.nights) : "";
+  L.guests           = p.guests != null ? String(p.guests) : "";
+  L.stationFrom      = p.station_from || "";
+  L.stationTo        = p.station_to || "";
+  L.vehicleClass     = p.vehicle_class || "";
+  L.pickupLocation   = p.pickup_location || "";
+  L.dropoffLocation  = p.dropoff_location || "";
+  if (p.type === "hotel" || p.type === "airbnb") {
+    L.checkIn  = fmtDT(p.departs_at);
+    L.checkOut = fmtDT(p.arrives_at);
+  } else {
+    L.depDate = fmtDT(p.departs_at);
+    L.arrDate = fmtDT(p.arrives_at);
+  }
+  return L;
+}
+
 // ── Field components ──────────────────────────────────────────────────────────
 function Field({ label, value, onChangeText, placeholder, keyboardType, autoCapitalize, editable = true, right, multiline }) {
   return (
@@ -379,7 +417,7 @@ function EventFields({ state, set }) {
 // ── LegFormPanel — inline form for adding/editing a single leg ────────────────
 function LegFormPanel({ onAdd, onCancel, editPayload }) {
   const [legType, setLegType] = useState(editPayload?.type || "flight");
-  const [leg, setLegState] = useState(blankLeg());
+  const [leg, setLegState] = useState(editPayload ? payloadToLegState(editPayload) : blankLeg());
   const [lookingUp, setLookingUp] = useState(false);
   const [looked, setLooked] = useState(false);
   const setF = (key, val) => setLegState(prev => ({ ...prev, [key]: val }));
@@ -524,7 +562,10 @@ function PasteImportPanel({ onImported, onCancel }) {
 // ── Main screen ────────────────────────────────────────────────────────────────
 export default function AddTripScreen({ navigation, route }) {
   const addLegMode = route?.params?.addLegMode === true;
-  const editLegParam = route?.params?.editLeg || null;   // { tripId, legId, leg }
+  const editLegParam = route?.params?.editLeg || null;
+  // Callers may pass the leg directly OR wrapped as { leg, legId }. Normalize both.
+  const editLegObj = editLegParam ? (editLegParam.leg || editLegParam) : null;
+  const editLegId  = editLegParam ? (editLegParam.legId ?? editLegParam.leg?.id ?? editLegParam.id) : null;
   const existingTripId = route?.params?.tripId || null;
 
   const [title, setTitle]   = useState("");
@@ -571,6 +612,12 @@ export default function AddTripScreen({ navigation, route }) {
       setTab("ai");
     }
   }, [route?.params?.prefillPlan]);
+
+  // When opened to EDIT a booking, jump to the manual tab and open the leg form
+  // pre-filled with that booking's values (instead of a blank form).
+  useEffect(() => {
+    if (editLegObj) { setTab("manual"); setShowLegForm(true); }
+  }, []);
 
   // ── AI draft ────────────────────────────────────────────────────────────────
   const draftFromNL = async () => {
@@ -679,7 +726,7 @@ export default function AddTripScreen({ navigation, route }) {
           return;
         }
         const { editLeg } = await import("../api");
-        await editLeg(existingTripId, editLegParam.legId, legs[0]);
+        await editLeg(existingTripId, editLegId, legs[0]);
         tap("medium");
         navigation.goBack();
         return;
@@ -842,8 +889,9 @@ export default function AddTripScreen({ navigation, route }) {
             {/* Inline leg form */}
             {showLegForm && (
               <LegFormPanel
-                onAdd={handleAddLeg}
+                onAdd={editLegObj ? (p) => { setLegs([p]); setShowLegForm(false); } : handleAddLeg}
                 onCancel={() => setShowLegForm(false)}
+                editPayload={editLegObj}
               />
             )}
 

@@ -7,8 +7,9 @@ import {
   ActivityIndicator, Alert, Linking, Modal, TextInput, Share, Clipboard,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { C, T } from "../theme";
-import { SerifText, tap } from "../components";
+import { Ionicons } from "@expo/vector-icons";
+import { C, T, SHADOW, litEdge } from "../theme";
+import { SerifText, tap, FadeRise } from "../components";
 import { getDisruptionAlternatives, acceptRescue, executeCascadeAction, getRescueOptions, getAirportNavigation } from "../api";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -193,13 +194,13 @@ function ConfirmBookModal({ visible, option, onConfirm, onCancel, booking }) {
 
 function CascadeActionCard({ action, onPress, executing, done }) {
   const icons = {
-    hotel_delay:        "🏨",
-    restaurant_delay:   "🍽",
-    lounge_access:      "🛋",
-    event_at_risk:      "🎫",
-    connection_at_risk: "⚠️",
-    transfer_at_risk:   "🚕",
-    visa_check:         "📋",
+    hotel_delay:        "bed-outline",
+    restaurant_delay:   "restaurant-outline",
+    lounge_access:      "cafe-outline",
+    event_at_risk:      "ticket-outline",
+    connection_at_risk: "alert-circle-outline",
+    transfer_at_risk:   "car-outline",
+    visa_check:         "document-text-outline",
   };
   return (
     <Pressable
@@ -207,7 +208,8 @@ function CascadeActionCard({ action, onPress, executing, done }) {
       onPress={onPress}
       disabled={executing || done}
     >
-      <Text style={s.cascadeIcon}>{icons[action.type] || "›"}</Text>
+      <Ionicons name={icons[action.type] || "ellipse-outline"} size={20} color={C.gold} style={s.cascadeIcon} />
+
       <View style={{ flex: 1 }}>
         <Text style={s.cascadeLabel}>{action.label}</Text>
         <Text style={s.cascadeSub}>{action.description}</Text>
@@ -390,7 +392,8 @@ export default function DisruptionScreen({ route, navigation }) {
         <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
           <View style={s.header}>
             <View style={[s.statusBanner, { backgroundColor: C.coral + "15", borderColor: C.coral + "40" }]}>
-              <Text style={[s.statusBannerT, { color: C.coral }]}>✈  Missed flight</Text>
+              <Ionicons name="airplane-outline" size={15} color={C.coral} />
+              <Text style={[s.statusBannerT, { color: C.coral }]}>Missed flight</Text>
             </View>
             {flight && (
               <View style={{ marginTop: 12 }}>
@@ -447,10 +450,11 @@ export default function DisruptionScreen({ route, navigation }) {
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
         {/* Header */}
-        <View style={s.header}>
+        <FadeRise style={s.header}>
           <View style={[s.statusBanner, { backgroundColor: isCancelled ? C.coral + "15" : C.amber + "15", borderColor: isCancelled ? C.coral + "40" : C.amber + "40" }]}>
+            <Ionicons name={isCancelled ? "close-circle-outline" : "time-outline"} size={15} color={isCancelled ? C.coral : C.amber} />
             <Text style={[s.statusBannerT, { color: isCancelled ? C.coral : C.amber }]}>
-              {isCancelled ? "⚠  Flight Cancelled" : `⏱  Delayed ${flight?.delay_minutes || 0} minutes`}
+              {isCancelled ? "Flight Cancelled" : `Delayed ${flight?.delay_minutes || 0} minutes`}
             </Text>
           </View>
           {flight && (
@@ -463,7 +467,7 @@ export default function DisruptionScreen({ route, navigation }) {
               <Text style={s.flightIdent}>{flight.ident}</Text>
             </View>
           )}
-        </View>
+        </FadeRise>
 
         {/* Connection risk alert */}
         {connectionRisk && (
@@ -631,12 +635,12 @@ const s = StyleSheet.create({
   scroll:       { paddingHorizontal: 20, paddingTop: 16 },
   loadingT:     { color: C.mut, textAlign: "center", marginTop: 12, fontFamily: T.sans, fontSize: 13 },
   header:       { marginBottom: 20 },
-  statusBanner: { borderRadius: 12, padding: 12, borderWidth: 1, marginBottom: 4 },
+  statusBanner: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 12, padding: 12, borderWidth: 1, marginBottom: 4 },
   statusBannerT:{ fontSize: 14, fontFamily: T.sansB },
   flightIdent:  { color: C.mut, fontSize: 13, fontFamily: T.sans, marginTop: 4 },
 
   connectionRisk: {
-    borderRadius: 12, borderWidth: 1, padding: 14, marginBottom: 14,
+    borderRadius: 12, borderWidth: 1, padding: 14, marginBottom: 14, ...SHADOW.soft,
   },
   connectionRiskTitle: { fontSize: 13, fontFamily: T.sansB, marginBottom: 4 },
   connectionRiskSub:   { fontSize: 12, fontFamily: T.sans, color: C.mut, lineHeight: 17 },
@@ -674,9 +678,9 @@ const s = StyleSheet.create({
   ec261Btn:     { alignSelf: "flex-start", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: C.gold + "60", marginRight: 8 },
   ec261BtnT:    { color: C.gold, fontSize: 13, fontFamily: T.sansM },
 
-  cascadeCard:  { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: C.card, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: C.line, marginBottom: 8 },
+  cascadeCard:  { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: C.card, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: C.line, marginBottom: 8, ...litEdge, ...SHADOW.soft },
   cascadeCardDone: { borderColor: C.teal + "40", backgroundColor: C.teal + "08" },
-  cascadeIcon:  { fontSize: 22 },
+  cascadeIcon:  { width: 24, textAlign: "center" },
   cascadeLabel: { color: C.ink, fontSize: 13, fontFamily: T.sansM, marginBottom: 2 },
   cascadeSub:   { color: C.mut, fontSize: 11, fontFamily: T.sans, lineHeight: 16 },
 

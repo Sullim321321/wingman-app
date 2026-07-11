@@ -9,10 +9,14 @@ import {
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { Swipeable } from "react-native-gesture-handler";
-import { C, T } from "../theme";
-import { tap } from "../components";
-import { getTrips, deleteTrip, getPrediction } from "../api";
+import * as SecureStore from "expo-secure-store";
+import { Ionicons } from "@expo/vector-icons";
+import { C, T, SHADOW, litEdge } from "../theme";
+import { tap, FadeRise } from "../components";
+import { getTrips, deleteTrip, getPrediction, getOnboardingSummary } from "../api";
 import { getCachedTrips } from "../offlineCache";
+
+const BACKFILL_KEY = "wingman_backfill_recap_seen";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -256,6 +260,29 @@ export default function TripsScreen({ navigation }) {
   const [showPast,   setShowPast]   = useState(false);
   const [pastTrips,  setPastTrips]  = useState([]);
   const [pastLoading, setPastLoading] = useState(false);
+  const [tripView,   setTripView]   = useState("upcoming"); // upcoming | past | all
+  const [recap,      setRecap]      = useState(null);   // backfill onboarding summary
+  const [recapSeen,  setRecapSeen]  = useState(true);   // default hidden until we check
+
+  // One-time "here's what I found" recap after a Gmail backfill.
+  useEffect(() => {
+    (async () => {
+      try {
+        const seen = await SecureStore.getItemAsync(BACKFILL_KEY);
+        if (seen) return; // already dismissed — never fetch again
+        setRecapSeen(false);
+        const s = await getOnboardingSummary();
+        if (s && s.trips_found > 0) setRecap(s);
+      } catch {}
+    })();
+  }, []);
+
+  const dismissRecap = async () => {
+    tap();
+    setRecap(null);
+    setRecapSeen(true);
+    try { await SecureStore.setItemAsync(BACKFILL_KEY, "1"); } catch {}
+  };
 
   const load = useCallback(async () => {
     try {
@@ -291,7 +318,7 @@ export default function TripsScreen({ navigation }) {
     }
   }, []);
 
-  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useFocusEffect(useCallback(() => { load(); loadPast(); }, [load, loadPast]));
 
   const handleDelete = async (id) => {
     try {
@@ -319,6 +346,13 @@ export default function TripsScreen({ navigation }) {
     return true;
   }).sort((a, b) => tripStartTime(a) - tripStartTime(b));
 
+  const hasPast = pastTrips.filter(isVisible).length > 0;
+  // If there's nothing upcoming but there IS history, auto-reveal it so the screen
+  // never looks empty for someone who's clearly travelled.
+  useEffect(() => {
+    if (!loading && upcoming.length === 0 && hasPast) setTripView("all");
+  }, [loading, upcoming.length, hasPast]);
+
   return (
     <SafeAreaView style={s.root}>
       <ScrollView
@@ -342,6 +376,42 @@ export default function TripsScreen({ navigation }) {
 
         <View style={s.rule} />
 
+        {/* ── Segmented view control ── */}
+        <View style={s.segRow}>
+          {[{ id: "upcoming", label: "Upcoming" }, { id: "past", label: "Past" }, { id: "all", label: "All" }].map(seg => (
+            <Pressable
+              key={seg.id}
+              style={[s.segBtn, tripView === seg.id && s.segBtnOn]}
+              onPress={() => { tap(); setTripView(seg.id); if (seg.id !== "upcoming" && pastTrips.length === 0) loadPast(); }}
+            >
+              <Text style={[s.segT, tripView === seg.id && s.segTOn]}>{seg.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {/* ── Backfill recap (UX #6) — shown once after Gmail connect ── */}
+        {!recapSeen && recap && (
+          <View style={s.recapCard}>
+            <View style={s.recapHead}>
+              <Ionicons name="sparkles-outline" size={16} color={C.gold} />
+              <Text style={s.recapKicker}>HERE'S WHAT I FOUND</Text>
+              <Pressable onPress={dismissRecap} hitSlop={10} style={{ marginLeft: "auto" }} accessibilityRole="button" accessibilityLabel="Dismiss recap">
+                <Ionicons name="close" size={18} color={C.mut} />
+              </Pressable>
+            </View>
+            <Text style={s.recapBody}>
+              I've pulled together {recap.trips_found} trip{recap.trips_found === 1 ? "" : "s"}
+              {recap.earliest_year ? ` going back to ${recap.earliest_year}` : ""}.
+              {recap.favorite_hotel
+                ? ` Your go-to stay is ${recap.favorite_hotel.name}${recap.favorite_hotel.stays ? ` — ${recap.favorite_hotel.stays} stays` : ""}${recap.favorite_hotel.city ? ` in ${recap.favorite_hotel.city}` : ""}.`
+                : ""}
+              {recap.top_city ? ` You fly to ${recap.top_city} more than anywhere else.` : ""}
+              {recap.dining_count > 0 ? ` I'm also keeping ${recap.dining_count} dining reservation${recap.dining_count === 1 ? "" : "s"} in view.` : ""}
+            </Text>
+            <Text style={s.recapFoot}>From here on, I'll watch every trip and surface only what needs you.</Text>
+          </View>
+        )}
+
         {loading ? (
           // Skeleton rows while loading
           <View style={{ paddingHorizontal: 24, gap: 0 }}>
@@ -361,21 +431,29 @@ export default function TripsScreen({ navigation }) {
           </View>
         ) : (
           <>
-            {/* ── Upcoming trips ── */}
-            {upcoming.length > 0 ? (
-              <>
-                <Text style={s.sectionLabel}>UPCOMING</Text>
-                {upcoming.map(trip => (
-                  <TripRow
-                    key={trip.id}
-                    trip={trip}
-                    navigation={navigation}
-                    onDelete={handleDelete}
-                  />
-                ))}
-              </>
-            ) : (
-              <EmptyState navigation={navigation} />
+            {/* ── Upcoming trips (hidden on the Past tab) ── */}
+            {tripView !== "past" && (
+              upcoming.length > 0 ? (
+                <>
+                  <Text style={s.sectionLabel}>UPCOMING</Text>
+                  {upcoming.map((trip, i) => (
+                    <FadeRise key={trip.id} delay={Math.min(i * 45, 270)}>
+                      <TripRow
+                        trip={trip}
+                        navigation={navigation}
+                        onDelete={handleDelete}
+                      />
+                    </FadeRise>
+                  ))}
+                </>
+              ) : (!hasPast && pastTrips.length === 0) ? (
+                <EmptyState navigation={navigation} />
+              ) : (
+                <View style={{ paddingHorizontal: 24, paddingTop: 8 }}>
+                  <Text style={s.sectionLabel}>UPCOMING</Text>
+                  <Text style={s.noUpcoming}>Nothing on the horizon right now — check Past, or add your next trip.</Text>
+                </View>
+              )
             )}
 
             {/* ── Import CTA ── */}
@@ -384,29 +462,21 @@ export default function TripsScreen({ navigation }) {
               onPress={() => { tap(); navigation.navigate("Connections"); }}
             >
               <View style={s.importIcon}>
-                <Text style={s.importIconT}>✉</Text>
+                <Ionicons name="mail-outline" size={16} color={C.gold} />
               </View>
               <Text style={s.importLabel}>Import from email</Text>
               <Text style={s.importArrow}>›</Text>
             </Pressable>
 
-            {/* ── Past trips toggle ── */}
-            <Pressable style={s.pastToggle} onPress={handleTogglePast}>
-              <Text style={s.pastToggleT}>
-                {showPast ? "Hide past trips" : "Show past trips"}
-              </Text>
-              <Text style={s.pastToggleArrow}>{showPast ? "▲" : "▼"}</Text>
-            </Pressable>
-
-            {/* ── Past trips list ── */}
-            {showPast && (
+            {/* ── Past trips (Past / All tabs) ── */}
+            {tripView !== "upcoming" && (
               pastLoading ? (
                 <ActivityIndicator color={C.gold} style={{ marginVertical: 24 }} />
-              ) : pastTrips.length > 0 ? (
+              ) : pastTrips.filter(isVisible).length > 0 ? (
                 <>
                   <View style={s.pastRule}>
                     <View style={s.pastRuleLine} />
-                    <Text style={s.pastRuleLabel}>EARLIER</Text>
+                    <Text style={s.pastRuleLabel}>EARLIER · LAST 30 DAYS</Text>
                     <View style={s.pastRuleLine} />
                   </View>
                   {pastTrips.filter(isVisible).map(trip => (
@@ -419,7 +489,7 @@ export default function TripsScreen({ navigation }) {
                   ))}
                 </>
               ) : (
-                <Text style={s.pastEmpty}>No past trips found.</Text>
+                <Text style={s.pastEmpty}>No past trips in the last 30 days.</Text>
               )
             )}
           </>
@@ -439,7 +509,67 @@ const s = StyleSheet.create({
     backgroundColor: C.bg,
   },
   scroll: {
-    paddingBottom: 16,
+    paddingBottom: 96,
+  },
+
+  // ── Segmented view control ──
+  segRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginHorizontal: 24,
+    marginTop: 14,
+    marginBottom: 4,
+  },
+  segBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: C.line,
+    alignItems: "center",
+  },
+  segBtnOn: { borderColor: C.gold, backgroundColor: "rgba(201,169,110,0.08)" },
+  segT: { fontFamily: T.sansM, fontSize: 12, color: C.mut, letterSpacing: 0.3 },
+  segTOn: { color: C.gold },
+
+  // ── Backfill recap card ──
+  recapCard: {
+    marginHorizontal: 24,
+    marginTop: 14,
+    marginBottom: 4,
+    padding: 18,
+    borderRadius: 14,
+    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: "rgba(201,169,110,0.35)",
+    ...litEdge,
+    ...SHADOW.soft,
+  },
+  recapHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 10,
+  },
+  recapKicker: {
+    fontFamily: T.sansB,
+    fontSize: 10,
+    letterSpacing: 1.4,
+    color: C.gold,
+  },
+  recapBody: {
+    fontFamily: T.garamondI,
+    fontSize: 17,
+    lineHeight: 25,
+    color: C.ink,
+  },
+  recapFoot: {
+    fontFamily: T.sans,
+    fontSize: 12.5,
+    lineHeight: 18,
+    color: C.mut,
+    marginTop: 10,
   },
 
   // ── Masthead ──
@@ -494,6 +624,14 @@ const s = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 4,
     opacity: 0.7,
+  },
+  noUpcoming: {
+    fontFamily: T.garamondI,
+    fontSize: 15,
+    color: C.mut,
+    lineHeight: 22,
+    paddingTop: 4,
+    paddingBottom: 8,
   },
 
   // ── Trip row ──

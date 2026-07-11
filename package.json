@@ -38,13 +38,15 @@
     "expo-location": "~18.1.5",
     "expo-notifications": "~0.31.2",
     "expo-secure-store": "~14.2.3",
+    "expo-sharing": "^13.1.5",
     "expo-speech": "~13.1.7",
     "expo-status-bar": "~2.2.3",
     "react": "19.0.0",
     "react-native": "0.79.6",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-safe-area-context": "5.4.0",
-    "react-native-screens": "~4.11.1"
+    "react-native-screens": "~4.11.1",
+    "react-native-view-shot": "^4.0.3"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

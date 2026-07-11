@@ -7,11 +7,16 @@ import {
   Alert, Linking,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { C, T } from "../theme";
 import { SerifText, tap } from "../components";
+
+// Shown if the server is slow to wake (Render cold start). Kept as a constant so the
+// error handler can reliably remove it — a mismatched string here left it stranded.
+const WARMUP_MSG = "One moment — just gathering your details.";
 import { sendConciergeMessage, getTrips, getConciergeThread, saveConciergeThread, clearConciergeThread } from "../api";
 import { LOCATION_OPT_IN_KEY } from "./SettingsScreen";
 
@@ -273,7 +278,7 @@ export default function ConciergeScreen({ route, navigation }) {
     const warmupTimer = setTimeout(() => {
       setMessages(prev => [
         ...prev,
-        { role: "assistant", content: "Wingman is waking up — just a moment... ☕" },
+        { role: "assistant", content: WARMUP_MSG, _warmup: true },
       ]);
     }, 8000);
     try {
@@ -299,18 +304,24 @@ export default function ConciergeScreen({ route, navigation }) {
       scheduleSave(updated.slice(1), activeTripId);
     } catch (err) {
       clearTimeout(warmupTimer);
+      const msg = err?.message || "";
       const isTimeout = err?.name === "TimeoutError" || err?.name === "AbortError";
-      const isOffline = err?.message?.includes("No connection") || err?.message?.includes("Network request failed");
+      const isOffline = msg.includes("No connection") || msg.includes("Network request failed");
+      // Server ran out of Anthropic credit — say so plainly instead of a vague error,
+      // so it's clear this is a top-up, not a bug, and retrying won't help.
+      const isUnavailable = msg.includes("service_unavailable") || msg.includes("credit balance");
       const errMsg = isOffline
         ? "No internet connection — check your signal and try again."
         : isTimeout
         ? "Still waking up — the server was asleep. Please try again in a few seconds."
-        : err?.message?.includes("401") || err?.message?.includes("Session expired")
+        : msg.includes("401") || msg.includes("Session expired")
         ? "Session expired — please sign out and back in."
+        : isUnavailable
+        ? "I'm briefly offline — my intelligence service needs topping up. Everything else (flight monitoring, alerts, your trips) is still running normally."
         : "Something went wrong. Try again in a moment.";
       // Remove the warm-up notice if it was shown, then add the error
       setMessages(prev => {
-        const filtered = prev.filter(m => !m.content?.includes("Wingman is waking up"));
+        const filtered = prev.filter(m => !m._warmup && m.content !== WARMUP_MSG);
         return [...filtered, { role: "assistant", content: errMsg }];
       });
     } finally {
@@ -354,7 +365,8 @@ export default function ConciergeScreen({ route, navigation }) {
         {!isUser && item.transit && (
           <View style={s.transitCard}>
             <View style={s.transitHeader}>
-              <Text style={s.transitIcon}>🚇</Text>
+              <Ionicons name="subway-outline" size={16} color={C.gold} style={s.transitIcon} />
+
               <View style={{ flex: 1 }}>
                 <Text style={s.transitTitle}>Transit Route</Text>
                 <Text style={s.transitMeta}>
@@ -429,10 +441,19 @@ export default function ConciergeScreen({ route, navigation }) {
         )}
 
         {/* Action button */}
-        {!isUser && item.action && item.action.url && (
+        {/* Proposed action — either an external link or an in-app step Wingman
+            can actually carry out. A chief of staff proposes; you tap once. */}
+        {!isUser && item.action && (item.action.url || item.action.screen) && (
           <Pressable
             style={s.actionBtn}
-            onPress={() => Linking.openURL(item.action.url)}
+            onPress={() => {
+              tap();
+              if (item.action.screen) {
+                navigation.navigate(item.action.screen, item.action.params || undefined);
+              } else if (item.action.url) {
+                Linking.openURL(item.action.url).catch(() => {});
+              }
+            }}
           >
             <LinearGradient colors={[C.gold, C.goldD || "#b8924a"]} style={s.actionBtnGrad}>
               <Text style={s.actionBtnT}>{item.action.label || "Open"}</Text>

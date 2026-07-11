@@ -4,8 +4,9 @@ import {
   Pressable, ActivityIndicator,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { C, T } from "../theme";
-import { Btn, BackBar, SerifText, useCountUp, success, g, tap } from "../components";
+import { Ionicons } from "@expo/vector-icons";
+import { C, T, SHADOW, litEdge } from "../theme";
+import { Btn, BackBar, SerifText, useCountUp, success, g, tap, FadeRise } from "../components";
 import {
   getPrediction, getTrips,
   getRescueOptions, acceptRescue, rejectRescue,
@@ -285,7 +286,6 @@ export default function AlertScreen({ navigation, route }) {
     ? `${pred.summary} ` + pred.factors.filter((f) => f.detail && f.impact !== "Low").map((f) => f.detail).join("; ")
     : `Conditions at ${dep} are deteriorating. Based on radar, ATC flow, and current cancellations, your ${dep} → ${arr} flight is at risk.`;
 
-  const heroEmoji = risk >= 70 ? "⛈️" : risk >= 45 ? "🌨️" : "⚠️";
   const heroTitle = risk >= 70
     ? `${tripTitle} connection is at high risk`
     : risk >= 45
@@ -371,7 +371,7 @@ export default function AlertScreen({ navigation, route }) {
           <BackBar nav={navigation} label="Alerts" />
           <View style={s.emptyWrap}>
             <View style={s.emptyIcon}>
-              <Text style={{ color: C.gold, fontSize: 22 }}>✈</Text>
+              <Ionicons name="airplane-outline" size={22} color={C.gold} />
             </View>
             <Text style={s.emptyH}>No upcoming flights</Text>
             <Text style={s.emptyBody}>
@@ -401,9 +401,9 @@ export default function AlertScreen({ navigation, route }) {
         <BackBar nav={navigation} label="Disruption · live" />
 
         {/* ── Hero — deck style: plain bg, serif headline ───────────────────────────────────── */}
-        <View style={s.heroCard}>
+        <FadeRise style={s.heroCard}>
           <View style={s.heroDisruptBadge}>
-            <Text style={s.heroDisruptIc}>⚠️</Text>
+            <Ionicons name="alert-circle" size={15} color={C.coral} style={{ marginRight: 5 }} />
             <Text style={s.heroDisruptLabel}>DISRUPTION DETECTED</Text>
           </View>
           <SerifText style={s.heroH}>{heroTitle}</SerifText>
@@ -414,20 +414,22 @@ export default function AlertScreen({ navigation, route }) {
             <Text style={[s.riskLbl, status === "live" && { color: C.teal }]}>{statusText}</Text>
           </View>
           {downstreamValue > 0 && (
-            <View style={s.downstreamBanner}>
+            <View style={[s.downstreamBanner, { flexDirection: "row", alignItems: "center", gap: 6 }]}>
+              <Ionicons name="flash" size={13} color={C.amber} />
               <Text style={s.downstreamText}>
-                ⚡ {formatMoney(downstreamValue)} in downstream {downstreamLegs === 1 ? "leg" : "legs"} at risk
+                {formatMoney(downstreamValue)} in downstream {downstreamLegs === 1 ? "leg" : "legs"} at risk
               </Text>
             </View>
           )}
-        </View>
+        </FadeRise>
 
-        <Text
+        <Pressable
           style={s.whyLink}
           onPress={() => navigation.navigate("Reason", { prediction: pred })}
         >
-          🧠  Why I think this →
-        </Text>
+          <Ionicons name="bulb-outline" size={15} color={C.gold} />
+          <Text style={s.whyLinkT}>Why I think this  ›</Text>
+        </Pressable>
 
         {/* ── Rescue decision engine ──────────────────────────────────────── */}
         <Text style={g.sectionT}>WINGMAN RESCUE OPTIONS</Text>
@@ -622,7 +624,7 @@ export default function AlertScreen({ navigation, route }) {
 
           {/* Footer — DECK: shield + "You're in control. We'll act when you say go." */}
           <View style={s.controlFooter}>
-            <Text style={s.controlFooterIc}>🛡️</Text>
+            <Ionicons name="shield-checkmark-outline" size={20} color={C.gold} style={s.controlFooterIc} />
             <View style={{ flex: 1 }}>
               <Text style={s.controlFooterT}>You're in control.</Text>
               <Text style={s.controlFooterS}>We'll act when you say go.</Text>
@@ -672,7 +674,8 @@ const s = StyleSheet.create({
   controlFooterIc: { fontSize: 18, opacity: 0.6 },
   controlFooterT:  { color: C.mut, fontSize: 13, fontFamily: T.sansM },
   controlFooterS:  { color: C.mut, fontSize: 13, fontFamily: T.sans, marginTop: 1 },
-  whyLink: { color: C.gold, fontSize: 14, fontFamily: T.sansM, textAlign: "center", marginVertical: 16 },
+  whyLink: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginVertical: 16 },
+  whyLinkT: { color: C.gold, fontSize: 14, fontFamily: T.sansM },
   downstreamBanner: {
     marginTop: 14, backgroundColor: C.amber + "1A", borderRadius: 10,
     borderWidth: 1, borderColor: C.amber + "40", paddingHorizontal: 12, paddingVertical: 8,

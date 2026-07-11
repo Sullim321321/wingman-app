@@ -4,9 +4,10 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
-import { C, T } from "../theme";
-import { BackBar, g, tap } from "../components";
-import { getInsightsROI, getActivity } from "../api";
+import { C, T, SHADOW, litEdge } from "../theme";
+import { BackBar, g, tap, FadeRise } from "../components";
+import { ShareCardModal } from "../components/ShareCard";
+import { getInsightsROI, getActivity, getInsightsHistory } from "../api";
 
 function StatCard({ value, label, sub }) {
   return (
@@ -19,8 +20,8 @@ function StatCard({ value, label, sub }) {
 }
 
 function OutcomeRow({ icon, title, detail, outcome, time }) {
-  const outcomeColor = outcome === "saved" ? C.gold : outcome === "missed" ? "#C97B6E" : C.mut;
-  const outcomeLabel = outcome === "saved" ? "Saved" : outcome === "missed" ? "Missed" : "Pending";
+  const outcomeColor = outcome === "saved" ? C.gold : outcome === "handled" ? C.teal : outcome === "missed" ? "#C97B6E" : C.mut;
+  const outcomeLabel = outcome === "saved" ? "Saved" : outcome === "handled" ? "Handled" : outcome === "missed" ? "Missed" : "Pending";
   return (
     <View style={s.outcomeRow}>
       <View style={s.outcomeIcon}>
@@ -40,6 +41,39 @@ function OutcomeRow({ icon, title, detail, outcome, time }) {
   );
 }
 
+// Editorial comparison bar (Design #5): you vs. an industry/unmanaged baseline,
+// both drawn to scale so the gap is visible at a glance.
+function CompareBar({ label, you, industry, fmt, betterLow }) {
+  if (you == null) return null;
+  const max = Math.max(you, industry, 1);
+  const better = betterLow ? you <= industry : you >= industry;
+  const youColor = better ? C.confirmed : C.attentionM;
+  return (
+    <View style={s.cmpRow}>
+      <Text style={s.cmpLabel}>{label}</Text>
+      <View style={s.cmpTrack}>
+        <View style={[s.cmpFill, { width: `${Math.max((you / max) * 100, 2)}%`, backgroundColor: youColor }]} />
+        <Text style={s.cmpVal}>You · {fmt(you)}</Text>
+      </View>
+      <View style={s.cmpTrack}>
+        <View style={[s.cmpFill, { width: `${Math.max((industry / max) * 100, 1)}%`, backgroundColor: C.card2 }]} />
+        <Text style={s.cmpValMut}>Industry · {fmt(industry)}</Text>
+      </View>
+    </View>
+  );
+}
+
+// "Recent outcomes" should show actual outcomes — a disruption handled, a rescue
+// accepted — not passive imports (which belong in Signals). These are the event
+// types that represent an outcome, plus a mapper to a resolved/pending label.
+const OUTCOME_TYPES = new Set(["rebook", "recovery", "disruption", "delay", "weather", "cancellation"]);
+function deriveOutcome(ev) {
+  if (ev.outcome) return ev.outcome;
+  if (ev.type === "rebook" || (ev.metadata && (ev.metadata.value_saved > 0 || ev.metadata.rescue_accepted))) return "saved";
+  if (ev.type === "recovery") return "handled";
+  return "pending";
+}
+
 const YEAR = new Date().getFullYear();
 
 export default function InsightsScreen({ navigation }) {
@@ -47,15 +81,19 @@ export default function InsightsScreen({ navigation }) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("all");
+  const [showShare, setShowShare] = useState(false);
+  const [history, setHistory] = useState([]);
 
   const fetchData = useCallback((p) => {
     setLoading(true);
     Promise.all([
       getInsightsROI(p).catch(() => null),
       getActivity(20).catch(() => ({ events: [] })),
-    ]).then(([roiData, actData]) => {
+      getInsightsHistory(12).catch(() => null),
+    ]).then(([roiData, actData, histData]) => {
       setRoi(roiData);
       setEvents(actData?.events || []);
+      setHistory(histData?.series || []);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -95,8 +133,16 @@ export default function InsightsScreen({ navigation }) {
     return (
       <SafeAreaView style={s.app}>
         <BackBar nav={navigation} label="Insights" />
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator color={C.gold} />
+        <View style={{ paddingHorizontal: 24, paddingTop: 8 }}>
+          <View style={{ height: 150, borderRadius: 16, backgroundColor: C.card2, marginBottom: 18 }} />
+          <View style={{ flexDirection: "row", gap: 12, marginBottom: 18 }}>
+            <View style={{ flex: 1, height: 92, borderRadius: 14, backgroundColor: C.card2 }} />
+            <View style={{ flex: 1, height: 92, borderRadius: 14, backgroundColor: C.card2 }} />
+          </View>
+          <View style={{ width: "40%", height: 12, borderRadius: 4, backgroundColor: C.card2, marginBottom: 16 }} />
+          {[0, 1, 2].map(i => (
+            <View key={i} style={{ height: 64, borderRadius: 12, backgroundColor: C.card, marginBottom: 12 }} />
+          ))}
         </View>
       </SafeAreaView>
     );
@@ -104,29 +150,33 @@ export default function InsightsScreen({ navigation }) {
 
   return (
     <SafeAreaView style={s.app}>
-      <ScrollView contentContainerStyle={g.scroll}>
+      <ScrollView contentContainerStyle={[g.scroll, { paddingBottom: 96 }]}>
         <BackBar nav={navigation} label="Insights" />
 
         {/* Hero ROI card — warm gold-tinted gradient, editorial serif value */}
+        <FadeRise>
         <LinearGradient colors={["rgba(201,169,110,0.16)", "rgba(201,169,110,0.04)"]} style={s.roiCard}>
           <View style={s.roiEyebrowRow}>
             <Text style={s.roiEyebrow}>TOTAL VALUE PROTECTED</Text>
             <Text style={s.roiYear}>{YEAR}</Text>
           </View>
-          <Text style={s.roiValue}>
-            {totalSaved > 0 ? `$${totalSaved.toLocaleString()}` : "—"}
-          </Text>
+          {totalSaved > 0 ? (
+            <Text style={s.roiValue}>${totalSaved.toLocaleString()}</Text>
+          ) : (
+            <Text style={s.roiValueEmpty}>All clear.</Text>
+          )}
           <Text style={s.roiSub}>
             {totalSaved > 0
               ? `Across ${disruptionsHandled} disruption${disruptionsHandled !== 1 ? "s" : ""} handled by Wingman`
-              : "Your first disruption handled will appear here."}
+              : "Nothing's gone wrong on your watch yet. The moment it does, I'll handle it — and the value I protect will show here."}
           </Text>
           {totalSaved > 0 && (
-            <Pressable style={s.shareBtn} onPress={() => { tap(); handleShare(); }}>
+            <Pressable style={s.shareBtn} onPress={() => { tap(); setShowShare(true); }}>
               <Text style={s.shareBtnT}>Share your ROI  ↗</Text>
             </Pressable>
           )}
         </LinearGradient>
+        </FadeRise>
 
         {/* Period selector */}
         <View style={s.periodRow}>
@@ -185,29 +235,66 @@ export default function InsightsScreen({ navigation }) {
           />
         </View>
 
-        {/* Benchmark comparison card */}
-        <View style={s.benchCard}>
-          <Text style={s.benchTitle}>HOW YOU COMPARE</Text>
-          {[
-            { label: "Disruption cost (unmanaged)",  benchmark: "$890",   yours: totalSaved > 0 ? `$${Math.round(totalSaved / Math.max(disruptionsHandled, 1)).toLocaleString()}` : null, better: true },
-            { label: "Typical rebooking time (DIY)",  benchmark: "2h 20m", yours: avgTimeSaved != null ? `${avgTimeSaved}m` : null, better: avgTimeSaved != null && avgTimeSaved < 140 },
-            { label: "Rescue accept rate (industry)", benchmark: "38%",    yours: rescueAcceptRate != null ? `${rescueAcceptRate}%` : null, better: rescueAcceptRate != null && rescueAcceptRate > 38 },
-          ].map((row, i) => (
-            <View key={i} style={[s.benchRow, i > 0 && { borderTopWidth: 1, borderTopColor: C.line }]}>
-              <View style={{ flex: 1 }}>
-                <Text style={s.benchLabel}>{row.label}</Text>
-                <Text style={s.benchBenchmark}>Industry avg: {row.benchmark}</Text>
+        {/* Value protected over time (Roadmap 2, Design #10) */}
+        {history.some(h => h.value > 0) ? (() => {
+          const max = Math.max(...history.map(h => h.value), 1);
+          const best = history.reduce((a, b) => (b.value > a.value ? b : a), history[0]);
+          return (
+            <FadeRise style={s.trendCard}>
+              <Text style={s.trendTitle}>VALUE PROTECTED · LAST 12 MONTHS</Text>
+              <View style={s.trendChart}>
+                {history.map((h, i) => (
+                  <View key={h.month} style={s.trendCol}>
+                    <View style={s.trendBarWrap}>
+                      <View
+                        style={[
+                          s.trendBar,
+                          { height: `${Math.max((h.value / max) * 100, h.value > 0 ? 6 : 1.5)}%` },
+                          h.value === 0 && s.trendBarEmpty,
+                          h.month === best.month && h.value > 0 && s.trendBarBest,
+                        ]}
+                      />
+                    </View>
+                    <Text style={[s.trendLabel, i % 2 !== 0 && { opacity: 0 }]}>{h.label}</Text>
+                  </View>
+                ))}
               </View>
-              {row.yours ? (
-                <View style={[s.benchBadge, { backgroundColor: row.better ? C.teal + "18" : C.amber + "18", borderColor: row.better ? C.teal + "40" : C.amber + "40" }]}>
-                  <Text style={[s.benchBadgeT, { color: row.better ? C.teal : C.amber }]}>{row.yours}</Text>
-                </View>
-              ) : (
-                <Text style={s.benchNA}>—</Text>
-              )}
-            </View>
-          ))}
-        </View>
+              <Text style={s.trendFoot}>
+                Best month: {best.label} — ${best.value.toLocaleString()} protected
+                {best.rescues > 0 ? ` across ${best.rescues} rescue${best.rescues !== 1 ? "s" : ""}` : ""}.
+              </Text>
+            </FadeRise>
+          );
+        })() : null}
+
+        {/* Benchmark comparison — editorial bars (Design #5) */}
+        {(disruptionsHandled > 0 || totalSaved > 0) && (
+          <FadeRise style={s.benchCard}>
+            <Text style={s.benchTitle}>HOW YOU COMPARE</Text>
+            <CompareBar
+              label="Value recovered per disruption"
+              you={totalSaved > 0 ? Math.round(totalSaved / Math.max(disruptionsHandled, 1)) : null}
+              industry={0}
+              betterLow={false}
+              fmt={(v) => `$${v.toLocaleString()}`}
+            />
+            <CompareBar
+              label="Time saved per disruption"
+              you={avgTimeSaved != null ? avgTimeSaved : null}
+              industry={0}
+              betterLow={false}
+              fmt={(v) => `${v}m`}
+            />
+            <CompareBar
+              label="Rescue accept rate"
+              you={rescueAcceptRate != null ? rescueAcceptRate : null}
+              industry={38}
+              betterLow={false}
+              fmt={(v) => `${v}%`}
+            />
+            <Text style={s.benchFoot}>Baseline: an unmanaged traveler recovers nothing and rebooks by hand.</Text>
+          </FadeRise>
+        )}
 
         {/* Learning loop callout */}
         <View style={s.learnCard}>
@@ -233,24 +320,28 @@ export default function InsightsScreen({ navigation }) {
           </View>
         )}
 
-        {/* Recent outcomes */}
-        {events.length > 0 && (
-          <View>
-            <Text style={g.sectionT}>RECENT OUTCOMES</Text>
-            <View style={g.group}>
-              {events.slice(0, 8).map((ev, i) => (
-                <OutcomeRow
-                  key={ev.id || i}
-                  icon={ev.type === "disruption" ? "◎" : ev.type === "booking" ? "◆" : "◇"}
-                  title={ev.title || ev.event_type || "Event"}
-                  detail={ev.body || ev.trip_title || ""}
-                  outcome={ev.outcome || "pending"}
-                  time={ev.created_at ? new Date(ev.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null}
-                />
-              ))}
+        {/* Recent outcomes — real outcomes only (imports live in Signals) */}
+        {(() => {
+          const outcomeEvents = events.filter(e => OUTCOME_TYPES.has(e.type) || e.outcome);
+          if (outcomeEvents.length === 0) return null;
+          return (
+            <View>
+              <Text style={g.sectionT}>RECENT OUTCOMES</Text>
+              <View style={g.group}>
+                {outcomeEvents.slice(0, 8).map((ev, i) => (
+                  <OutcomeRow
+                    key={ev.id || i}
+                    icon={ev.type === "disruption" ? "◎" : ev.type === "booking" ? "◆" : "◇"}
+                    title={ev.title || ev.event_type || "Event"}
+                    detail={ev.body || ev.trip_title || ""}
+                    outcome={deriveOutcome(ev)}
+                    time={ev.created_at ? new Date(ev.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null}
+                  />
+                ))}
+              </View>
             </View>
-          </View>
-        )}
+          );
+        })()}
 
         {/* Wingman Wrapped entry */}
         <Pressable style={s.wrappedCard} onPress={() => { tap(); navigation.navigate("Wrapped"); }}>
@@ -273,6 +364,13 @@ export default function InsightsScreen({ navigation }) {
           </View>
         )}
       </ScrollView>
+
+      <ShareCardModal
+        visible={showShare}
+        onClose={() => setShowShare(false)}
+        variant="roi"
+        data={{ totalSaved, disruptions: disruptionsHandled }}
+      />
     </SafeAreaView>
   );
 }
@@ -285,6 +383,7 @@ const s = StyleSheet.create({
   roiEyebrow: { color: C.gold, fontSize: 11, fontFamily: T.sansB, letterSpacing: 2.5 },
   roiYear: { color: C.mut, fontSize: 11, fontFamily: T.sansM, letterSpacing: 0.5 },
   roiValue: { color: C.ink, fontSize: 56, fontFamily: T.serifB, lineHeight: 64, marginBottom: 8 },
+  roiValueEmpty: { color: C.ink, fontSize: 40, fontFamily: T.garamondSI, lineHeight: 46, marginBottom: 8, opacity: 0.9 },
   roiSub: { color: C.mut, fontSize: 14, lineHeight: 20 },
   shareBtn: { marginTop: 18, alignSelf: "flex-start", paddingHorizontal: 16, paddingVertical: 9, borderRadius: 12, borderWidth: 1, borderColor: C.gold + "50", backgroundColor: C.gold + "12" },
   shareBtnT: { color: C.gold, fontSize: 12, fontFamily: T.sansB, letterSpacing: 0.5 },
@@ -296,7 +395,7 @@ const s = StyleSheet.create({
   periodTOn: { color: C.gold },
 
   streakRow: { flexDirection: "row", gap: 10, marginBottom: 20 },
-  streakCard: { flex: 1, backgroundColor: C.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)" },
+  streakCard: { flex: 1, backgroundColor: C.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", ...litEdge, ...SHADOW.soft },
   streakValue: { color: C.gold, fontSize: 28, fontFamily: T.serifB, marginBottom: 4 },
   streakLabel: { color: C.ink, fontSize: 13, fontFamily: T.sansB },
   streakSub: { color: C.mut, fontSize: 11, marginTop: 2 },
@@ -314,6 +413,7 @@ const s = StyleSheet.create({
     flexDirection: "row", gap: 14, padding: 18,
     backgroundColor: "rgba(201,169,110,0.06)", borderRadius: 16,
     borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", marginBottom: 24,
+    ...litEdge, ...SHADOW.soft,
   },
   learnIcon: { fontSize: 22, color: C.gold, marginTop: 2 },
   learnTitle: { color: C.gold, fontSize: 14, fontFamily: T.sansB, marginBottom: 4 },
@@ -346,7 +446,7 @@ const s = StyleSheet.create({
   emptyH: { color: C.ink, fontSize: 18, fontFamily: T.serifB, textAlign: "center", marginBottom: 10 },
   emptySub: { color: C.mut, fontSize: 14, lineHeight: 21, textAlign: "center" },
   // Benchmark card
-  benchCard:      { backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, overflow: "hidden", marginBottom: 20 },
+  benchCard:      { backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line, overflow: "hidden", marginBottom: 20, ...litEdge },
   benchTitle:     { color: C.mut, fontSize: 10, fontFamily: T.sansB, letterSpacing: 1.5, padding: 16, paddingBottom: 10 },
   benchRow:       { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 12 },
   benchLabel:     { color: C.ink, fontSize: 13, fontFamily: T.sansM, marginBottom: 2 },
@@ -354,4 +454,26 @@ const s = StyleSheet.create({
   benchBadge:     { borderRadius: 8, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 4 },
   benchBadgeT:    { fontSize: 12, fontFamily: T.sansB },
   benchNA:        { color: C.mut, fontSize: 13, fontFamily: T.sans },
+  benchFoot:      { color: C.mut, fontSize: 11, fontFamily: T.sans, lineHeight: 16, paddingHorizontal: 16, paddingTop: 4, paddingBottom: 16 },
+  // ── Value-protected trend (Roadmap 2) ──
+  trendCard: {
+    backgroundColor: C.card, borderRadius: 16, borderWidth: 1, borderColor: C.line,
+    padding: 18, marginBottom: 20, ...litEdge, ...SHADOW.soft,
+  },
+  trendTitle: { color: C.mut, fontSize: 10, fontFamily: T.sansB, letterSpacing: 1.5, marginBottom: 16 },
+  trendChart: { flexDirection: "row", alignItems: "flex-end", height: 110, gap: 5 },
+  trendCol: { flex: 1, alignItems: "center" },
+  trendBarWrap: { width: "100%", height: 90, justifyContent: "flex-end" },
+  trendBar: { width: "100%", borderRadius: 3, backgroundColor: C.gold, opacity: 0.55 },
+  trendBarBest: { opacity: 1 },
+  trendBarEmpty: { backgroundColor: C.card2, opacity: 1 },
+  trendLabel: { color: C.mut, fontSize: 9, fontFamily: T.sansM, marginTop: 6 },
+  trendFoot: { color: C.mut, fontSize: 12, fontFamily: T.sans, lineHeight: 18, marginTop: 14 },
+  // ── Comparison bars (Design #5) ──
+  cmpRow:         { paddingHorizontal: 16, paddingVertical: 10 },
+  cmpLabel:       { color: C.ink, fontSize: 13, fontFamily: T.sansM, marginBottom: 4 },
+  cmpTrack:       { height: 24, borderRadius: 6, backgroundColor: C.bg, overflow: "hidden", justifyContent: "center", marginTop: 6 },
+  cmpFill:        { position: "absolute", left: 0, top: 0, bottom: 0, borderRadius: 6 },
+  cmpVal:         { color: C.ink, fontSize: 11, fontFamily: T.sansB, paddingHorizontal: 10 },
+  cmpValMut:      { color: C.mut, fontSize: 11, fontFamily: T.sansM, paddingHorizontal: 10 },
 });

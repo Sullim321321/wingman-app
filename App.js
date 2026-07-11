@@ -3,7 +3,8 @@
 // Custom tab bar: wide-tracked caps labels + hairline Unicode icons + champagne gold
 
 import React, { useEffect, useState } from "react";
-import { View, ActivityIndicator, Text, StyleSheet } from "react-native";
+import { View, ActivityIndicator, Text, StyleSheet, Pressable } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer, DarkTheme, createNavigationContainerRef } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -34,7 +35,8 @@ import {
 
 import { C, T } from "./src/theme";
 import { ThemeProvider, useTheme } from "./src/ThemeContext";
-import { setupNotificationHandler, registerForPush } from "./src/notify";
+import { setupNotificationHandler, registerForPush, registerNotificationCategories } from "./src/notify";
+import { confirmDecision, dismissDecision } from "./src/api";
 import { AuthProvider, useAuth } from "./src/auth";
 import ErrorBoundary from "./src/ErrorBoundary";
 
@@ -85,6 +87,8 @@ import JourneySimulatorScreen from "./src/screens/JourneySimulatorScreen";
 import TravelProfileScreen from "./src/screens/TravelProfileScreen";
 import MemoryScreen from "./src/screens/MemoryScreen";
 import PassengerProfileScreen from "./src/screens/PassengerProfileScreen";
+import DecisionsScreen from "./src/screens/DecisionsScreen";
+import ExpensesScreen from "./src/screens/ExpensesScreen";
 
 export const navRef = createNavigationContainerRef();
 const Stack = createNativeStackNavigator();
@@ -123,9 +127,10 @@ function TabIcon({ name, focused }) {
 
 // ─── Tab navigator ────────────────────────────────────────────────────────────
 
-function Tabs() {
+function Tabs({ navigation }) {
   const { C: TC, isDark } = useTheme();
   const [signalBadge, setSignalBadge] = React.useState(null);
+  const [activeRoute, setActiveRoute] = React.useState("Home");
 
   // Poll for active signals every 5 min to keep the badge fresh
   React.useEffect(() => {
@@ -148,7 +153,16 @@ function Tabs() {
   }, []);
 
   return (
+    <View style={{ flex: 1 }}>
     <Tab.Navigator
+      screenListeners={{
+        state: (e) => {
+          try {
+            const st = e.data?.state;
+            if (st) setActiveRoute(st.routes[st.index].name);
+          } catch {}
+        },
+      }}
       screenOptions={({ route }) => ({
         headerShown: false,
         sceneContainerStyle: { backgroundColor: TC.bg },
@@ -186,6 +200,23 @@ function Tabs() {
       />
       <Tab.Screen name="Insights"     component={InsightsScreen} />
     </Tab.Navigator>
+
+    {/* Always-present concierge affordance (UI #1) — hidden on Home, which already
+        has the concierge input inline (avoids covering the send button). */}
+    {activeRoute !== "Home" && (
+      <Pressable
+        onPress={() => { try { require("./src/components").tap?.(); } catch {} navigation.navigate("Concierge"); }}
+        style={({ pressed }) => [
+          fab.pill,
+          { backgroundColor: TC.card, borderColor: TC.gold, opacity: pressed ? 0.85 : 1 },
+        ]}
+        accessibilityLabel="Ask Wingman"
+      >
+        <Ionicons name="chatbubbles-outline" size={16} color={TC.gold} />
+        <Text style={[fab.label, { color: TC.gold }]}>Ask Wingman</Text>
+      </Pressable>
+    )}
+    </View>
   );
 }
 
@@ -250,15 +281,30 @@ function Root() {
     })();
   }, [token]);
 
-  useEffect(() => { setupNotificationHandler(); }, []);
+  useEffect(() => { setupNotificationHandler(); registerNotificationCategories(); }, []);
 
   useEffect(() => {
     if (token) registerForPush();
   }, [token]);
 
   useEffect(() => {
-    const resp = Notifications.addNotificationResponseReceivedListener((r) => {
+    const resp = Notifications.addNotificationResponseReceivedListener(async (r) => {
       const data = r.notification.request.content.data || {};
+
+      // ── Inline decision actions (UI #5) — approve/dismiss straight from the
+      // notification, without opening the app. A chief of staff shouldn't make
+      // you launch an app to say yes.
+      const action = r.actionIdentifier;
+      if (data.decision_id && (action === "approve" || action === "dismiss")) {
+        try {
+          if (action === "approve") await confirmDecision(data.decision_id, data.option_id);
+          else await dismissDecision(data.decision_id);
+        } catch (e) {
+          console.warn("[push-action]", e.message);
+        }
+        return; // handled without navigating
+      }
+
       if (!navRef.isReady()) return;
       const route = data.route || "Alert";
       // Pass tripId / legId / flightIdent through to the target screen
@@ -399,6 +445,8 @@ function Root() {
             <Stack.Screen name="JourneySimulator"     component={JourneySimulatorScreen} />
             <Stack.Screen name="TravelProfile"        component={TravelProfileScreen} />
             <Stack.Screen name="Memory"               component={MemoryScreen} />
+            <Stack.Screen name="Decisions"            component={DecisionsScreen} />
+            <Stack.Screen name="Expenses"             component={ExpensesScreen} />
             <Stack.Screen name="Main"         component={Tabs} />
           </>
         ) : (
@@ -481,5 +529,31 @@ const tb = StyleSheet.create({
   iconActive: {
     color: C.gold,
     opacity: 1,
+  },
+});
+
+// ─── Floating "Ask Wingman" pill ──────────────────────────────────────────────
+const fab = StyleSheet.create({
+  pill: {
+    position: "absolute",
+    right: 18,
+    bottom: 100,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+    borderRadius: 24,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  label: {
+    fontFamily: T.sansB,
+    fontSize: 12.5,
+    letterSpacing: 0.3,
   },
 });

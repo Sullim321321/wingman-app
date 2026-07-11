@@ -9,14 +9,15 @@ import React, {
 import {
   SafeAreaView, View, Text, TextInput, Pressable, FlatList,
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
-  Alert, Animated, Easing, AppState, ScrollView,
+  Alert, Animated, Easing, AppState, ScrollView, Linking,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useFocusEffect } from "@react-navigation/native";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { C, T } from "../theme";
-import { tap } from "../components";
+import { C, T, SHADOW, litEdge } from "../theme";
+import { tap, DecisionCard, FadeRise } from "../components";
 import { PlanCard } from "../components/PlanCard";
 import {
   getTrips, getHomeState, getWeather, getMe,
@@ -24,6 +25,7 @@ import {
   getTripBriefing, getPrediction, triggerGmailScan, getTravelProfile,
   getLocalNews, getLocalTraffic, getTodayEvents, getTravelStats,
   createTrip, addLeg,
+  getDecisions, confirmDecision, dismissDecision, undoDecision,
 } from "../api";
 import { scheduleDisruption, schedulePreDepartureBriefing, schedulePostTripDebrief } from "../notify";
 import * as Speech from "expo-speech";
@@ -365,6 +367,9 @@ function buildWelcomeMessage(trips, firstName, city) {
 
 export default function HomeScreen({ navigation }) {
   const [trips, setTrips]               = useState([]);
+  const [decisions, setDecisions]       = useState([]);
+  const [decisionBusy, setDecisionBusy] = useState(false);
+  const decisionTimers                  = useRef({});
   const [tripsLoaded, setTripsLoaded]   = useState(false);
   const [homeState, setHomeState]       = useState(null);
   const [weather, setWeather]           = useState(null);
@@ -455,6 +460,11 @@ export default function HomeScreen({ navigation }) {
         }
       })
       .catch(() => { if (!cancelled) { setTripsLoaded(true); setBriefingLoading(false); } });
+
+    // Load pending decisions (chief-of-staff cards) — surface above the briefing
+    getDecisions()
+      .then(d => { if (!cancelled) setDecisions(d.decisions || []); })
+      .catch(() => {});
 
     // Location + weather + home state
     (async () => {
@@ -737,19 +747,23 @@ export default function HomeScreen({ navigation }) {
       scheduleSave(updated);
     } catch (err) {
       console.log("[CONCIERGE ERROR]", "status:", err?.status, "message:", err?.message, "detail:", err?.detail);
-      const isTimeout = err?.name === "TimeoutError" || err?.name === "AbortError";
-      const isOffline = err?.message?.includes("No connection") || err?.message?.includes("Network request failed");
-      const isServerError = err?.status >= 500 || err?.message?.includes("500") || err?.message?.includes("502") || err?.message?.includes("503");
-      const isAuthError = err?.status === 401 || err?.message?.includes("401") || err?.message?.includes("unauthorized");
+      const msg = (err?.message || "") + " " + (err?.detail || "");
+      const isTimeout = err?.name === "TimeoutError" || err?.name === "AbortError" || /timeout/i.test(msg);
+      const isOffline = /No connection|Network request failed|internet/i.test(msg);
+      const isAuthError = err?.status === 401 || /401|unauthorized|session expired/i.test(msg);
+      const isServiceDown = /service_unavailable|credit balance|insufficient_quota/i.test(msg);
+      const isServerError = err?.status >= 500 || /50[0-9]|concierge_error/i.test(msg);
       const errMsg = isOffline
         ? "No internet connection — check your signal and try again."
-        : isTimeout
-        ? "That took a little longer than usual. Try again — I'm ready."
         : isAuthError
-        ? "Your session has expired. Please sign out and back in."
+        ? "Your session's expired. Sign out and back in (Settings › Sign out) and I'll be right here."
+        : isServiceDown
+        ? "I'm temporarily offline (my AI service hit a limit). This is on our side, not you — try again in a minute."
+        : isTimeout
+        ? "That took longer than usual — the server may have been waking up. Try once more, I'm ready."
         : isServerError
-        ? "I'm having a moment. Try again in a few seconds."
-        : "I didn't quite catch that. Try again."
+        ? "Something hiccuped on my end. Give it a few seconds and try again."
+        : "That didn't go through. Try again — if it keeps happening, sign out and back in."
       setMessages(prev => [...prev, { role: "assistant", content: errMsg }]);
     } finally {
       setChatLoading(false);
@@ -919,6 +933,136 @@ export default function HomeScreen({ navigation }) {
 
   const tabBarHeight = useBottomTabBarHeight();
 
+  const handleConfirmDecision = async (decision, optionId) => {
+    const opt = (decision.options || []).find(o => o.id === optionId);
+    // For a real disruption's primary action, open the full rebooking flow.
+    if (decision.kind === "rebook" && optionId === decision.recommended_option_id && decision.trip_id && decision.leg_id) {
+      confirmDecision(decision.id, optionId).catch(() => {});
+      setDecisions(prev => prev.filter(d => d.id !== decision.id));
+      navigation.navigate("Disruption", { tripId: String(decision.trip_id), legId: String(decision.leg_id) });
+      return;
+    }
+    // Otherwise: acknowledge with a "Done" state (with a short undo window), then fade out.
+    setDecisionBusy(true);
+    setDecisions(prev => prev.map(d => d.id === decision.id ? { ...d, _confirmed: opt?.label || "Handled" } : d));
+    try {
+      await confirmDecision(decision.id, optionId);
+    } catch (_) {
+      setDecisions(prev => prev.map(d => d.id === decision.id ? { ...d, _confirmed: undefined } : d));
+      setDecisionBusy(false);
+      return;
+    }
+    setDecisionBusy(false);
+    decisionTimers.current[decision.id] = setTimeout(
+      () => setDecisions(prev => prev.filter(d => d.id !== decision.id)),
+      6000
+    );
+  };
+
+  const handleUndoDecision = (decision) => {
+    clearTimeout(decisionTimers.current[decision.id]);
+    setDecisions(prev => prev.map(d => d.id === decision.id ? { ...d, _confirmed: undefined } : d));
+    undoDecision(decision.id).catch(() => {});
+  };
+  const handleDismissDecision = (decision) => {
+    setDecisions(prev => prev.filter(d => d.id !== decision.id));
+    dismissDecision(decision.id).catch(() => {});
+  };
+
+  // Day-of-travel: a focused panel when a flight departs within ~18h — gate, status,
+  // countdown, and a tap into live tracking. Home becomes "today" on travel days.
+  // ── Adaptive home (Roadmap 2, UI #1) ──────────────────────────────────────
+  // Home reshapes by where you are in the trip: in-transit → day-of → pre-trip →
+  // post-trip → planning. Exactly one hero panel shows, so the screen always leads
+  // with the thing that matters right now.
+  const inTransit = (() => {
+    const now = Date.now();
+    for (const trip of (trips || [])) {
+      for (const leg of (trip.legs || [])) {
+        if (leg.type !== "flight" || !leg.departs_at) continue;
+        const dep = new Date(leg.departs_at).getTime();
+        const arr = leg.arrives_at ? new Date(leg.arrives_at).getTime() : dep + 3 * 3600000;
+        if (now >= dep && now <= arr + 30 * 60000) {
+          const left = Math.max(0, arr - now);
+          const h = Math.floor(left / 3600000);
+          const m = Math.floor((left % 3600000) / 60000);
+          const eta = h > 0 ? `Lands in ${h}h ${m}m` : m > 1 ? `Lands in ${m}m` : "Landing now";
+          return { leg: { ...leg, tripTitle: trip.title }, eta };
+        }
+      }
+    }
+    return null;
+  })();
+
+  const dayOf = (() => {
+    if (inTransit) return null; // you're already flying
+    const flt = findNextFlight(trips);
+    if (!flt?.departs_at) return null;
+    const ms = new Date(flt.departs_at).getTime() - Date.now();
+    if (ms < 0 || ms > 18 * 3600000) return null;
+    const h = Math.floor(ms / 3600000);
+    const m = Math.floor((ms % 3600000) / 60000);
+    const countdown = h > 0 ? `Departs in ${h}h ${m}m` : m > 5 ? `Departs in ${m}m` : "Boarding soon";
+    return { leg: flt, countdown };
+  })();
+
+  // Just landed — close the loop and capture the outcome while it's fresh.
+  const postTrip = (() => {
+    if (inTransit || dayOf) return null;
+    const now = Date.now();
+    let best = null, bestT = 0;
+    for (const trip of (trips || [])) {
+      for (const leg of (trip.legs || [])) {
+        if (!leg.arrives_at) continue;
+        const arr = new Date(leg.arrives_at).getTime();
+        if (arr < now && now - arr < 48 * 3600000 && arr > bestT) { bestT = arr; best = trip; }
+      }
+    }
+    return best ? { trip: best } : null;
+  })();
+
+  // Anticipatory pre-work (UX #1): for the next trip that isn't day-of yet,
+  // show what Wingman has already handled so the value is visible before departure.
+  // Every line reflects a real capability — nothing fabricated.
+  const prep = (() => {
+    if (dayOf || inTransit || postTrip) return null; // a nearer-term phase takes over
+    const flt = findNextFlight(trips);
+    if (!flt?.departs_at) return null;
+    const days = Math.ceil((new Date(flt.departs_at).getTime() - Date.now()) / 86400000);
+    if (days < 0 || days > 14) return null;
+    const items = [
+      {
+        icon: "eye-outline",
+        text: `Monitoring ${`${flt.carrier || ""}${flt.flight_number || ""}`.trim() || "your flight"} ${flt.origin || "?"}→${flt.destination || "?"} for delays and gate changes`,
+      },
+    ];
+    if (riskScore != null) {
+      items.push({
+        icon: "pulse-outline",
+        text: `Disruption risk checked — ${riskScore >= 60 ? "elevated" : riskScore >= 30 ? "moderate" : "low"} right now`,
+      });
+    }
+    if (flt.origin) {
+      items.push({
+        icon: "cafe-outline",
+        text: `Lounge, dining & terminal options ready for ${flt.origin}`,
+        route: "LoungeCards",
+        params: { airport: flt.origin },
+      });
+    }
+    // Entry & documents. Wingman deliberately does NOT assert visa rules — getting
+    // that wrong could strand you. It points to the authoritative source instead.
+    if (flt.destination) {
+      items.push({
+        icon: "document-text-outline",
+        text: `Entry rules for ${flt.destination} — confirm on the official source before you fly`,
+        url: "https://www.iatatravelcentre.com/",
+        verify: true,
+      });
+    }
+    return { days, flt, items };
+  })();
+
   // Masthead + hero briefing + section divider live INSIDE the FlatList as its
   // scrollable header. This keeps the message list the only flex element, so the
   // input bar reliably sits above the keyboard (the tall hero no longer pins it down).
@@ -948,6 +1092,148 @@ export default function HomeScreen({ navigation }) {
 
         <View style={s.rule} />
 
+        {/* ── Decisions — the one thing that needs you, above the briefing ── */}
+        {decisions.length > 0 ? (
+          <FadeRise style={{ marginTop: 8 }}>
+            {decisions.slice(0, 2).map(d => (
+              <DecisionCard
+                key={d.id}
+                decision={d}
+                busy={decisionBusy}
+                onConfirm={handleConfirmDecision}
+                onDismiss={handleDismissDecision}
+                onUndo={handleUndoDecision}
+              />
+            ))}
+            {decisions.length > 2 ? (
+              <Pressable
+                style={s.decisionsMore}
+                onPress={() => { tap(); navigation.navigate("Decisions"); }}
+                accessibilityRole="button"
+                accessibilityLabel={`View all ${decisions.length} decisions`}
+              >
+                <Text style={s.decisionsMoreT}>View all {decisions.length} decisions  ›</Text>
+              </Pressable>
+            ) : null}
+          </FadeRise>
+        ) : null}
+
+        {/* ── In-transit — you're in the air right now ── */}
+        {inTransit ? (
+          <FadeRise delay={70}>
+            <Pressable
+              style={s.transitCard}
+              onPress={() => { tap(); navigation.navigate("Alert", { flight: {
+                carrier: inTransit.leg.carrier, flight_number: inTransit.leg.flight_number,
+                origin: inTransit.leg.origin, destination: inTransit.leg.destination,
+                departs_at: inTransit.leg.departs_at, tripTitle: inTransit.leg.tripTitle,
+              } }); }}
+            >
+              <View style={s.dayOfHead}>
+                <View style={[s.dayOfDot, { backgroundColor: C.gold }]} />
+                <Text style={[s.dayOfKicker, { color: C.gold }]}>IN THE AIR</Text>
+                <Text style={s.dayOfCountdown}>{inTransit.eta}</Text>
+              </View>
+              <Text style={s.dayOfRoute}>{inTransit.leg.origin || "?"} → {inTransit.leg.destination || "?"}</Text>
+              <Text style={s.dayOfMeta}>
+                {`${inTransit.leg.carrier || ""}${inTransit.leg.flight_number || ""}`.trim()} · I'm watching your connections and onward bookings.
+              </Text>
+              <Text style={[s.dayOfCta, { color: C.gold }]}>Live status  ›</Text>
+            </Pressable>
+          </FadeRise>
+        ) : null}
+
+        {/* ── Just landed — close the loop while it's fresh ── */}
+        {postTrip ? (
+          <FadeRise delay={70}>
+            <Pressable
+              style={s.postTripCard}
+              onPress={() => { tap(); navigation.navigate("TripDetail", { trip: postTrip.trip }); }}
+            >
+              <View style={s.dayOfHead}>
+                <View style={[s.dayOfDot, { backgroundColor: C.teal }]} />
+                <Text style={[s.dayOfKicker, { color: C.teal }]}>WELCOME BACK</Text>
+              </View>
+              <Text style={s.postTripHed}>How was {postTrip.trip.title}?</Text>
+              <Text style={s.dayOfMeta}>
+                Rate it and I'll sharpen my predictions for your next one — and show you the value I protected.
+              </Text>
+              <Text style={[s.dayOfCta, { color: C.teal }]}>Rate this trip  ›</Text>
+            </Pressable>
+          </FadeRise>
+        ) : null}
+
+        {/* ── Day-of-travel panel — Home becomes "today" when you're flying ── */}
+        {dayOf ? (
+          <FadeRise delay={70}>
+          <Pressable
+            style={s.dayOfCard}
+            onPress={() => { tap(); navigation.navigate("Alert", { flight: {
+              carrier: dayOf.leg.carrier, flight_number: dayOf.leg.flight_number,
+              origin: dayOf.leg.origin, destination: dayOf.leg.destination,
+              departs_at: dayOf.leg.departs_at, tripTitle: dayOf.leg.tripTitle,
+            } }); }}
+          >
+            <View style={s.dayOfHead}>
+              <View style={s.dayOfDot} />
+              <Text style={s.dayOfKicker}>TODAY · YOUR FLIGHT</Text>
+              <Text style={s.dayOfCountdown}>{dayOf.countdown}</Text>
+            </View>
+            <Text style={s.dayOfRoute}>{dayOf.leg.origin || "?"} → {dayOf.leg.destination || "?"}</Text>
+            {(() => {
+              const meta = [
+                `${dayOf.leg.carrier || ""}${dayOf.leg.flight_number || ""}`.trim(),
+                dayOf.leg.gate ? `Gate ${dayOf.leg.gate}` : null,
+                dayOf.leg.terminal ? `Terminal ${dayOf.leg.terminal}` : null,
+                dayOf.leg.status || null,
+              ].filter(Boolean).join("  ·  ");
+              return meta ? <Text style={s.dayOfMeta}>{meta}</Text> : null;
+            })()}
+            <Text style={s.dayOfCta}>Live status &amp; gate  ›</Text>
+          </Pressable>
+          </FadeRise>
+        ) : null}
+
+        {/* ── Anticipatory prep — "I've already handled this" (UX #1) ── */}
+        {prep ? (
+          <FadeRise delay={70} style={s.prepCard}>
+            <View style={s.prepHead}>
+              <Text style={s.prepKicker}>AHEAD OF YOUR TRIP</Text>
+              <Text style={s.prepDays}>{prep.days === 0 ? "Departs today" : prep.days === 1 ? "In 1 day" : `In ${prep.days} days`}</Text>
+            </View>
+            <Text style={s.prepRoute}>{prep.flt.origin || "?"} → {prep.flt.destination || "?"}</Text>
+            <View style={s.prepList}>
+              {prep.items.map((it, i) => {
+                const tappable = !!(it.route || it.url);
+                const Row = tappable ? Pressable : View;
+                const onPress = it.url
+                  ? () => { tap(); Linking.openURL(it.url).catch(() => {}); }
+                  : it.route
+                  ? () => { tap(); navigation.navigate(it.route, it.params); }
+                  : undefined;
+                return (
+                  <Row
+                    key={i}
+                    style={s.prepRow}
+                    {...(tappable ? { onPress } : {})}
+                  >
+                    {/* A checkmark means "I've handled this." Items you must verify
+                        yourself get their own icon — never a false all-clear. */}
+                    <Ionicons
+                      name={it.verify ? (it.icon || "open-outline") : "checkmark-circle"}
+                      size={17}
+                      color={it.verify ? C.amber : C.gold}
+                      style={{ marginTop: 1 }}
+                    />
+                    <Text style={s.prepText}>{it.text}</Text>
+                    {tappable ? <Text style={s.prepArrow}>›</Text> : null}
+                  </Row>
+                );
+              })}
+            </View>
+          </FadeRise>
+        ) : null}
+
         {/* ── HERO BRIEFING — fills the viewport above the fold ─────────── */}
         <View style={s.heroWrap}>
           {/* Edition line */}
@@ -974,7 +1260,8 @@ export default function HomeScreen({ navigation }) {
                 style={[s.disruptionBanner, { borderColor: isCancelled ? C.coral + '60' : C.amber + '60', backgroundColor: isCancelled ? C.coral + '12' : C.amber + '10' }]}
                 onPress={() => { tap(); navigation.navigate('Disruption', { tripId: String(leg.tripId), legId: String(leg.id), ident }); }}
               >
-                <Text style={[s.disruptionBannerIcon, { color: isCancelled ? C.coral : C.amber }]}>{isCancelled ? '⚠' : '⏱'}</Text>
+                <Ionicons name={isCancelled ? "alert-circle-outline" : "time-outline"} size={20} color={isCancelled ? C.coral : C.amber} style={s.disruptionBannerIcon} />
+
                 <View style={{ flex: 1 }}>
                   <Text style={[s.disruptionBannerTitle, { color: isCancelled ? C.coral : C.amber }]}>
                     {isCancelled ? `${ident} cancelled` : `${ident} delayed`}
@@ -1071,7 +1358,7 @@ export default function HomeScreen({ navigation }) {
             <View style={s.briefingControls}>
               <Pressable onPress={() => { tap(); speakBriefing(); }} style={s.speakHint}>
                 <Text style={[s.speakHintT, isSpeaking && { color: C.gold }]}>
-                  {isSpeaking ? "◼ Stop" : "▶ Hear briefing"}
+                  {isSpeaking ? "◼︎ Stop" : "▶︎ Hear briefing"}
                 </Text>
               </Pressable>
               <Pressable
@@ -1346,6 +1633,67 @@ const s = StyleSheet.create({
     backgroundColor: C.line,
     opacity: 0.5,
   },
+
+  // ── Day-of-travel panel ──
+  dayOfCard: {
+    marginHorizontal: 24,
+    marginTop: 12,
+    marginBottom: 4,
+    padding: 18,
+    borderRadius: 16,
+    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: "rgba(45,184,150,0.30)",
+    ...SHADOW.soft,
+  },
+  dayOfHead: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
+  dayOfDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.teal },
+  dayOfKicker: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2, color: C.teal, flex: 1 },
+  dayOfCountdown: { fontFamily: T.sansM, fontSize: 11, color: C.mut },
+  dayOfRoute: { fontFamily: T.garamondSI, fontSize: 30, color: C.ink, lineHeight: 34, marginBottom: 4 },
+  dayOfMeta: { fontFamily: T.sans, fontSize: 12, color: C.mut, marginBottom: 10 },
+  dayOfCta: { fontFamily: T.sansB, fontSize: 12, color: C.teal },
+
+  // ── Adaptive phases: in-transit + post-trip ──
+  transitCard: {
+    marginHorizontal: 24, marginTop: 12, marginBottom: 4, padding: 18, borderRadius: 16,
+    backgroundColor: C.card, borderWidth: 1, borderColor: "rgba(201,169,110,0.30)",
+    ...litEdge, ...SHADOW.soft,
+  },
+  postTripCard: {
+    marginHorizontal: 24, marginTop: 12, marginBottom: 4, padding: 18, borderRadius: 16,
+    backgroundColor: C.card, borderWidth: 1, borderColor: "rgba(45,184,150,0.30)",
+    ...litEdge, ...SHADOW.soft,
+  },
+  postTripHed: { fontFamily: T.garamondSI, fontSize: 26, color: C.ink, lineHeight: 31, marginBottom: 6 },
+
+  // ── Anticipatory prep card (UX #1) ──
+  prepCard: {
+    marginHorizontal: 20,
+    marginTop: 14,
+    padding: 18,
+    borderRadius: 16,
+    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: C.line,
+    ...litEdge,
+    ...SHADOW.soft,
+  },
+  prepHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+  prepKicker: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2, color: C.gold },
+  prepDays: { fontFamily: T.sansM, fontSize: 11, color: C.mut },
+  prepRoute: { fontFamily: T.garamondSI, fontSize: 26, color: C.ink, lineHeight: 30, marginBottom: 12 },
+  prepList: { gap: 10 },
+  prepRow: { flexDirection: "row", alignItems: "flex-start", gap: 9 },
+  prepText: { flex: 1, fontFamily: T.sans, fontSize: 13.5, lineHeight: 19, color: C.ink },
+  prepArrow: { fontFamily: T.sans, fontSize: 16, color: C.mut, opacity: 0.6, marginLeft: 4 },
+  decisionsMore: { marginHorizontal: 20, marginTop: 2, marginBottom: 4, paddingVertical: 10, alignItems: "center" },
+  decisionsMoreT: { fontFamily: T.sansM, fontSize: 13, color: C.gold, letterSpacing: 0.2 },
 
   // ── Hero briefing wrapper ──
   // Sits between masthead and CONVERSATION divider.

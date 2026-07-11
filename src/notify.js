@@ -13,6 +13,30 @@ export function setupNotificationHandler() {
   });
 }
 
+// ─── Actionable notifications (Roadmap 2, UI #5) ─────────────────────────────
+// A chief of staff shouldn't make you open an app to say yes. Decision pushes
+// carry Approve / Not now buttons that act straight from the lock screen.
+export const DECISION_CATEGORY = "wingman_decision";
+
+export async function registerNotificationCategories() {
+  try {
+    await Notifications.setNotificationCategoryAsync(DECISION_CATEGORY, [
+      {
+        identifier: "approve",
+        buttonTitle: "Approve",
+        options: { opensAppToForeground: false },
+      },
+      {
+        identifier: "dismiss",
+        buttonTitle: "Not now",
+        options: { opensAppToForeground: false, isDestructive: true },
+      },
+    ]);
+  } catch (e) {
+    console.warn("[push] category registration failed:", e.message);
+  }
+}
+
 export async function registerForPush() {
   try {
     if (!Device.isDevice) return null;

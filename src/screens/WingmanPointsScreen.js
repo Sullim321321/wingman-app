@@ -6,6 +6,7 @@ import {
   StyleSheet, ActivityIndicator, Alert, Modal,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { C, T, GRAD } from "../theme";
 import { SerifText, tap } from "../components";
@@ -239,7 +240,7 @@ export default function WingmanPointsScreen({ navigation }) {
                   <Text style={[s.redeemCost, canAfford ? { color: C.gold } : { color: C.mut }]}>
                     {perk.cost.toLocaleString()} pts
                   </Text>
-                  {!canAfford && <Text style={s.lockIcon}>🔒</Text>}
+                  {!canAfford && <Ionicons name="lock-closed" size={11} color={C.mut} style={s.lockIcon} />}
                 </View>
               </Pressable>
             );

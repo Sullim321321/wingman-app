@@ -5,6 +5,7 @@ import {
   Alert, RefreshControl, KeyboardAvoidingView, Platform,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 import { C, T } from "../theme";
 import { BackBar, Btn, g } from "../components";
 import * as SecureStore from "expo-secure-store";
@@ -396,9 +397,10 @@ function ConnectModal({ visible, onClose, onConnect, editProgram, editData }) {
                   )}
                 </>
               )}
-              <View style={ps.privacyNote}>
-                <Text style={ps.privacyNoteText}>
-                  🔒 Your credentials are encrypted and stored securely. Wingman never sells or shares your data.
+              <View style={[ps.privacyNote, { flexDirection: "row", alignItems: "flex-start", gap: 7 }]}>
+                <Ionicons name="lock-closed-outline" size={13} color={C.mut} style={{ marginTop: 1 }} />
+                <Text style={[ps.privacyNoteText, { flex: 1 }]}>
+                  Your credentials are encrypted and stored securely. Wingman never sells or shares your data.
                 </Text>
               </View>
 
@@ -548,7 +550,7 @@ export default function LoyaltyScreen({ navigation }) {
           <ActivityIndicator color={C.gold} style={{ marginTop: 40 }} />
         ) : accounts.length === 0 ? (
           <View style={ps.empty}>
-            <Text style={ps.emptyIcon}>🏆</Text>
+            <Ionicons name="trophy-outline" size={30} color={C.gold} style={ps.emptyIcon} />
             <Text style={ps.emptyTitle}>No loyalty accounts yet</Text>
             <Text style={ps.emptySub}>Add your frequent flyer and hotel programs. Wingman will factor your status into every recommendation — hotel upgrades, seat suggestions, and lounge access.</Text>
           </View>

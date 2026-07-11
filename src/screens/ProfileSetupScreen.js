@@ -107,6 +107,16 @@ export default function ProfileSetupScreen({ navigation }) {
             Tell Wingman your preferences so it can filter the right upgrades, lounges, and rescue options for you.
           </Text>
 
+          {/* Value-first: connect the inbox and see trips appear in seconds */}
+          <Pressable style={s.connectCard} onPress={() => { tap(); navigation.navigate("Connections"); }}>
+            <View style={{ flex: 1 }}>
+              <Text style={s.connectKicker}>FASTEST START</Text>
+              <Text style={s.connectTitle}>Connect your inbox</Text>
+              <Text style={s.connectSub}>I'll find your trips automatically and show you what I already know — in seconds.</Text>
+            </View>
+            <Text style={s.connectArrow}>›</Text>
+          </Pressable>
+
           <View style={s.rule} />
 
           {/* Name */}
@@ -271,6 +281,23 @@ const s = StyleSheet.create({
     textAlign: "center",
     marginBottom: 24,
   },
+
+  // ── Connect-inbox card (value-first) ──
+  connectCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 18,
+    borderRadius: 16,
+    backgroundColor: "rgba(201,169,110,0.06)",
+    borderWidth: 1,
+    borderColor: "rgba(201,169,110,0.35)",
+    marginBottom: 24,
+  },
+  connectKicker: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2, color: C.gold, marginBottom: 4 },
+  connectTitle: { fontFamily: T.garamondSI, fontSize: 20, color: C.ink, marginBottom: 4 },
+  connectSub: { fontFamily: T.sans, fontSize: 13, lineHeight: 19, color: C.mut },
+  connectArrow: { fontFamily: T.sans, fontSize: 22, color: C.gold },
 
   // ── Rule ──
   rule: {

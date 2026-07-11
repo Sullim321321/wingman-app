@@ -1,5 +1,6 @@
 import React from "react";
-import { SafeAreaView, ScrollView, View, Text, StyleSheet } from "react-native";
+import { SafeAreaView, ScrollView, View, Text, StyleSheet, Pressable } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { C, T } from "../theme";
 import { Radar, ContribRow, ReasonCard, Chip, Btn, BackBar, useCountUp, g } from "../components";
 
@@ -12,11 +13,11 @@ const STATIC_FACTORS = [
 
 function iconFor(label) {
   const l = label.toLowerCase();
-  if (l.includes("weather")) return "🌨️";
-  if (l.includes("sensitiv") || l.includes("airport")) return "🛬";
-  if (l.includes("atc") || l.includes("flow")) return "🛬";
-  if (l.includes("seat") || l.includes("connection") || l.includes("baseline")) return "🪑";
-  return "📊";
+  if (l.includes("weather")) return "rainy-outline";
+  if (l.includes("sensitiv") || l.includes("airport")) return "airplane-outline";
+  if (l.includes("atc") || l.includes("flow")) return "git-network-outline";
+  if (l.includes("seat") || l.includes("connection") || l.includes("baseline")) return "people-outline";
+  return "stats-chart-outline";
 }
 
 export default function ReasonScreen({ navigation, route }) {
@@ -56,7 +57,10 @@ export default function ReasonScreen({ navigation, route }) {
         <Text style={g.sectionT}>SOURCES CHECKED</Text>
         <View style={g.metaRow}>{sources.map((x, i) => <Chip key={i}>{x}</Chip>)}</View>
 
-        <Text style={s.trackLink} onPress={() => navigation.navigate("Track")}>📈  See Wingman's track record →</Text>
+        <Pressable style={s.trackLink} onPress={() => navigation.navigate("Track")}>
+          <Ionicons name="trending-up-outline" size={15} color={C.gold} />
+          <Text style={s.trackLinkT}>See Wingman's track record  ›</Text>
+        </Pressable>
         <Btn title="Got it — see my options" onPress={() => navigation.goBack()} style={{ marginTop: 6 }} />
       </ScrollView>
     </SafeAreaView>
@@ -71,5 +75,6 @@ const s = StyleSheet.create({
   confLbl: { fontSize: 11, color: C.mut, letterSpacing: 1, marginTop: 2 },
   contrib: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 14, marginBottom: 12 },
   contribT: { fontSize: 11, color: C.mut, letterSpacing: 1, marginBottom: 12 },
-  trackLink: { color: C.gold, fontSize: 13, fontFamily: T.sansM, textAlign: "center", marginVertical: 16 },
+  trackLink: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginVertical: 16 },
+  trackLinkT: { color: C.gold, fontSize: 13, fontFamily: T.sansM },
 });

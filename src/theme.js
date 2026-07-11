@@ -43,6 +43,26 @@ export const C = {
   warn:  "#D4902A",
   risk:  "#D95F5F",
 
+  // ─── Codified color semantics (Design #4) ────────────────────────────────────
+  // One rule, used everywhere. Prefer these names over raw palette colours when the
+  // colour is carrying *meaning* (not just decoration):
+  //   action     → gold   · anything the user can tap / the primary next step
+  //   confirmed  → teal   · done, booked, on-time, "handled"
+  //   attention  → coral  · needs the user now (disruption, high risk, error)
+  //   attentionM → amber  · worth noting, not urgent (moderate risk, minor delay)
+  //   premium    → indigo · elite / upgraded / landed
+  //   neutral    → mut    · quiet, routine, informational
+  action:     "#C9A96E",
+  confirmed:  "#2DB896",
+  attention:  "#D95F5F",
+  attentionM: "#D4902A",
+  premium:    "#818CF8",
+  neutral:    "#8A7F70",
+  // Soft tinted fills for the above (backgrounds behind semantic content)
+  actionFill:    "#C9A96E14",
+  confirmedFill: "#2DB89614",
+  attentionFill: "#D95F5F14",
+
   // ─── Glass / Blur layer ──────────────────────────────────────────────────────
   glassTab:  "rgba(10,9,6,0.92)",    // Tab bar glass background
   glassBg:   "rgba(28,25,21,0.95)",  // Modal / overlay glass
@@ -89,6 +109,32 @@ export const E = {
   },
 };
 
+// ─── Depth & materials (Design #6) ───────────────────────────────────────────
+// Two reusable presets so elevation reads consistently against the obsidian bg.
+//   SHADOW.soft  → resting cards (barely-there lift)
+//   SHADOW.sheet → floating surfaces / bottom sheets (clear separation)
+// `litEdge` adds a faint top-highlight hairline — a subtle lit bevel that makes a
+// card feel like a physical surface catching light. Spread it into a card style
+// that already sets borderWidth/borderColor; it only overrides the top edge.
+export const SHADOW = {
+  soft: {
+    shadowColor: "#000",
+    shadowOpacity: 0.22,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  sheet: {
+    shadowColor: "#000",
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: -6 },
+    elevation: 12,
+  },
+};
+
+export const litEdge = { borderTopColor: "#FFFFFF12" };
+
 // Button gradient stops
 export const GRAD = {
   gold:    ["#D4B483", "#C9A96E", "#A8884E"],
@@ -97,6 +143,35 @@ export const GRAD = {
   dark:    ["#2A261F", "#1C1915"],
   parch:   ["#F5EDD8", "#EDE4CC"],
   goldBtn: ["#EDE4CC", "#E8D5A3", "#D4B483"],
+};
+
+// ─── Locked type ramp (Design #2) ────────────────────────────────────────────
+// One named scale, used everywhere. Each entry is { size, line, track } — pair it
+// with the right family from T (serif/garamond for editorial, sans for UI).
+// Replaces ad-hoc fontSize literals so headings/body stay consistent across screens.
+//   display  → hero editorial headline (route, greeting)   · Garamond/Playfair
+//   title    → screen title ("Your trips.")                · Garamond italic
+//   headline → card headline, decision headline            · Garamond/serif
+//   body     → reading prose (briefing)                    · Garamond or sans
+//   callout  → primary UI text, list row title             · sans medium
+//   sub      → secondary UI text, meta                     · sans
+//   caption  → small meta, timestamps                      · sans
+//   label    → all-caps tracked section labels             · sans bold
+export const TR = {
+  display:  { size: 34, line: 40, track: -0.4 },
+  title:    { size: 30, line: 36, track: -0.3 },
+  headline: { size: 22, line: 28, track: -0.2 },
+  body:     { size: 17, line: 25, track: 0 },
+  callout:  { size: 15, line: 20, track: 0 },
+  sub:      { size: 13, line: 18, track: 0 },
+  caption:  { size: 12, line: 16, track: 0.2 },
+  label:    { size: 10, line: 13, track: 1.6 },
+};
+
+// Convenience: spread a ramp entry into a style ({ fontSize, lineHeight, letterSpacing }).
+export const ramp = (key) => {
+  const r = TR[key] || TR.body;
+  return { fontSize: r.size, lineHeight: r.line, letterSpacing: r.track };
 };
 
 // Typography size constants — exact deck scale

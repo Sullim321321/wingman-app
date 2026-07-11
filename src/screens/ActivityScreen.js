@@ -5,12 +5,13 @@
 import React, { useState, useCallback } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, StyleSheet,
-  ActivityIndicator, RefreshControl, Pressable,
+  ActivityIndicator, RefreshControl, Pressable, Animated,
 } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 import { useFocusEffect } from "@react-navigation/native";
-import { C, T } from "../theme";
-import { tap } from "../components";
-import { getActivity } from "../api";
+import { C, T, SHADOW, litEdge } from "../theme";
+import { tap, FadeRise } from "../components";
+import { getActivity, dismissSignal } from "../api";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -37,6 +38,7 @@ const SIGNAL_META = {
   disruption:  { color: C.coral,  label: "DISRUPTION",  actionable: true  },
   delay:       { color: C.amber,  label: "DELAY",        actionable: true  },
   weather:     { color: C.amber,  label: "WEATHER",      actionable: true  },
+  cascade:     { color: C.amber,  label: "KNOCK-ON",     actionable: true  },
   recovery:    { color: C.teal,   label: "RECOVERY",     actionable: false },
   seat_alert:  { color: C.teal,   label: "SEAT",         actionable: false },
   departed:    { color: C.gold,   label: "DEPARTED",     actionable: false },
@@ -49,11 +51,20 @@ const SIGNAL_META = {
 
 // ─── Signal Row ───────────────────────────────────────────────────────────────
 
-function SignalRow({ event, onAction, showBorder }) {
+function SignalRow({ event, onAction, onDismiss, showBorder }) {
   const meta = SIGNAL_META[event.type] || SIGNAL_META.status;
   const active = isActive(event);
 
-  return (
+  const renderRightActions = (progress, dragX) => {
+    const scale = dragX.interpolate({ inputRange: [-80, 0], outputRange: [1, 0.8], extrapolate: "clamp" });
+    return (
+      <Pressable style={s.dismissAction} onPress={() => onDismiss && onDismiss(event)}>
+        <Animated.Text style={[s.dismissActionT, { transform: [{ scale }] }]}>Dismiss</Animated.Text>
+      </Pressable>
+    );
+  };
+
+  const row = (
     <Pressable
       style={[s.signalRow, showBorder && s.signalRowBorder]}
       onPress={() => { if (meta.actionable) { tap(); onAction(event); } }}
@@ -102,6 +113,13 @@ function SignalRow({ event, onAction, showBorder }) {
       </View>
     </Pressable>
   );
+
+  if (!onDismiss) return row;
+  return (
+    <Swipeable renderRightActions={renderRightActions} overshootRight={false} friction={2} rightThreshold={40}>
+      {row}
+    </Swipeable>
+  );
 }
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
@@ -140,21 +158,31 @@ export default function ActivityScreen({ navigation }) {
     navigation.navigate("Alert", { flight });
   };
 
-  // Collapse duplicate import spam (same title + body) — keep the most recent of each
+  const handleDismiss = (event) => {
+    tap();
+    setEvents(prev => prev.filter(e => e.id !== event.id)); // optimistic
+    if (event.id) dismissSignal(event.id).catch(() => {});
+  };
+
+  // Collapse duplicate import spam — key on normalized title + trip so the same
+  // booking added to the same trip only shows once.
   const _seenImport = new Set();
   const dedupedEvents = events.filter((e) => {
     const isImport = e.type === "import" || /imported|new trip created/i.test(`${e.title || ""} ${e.body || ""}`);
     if (!isImport) return true;
-    const key = `${(e.title || "").trim()}|${(e.body || "").trim()}`;
+    const key = `${(e.title || "").trim().toLowerCase()}|${(e.trip_title || e.body || "").trim().toLowerCase()}`;
     if (_seenImport.has(key)) return false;
     _seenImport.add(key);
     return true;
   });
 
-  const activeSignals = dedupedEvents.filter(isActive);
-  const olderSignals  = dedupedEvents.filter(e => !isActive(e));
-  const disruptionCount = dedupedEvents.filter(e =>
-    e.type === "disruption" || e.type === "delay" || e.type === "weather"
+  // Routine bookkeeping (imports, status, trip-created) is NOT an active signal. Only
+  // things that may need the traveller's attention lead the feed; imports drop below.
+  const isRoutine = (e) => ["import", "status", "hotel_email", "trip"].includes(e.type);
+  const activeSignals = dedupedEvents.filter(e => isActive(e) && !isRoutine(e));
+  const olderSignals  = dedupedEvents.filter(e => !(isActive(e) && !isRoutine(e)));
+  const disruptionCount = activeSignals.filter(e =>
+    ["disruption", "delay", "weather"].includes(e.type)
   ).length;
   const activeCount = activeSignals.length;
 
@@ -217,21 +245,30 @@ export default function ActivityScreen({ navigation }) {
           </View>
         ) : (
           <>
-            {/* ── Active signals ── */}
-            {activeSignals.length > 0 && (
+            {/* ── Active signals — or a calm all-clear when nothing needs attention ── */}
+            {activeSignals.length > 0 ? (
               <>
-                <Text style={s.sectionLabel}>ACTIVE</Text>
+                <Text style={s.sectionLabel}>NEEDS ATTENTION</Text>
                 <View style={s.feedBlock}>
                   {activeSignals.map((event, i) => (
-                    <SignalRow
-                      key={event.id || i}
-                      event={event}
-                      onAction={handleAction}
-                      showBorder={i > 0}
-                    />
+                    <FadeRise key={event.id || i} delay={Math.min(i * 55, 275)}>
+                      <SignalRow
+                        event={event}
+                        onAction={handleAction}
+                        onDismiss={handleDismiss}
+                        showBorder={i > 0}
+                      />
+                    </FadeRise>
                   ))}
                 </View>
               </>
+            ) : (
+              <View style={s.emptyWrap}>
+                <Text style={s.emptyHed}>All clear.</Text>
+                <Text style={[s.emptySub, { marginBottom: 8 }]}>
+                  Nothing needs your attention right now. Wingman is watching your trips — disruptions, delays, and gate changes surface here the moment they happen.
+                </Text>
+              </View>
             )}
 
             {/* ── Older signals ── */}
@@ -248,6 +285,7 @@ export default function ActivityScreen({ navigation }) {
                       key={event.id || i}
                       event={event}
                       onAction={handleAction}
+                      onDismiss={handleDismiss}
                       showBorder={i > 0}
                     />
                   ))}
@@ -274,7 +312,7 @@ export default function ActivityScreen({ navigation }) {
 
 const s = StyleSheet.create({
   root:   { flex: 1, backgroundColor: C.bg },
-  scroll: { paddingBottom: 16 },
+  scroll: { paddingBottom: 96 },
 
   // ── Masthead ──
   masthead: {
@@ -337,6 +375,18 @@ const s = StyleSheet.create({
     borderColor: C.line,
     borderRadius: 14,
     overflow: "hidden",
+    ...litEdge,
+  },
+  dismissAction: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: 88,
+    backgroundColor: C.mut + "22",
+  },
+  dismissActionT: {
+    fontFamily: T.sansB,
+    fontSize: 13,
+    color: C.mut,
   },
 
   // ── Signal row ──

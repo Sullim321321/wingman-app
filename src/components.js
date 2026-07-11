@@ -4,10 +4,11 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import {
-  View, Text, Pressable, Animated, Easing, StyleSheet, Platform,
+  View, Text, Pressable, Animated, Easing, StyleSheet, Platform, AccessibilityInfo,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
+import { Ionicons } from "@expo/vector-icons";
 import { C, T, GRAD } from "./theme";
 // SafeBlur — expo-blur removed; renders a semi-opaque View instead of native UIVisualEffectView
 function SafeBlur({ style, children }) {
@@ -113,12 +114,94 @@ export function PressCard({ onPress, style, children }) {
   );
 }
 
+// ─── Signature motion (Design #1) ────────────────────────────────────────────
+// Gentle editorial entrance: content fades up a few points on mount. Use `delay`
+// to stagger a stack of cards. Native-driven, so it never blocks the JS thread.
+export function FadeRise({ children, delay = 0, distance = 10, duration = 460, style }) {
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    let mounted = true;
+    // Respect the system "Reduce Motion" accessibility setting — skip the transition
+    // and show content immediately rather than animating it in.
+    AccessibilityInfo.isReduceMotionEnabled().then((reduce) => {
+      if (!mounted) return;
+      if (reduce) {
+        v.setValue(1);
+      } else {
+        Animated.timing(v, {
+          toValue: 1,
+          duration,
+          delay,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }).start();
+      }
+    }).catch(() => {
+      // If the check fails, fall back to animating.
+      Animated.timing(v, { toValue: 1, duration, delay, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+    });
+    return () => { mounted = false; };
+  }, []);
+  return (
+    <Animated.View
+      style={[
+        style,
+        {
+          opacity: v,
+          transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [distance, 0] }) }],
+        },
+      ]}
+    >
+      {children}
+    </Animated.View>
+  );
+}
+
+// ─── Identity system (Roadmap 2, Design #1) ──────────────────────────────────
+// One locked mark + wordmark, used everywhere the brand appears (headers, push,
+// share cards, Wallet). The "W" is a serif-italic monogram in a hairline gold box;
+// the wordmark is wide-tracked DM Sans caps.
+export function WMark({ size = 26, color = C.gold, style }) {
+  return (
+    <View
+      style={[
+        {
+          width: size, height: size, borderRadius: size * 0.23,
+          borderWidth: 1, borderColor: color,
+          alignItems: "center", justifyContent: "center",
+        },
+        style,
+      ]}
+    >
+      <Text style={{ fontFamily: T.serifI, fontSize: size * 0.58, color, lineHeight: size * 0.8 }}>W</Text>
+    </View>
+  );
+}
+
+export function Wordmark({ size = 12, color = C.gold, style }) {
+  return (
+    <Text style={[{ fontFamily: T.sansB, fontSize: size, letterSpacing: size * 0.25, color }, style]}>
+      WINGMAN
+    </Text>
+  );
+}
+
+// Mark + wordmark lockup for headers and mastheads.
+export function Masthead({ markSize = 24, gap = 9, color = C.gold, style }) {
+  return (
+    <View style={[{ flexDirection: "row", alignItems: "center", gap }, style]}>
+      <WMark size={markSize} color={color} />
+      <Wordmark size={markSize * 0.5} color={color} />
+    </View>
+  );
+}
+
 // ─── Back navigation bar — frosted glass ─────────────────────────────────────
 export function BackBar({ nav, label = "", serif = false }) {
   return (
     <SafeBlur intensity={60} tint="dark" style={g.backbarBlur}>
       <View style={g.backbar}>
-        <Pressable onPress={() => { tap(); nav.goBack(); }} style={g.backBtn}>
+        <Pressable onPress={() => { tap(); nav.goBack(); }} style={g.backBtn} accessibilityRole="button" accessibilityLabel="Go back">
           <Text style={g.backArrow}>‹</Text>
           <Text style={g.back}>Back</Text>
         </Pressable>
@@ -155,12 +238,14 @@ export function Segmented({ options, value, onChange }) {
 }
 
 // ─── Settings row ─────────────────────────────────────────────────────────────
-export function SetRow({ ic, iconColor, t, sub, right, onPress }) {
+export function SetRow({ ic, icon, iconColor, t, sub, right, onPress }) {
   const Wrap = onPress ? Pressable : View;
   return (
     <Wrap style={g.setRow} onPress={onPress ? () => { tap(); onPress(); } : undefined}>
       <View style={[g.setIc, { borderTopColor: "#FFFFFF0A", borderBottomColor: "#00000040" }]}>
-        <Text style={{ fontSize: 15, color: iconColor || C.gold, fontFamily: T.sans }}>{ic}</Text>
+        {icon
+          ? <Ionicons name={icon} size={17} color={iconColor || C.gold} />
+          : <Text style={{ fontSize: 15, color: iconColor || C.gold, fontFamily: T.sans }}>{ic}</Text>}
       </View>
       <View style={{ flex: 1 }}>
         <Text style={g.setT}>{t}</Text>
@@ -170,6 +255,97 @@ export function SetRow({ ic, iconColor, t, sub, right, onPress }) {
     </Wrap>
   );
 }
+
+// ─── Decision card ────────────────────────────────────────────────────────────
+// A chief-of-staff decision: headline + rationale + a recommended default action,
+// with alternatives tucked away and a quiet "Not now."
+export function DecisionCard({ decision, onConfirm, onDismiss, onUndo, busy }) {
+  const [showOthers, setShowOthers] = useState(false);
+
+  // Confirmed state — acknowledge what was done, with a short window to undo.
+  if (decision._confirmed) {
+    return (
+      <View style={dcS.card}>
+        <View style={dcS.head}>
+          <View style={[dcS.dot, { backgroundColor: C.teal }]} />
+          <Text style={[dcS.kicker, { color: C.teal }]}>DONE</Text>
+        </View>
+        <Text style={dcS.headline}>{decision._confirmed}</Text>
+        <Text style={dcS.rationale}>Handled. I'll keep watching and let you know if anything changes.</Text>
+        {onUndo ? (
+          <Pressable onPress={() => { tap(); onUndo(decision); }} style={dcS.dismissWrap}>
+            <Text style={[dcS.dismiss, { color: C.gold }]}>Undo</Text>
+          </Pressable>
+        ) : null}
+      </View>
+    );
+  }
+
+  const opts = decision.options || [];
+  const rec = opts.find(o => o.id === decision.recommended_option_id) || opts[0] || null;
+  const others = opts.filter(o => !rec || o.id !== rec.id);
+  return (
+    <View style={dcS.card}>
+      <View style={dcS.head}>
+        <View style={dcS.dot} />
+        <Text style={dcS.kicker}>WINGMAN · NEEDS YOU</Text>
+      </View>
+      <Text style={dcS.headline}>{decision.headline}</Text>
+      {decision.rationale ? <Text style={dcS.rationale}>{decision.rationale}</Text> : null}
+
+      {rec ? (
+        <Pressable style={[dcS.primary, busy && { opacity: 0.6 }]} disabled={busy} onPress={() => { tap(); onConfirm(decision, rec.id); }}>
+          <Text style={dcS.primaryT}>{busy ? "Working…" : `${rec.label}  ›`}</Text>
+          {rec.detail ? <Text style={dcS.primarySub}>{rec.detail}</Text> : null}
+        </Pressable>
+      ) : null}
+
+      {others.length > 0 ? (
+        <>
+          <Pressable onPress={() => { tap(); setShowOthers(v => !v); }}>
+            <Text style={dcS.otherToggle}>{showOthers ? "Hide options" : "Other options"}</Text>
+          </Pressable>
+          {showOthers && others.map(o => (
+            <Pressable key={o.id} style={dcS.other} disabled={busy} onPress={() => { tap(); onConfirm(decision, o.id); }}>
+              <Text style={dcS.otherT}>{o.label}</Text>
+              {o.detail ? <Text style={dcS.otherSub}>{o.detail}</Text> : null}
+            </Pressable>
+          ))}
+        </>
+      ) : null}
+
+      <Pressable onPress={() => { tap(); onDismiss(decision); }} disabled={busy} style={dcS.dismissWrap}>
+        <Text style={dcS.dismiss}>Not now</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+const dcS = StyleSheet.create({
+  card: {
+    marginHorizontal: 24, marginBottom: 14, padding: 18,
+    backgroundColor: C.card, borderRadius: 16,
+    borderWidth: 1, borderColor: "rgba(201,169,110,0.30)",
+  },
+  head: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
+  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.gold },
+  kicker: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2, color: C.gold },
+  headline: { fontFamily: T.garamondSI, fontSize: 22, color: C.ink, lineHeight: 28, marginBottom: 6 },
+  rationale: { fontFamily: T.garamondI, fontSize: 14, color: C.mut, lineHeight: 21, marginBottom: 14 },
+  primary: {
+    backgroundColor: C.gold, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 16, marginBottom: 4,
+  },
+  primaryT: { fontFamily: T.sansB, fontSize: 14, color: C.inkD || C.bg },
+  primarySub: { fontFamily: T.sans, fontSize: 12, color: "rgba(0,0,0,0.6)", marginTop: 2 },
+  otherToggle: { fontFamily: T.sansM, fontSize: 12, color: C.gold, paddingVertical: 10 },
+  other: {
+    borderWidth: 1, borderColor: C.line, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, marginBottom: 8,
+  },
+  otherT: { fontFamily: T.sansM, fontSize: 13, color: C.ink },
+  otherSub: { fontFamily: T.sans, fontSize: 12, color: C.mut, marginTop: 2 },
+  dismissWrap: { alignItems: "center", paddingTop: 4 },
+  dismiss: { fontFamily: T.sansM, fontSize: 12, color: C.mut },
+});
 
 // ─── Itinerary leg row ────────────────────────────────────────────────────────
 export function Leg({ ic, t, sub, tag, tagColor }) {
@@ -211,7 +387,7 @@ export function ReasonCard({ icon, t, w, wColor, p }) {
     <View style={g.rcard}>
       <View style={g.rcardH}>
         <View style={[g.rcardIc, { borderTopColor: "#FFFFFF0A", borderBottomColor: "#00000040" }]}>
-          <Text style={{ fontSize: 14, color: C.gold }}>{icon}</Text>
+          <Ionicons name={icon} size={15} color={C.gold} />
         </View>
         <Text style={g.rcardT}>{t}</Text>
         <Text style={[g.rcardW, { color: wColor }]}>{w}</Text>

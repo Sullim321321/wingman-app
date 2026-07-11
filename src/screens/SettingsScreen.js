@@ -402,128 +402,71 @@ export default function SettingsScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Quick profile shortcuts — surfaced prominently so users find them */}
-        <View style={s.profileShortcuts}>
-          <Text style={s.profileShortcutsLabel}>QUICK SETUP</Text>
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            {[
-              { label: "Travel profile",  sub: "Seat, cabin, airports", ic: "✈", route: "TravelProfile" },
-              { label: "Home airport",    sub: "Pre-fill ground transport", ic: "H", route: "HomeAddress" },
-              { label: "Loyalty cards",   sub: "Points & lounges", ic: "L", route: "Loyalty" },
-            ].map(item => (
-              <TouchableOpacity
-                key={item.route}
-                style={s.profileShortcutCard}
-                onPress={() => navigation.navigate(item.route)}
-              >
-                <Text style={s.profileShortcutIc}>{item.ic}</Text>
-                <Text style={s.profileShortcutLabel}>{item.label}</Text>
-                <Text style={s.profileShortcutSub}>{item.sub}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        <Text style={g.sectionT}>APPEARANCE</Text>
+        <Text style={g.sectionT}>ALERTS & MONITORING</Text>
         <View style={g.group}>
+          <SetRow
+            icon="notifications-outline"
+            iconColor={C.gold}
+            t="Push notifications"
+            sub={pushEnabled ? "On — delays, gate changes, daily brief" : "Off — turn on for alerts & briefing"}
+            right={
+              pushLoading
+                ? <ActivityIndicator color={C.gold} size="small" />
+                : <Switch value={pushEnabled} onValueChange={handlePushToggle} trackColor={{ true: C.gold, false: C.card2 }} thumbColor={pushEnabled ? C.inkD : C.mut} ios_backgroundColor={C.card2} />
+            }
+          />
+          <SetRow icon="cloud-outline" iconColor={C.gold} t="Weather & delay watch" sub="Predict disruptions before the airline" right={sw(weather, "weather_alerts")} />
+          <SetRow icon="pricetag-outline" iconColor={C.gold} t="Price & seat-drop alerts" sub="Better seats or fares on booked trips" right={sw(drops, "price_alerts")} />
+          <SetRow icon="moon-outline" iconColor={C.gold} t="Quiet hours" sub="Hold non-urgent pings 10p–7a" right={sw(quiet, "quiet_hours")} />
           <View style={{ borderBottomWidth: 0 }}>
-            <SetRow
-              ic="◑"
-              iconColor={C.gold}
-              t="Colour scheme"
-              sub="System follows your iPhone setting"
-              right={
-                <View style={{ flexDirection: "row", gap: 6 }}>
-                  {["system", "dark", "light"].map(opt => (
-                    <TouchableOpacity
-                      key={opt}
-                      onPress={() => setAppearance(opt)}
-                      style={[
-                        s.themeBtn,
-                        appearance === opt && s.themeBtnActive,
-                      ]}
-                    >
-                      <Text style={[
-                        s.themeBtnT,
-                        appearance === opt && s.themeBtnTActive,
-                      ]}>
-                        {opt === "system" ? "Auto" : opt === "dark" ? "Dark" : "Light"}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              }
-            />
+            <SetRow icon="location-outline" iconColor={C.gold} t="Use my location" sub="For local restaurant, hotel & experience picks" right={<Switch value={locationEnabled} onValueChange={handleLocationToggle} trackColor={{ true: C.gold, false: C.card2 }} thumbColor={locationEnabled ? C.inkD : C.mut} ios_backgroundColor={C.card2} />} />
           </View>
         </View>
 
-        <Text style={g.sectionT}>LOCATION</Text>
+        <Text style={g.sectionT}>YOUR PROFILE</Text>
         <View style={g.group}>
+          <SetRow icon="person-outline" iconColor={C.gold} t="About me" sub="Identity, preferences, learned hotels & saved instructions" right={<Chip color={C.gold}>View ›</Chip>} onPress={() => navigation.navigate("Memory")} />
+          <SetRow icon="airplane-outline" iconColor={C.gold} t="Travel profile" sub="Home airports, seat & cabin, pace, payment" right={<Chip color={C.gold}>Edit ›</Chip>} onPress={() => navigation.navigate("TravelProfile")} />
+          <SetRow icon="sparkles-outline" iconColor={C.gold} t="Taste & preferences" sub="Editorial sources, hotel specs, dining, dietary" right={<Chip color={C.gold}>Edit ›</Chip>} onPress={() => navigation.navigate("TasteSetup", { fromSettings: true })} />
+          <SetRow icon="home-outline" iconColor={C.gold} t="Home address" sub="Pre-filled as your dropoff when you land" right={<Chip color={C.teal}>Set ›</Chip>} onPress={() => navigation.navigate("HomeAddress")} />
+          <SetRow icon="ribbon-outline" iconColor={C.gold} t="Loyalty & lounges" sub="Frequent flyer, hotel programs, lounge cards" right={<Chip color={C.teal}>Manage ›</Chip>} onPress={() => navigation.navigate("Loyalty")} />
           <View style={{ borderBottomWidth: 0 }}>
-            <SetRow
-              ic="◎"
-              iconColor={C.gold}
-              t="Use my location"
-              sub="Let Wingman know where you are for local restaurant, hotel, and experience recommendations"
-              right={
-                <Switch
-                  value={locationEnabled}
-                  onValueChange={handleLocationToggle}
-                  trackColor={{ true: C.gold, false: C.card2 }}
-                  thumbColor={locationEnabled ? C.inkD : C.mut}
-                  ios_backgroundColor={C.card2}
-                />
-              }
-            />
+            <SetRow icon="card-outline" iconColor={C.gold} t="Traveler ID" sub="Name, DOB, passport — for autonomous rebooking" right={<Chip color={C.gold}>Edit ›</Chip>} onPress={() => navigation.navigate("PassengerProfile")} />
           </View>
         </View>
 
-        <Text style={g.sectionT}>NOTIFICATIONS</Text>
+        <Text style={g.sectionT}>AUTOMATION & DATA</Text>
         <View style={g.group}>
+          <SetRow icon="options-outline" iconColor={C.gold} t="Autonomy & delegation" sub="How much Wingman does on its own, approval limits" right={<Chip color={C.gold}>Edit ›</Chip>} onPress={() => navigation.navigate("Autonomy")} />
           <View style={{ borderBottomWidth: 0 }}>
-            <SetRow
-              ic="🔔"
-              iconColor={C.gold}
-              t="Flight alerts & morning briefing"
-              sub={pushEnabled ? "Notifications are on — you’ll hear about delays, gate changes, and your daily brief" : "Turn on to get flight alerts, gate changes, and your morning briefing"}
-              right={
-                pushLoading
-                  ? <ActivityIndicator color={C.gold} size="small" />
-                  : <Switch
-                      value={pushEnabled}
-                      onValueChange={handlePushToggle}
-                      trackColor={{ true: C.gold, false: C.card2 }}
-                      thumbColor={pushEnabled ? C.inkD : C.mut}
-                      ios_backgroundColor={C.card2}
-                    />
-              }
-            />
+            <SetRow icon="link-outline" iconColor={C.gold} t="Connected accounts & privacy" sub="Gmail, Calendar, Messages — explicit opt-in only" right={<Chip color={C.teal}>Manage ›</Chip>} onPress={() => navigation.navigate("Connections")} />
           </View>
         </View>
 
-        <Text style={g.sectionT}>MONITORING</Text>
+        <Text style={g.sectionT}>PREFERENCES</Text>
         <View style={g.group}>
-          <SetRow ic="~" iconColor={C.gold} t="Weather & delay watch" sub="Predict disruptions before the airline" right={sw(weather, "weather_alerts")} />
-          <SetRow ic="v" iconColor={C.gold} t="Price & seat-drop alerts" sub="Better seats or fares on booked trips" right={sw(drops, "price_alerts")} />
-          <View style={{ borderBottomWidth: 0 }}>
-            <SetRow ic=")" iconColor={C.gold} t="Quiet hours" sub="Hold non-urgent pings 10p–7a" right={sw(quiet, "quiet_hours")} />
-          </View>
-        </View>
-
-        <Text style={g.sectionT}>LANGUAGE & CURRENCY</Text>
-        <View style={g.group}>
+          <SetRow
+            icon="contrast-outline"
+            iconColor={C.gold}
+            t="Colour scheme"
+            sub="System follows your iPhone"
+            right={
+              <View style={{ flexDirection: "row", gap: 6 }}>
+                {["system", "dark", "light"].map(opt => (
+                  <TouchableOpacity key={opt} onPress={() => setAppearance(opt)} style={[s.themeBtn, appearance === opt && s.themeBtnActive]}>
+                    <Text style={[s.themeBtnT, appearance === opt && s.themeBtnTActive]}>
+                      {opt === "system" ? "Auto" : opt === "dark" ? "Dark" : "Light"}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            }
+          />
           <View style={s.localeRow}>
             <Text style={s.localeLabel}>Language</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.chipScroll}>
               {LANGUAGES.map((lang) => (
-                <Chip
-                  key={lang.code}
-                  color={locale === lang.code ? C.gold : undefined}
-                  onPress={() => handleLocaleChange(lang.code, null)}
-                  style={s.localeChip}
-                >
-                  {lang.label}
-                </Chip>
+                <Chip key={lang.code} color={locale === lang.code ? C.gold : undefined} onPress={() => handleLocaleChange(lang.code, null)} style={s.localeChip}>{lang.label}</Chip>
               ))}
             </ScrollView>
           </View>
@@ -531,83 +474,23 @@ export default function SettingsScreen({ navigation }) {
             <Text style={s.localeLabel}>Currency</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.chipScroll}>
               {CURRENCIES.map((cur) => (
-                <Chip
-                  key={cur}
-                  color={currency === cur ? C.teal : undefined}
-                  onPress={() => handleLocaleChange(null, cur)}
-                  style={s.localeChip}
-                >
-                  {cur}
-                </Chip>
+                <Chip key={cur} color={currency === cur ? C.teal : undefined} onPress={() => handleLocaleChange(null, cur)} style={s.localeChip}>{cur}</Chip>
               ))}
             </ScrollView>
-          </View>
-        </View>
-
-        <Text style={g.sectionT}>CONNECTED ACCOUNTS</Text>
-        <View style={g.group}>
-          <SetRow ic="@" iconColor={C.gold} t="Inbox" sub="Sync travel emails automatically" right={<Chip color={C.teal}>Manage ›</Chip>} onPress={() => navigation.navigate("Connections")} />
-          <SetRow ic="$" iconColor={C.gold} t="Payment & trip protection" sub="Manage payment methods" right={<Chip>Manage</Chip>} onPress={() => navigation.navigate("Subscription")} />
-          <View style={{ borderBottomWidth: 0 }}>
-            <SetRow ic="+" iconColor={C.gold} t="All channels & privacy" sub="Email, Calendar, WhatsApp, Messages" right={<Chip color={C.gold}>Manage ›</Chip>} onPress={() => navigation.navigate("Connections")} />
-          </View>
-        </View>
-
-        <Text style={g.sectionT}>BOOK FLIGHTS</Text>
-        <View style={g.group}>
-          <View style={{ borderBottomWidth: 0 }}>
-            <SetRow ic="+" iconColor={C.gold} t="Search & book flights" sub="Powered by Duffel — 300+ airlines" right={<Chip color={C.gold}>Search ›</Chip>} onPress={() => navigation.navigate("FlightSearch")} />
-          </View>
-        </View>
-
-        <Text style={g.sectionT}>TASTE PROFILE</Text>
-        <View style={g.group}>
-          <SetRow ic="*" iconColor={C.gold} t="Editorial sources & preferences" sub="Sources, hotel soft-specs, seat prefs, dietary" right={<Chip color={C.gold}>Edit ›</Chip>} onPress={() => navigation.navigate("TasteSetup", { fromSettings: true })} />
-          <SetRow ic="✈" iconColor={C.gold} t="Travel profile" sub="Home airports, seat preference, travel pace, payment methods" right={<Chip color={C.gold}>Edit ›</Chip>} onPress={() => navigation.navigate("TravelProfile")} />
-          <View style={{ borderBottomWidth: 0 }}>
-            <SetRow ic="H" iconColor={C.gold} t="Home address" sub="Pre-filled as Uber dropoff when you land" right={<Chip color={C.teal}>Set ›</Chip>} onPress={() => navigation.navigate("HomeAddress")} />
-          </View>
-        </View>
-
-        <Text style={g.sectionT}>WHAT WINGMAN KNOWS ABOUT YOU</Text>
-        <View style={g.group}>
-          <View style={{ borderBottomWidth: 0 }}>
-            <SetRow ic="◎" iconColor={C.gold} t="About me" sub="Your identity, preferences and context — review and correct" right={<Chip color={C.gold}>View ›</Chip>} onPress={() => navigation.navigate("Memory")} />
-          </View>
-        </View>
-        <HotelAffinitySection />
-
-        <Text style={[g.sectionT, { marginTop: 4 }]}>REMEMBERED INSTRUCTIONS</Text>
-        <ConciergeMemorySection />
-
-        <Text style={g.sectionT}>LOYALTY PROGRAMS</Text>
-        <View style={g.group}>
-          <SetRow ic="L" iconColor={C.gold} t="Frequent flyer & hotel programs" sub="Marriott, Hilton, United, Delta, Hyatt & more" right={<Chip color={C.teal}>Manage ›</Chip>} onPress={() => navigation.navigate("Loyalty")} />
-          <View style={{ borderBottomWidth: 0 }}>
-            <SetRow ic="◈" iconColor={C.teal} t="Lounge access cards" sub="Amex Platinum, Priority Pass, Chase Sapphire & more" right={<Chip color={C.teal}>Edit ›</Chip>} onPress={() => navigation.navigate("LoungeCards")} />
-          </View>
-        </View>
-
-        <Text style={g.sectionT}>AUTONOMY & DATA</Text>
-        <View style={g.group}>
-          <SetRow ic="◈" iconColor={C.gold} t="Autonomy settings" sub="Delegation policy, approval thresholds, payment prefs" right={<Chip color={C.gold}>Edit ›</Chip>} onPress={() => navigation.navigate("Autonomy")} />
-          <SetRow ic="🛂" iconColor={C.gold} t="Traveler ID" sub="Name, DOB, passport — required for autonomous rebooking" right={<Chip color={C.gold}>Edit ›</Chip>} onPress={() => navigation.navigate("PassengerProfile")} />
-          <View style={{ borderBottomWidth: 0 }}>
-            <SetRow ic="◎" iconColor={C.gold} t="Data sources" sub="Gmail, Calendar, Messages — explicit opt-in only" right={<Chip color={C.gold}>Manage ›</Chip>} onPress={() => navigation.navigate("Connections")} />
           </View>
         </View>
 
         <Text style={g.sectionT}>SUBSCRIPTION</Text>
         <View style={g.group}>
           <View style={{ borderBottomWidth: 0 }}>
-            <SetRow ic="P" iconColor={C.gold} t="Wingman Pro / Elite" sub="Manage your subscription and billing" right={<Chip color={C.gold}>Manage ›</Chip>} onPress={() => navigation.navigate("Subscription")} />
+            <SetRow icon="diamond-outline" iconColor={C.gold} t="Wingman Pro / Elite" sub="Subscription, payment & billing" right={<Chip color={C.gold}>Manage ›</Chip>} onPress={() => navigation.navigate("Subscription")} />
           </View>
         </View>
 
         <Text style={g.sectionT}>ACCOUNT</Text>
         <Text style={s.acct}>Signed in as {email || "—"}</Text>
         <Btn title="Sign out" kind="ghost" onPress={signOut} />
-        <Text style={s.versionT}>Wingman v1.0.115 · Build 173+</Text>
+        <Text style={s.versionT}>Wingman · v1.0.115</Text>
       </ScrollView>
     </SafeAreaView>
   );

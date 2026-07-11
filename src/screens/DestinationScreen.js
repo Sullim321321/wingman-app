@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { C, T } from "../theme";
+import { DestinationImage } from "../components/DestinationImage";
 import { SerifText, tap } from "../components";
 import { getDestinationIntel } from "../api";
 
@@ -142,6 +143,9 @@ export default function DestinationScreen({ route, navigation }) {
 
       {intel && !loading && (
         <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+
+          {/* Destination photo wash (Design #9) */}
+          <DestinationImage city={city || label} height={168} style={{ borderRadius: 16, marginBottom: 18 }} />
 
           {/* Headline */}
           <SerifText italic style={s.headline}>{intel.headline}</SerifText>

@@ -6,10 +6,13 @@
 import React, { useState, useCallback, useEffect } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
-  ActivityIndicator, Alert, RefreshControl, Share, Linking, TextInput,
+  ActivityIndicator, Alert, RefreshControl, Share, Linking, TextInput, Modal,
 } from "react-native";
-import { C, T } from "../theme";
-import { tap } from "../components";
+import { C, T, SHADOW, litEdge } from "../theme";
+import { tap, FadeRise } from "../components";
+import { ShareCardModal } from "../components/ShareCard";
+import { DestinationImage } from "../components/DestinationImage";
+import { Ionicons } from "@expo/vector-icons";
 import * as Calendar from "expo-calendar";
 import {
   getFlightStatus, getPrediction, refreshTrip, getTripRisk,
@@ -17,8 +20,10 @@ import {
   inviteCompanion, getCompanions, getTrips,
   getChecklist, generateChecklist, updateChecklistItem, addChecklistItem,
   getShowNights, updateCompanionsMeta, getDisruptionAlternatives,
-  editLeg, deleteLeg, exportCalendarIcs,
+  editLeg, deleteLeg, exportCalendarIcs, getToken,
+  getStandingOrder, setStandingOrder, getMe,
 } from "../api";
+import { UpgradeSheet } from "../components/UpgradeSheet";
 import { API_BASE } from "../config";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -43,6 +48,64 @@ function minutesToHM(mins) {
   const m = Math.abs(mins) % 60;
   const sign = mins < 0 ? "−" : "+";
   return h > 0 ? `${sign}${h}h ${m}m` : `${sign}${m}m`;
+}
+
+// Merge multiple reservations at the SAME hotel (e.g. nights booked under separate
+// confirmation numbers) into one stay spanning check-in → check-out. Non-stay legs
+// pass through untouched.
+function consolidateStays(legs) {
+  const stays = [];
+  const rest = [];
+  const groups = {};
+  for (const l of legs) {
+    if (l.type === "hotel" || l.type === "airbnb") {
+      const key = String(l.carrier || l.destination || l.property_name || l.type).trim().toLowerCase();
+      (groups[key] = groups[key] || []).push(l);
+    } else {
+      rest.push(l);
+    }
+  }
+  for (const key of Object.keys(groups)) {
+    const g = groups[key];
+    if (g.length === 1) { stays.push(g[0]); continue; }
+    let start = null, end = null;
+    for (const l of g) {
+      if (l.departs_at && (!start || l.departs_at < start)) start = l.departs_at;
+      const e = l.arrives_at || l.departs_at;
+      if (e && (!end || e > end)) end = e;
+    }
+    let nights = null;
+    if (start && end) nights = Math.max(1, Math.round((new Date(end).getTime() - new Date(start).getTime()) / 86400000));
+    const base = g.slice().sort((a, b) => (a.departs_at || "") < (b.departs_at || "") ? -1 : 1)[0];
+    stays.push({
+      ...base,
+      departs_at: start,
+      arrives_at: end,
+      _nights: nights,
+      _mergedCount: g.length,
+      confirmation: g.map(x => x.confirmation).filter(Boolean).join(", ") || base.confirmation,
+    });
+  }
+  // Dedupe non-stay legs too (identical Ubers/transfers): same type + name + time.
+  const seen = new Set();
+  const dedupedRest = rest.filter((l) => {
+    const key = `${l.type}|${String(l.carrier || l.destination || "").toLowerCase()}|${l.departs_at || ""}|${l.confirmation || ""}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  return [...dedupedRest, ...stays];
+}
+
+// Stays show check-in/out DATES only — parsers often emit a bogus "11:00 AM – 8:00 AM"
+// clock time, which is meaningless for a hotel. Returns a clean date-range label.
+function stayDatesLabel(leg) {
+  const ci = fmt(leg.departs_at);
+  const co = fmt(leg.arrives_at);
+  const nights = leg._nights;
+  if (ci && co && co !== ci) return `${ci} → ${co}${nights ? ` · ${nights} night${nights > 1 ? "s" : ""}` : ""}`;
+  if (ci) return `Check-in ${ci}`;
+  return null;
 }
 
 // ─── Status Pill ──────────────────────────────────────────────────────────────
@@ -208,10 +271,12 @@ function OtherLegRow({ leg, onEdit, onDelete }) {
   }[leg.type] || "Booking";
 
   const name     = leg.carrier || leg.destination || typeLabel;
+  const isStay   = leg.type === "hotel" || leg.type === "airbnb";
   const depDate  = fmt(leg.departs_at);
   const arrDate  = fmt(leg.arrives_at);
   const depTime  = fmtTime(leg.departs_at);
   const arrTime  = fmtTime(leg.arrives_at);
+  const stayLabel = isStay ? stayDatesLabel(leg) : null;
 
   return (
     <View style={s.otherRow}>
@@ -220,15 +285,19 @@ function OtherLegRow({ leg, onEdit, onDelete }) {
       </View>
       <View style={s.otherBody}>
         <Text style={s.otherName}>{name}</Text>
-        {(depDate || arrDate) && (
+        {isStay ? (
+          stayLabel ? <Text style={s.otherMeta}>{stayLabel}</Text> : null
+        ) : (depDate || arrDate) ? (
           <Text style={s.otherMeta}>
             {depDate}{depTime ? ` · ${depTime}` : ""}
             {arrDate && arrDate !== depDate ? `  –  ${arrDate}${arrTime ? ` · ${arrTime}` : ""}` : ""}
           </Text>
-        )}
-        {leg.confirmation && (
+        ) : null}
+        {leg._mergedCount > 1 ? (
+          <Text style={s.otherMeta}>{leg._mergedCount} reservations</Text>
+        ) : leg.confirmation ? (
           <Text style={s.otherMeta}>Ref: {leg.confirmation}</Text>
-        )}
+        ) : null}
       </View>
       <View style={s.otherActions}>
         {onEdit && (
@@ -273,7 +342,8 @@ function OutcomeCard({ tripId, onSubmitted }) {
   if (submitted) {
     return (
       <View style={s.outcomeCard}>
-        <Text style={s.outcomeTitle}>Noted. Wingman learns from every trip.</Text>
+        <Text style={s.outcomeTitle}>Noted — your predictions just got sharper.</Text>
+        <Text style={s.outcomeSub}>I'll weight this trip's outcome when I forecast delays, connections, and rescue timing for your next one.</Text>
       </View>
     );
   }
@@ -313,6 +383,7 @@ export default function TripDetailScreen({ route, navigation }) {
   const [riskData,      setRiskData]      = useState(null);
   const [riskLoading,   setRiskLoading]   = useState(false);
   const [outcomeSubmitted, setOutcomeSubmitted] = useState(false);
+  const [showBookings, setShowBookings] = useState(false);
   const [destIntel,     setDestIntel]     = useState(null);
   const [companions,    setCompanions]    = useState([]);
   const [inviteEmail,   setInviteEmail]   = useState("");
@@ -327,6 +398,17 @@ export default function TripDetailScreen({ route, navigation }) {
   const [disruptionLoading,setDisruptionLoading]= useState(false);
   const [companionsCount,  setCompanionsCount]  = useState(initialTrip?.companions_count || 1);
   const [companionNames,   setCompanionNames]   = useState(initialTrip?.companion_names || []);
+  const [showMore,         setShowMore]         = useState(false);
+  const [showShareCard,    setShowShareCard]    = useState(false);
+  const [showStanding,     setShowStanding]     = useState(false);
+  const [isPro,            setIsPro]            = useState(true); // assume yes until known, so we never wrongly gate
+  const [upgradeMoment,    setUpgradeMoment]    = useState(null); // key into UPGRADE_MOMENTS
+  const [standing,         setStanding]         = useState({ enabled: false, max_price: "", min_cabin: "economy" });
+  const [standingSaving,   setStandingSaving]   = useState(false);
+  const [quickEdit,        setQuickEdit]        = useState(null); // leg being edited inline
+  const [qName,            setQName]            = useState("");
+  const [qConf,            setQConf]            = useState("");
+  const [qSaving,          setQSaving]          = useState(false);
 
   // Fetch trip by ID if only ID was passed (deep-link / Concierge path)
   useEffect(() => {
@@ -375,14 +457,29 @@ export default function TripDetailScreen({ route, navigation }) {
   if (loadingTrip || !trip) {
     return (
       <SafeAreaView style={s.root}>
-        <ActivityIndicator size="large" color={C.gold} style={{ flex: 1 }} />
+        <View style={{ paddingHorizontal: 24, paddingTop: 12 }}>
+          <View style={{ width: 24, height: 24, borderRadius: 6, backgroundColor: C.card2, marginBottom: 28 }} />
+          <View style={{ width: "42%", height: 12, borderRadius: 4, backgroundColor: C.card2, marginBottom: 14 }} />
+          <View style={{ width: "72%", height: 30, borderRadius: 6, backgroundColor: C.card2, marginBottom: 10 }} />
+          <View style={{ width: "34%", height: 12, borderRadius: 4, backgroundColor: C.card2, marginBottom: 30 }} />
+          {[0, 1, 2].map(i => (
+            <View key={i} style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+              <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: C.card2, marginRight: 14 }} />
+              <View style={{ flex: 1 }}>
+                <View style={{ width: "58%", height: 12, borderRadius: 4, backgroundColor: C.card2, marginBottom: 8 }} />
+                <View style={{ width: "38%", height: 10, borderRadius: 4, backgroundColor: C.card }} />
+              </View>
+            </View>
+          ))}
+        </View>
       </SafeAreaView>
     );
   }
 
   const legs        = trip.legs || [];
+  const displayLegs = consolidateStays(legs);
   const flightLegs  = legs.filter(l => l.type === "flight");
-  const otherLegs   = legs.filter(l => l.type !== "flight");
+  const otherLegs   = displayLegs.filter(l => l.type !== "flight");
   const firstFlight = flightLegs[0];
 
   const tripStartDate = trip.trip_start || firstFlight?.departs_at || legs[0]?.departs_at;
@@ -524,8 +621,35 @@ export default function TripDetailScreen({ route, navigation }) {
     } catch {}
   };
 
+  // Inline quick-edit (UI #4): fix the two things people most often correct —
+  // the booking name and the confirmation number — without leaving the screen.
   const handleEditLeg = (leg) => {
+    setQuickEdit(leg);
+    setQName(leg.carrier || leg.destination || "");
+    setQConf(leg.confirmation || "");
+  };
+
+  const handleFullEdit = (leg) => {
+    setQuickEdit(null);
     navigation.navigate("AddTrip", { editLeg: leg, tripId: trip.id });
+  };
+
+  const saveQuickEdit = async () => {
+    if (!quickEdit) return;
+    setQSaving(true);
+    const patch = { carrier: qName.trim(), confirmation: qConf.trim() };
+    try {
+      await editLeg(trip.id, quickEdit.id, patch);
+      setTrip(prev => ({
+        ...prev,
+        legs: (prev.legs || []).map(l => l.id === quickEdit.id ? { ...l, ...patch } : l),
+      }));
+      setQuickEdit(null);
+    } catch (e) {
+      Alert.alert("Couldn't save", e.message || "Please try again.");
+    } finally {
+      setQSaving(false);
+    }
   };
 
   const handleDeleteLeg = (leg) => {
@@ -550,6 +674,165 @@ export default function TripDetailScreen({ route, navigation }) {
         },
       ]
     );
+  };
+
+  // Subscription tier — drives the well-timed upgrade moments.
+  useEffect(() => {
+    let on = true;
+    getMe()
+      .then(me => {
+        if (!on) return;
+        const tier = (me?.subscription_tier || "free").toLowerCase();
+        const status = (me?.subscription_status || "").toLowerCase();
+        setIsPro(tier !== "free" && status !== "inactive");
+      })
+      .catch(() => {}); // on failure, leave isPro=true — never gate a paying user by accident
+    return () => { on = false; };
+  }, []);
+
+  // ── Action handlers (used by the action bar + "More" sheet) ──
+  const handleUpgradeBid = () => {
+    if (!firstFlight?.id) return;
+    navigation.navigate("UpgradeBid", {
+      tripId: trip.id, legId: firstFlight.id,
+      flightIdent: firstFlight.flight_number,
+      origin: firstFlight.origin, destination: firstFlight.destination,
+      carrier: firstFlight.carrier,
+    });
+  };
+
+  const handleAddToWallet = async () => {
+    if (!firstFlight?.id) return;
+    const t = await getToken();
+    Linking.openURL(`${API_BASE}/wallet/pass/${firstFlight.id}?token=${encodeURIComponent(t || "")}`);
+  };
+
+  const handleAddBooking = () => {
+    navigation.navigate("AddTrip", { tripId: trip.id, addLegMode: true });
+  };
+
+  const openStanding = async () => {
+    // Autonomous rebooking is the flagship Pro capability — surface the upgrade
+    // exactly here, at the moment the value is concrete.
+    if (!isPro) { setUpgradeMoment("standing_orders"); return; }
+    setShowStanding(true);
+    try {
+      const so = await getStandingOrder(trip.id);
+      setStanding({
+        enabled: !!so.enabled,
+        max_price: so.max_price != null ? String(so.max_price) : "",
+        min_cabin: so.min_cabin || "economy",
+      });
+    } catch (_) {}
+  };
+
+  const saveStanding = async () => {
+    setStandingSaving(true);
+    try {
+      await setStandingOrder(trip.id, {
+        enabled: standing.enabled,
+        max_price: standing.max_price ? parseInt(standing.max_price, 10) : null,
+        min_cabin: standing.min_cabin,
+      });
+      setShowStanding(false);
+    } catch (e) {
+      Alert.alert("Couldn't save", e.message || "Please try again.");
+    } finally {
+      setStandingSaving(false);
+    }
+  };
+
+  const handleExportCalendar = async () => {
+    try {
+      const { status } = await Calendar.requestCalendarPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission denied", "Wingman needs calendar access to add events.");
+        return;
+      }
+      const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
+      let calId = calendars.find(c => c.title === "Wingman")?.id;
+      if (!calId) {
+        const defaultCal = await Calendar.getDefaultCalendarAsync();
+        calId = await Calendar.createCalendarAsync({
+          title: "Wingman",
+          color: "#C9A84C",
+          entityType: Calendar.EntityTypes.EVENT,
+          sourceId: defaultCal?.source?.id,
+          source: defaultCal?.source,
+          name: "Wingman",
+          ownerAccount: "personal",
+          accessLevel: Calendar.CalendarAccessLevel.OWNER,
+        });
+      }
+      const legs = trip.legs || [];
+      let added = 0;
+      for (const leg of legs) {
+        const start = leg.dep_time || leg.start_time || leg.date;
+        const end = leg.arr_time || leg.end_time || start;
+        if (!start) continue;
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        if (isNaN(startDate.getTime())) continue;
+        if (isNaN(endDate.getTime()) || endDate <= startDate) {
+          endDate.setTime(startDate.getTime() + 2 * 60 * 60 * 1000);
+        }
+        const title = leg.type === "flight"
+          ? `✈ ${leg.flight_number || "Flight"} ${leg.origin || ""} → ${leg.destination || ""}`
+          : leg.type === "hotel"
+          ? `🏨 ${leg.hotel_name || leg.title || "Hotel"}`
+          : leg.type === "event" || leg.type === "show"
+          ? `🎭 ${leg.event_name || leg.title || "Event"}`
+          : leg.title || leg.type || "Booking";
+        const location = leg.type === "flight"
+          ? `${leg.origin || ""} → ${leg.destination || ""}`
+          : leg.venue || leg.hotel_name || "";
+        await Calendar.createEventAsync(calId, {
+          title, startDate, endDate, location,
+          notes: `Wingman trip: ${trip.title}`,
+          timeZone: leg.timezone || "UTC",
+        });
+        added++;
+      }
+      Alert.alert(
+        "Added to Calendar",
+        added > 0
+          ? `${added} event${added !== 1 ? "s" : ""} added to your Wingman calendar.`
+          : "No events with dates found to add."
+      );
+    } catch (e) {
+      Alert.alert("Export failed", e.message);
+    }
+  };
+
+  const handleExportItinerary = async () => {
+    try {
+      const sorted = [...(trip.legs || [])].sort((a, b) => {
+        const ta = a.departs_at || a.arrives_at || '';
+        const tb = b.departs_at || b.arrives_at || '';
+        return ta < tb ? -1 : ta > tb ? 1 : 0;
+      });
+      const TYPE_LABEL = { flight: '✈ Flight', hotel: '🏨 Hotel', airbnb: '🏠 Stay', train: '🚄 Train', car: '🚗 Car', ferry: '⛴ Ferry', activity: '🎭 Activity', transfer: '🚖 Transfer', cruise: '🚢 Cruise' };
+      const lines = [`${trip.title}`, ``, `ITINERARY`, `${'─'.repeat(40)}`];
+      let lastDate = null;
+      for (const leg of sorted) {
+        const d = fmt(leg.departs_at || leg.arrives_at);
+        if (d && d !== lastDate) { lines.push(``); lines.push(d.toUpperCase()); lastDate = d; }
+        const typeLabel = TYPE_LABEL[leg.type] || leg.type?.toUpperCase() || 'BOOKING';
+        const name = leg.type === 'flight'
+          ? `${leg.carrier || ''}${leg.flight_number || ''} · ${leg.origin || '?'} → ${leg.destination || '?'}`
+          : leg.carrier || leg.destination || '';
+        const time = fmtTime(leg.departs_at);
+        const endTime = fmtTime(leg.arrives_at);
+        const timeStr = time ? ` · ${time}${endTime && endTime !== time ? ` – ${endTime}` : ''}` : '';
+        const conf = leg.confirmation ? ` (Ref: ${leg.confirmation})` : '';
+        lines.push(`  ${typeLabel}: ${name}${timeStr}${conf}`);
+      }
+      lines.push(``);
+      lines.push(`Tracked by Wingman — wingmantravel.app`);
+      await Share.share({ message: lines.join('\n') });
+    } catch (e) {
+      Alert.alert('Export failed', e.message);
+    }
   };
 
   // ── Build prose briefing for the header
@@ -587,8 +870,18 @@ export default function TripDetailScreen({ route, navigation }) {
           <Text style={s.backLabel}>Trips</Text>
         </Pressable>
 
+        {/* ── Destination photo wash (Design #9) — city from destination_city, else a
+             trip title that looks like a place (skip routes / import junk) ── */}
+        {(() => {
+          const titleCity = trip.title && !/[→>]|imported|reservation|confirmation|\bunknown\b/i.test(trip.title) && trip.title.length <= 28 ? trip.title : null;
+          const imageCity = trip.destination_city || titleCity;
+          return imageCity ? (
+            <DestinationImage city={imageCity} height={150} style={{ borderRadius: 14, marginHorizontal: 24, marginBottom: 6 }} />
+          ) : null;
+        })()}
+
         {/* ── Editorial header ── */}
-        <View style={s.header}>
+        <FadeRise style={s.header}>
           {/* Edition line */}
           <View style={s.editionLine}>
             {depDate && <Text style={s.editionDate}>{depDate}{endDate && endDate !== depDate ? `  –  ${endDate}` : ""}</Text>}
@@ -619,14 +912,14 @@ export default function TripDetailScreen({ route, navigation }) {
 
           {/* Prose briefing */}
           {briefingProse && <Text style={s.prose}>{briefingProse}</Text>}
-        </View>
+        </FadeRise>
 
         <View style={s.rule} />
 
         {/* ── Day-by-day itinerary timeline ── */}
         {legs.length > 0 && (() => {
-          // Sort all legs chronologically
-          const sorted = [...legs].sort((a, b) => {
+          // Sort all legs chronologically (stays consolidated into one block)
+          const sorted = [...displayLegs].sort((a, b) => {
             const ta = a.departs_at || a.arrives_at || '';
             const tb = b.departs_at || b.arrives_at || '';
             return ta < tb ? -1 : ta > tb ? 1 : 0;
@@ -638,7 +931,7 @@ export default function TripDetailScreen({ route, navigation }) {
             if (!groups[d]) groups[d] = [];
             groups[d].push(leg);
           }
-          const TYPE_ICON = { flight: '✈', hotel: '🏨', airbnb: '🏠', train: '🚄', car: '🚗', ferry: '⛴', activity: '🎭', transfer: '🚖', cruise: '🚢', other: '📌' };
+          const TYPE_ICON = { flight: 'airplane-outline', hotel: 'bed-outline', airbnb: 'home-outline', train: 'train-outline', car: 'car-outline', ferry: 'boat-outline', activity: 'ticket-outline', transfer: 'car-outline', cruise: 'boat-outline', dining: 'restaurant-outline', restaurant: 'restaurant-outline', other: 'bookmark-outline' };
           return (
             <>
               <Text style={s.sectionLabel}>ITINERARY</Text>
@@ -646,7 +939,8 @@ export default function TripDetailScreen({ route, navigation }) {
                 <View key={gi} style={s.dayGroup}>
                   <Text style={s.dayLabel}>{date}</Text>
                   {dayLegs.map((leg, li) => {
-                    const icon = TYPE_ICON[leg.type] || '📌';
+                    const icon = TYPE_ICON[leg.type] || 'bookmark-outline';
+                    const isStay = leg.type === 'hotel' || leg.type === 'airbnb';
                     const name = leg.type === 'flight'
                       ? `${leg.carrier || ''}${leg.flight_number || ''} · ${leg.origin || '?'} → ${leg.destination || '?'}`
                       : leg.carrier || leg.destination || leg.type;
@@ -655,15 +949,19 @@ export default function TripDetailScreen({ route, navigation }) {
                     const conf = leg.confirmation;
                     return (
                       <View key={li} style={[s.timelineRow, li < dayLegs.length - 1 && s.timelineRowBorder]}>
-                        <Text style={s.timelineIcon}>{icon}</Text>
+                        <Ionicons name={icon} size={16} color={C.gold} style={{ width: 22, textAlign: 'center', marginTop: 1 }} />
                         <View style={{ flex: 1 }}>
                           <Text style={s.timelineName}>{name}</Text>
-                          {(time || endTime) && (
+                          {isStay ? (
+                            stayDatesLabel(leg) ? <Text style={s.timelineMeta}>{stayDatesLabel(leg)}</Text> : null
+                          ) : (time || endTime) ? (
                             <Text style={s.timelineMeta}>
                               {time}{endTime && endTime !== time ? ` – ${endTime}` : ''}
                             </Text>
-                          )}
-                          {conf && <Text style={s.timelineMeta}>Ref: {conf}</Text>}
+                          ) : null}
+                          {leg._mergedCount > 1
+                            ? <Text style={s.timelineMeta}>{leg._mergedCount} reservations</Text>
+                            : conf ? <Text style={s.timelineMeta}>Ref: {conf}</Text> : null}
                         </View>
                       </View>
                     );
@@ -708,11 +1006,14 @@ export default function TripDetailScreen({ route, navigation }) {
           </>
         )}
 
-        {/* ── Other legs ── */}
+        {/* ── Other legs — collapsed by default so the itinerary above stays the hero ── */}
         {otherLegs.length > 0 && (
           <>
-            <Text style={s.sectionLabel}>BOOKINGS</Text>
-            {otherLegs.map((leg, i) => (
+            <Pressable style={s.manageToggle} onPress={() => { tap(); setShowBookings(v => !v); }}>
+              <Text style={s.sectionLabel}>MANAGE BOOKINGS ({otherLegs.length})</Text>
+              <Text style={s.manageArrow}>{showBookings ? "▲" : "▼"}</Text>
+            </Pressable>
+            {showBookings && otherLegs.map((leg, i) => (
               <OtherLegRow
                 key={i}
                 leg={leg}
@@ -810,7 +1111,9 @@ export default function TripDetailScreen({ route, navigation }) {
           </>
         )}
 
-        {/* ── Pre-trip checklist ── */}
+        {/* ── Pre-trip checklist — pointless once the trip is over, so hide it
+             (unless items already exist, which are worth keeping visible). ── */}
+        {(!isCompleted || (checklist && checklist.length > 0)) && (
         <>
           <Text style={s.sectionLabel}>PRE-TRIP CHECKLIST</Text>
           <View style={s.intelBlock}>
@@ -868,194 +1171,214 @@ export default function TripDetailScreen({ route, navigation }) {
             )}
           </View>
         </>
+        )}
 
-        {/* ── Three primary action rows ── */}
-        <View style={s.actionsBlock}>
-          {/* Ask Wingman */}
-          <Pressable style={s.actionRow} onPress={() => { tap(); openConcierge(); }}>
-            <Text style={s.actionRowLabel}>Ask Wingman</Text>
-            <Text style={s.actionRowArrow}>›</Text>
+        {/* ── Confident action bar + "More" sheet ── */}
+        {(() => {
+          const hasFlight = !!firstFlight?.id;
+          const canDisrupt = hasFlight && !isCompleted;
+          // Primary bar: the chief-of-staff CTA + the single most relevant next action.
+          const primary = [
+            { key: "ask", label: "Ask Wingman", icon: "chatbubbles-outline", onPress: openConcierge, hero: true },
+            canDisrupt
+              ? { key: "disrupt", label: "Disruptions", icon: "alert-circle-outline", onPress: () => handleOpenDisruption(firstFlight) }
+              : { key: "add", label: "Add booking", icon: "add-circle-outline", onPress: handleAddBooking },
+            { key: "share", label: "Share", icon: "share-outline", onPress: () => setShowShareCard(true) },
+          ];
+          // Everything else lives in the More sheet.
+          const more = [
+            canDisrupt && { key: "upgrade", label: "Upgrade bid", sub: "Bid for a cabin upgrade", icon: "trending-up-outline", onPress: handleUpgradeBid },
+            hasFlight && { key: "wallet", label: "Add boarding pass to Wallet", sub: "Apple Wallet", icon: "wallet-outline", onPress: handleAddToWallet },
+            canDisrupt && { key: "standing", label: "Standing orders", sub: "Pre-authorize auto-rebooking for this trip", icon: "shield-checkmark-outline", onPress: openStanding },
+            canDisrupt && { key: "add2", label: "Add booking", sub: "Hotel, car, activity…", icon: "add-circle-outline", onPress: handleAddBooking },
+            { key: "expenses", label: "Trip expenses", sub: "Categorized report — export as a receipt", icon: "receipt-outline", onPress: () => navigation.navigate("Expenses", { trip }) },
+            { key: "cal", label: "Export to Calendar", sub: "Add every leg to your calendar", icon: "calendar-outline", onPress: handleExportCalendar },
+            { key: "itin", label: "Export itinerary", sub: "Share a plain-text summary", icon: "document-text-outline", onPress: handleExportItinerary },
+          ].filter(Boolean);
+          return (
+            <>
+              <View style={s.actionBar}>
+                {primary.map(a => (
+                  <Pressable
+                    key={a.key}
+                    style={[s.actionTile, a.hero && s.actionTileHero]}
+                    onPress={() => { tap(); a.onPress(); }}
+                    accessibilityRole="button"
+                    accessibilityLabel={a.label}
+                  >
+                    <Ionicons name={a.icon} size={19} color={a.hero ? C.inkD : C.gold} />
+                    <Text style={[s.actionTileT, a.hero && s.actionTileTHero]} numberOfLines={1}>{a.label}</Text>
+                  </Pressable>
+                ))}
+                {more.length > 0 && (
+                  <Pressable style={s.actionTile} onPress={() => { tap(); setShowMore(true); }}>
+                    <Ionicons name="ellipsis-horizontal" size={19} color={C.gold} />
+                    <Text style={s.actionTileT}>More</Text>
+                  </Pressable>
+                )}
+              </View>
+
+              <Modal
+                visible={showMore}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setShowMore(false)}
+              >
+                <Pressable style={s.sheetScrim} onPress={() => setShowMore(false)}>
+                  <Pressable style={s.sheet} onPress={() => {}}>
+                    <View style={s.sheetGrip} />
+                    <Text style={s.sheetTitle}>More actions</Text>
+                    {more.map((a, i) => (
+                      <Pressable
+                        key={a.key}
+                        style={[s.sheetRow, i < more.length - 1 && s.sheetRowBorder]}
+                        onPress={() => { tap(); setShowMore(false); a.onPress(); }}
+                      >
+                        <Ionicons name={a.icon} size={20} color={C.gold} style={{ width: 28 }} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={s.sheetRowLabel}>{a.label}</Text>
+                          {a.sub ? <Text style={s.sheetRowSub}>{a.sub}</Text> : null}
+                        </View>
+                        <Text style={s.actionRowArrow}>›</Text>
+                      </Pressable>
+                    ))}
+                    <Pressable style={s.sheetCancel} onPress={() => { tap(); setShowMore(false); }}>
+                      <Text style={s.sheetCancelT}>Close</Text>
+                    </Pressable>
+                  </Pressable>
+                </Pressable>
+              </Modal>
+            </>
+          );
+        })()}
+
+        {/* ── Inline quick-edit sheet (UI #4) ── */}
+        <Modal
+          visible={!!quickEdit}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setQuickEdit(null)}
+        >
+          <Pressable style={s.sheetScrim} onPress={() => !qSaving && setQuickEdit(null)}>
+            <Pressable style={s.sheet} onPress={() => {}}>
+              <View style={s.sheetGrip} />
+              <Text style={s.sheetTitle}>Quick edit</Text>
+              <Text style={s.qEditField}>NAME</Text>
+              <TextInput
+                style={s.qEditInput}
+                value={qName}
+                onChangeText={setQName}
+                placeholder="Booking name"
+                placeholderTextColor={C.mut}
+                autoCapitalize="words"
+              />
+              <Text style={s.qEditField}>CONFIRMATION #</Text>
+              <TextInput
+                style={s.qEditInput}
+                value={qConf}
+                onChangeText={setQConf}
+                placeholder="e.g. AB12CD"
+                placeholderTextColor={C.mut}
+                autoCapitalize="characters"
+              />
+              <Pressable
+                style={[s.qEditSave, qSaving && { opacity: 0.6 }]}
+                onPress={saveQuickEdit}
+                disabled={qSaving}
+              >
+                {qSaving
+                  ? <ActivityIndicator color={C.inkD} />
+                  : <Text style={s.qEditSaveT}>Save</Text>}
+              </Pressable>
+              <Pressable
+                style={s.sheetRow}
+                onPress={() => quickEdit && handleFullEdit(quickEdit)}
+              >
+                <Ionicons name="create-outline" size={20} color={C.gold} style={{ width: 28 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={s.sheetRowLabel}>Edit all details</Text>
+                  <Text style={s.sheetRowSub}>Dates, times, route, and more</Text>
+                </View>
+                <Text style={s.actionRowArrow}>›</Text>
+              </Pressable>
+              <Pressable style={s.sheetCancel} onPress={() => setQuickEdit(null)}>
+                <Text style={s.sheetCancelT}>Cancel</Text>
+              </Pressable>
+            </Pressable>
           </Pressable>
-          <View style={s.actionDivider} />
-          {/* Check disruptions */}
-          {firstFlight?.id && !isCompleted && (
-            <>
+        </Modal>
+
+        {/* ── Well-timed upgrade moment (Roadmap 2, UI #10) ── */}
+        <UpgradeSheet
+          visible={!!upgradeMoment}
+          moment={upgradeMoment || "standing_orders"}
+          onClose={() => setUpgradeMoment(null)}
+          onUpgrade={() => { setUpgradeMoment(null); navigation.navigate("Subscription"); }}
+        />
+
+        {/* ── Standing orders sheet (Roadmap 2) ── */}
+        <Modal
+          visible={showStanding}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowStanding(false)}
+        >
+          <Pressable style={s.sheetScrim} onPress={() => !standingSaving && setShowStanding(false)}>
+            <Pressable style={s.sheet} onPress={() => {}}>
+              <View style={s.sheetGrip} />
+              <Text style={s.sheetTitle}>Standing orders</Text>
+              <Text style={s.qEditField}>Pre-authorize Wingman to rebook this trip automatically if a flight is cancelled or badly delayed — within the limits you set. You stay in control; I only act inside these rules.</Text>
+
               <Pressable
-                style={s.actionRow}
-                onPress={() => { tap(); handleOpenDisruption(firstFlight); }}
+                style={[s.sheetRow, s.sheetRowBorder]}
+                onPress={() => setStanding(v => ({ ...v, enabled: !v.enabled }))}
               >
-                <Text style={s.actionRowLabel}>Check disruptions</Text>
-                <Text style={s.actionRowArrow}>›</Text>
+                <Ionicons name={standing.enabled ? "checkmark-circle" : "ellipse-outline"} size={22} color={standing.enabled ? C.teal : C.mut} style={{ width: 28 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={s.sheetRowLabel}>Auto-rebook this trip</Text>
+                  <Text style={s.sheetRowSub}>{standing.enabled ? "On — I'll act within your limits" : "Off — I'll ask first"}</Text>
+                </View>
               </Pressable>
-              <View style={s.actionDivider} />
-            </>
-          )}
-          {/* Upgrade bid */}
-          {firstFlight?.id && !isCompleted && (
-            <>
-              <Pressable
-                style={s.actionRow}
-                onPress={() => { tap(); navigation.navigate("UpgradeBid", {
-                  tripId: trip.id, legId: firstFlight.id,
-                  flightIdent: firstFlight.flight_number,
-                  origin: firstFlight.origin, destination: firstFlight.destination,
-                  carrier: firstFlight.carrier,
-                }); }}
-              >
-                <Text style={s.actionRowLabel}>Upgrade bid</Text>
-                <Text style={s.actionRowArrow}>›</Text>
+
+              {standing.enabled ? (
+                <>
+                  <Text style={s.qEditField}>MAX PRICE WITHOUT ASKING</Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <Text style={{ fontFamily: T.serifB, fontSize: 18, color: C.gold }}>$</Text>
+                    <TextInput
+                      style={[s.qEditInput, { flex: 1 }]}
+                      value={standing.max_price}
+                      onChangeText={t => setStanding(v => ({ ...v, max_price: t.replace(/[^0-9]/g, "") }))}
+                      placeholder="650"
+                      placeholderTextColor={C.mut}
+                      keyboardType="number-pad"
+                    />
+                  </View>
+
+                  <Text style={s.qEditField}>MINIMUM CABIN</Text>
+                  <View style={{ flexDirection: "row", gap: 8 }}>
+                    {[["economy", "Economy"], ["premium_economy", "Premium"], ["business", "Business"], ["first", "First"]].map(([id, label]) => (
+                      <Pressable
+                        key={id}
+                        style={[s.cabinPill, standing.min_cabin === id && s.cabinPillOn]}
+                        onPress={() => setStanding(v => ({ ...v, min_cabin: id }))}
+                      >
+                        <Text style={[s.cabinPillT, standing.min_cabin === id && s.cabinPillTOn]}>{label}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </>
+              ) : null}
+
+              <Pressable style={[s.qEditSave, standingSaving && { opacity: 0.6 }]} onPress={saveStanding} disabled={standingSaving}>
+                {standingSaving ? <ActivityIndicator color={C.inkD} /> : <Text style={s.qEditSaveT}>Save</Text>}
               </Pressable>
-              <View style={s.actionDivider} />
-            </>
-          )}
-          {/* Wallet */}
-          {firstFlight?.id && (
-            <>
-              <Pressable
-                style={s.actionRow}
-                onPress={() => { tap(); Linking.openURL(`${API_BASE}/wallet/pass/${firstFlight.id}`); }}
-              >
-                <Text style={s.actionRowLabel}>Add to Wallet</Text>
-                <Text style={s.actionRowArrow}>›</Text>
+              <Pressable style={s.sheetCancel} onPress={() => setShowStanding(false)}>
+                <Text style={s.sheetCancelT}>Cancel</Text>
               </Pressable>
-              <View style={s.actionDivider} />
-            </>
-          )}
-          {/* Export to Calendar */}
-          <>
-            <Pressable
-              style={s.actionRow}
-              onPress={async () => {
-                tap();
-                try {
-                  const { status } = await Calendar.requestCalendarPermissionsAsync();
-                  if (status !== "granted") {
-                    Alert.alert("Permission denied", "Wingman needs calendar access to add events.");
-                    return;
-                  }
-                  // Find or create a Wingman calendar
-                  const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
-                  let calId = calendars.find(c => c.title === "Wingman")?.id;
-                  if (!calId) {
-                    const defaultCal = await Calendar.getDefaultCalendarAsync();
-                    calId = await Calendar.createCalendarAsync({
-                      title: "Wingman",
-                      color: "#C9A84C",
-                      entityType: Calendar.EntityTypes.EVENT,
-                      sourceId: defaultCal?.source?.id,
-                      source: defaultCal?.source,
-                      name: "Wingman",
-                      ownerAccount: "personal",
-                      accessLevel: Calendar.CalendarAccessLevel.OWNER,
-                    });
-                  }
-                  // Add each leg as a calendar event
-                  const legs = trip.legs || [];
-                  let added = 0;
-                  for (const leg of legs) {
-                    const start = leg.dep_time || leg.start_time || leg.date;
-                    const end = leg.arr_time || leg.end_time || start;
-                    if (!start) continue;
-                    const startDate = new Date(start);
-                    const endDate = new Date(end);
-                    if (isNaN(startDate.getTime())) continue;
-                    if (isNaN(endDate.getTime()) || endDate <= startDate) {
-                      endDate.setTime(startDate.getTime() + 2 * 60 * 60 * 1000);
-                    }
-                    const title = leg.type === "flight"
-                      ? `✈ ${leg.flight_number || "Flight"} ${leg.origin || ""} → ${leg.destination || ""}`
-                      : leg.type === "hotel"
-                      ? `🏨 ${leg.hotel_name || leg.title || "Hotel"}`
-                      : leg.type === "event" || leg.type === "show"
-                      ? `🎭 ${leg.event_name || leg.title || "Event"}`
-                      : leg.title || leg.type || "Booking";
-                    const location = leg.type === "flight"
-                      ? `${leg.origin || ""} → ${leg.destination || ""}`
-                      : leg.venue || leg.hotel_name || "";
-                    await Calendar.createEventAsync(calId, {
-                      title,
-                      startDate,
-                      endDate,
-                      location,
-                      notes: `Wingman trip: ${trip.title}`,
-                      timeZone: leg.timezone || "UTC",
-                    });
-                    added++;
-                  }
-                  Alert.alert(
-                    "Added to Calendar",
-                    added > 0
-                      ? `${added} event${added !== 1 ? "s" : ""} added to your Wingman calendar.`
-                      : "No events with dates found to add."
-                  );
-                } catch (e) {
-                  Alert.alert("Export failed", e.message);
-                }
-              }}
-            >
-              <Text style={s.actionRowLabel}>Export to Calendar</Text>
-              <Text style={s.actionRowArrow}>›</Text>
             </Pressable>
-            <View style={s.actionDivider} />
-          </>
-          {/* Add booking */}
-          <>
-            <Pressable
-              style={s.actionRow}
-              onPress={() => { tap(); navigation.navigate("AddTrip", { tripId: trip.id, addLegMode: true }); }}
-            >
-              <Text style={s.actionRowLabel}>Add booking</Text>
-              <Text style={s.actionRowArrow}>›</Text>
-            </Pressable>
-            <View style={s.actionDivider} />
-          </>
-          {/* Export itinerary */}
-          <>
-            <Pressable
-              style={s.actionRow}
-              onPress={async () => {
-                tap();
-                try {
-                  const sorted = [...(trip.legs || [])].sort((a, b) => {
-                    const ta = a.departs_at || a.arrives_at || '';
-                    const tb = b.departs_at || b.arrives_at || '';
-                    return ta < tb ? -1 : ta > tb ? 1 : 0;
-                  });
-                  const TYPE_LABEL = { flight: '\u2708 Flight', hotel: '\ud83c\udfe8 Hotel', airbnb: '\ud83c\udfe0 Stay', train: '\ud83d\ude84 Train', car: '\ud83d\ude97 Car', ferry: '\u26f4 Ferry', activity: '\ud83c\udfad Activity', transfer: '\ud83d\ude96 Transfer', cruise: '\ud83d\udea2 Cruise' };
-                  const lines = [`${trip.title}`, ``, `ITINERARY`, `${'─'.repeat(40)}`];
-                  let lastDate = null;
-                  for (const leg of sorted) {
-                    const d = fmt(leg.departs_at || leg.arrives_at);
-                    if (d && d !== lastDate) { lines.push(``); lines.push(d.toUpperCase()); lastDate = d; }
-                    const typeLabel = TYPE_LABEL[leg.type] || leg.type?.toUpperCase() || 'BOOKING';
-                    const name = leg.type === 'flight'
-                      ? `${leg.carrier || ''}${leg.flight_number || ''} · ${leg.origin || '?'} → ${leg.destination || '?'}`
-                      : leg.carrier || leg.destination || '';
-                    const time = fmtTime(leg.departs_at);
-                    const endTime = fmtTime(leg.arrives_at);
-                    const timeStr = time ? ` · ${time}${endTime && endTime !== time ? ` – ${endTime}` : ''}` : '';
-                    const conf = leg.confirmation ? ` (Ref: ${leg.confirmation})` : '';
-                    lines.push(`  ${typeLabel}: ${name}${timeStr}${conf}`);
-                  }
-                  lines.push(``);
-                  lines.push(`Tracked by Wingman — wingmantravel.app`);
-                  await Share.share({ message: lines.join('\n') });
-                } catch (e) {
-                  Alert.alert('Export failed', e.message);
-                }
-              }}
-            >
-              <Text style={s.actionRowLabel}>Export itinerary</Text>
-              <Text style={s.actionRowArrow}>›</Text>
-            </Pressable>
-            <View style={s.actionDivider} />
-          </>
-          {/* Share */}
-          <Pressable style={s.actionRow} onPress={() => { tap(); handleShareTrip(); }}>
-            <Text style={s.actionRowLabel}>Share trip</Text>
-            <Text style={s.actionRowArrow}>›</Text>
           </Pressable>
-        </View>
+        </Modal>
 
         {/* ── Destination intel ── */}
         {destIntel?.pro_required && (
@@ -1162,6 +1485,21 @@ export default function TripDetailScreen({ route, navigation }) {
 
         <View style={{ height: 32 }} />
       </ScrollView>
+
+      <ShareCardModal
+        visible={showShareCard}
+        onClose={() => setShowShareCard(false)}
+        variant="trip"
+        data={{
+          title: trip.title,
+          route: firstFlight
+            ? `${firstFlight.origin || ""} → ${firstFlight.destination || ""}`.trim()
+            : (trip.destination_city || ""),
+          dates: tripStartDate
+            ? new Date(tripStartDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+            : "Tracked by Wingman",
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -1255,6 +1593,13 @@ const s = StyleSheet.create({
     paddingBottom: 6,
     opacity: 0.7,
   },
+  manageToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingRight: 24,
+  },
+  manageArrow: { color: C.mut, fontSize: 11, opacity: 0.7 },
 
   // ── Itinerary timeline ──
   dayGroup: {
@@ -1524,6 +1869,149 @@ const s = StyleSheet.create({
     backgroundColor: C.line,
     opacity: 0.5,
   },
+
+  // ── Confident action bar (UI #10) ──
+  actionBar: {
+    flexDirection: "row",
+    gap: 8,
+    marginHorizontal: 24,
+    marginTop: 20,
+  },
+  actionTile: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 14,
+    paddingHorizontal: 4,
+    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 12,
+    ...litEdge,
+    ...SHADOW.soft,
+  },
+  actionTileHero: {
+    backgroundColor: C.gold,
+    borderColor: C.gold,
+  },
+  actionTileT: {
+    fontFamily: T.sansM,
+    fontSize: 11,
+    color: C.mut,
+    letterSpacing: 0.2,
+  },
+  actionTileTHero: {
+    color: C.inkD,
+    fontFamily: T.sansB,
+  },
+  // ── "More" bottom sheet ──
+  sheetScrim: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    justifyContent: "flex-end",
+  },
+  sheet: {
+    backgroundColor: C.bg,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    borderWidth: 1,
+    borderColor: C.line,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 40,
+    ...SHADOW.sheet,
+  },
+  sheetGrip: {
+    alignSelf: "center",
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: C.line,
+    marginBottom: 16,
+  },
+  sheetTitle: {
+    fontFamily: T.sansM,
+    fontSize: 11,
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    color: C.mut,
+    marginBottom: 8,
+  },
+  sheetRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 15,
+  },
+  sheetRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: C.line,
+  },
+  sheetRowLabel: {
+    fontFamily: T.sansM,
+    fontSize: 15,
+    color: C.ink,
+  },
+  sheetRowSub: {
+    fontFamily: T.sans,
+    fontSize: 12,
+    color: C.mut,
+    marginTop: 2,
+  },
+  sheetCancel: {
+    marginTop: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: C.line,
+  },
+  sheetCancelT: {
+    fontFamily: T.sansM,
+    fontSize: 14,
+    color: C.ink,
+  },
+  // ── Inline quick-edit fields ──
+  qEditField: {
+    fontFamily: T.sansM,
+    fontSize: 10,
+    letterSpacing: 1.2,
+    color: C.mut,
+    marginTop: 14,
+    marginBottom: 6,
+  },
+  qEditInput: {
+    fontFamily: T.sans,
+    fontSize: 16,
+    color: C.ink,
+    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  qEditSave: {
+    marginTop: 18,
+    marginBottom: 6,
+    paddingVertical: 15,
+    alignItems: "center",
+    borderRadius: 12,
+    backgroundColor: C.gold,
+  },
+  qEditSaveT: {
+    fontFamily: T.sansB,
+    fontSize: 15,
+    color: C.inkD,
+  },
+  cabinPill: {
+    flex: 1, alignItems: "center", paddingVertical: 10, borderRadius: 10,
+    backgroundColor: C.card, borderWidth: 1, borderColor: C.line,
+  },
+  cabinPillOn: { borderColor: C.gold, backgroundColor: "rgba(201,169,110,0.08)" },
+  cabinPillT: { fontFamily: T.sansM, fontSize: 11, color: C.mut },
+  cabinPillTOn: { color: C.gold },
 
   // ── Pro upsell ──
   proCard: {

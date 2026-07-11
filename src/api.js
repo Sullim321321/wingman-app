@@ -57,7 +57,9 @@ export async function req(path, opts = {}) {
   if (r.status === 401) {
     // Token expired or invalid — trigger auto sign-out if handler is registered
     if (_on401) _on401();
-    throw new Error("Session expired — please sign in again.");
+    const err = new Error("Session expired — please sign in again.");
+    err.status = 401;
+    throw err;
   }
   if (!r.ok) {
     const err = new Error(body.error || "HTTP " + r.status);
@@ -152,6 +154,17 @@ export const sendConciergeMessage = (message, history = [], location = null) =>
     signal: AbortSignal.timeout(65000), // 65s — Render free tier cold-start (up to 50s) + Claude latency
   });
 
+// ─── Decisions (chief-of-staff decision cards) ─────────────────────────────────
+export const getDecisions = () => req("/decisions");
+export const confirmDecision = (id, optionId) =>
+  req(`/decisions/${id}/confirm`, { method: "POST", body: JSON.stringify(optionId ? { option_id: optionId } : {}) });
+export const dismissDecision = (id) =>
+  req(`/decisions/${id}/dismiss`, { method: "POST" });
+export const undoDecision = (id) =>
+  req(`/decisions/${id}/undo`, { method: "POST" });
+export const simulateDecision = () =>
+  req("/decisions/simulate", { method: "POST" });
+
 // Apple Wallet
 export const getWalletPass = (legId) => req("/wallet/pass/" + legId);
 
@@ -211,33 +224,6 @@ export const syncCalendar = (events) =>
 export const parseMessages = (messages) =>
   req("/sync/messages", { method: "POST", body: JSON.stringify({ messages: Array.isArray(messages) ? messages : [{ body: messages, sender: "Manual", timestamp: new Date().toISOString() }] }) });
 
-// ─── MONITORING ENGINE ────────────────────────────────────────────────────────
-// Trip risk profile — downstream value at risk if upstream flight is delayed
-export const getTripRiskProfile = (tripId) =>
-  req("/trips/" + tripId + "/risk-profile");
-
-// Disruption evaluation — compare rescue cost vs downstream loss
-export const evaluateDisruption = ({ tripId, delayMinutes, rescueOptions }) =>
-  req("/disruption/evaluate", {
-    method: "POST",
-    body: JSON.stringify({ trip_id: tripId, delay_minutes: delayMinutes, rescue_options: rescueOptions }),
-  });
-
-// ─── RESCUE DECISION ENGINE ───────────────────────────────────────────────────
-// Rescue search — ranked options across cash and points
-export const searchRescueOptions = ({ origin, destination, date, cabin = "economy", tripId }) =>
-  req("/flights/rescue/search", {
-    method: "POST",
-    body: JSON.stringify({ origin, destination, date, cabin, trip_id: tripId }),
-  });
-
-// Autonomous rescue execution
-export const executeRescue = ({ offerId, tripId, paymentMethod }) =>
-  req("/flights/rescue/execute", {
-    method: "POST",
-    body: JSON.stringify({ offer_id: offerId, trip_id: tripId, payment_method: paymentMethod }),
-  });
-
 // ─── AUTONOMY POLICY ─────────────────────────────────────────────────────────
 // Save user delegation rules — backend is at /policy (not /profile/policy)
 export const updatePolicy = (policy) =>
@@ -245,20 +231,6 @@ export const updatePolicy = (policy) =>
 
 // Get current policy
 export const getPolicy = () => req("/policy");
-
-// ─── LEARNING LOOP ────────────────────────────────────────────────────────────
-// Log post-trip outcome
-export const logOutcome = ({ tripId, predictedDelay, actualDelay, rescueAccepted, notes }) =>
-  req("/outcomes/log", {
-    method: "POST",
-    body: JSON.stringify({
-      trip_id: tripId,
-      predicted_delay: predictedDelay,
-      actual_delay: actualDelay,
-      rescue_accepted: rescueAccepted,
-      notes,
-    }),
-  });
 
 // ROI dashboard — total value saved, accepts period filter: '30d' | '90d' | 'all'
 export const getInsightsROI = (period = "all") => req("/insights/roi?period=" + encodeURIComponent(period));
@@ -497,6 +469,23 @@ export const deleteLeg = (tripId, legId) =>
   req(`/trips/${tripId}/legs/${legId}`, { method: "DELETE" });
 export const addLeg = (tripId, leg) =>
   req(`/trips/${tripId}/legs`, { method: "POST", body: JSON.stringify(leg) });
+
+// Backfill onboarding recap ("here's what I found")
+export const getOnboardingSummary = () => req(`/onboarding/summary`);
+
+// Muted destination photo for trip screens (Unsplash-backed, cached server-side)
+export const getDestinationImage = (city) => req(`/destination/image?city=${encodeURIComponent(city || "")}`);
+
+// Dismiss a signal (swipe-to-dismiss on the Signals feed)
+export const dismissSignal = (id) => req(`/activity/${id}/dismiss`, { method: "POST" });
+
+// ROI history — value protected per month (Insights trend chart)
+export const getInsightsHistory = (months = 12) => req(`/insights/roi/history?months=${months}`);
+
+// Standing orders — per-trip pre-authorized auto-rebooking rules
+export const getStandingOrder = (tripId) => req(`/trips/${tripId}/standing-order`);
+export const setStandingOrder = (tripId, order) =>
+  req(`/trips/${tripId}/standing-order`, { method: "PUT", body: JSON.stringify(order) });
 
 // Itinerary paste import
 export const importPasteItinerary = (text, companions_count, companion_names) =>

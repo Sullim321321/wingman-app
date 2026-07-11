@@ -37,7 +37,6 @@
       }
     },
     "plugins": [
-      "./plugins/withFmtFix",
       "expo-font",
       "expo-calendar",
       [
@@ -59,7 +58,6 @@
           "enableGooglePay": false
         }
       ],
-      "./plugins/withRCTTurboModuleFix",
       "expo-local-authentication",
       "expo-apple-authentication",
       "@react-native-community/datetimepicker",

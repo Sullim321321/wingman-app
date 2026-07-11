@@ -15,7 +15,7 @@ import {
 import * as Clipboard from "expo-clipboard";
 import { useFocusEffect } from "@react-navigation/native";
 import { C, T, SHADOW, litEdge } from "../theme";
-import { BackBar, FadeRise, tap, g } from "../components";
+import { BackBar, FadeRise, tap } from "../components";
 import { getReferral } from "../api";
 
 export default function InviteScreen({ navigation }) {
@@ -187,7 +187,11 @@ const s = StyleSheet.create({
   },
   copyBtn: {
     paddingVertical: 8, paddingHorizontal: 20, borderRadius: 999,
-    borderWidth: 1, borderColor: g(C.gold, 0.35),
+    // C.gold (#C9A96E) at 35%. There is no alpha helper in the theme — `g` is the
+    // shared styles OBJECT from components.js, not a function. Calling it here is
+    // what threw "Object is not a function" inside StyleSheet.create, at import
+    // time, before React could mount: the white screen.
+    borderWidth: 1, borderColor: "rgba(201, 169, 110, 0.35)",
   },
   copyT: { fontFamily: T.sansM, fontSize: 13, color: C.gold },
 

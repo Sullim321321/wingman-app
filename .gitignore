@@ -2,6 +2,14 @@ node_modules/
 .expo/
 dist/
 build/
+
+# Native projects are GENERATED (Continuous Native Generation) — `expo prebuild`
+# and `expo run:ios` create these. They are build output, not source. Committing
+# them means EAS stops regenerating them from app.json/config plugins, and your
+# config silently stops taking effect.
+/ios
+/android
+
 *.orig.*
 .DS_Store
 *.jks

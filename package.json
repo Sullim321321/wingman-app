@@ -8,7 +8,8 @@
     "android": "expo run:android",
     "build:ios": "eas build -p ios --profile preview",
     "submit:ios": "eas submit -p ios --latest",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "check": "node scripts/check-module-scope.js"
   },
   "dependencies": {
     "@expo-google-fonts/dm-sans": "^0.2.3",
@@ -46,7 +47,7 @@
     "react-native-gesture-handler": "~2.24.0",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
-    "react-native-view-shot": "^4.0.3"
+    "react-native-view-shot": "^5.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

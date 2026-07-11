@@ -8,7 +8,6 @@
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#1A1714",
     "icon": "./assets/icon.png",
-    "newArchEnabled": true,
     "splash": {
       "backgroundColor": "#1A1714",
       "resizeMode": "contain",
@@ -62,7 +61,8 @@
       "expo-apple-authentication",
       "@react-native-community/datetimepicker",
       "expo-asset",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-sharing"
     ],
     "extra": {
       "eas": {

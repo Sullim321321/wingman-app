@@ -9,6 +9,28 @@ export function setToken(t) { _token = t; }
 let _on401 = null;
 export function setOn401Handler(fn) { _on401 = fn; }
 
+/**
+ * A timeout signal that actually exists on this engine.
+ *
+ * We were using AbortSignal.timeout(ms). Hermes does not reliably implement it —
+ * and when it's missing, calling it throws a TypeError BEFORE fetch is even
+ * attempted. No request, no status, no response: the caller just sees an opaque
+ * error. In the concierge that surfaced as "That didn't go through", which is
+ * indistinguishable from a server failure and sent us hunting the backend while
+ * the request was never leaving the phone.
+ *
+ * AbortController + setTimeout is plain ES and works on every engine.
+ */
+function timeoutSignal(ms) {
+  const c = new AbortController();
+  const t = setTimeout(() => c.abort(new Error("timeout")), ms);
+  // Don't leak the timer if the request settles first.
+  if (c.signal.addEventListener) {
+    c.signal.addEventListener("abort", () => clearTimeout(t), { once: true });
+  }
+  return c.signal;
+}
+
 // Retry fetch with exponential backoff
 async function fetchWithRetry(url, opts = {}, retries = 2) {
   for (let i = 0; i <= retries; i++) {
@@ -159,7 +181,7 @@ export const sendConciergeMessage = (message, history = [], location = null) =>
   req("/concierge", {
     method: "POST",
     body: JSON.stringify({ message, history, ...(location ? { location } : {}) }),
-    signal: AbortSignal.timeout(65000), // 65s — Render free tier cold-start (up to 50s) + Claude latency
+    signal: timeoutSignal(65000), // 65s — Render cold-start (up to 50s) + Claude latency
   });
 
 // ─── Decisions (chief-of-staff decision cards) ─────────────────────────────────
@@ -537,7 +559,7 @@ export const importPdfOcr = async (fileUri, mimeType = "application/pdf") => {
       method: "POST",
       headers,
       body: formData,
-      signal: AbortSignal.timeout(60000),
+      signal: timeoutSignal(60000),
     });
   } catch (e) {
     throw new Error("No connection — check your internet and try again.");

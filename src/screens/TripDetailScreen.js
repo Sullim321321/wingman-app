@@ -1207,7 +1207,18 @@ export default function TripDetailScreen({ route, navigation }) {
                     accessibilityLabel={a.label}
                   >
                     <Ionicons name={a.icon} size={19} color={a.hero ? C.inkD : C.gold} />
-                    <Text style={[s.actionTileT, a.hero && s.actionTileTHero]} numberOfLines={1}>{a.label}</Text>
+                    {/* "Ask Wingman" is the longest label and was truncating to
+                        "Ask Wingm…" — which reads like a bug in a product whose
+                        whole promise is composure. Shrink to fit rather than clip;
+                        minimumFontScale keeps it legible. */}
+                    <Text
+                      style={[s.actionTileT, a.hero && s.actionTileTHero]}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.8}
+                    >
+                      {a.label}
+                    </Text>
                   </Pressable>
                 ))}
                 {more.length > 0 && (

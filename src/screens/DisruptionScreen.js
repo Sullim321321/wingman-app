@@ -4,8 +4,13 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
-  ActivityIndicator, Alert, Linking, Modal, TextInput, Share, Clipboard,
+  ActivityIndicator, Alert, Linking, Modal, TextInput, Share,
 } from "react-native";
+// Clipboard was being imported from react-native — that's the CORE Clipboard API,
+// deprecated years ago and on its way out of RN entirely. It still resolves today
+// and would simply stop working one SDK from now, silently: the copy button would
+// do nothing and never say so. expo-clipboard is the supported path.
+import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { C, T, SHADOW, litEdge } from "../theme";
@@ -111,9 +116,15 @@ function EC261Card({ ec261, isCancelled }) {
 
 // Draft message modal — shown when cascade action returns a drafted message
 function DraftModal({ visible, title, message, onClose }) {
-  const handleCopy = () => {
-    Clipboard.setString(message || "");
-    Alert.alert("Copied", "Message copied to clipboard.");
+  const handleCopy = async () => {
+    // Await the write before claiming success — telling someone their message is
+    // copied when it isn't is worse than not offering the button.
+    try {
+      await Clipboard.setStringAsync(message || "");
+      Alert.alert("Copied", "Message copied to clipboard.");
+    } catch {
+      Alert.alert("Couldn't copy", "Select the text above and copy it manually.");
+    }
   };
   const handleShare = () => {
     Share.share({ message: message || "" });

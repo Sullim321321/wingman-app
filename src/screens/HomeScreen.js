@@ -30,6 +30,7 @@ import {
 import { scheduleDisruption, schedulePreDepartureBriefing, schedulePostTripDebrief } from "../notify";
 import * as Speech from "expo-speech";
 import { LOCATION_OPT_IN_KEY } from "./SettingsScreen";
+import { syncFlightActivity } from "../liveActivity";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -971,6 +972,18 @@ export default function HomeScreen({ navigation }) {
 
   // Day-of-travel: a focused panel when a flight departs within ~18h — gate, status,
   // countdown, and a tap into live tracking. Home becomes "today" on travel days.
+  // ── Live Activity (lock screen / Dynamic Island) ──────────────────────────
+  // Whenever the trip data changes, tell the lock screen. syncFlightActivity is
+  // idempotent and decides for itself whether anything should be showing — it
+  // starts, updates, or ends as needed. iOS-only; a no-op everywhere else, and it
+  // swallows its own errors, because a courtesy must never break the app.
+  useEffect(() => {
+    const legs = (trips || []).flatMap((t) =>
+      (t.legs || []).map((l) => ({ ...l, trip_id: t.id })),
+    );
+    syncFlightActivity(legs);
+  }, [trips]);
+
   // ── Adaptive home (Roadmap 2, UI #1) ──────────────────────────────────────
   // Home reshapes by where you are in the trip: in-transit → day-of → pre-trip →
   // post-trip → planning. Exactly one hero panel shows, so the screen always leads

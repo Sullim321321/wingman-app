@@ -32,6 +32,19 @@
     },
     "plugins": [
       [
+        "expo-widgets",
+        {
+          "enablePushNotifications": true,
+          "widgets": [
+            {
+              "name": "FlightActivity",
+              "displayName": "Flight",
+              "description": "Your gate, your status, and the time you have left."
+            }
+          ]
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/splash.png",

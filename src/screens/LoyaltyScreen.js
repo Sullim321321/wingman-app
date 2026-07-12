@@ -10,6 +10,7 @@ import { C, T } from "../theme";
 import { BackBar, Btn, g } from "../components";
 import * as SecureStore from "expo-secure-store";
 import { API_BASE } from "../config";
+import { getLoyaltyInsights } from "../api";
 
 // ---------------------------------------------------------------------------
 // Program metadata
@@ -425,8 +426,51 @@ function ConnectModal({ visible, onClose, onConnect, editProgram, editData }) {
 // ---------------------------------------------------------------------------
 // Main screen
 // ---------------------------------------------------------------------------
+// ── What Wingman actually noticed ────────────────────────────────────────────
+// Connecting a loyalty account used to get you a list of numbers back. This is the
+// part that earns the connection: what's expiring, what's within reach, and which
+// booking might not have your number on it.
+//
+// Note what's absent: no "best card for this booking", no award availability. We
+// don't hold earning rates or award inventory, and a chief of staff who guesses
+// confidently about a $4,000 booking is worse than one who says nothing.
+function InsightCard({ item }) {
+  const tone =
+    item.urgency === "high"   ? C.coral
+    : item.urgency === "medium" ? C.gold
+    : C.mut;
+  const icon =
+    item.kind === "points_expiring" ? "hourglass-outline"
+    : item.kind === "status_gap"    ? "trending-up-outline"
+    : "pricetag-outline";
+
+  return (
+    <View style={ins.card}>
+      <View style={ins.head}>
+        <Ionicons name={icon} size={16} color={tone} style={{ marginRight: 8 }} />
+        <Text style={[ins.title, { color: tone }]} numberOfLines={2}>{item.title}</Text>
+      </View>
+      <Text style={ins.body}>{item.body}</Text>
+    </View>
+  );
+}
+
+const ins = StyleSheet.create({
+  wrap:  { marginBottom: 22 },
+  label: { fontFamily: T.sans, fontSize: 10, letterSpacing: T.trackWide, color: C.mut, marginBottom: 10 },
+  card: {
+    backgroundColor: C.card, borderWidth: 1, borderColor: C.line,
+    borderRadius: 14, padding: 14, marginBottom: 8,
+  },
+  head:  { flexDirection: "row", alignItems: "flex-start", marginBottom: 6 },
+  title: { fontFamily: T.sansM, fontSize: 14, flex: 1, lineHeight: 19 },
+  body:  { fontFamily: T.sans, fontSize: 13, lineHeight: 19, color: C.mut },
+  none:  { fontFamily: T.sans, fontSize: 13, lineHeight: 19, color: C.mut },
+});
+
 export default function LoyaltyScreen({ navigation }) {
   const [accounts, setAccounts] = useState([]);
+  const [insights, setInsights] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -449,6 +493,12 @@ export default function LoyaltyScreen({ navigation }) {
       setAccounts(data.accounts || []);
     } catch (e) {
       console.error("[loyalty] fetch error:", e.message);
+    }
+    // Insights are a bonus, not a prerequisite — never let them break the screen.
+    try {
+      setInsights((await getLoyaltyInsights()).insights || []);
+    } catch (_) {
+      setInsights([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -542,6 +592,26 @@ export default function LoyaltyScreen({ navigation }) {
               <Text style={ps.summaryNum}>{accounts.length}</Text>
               <Text style={ps.summaryLabel}>programs</Text>
             </View>
+          </View>
+        )}
+
+        {/* What Wingman noticed — the reason to connect an account at all.
+            Sits ABOVE the balances, because a list of numbers is not a service. */}
+        {!loading && accounts.length > 0 && (
+          <View style={ins.wrap}>
+            <Text style={ins.label}>WHAT NEEDS YOU</Text>
+            {insights.length === 0 ? (
+              <View style={ins.card}>
+                <Text style={ins.none}>
+                  Nothing expiring, nothing within reach of a status bump. I'll tell you
+                  the moment that changes.
+                </Text>
+              </View>
+            ) : (
+              insights.map((item, i) => (
+                <InsightCard key={`${item.kind}-${item.program}-${i}`} item={item} />
+              ))
+            )}
           </View>
         )}
 

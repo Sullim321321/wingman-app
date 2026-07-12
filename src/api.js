@@ -106,6 +106,12 @@ export const verifyCode = (email, code, referralCode) =>
 // ─── REFERRAL ────────────────────────────────────────────────────────────────
 export const getReferral = () => req("/referral");
 
+// ─── LOYALTY ─────────────────────────────────────────────────────────────────
+// Insights derived only from what we actually hold — expiring points, status gaps,
+// and bookings that may be missing your number. Deliberately NOT earning rates or
+// award availability: we don't have that data and won't guess at it.
+export const getLoyaltyInsights = () => req("/loyalty/insights");
+
 export const getPrediction = ({ dep = "DEN", arr = "ASE" } = {}) =>
   req("/predict?dep=" + encodeURIComponent(dep) + "&arr=" + encodeURIComponent(arr));
 

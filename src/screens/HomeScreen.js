@@ -1899,7 +1899,9 @@ const s = StyleSheet.create({
     alignItems: "center",
   },
   statValue: {
-    fontFamily: T.garamondB || T.garamond,
+    // There is no garamondB — EB Garamond ships Regular / Italic / Medium-Italic /
+    // SemiBold-Italic here. The `|| T.garamond` fallback was quietly saving us.
+    fontFamily: T.garamond,
     fontSize: 22,
     color: C.gold,
     letterSpacing: -0.3,

@@ -110,6 +110,11 @@ export default function InsightsScreen({ navigation }) {
   const rescueAcceptRate  = roi?.rescue_accept_rate ?? null;
   const avgTimeSaved      = roi?.avg_time_saved_minutes ?? null;
   const tripsTotal        = roi?.trips_total ?? 0;
+  // Derive the raw count from the rate, so we can show "1 of 1" instead of a
+  // meaningless "100%" when the sample is tiny. The server only sends the rate.
+  const rescuesAccepted = (rescueAcceptRate != null && disruptionsHandled > 0)
+    ? Math.round((rescueAcceptRate / 100) * disruptionsHandled)
+    : null;
   const bestRescueValue   = roi?.best_rescue_value ?? null;
   const bestRescueFlight  = roi?.best_rescue_flight ?? null;
   const protectedSince    = roi?.protected_since ?? null;
@@ -197,7 +202,12 @@ export default function InsightsScreen({ navigation }) {
             {tripsTotal > 0 && (
               <View style={s.streakCard}>
                 <Text style={s.streakValue}>{tripsTotal}</Text>
-                <Text style={s.streakLabel}>Trips protected</Text>
+                {/* Was "Trips protected". They weren't protected — they were read out
+                    of an inbox. Wingman has handled exactly one disruption. Claiming
+                    46 trips were "protected" is the app flattering itself, and the
+                    moment a user notices, they stop believing the numbers that ARE
+                    true. "Tracked" is what actually happened. */}
+                <Text style={s.streakLabel}>Trips tracked</Text>
                 <Text style={s.streakSub}>{protectedSinceStr ? `Since ${protectedSinceStr}` : "Total with Wingman"}</Text>
               </View>
             )}
@@ -211,27 +221,40 @@ export default function InsightsScreen({ navigation }) {
           </View>
         )}
 
-        {/* Stats grid */}
+        {/* ── Stats grid ─────────────────────────────────────────────────────────
+            A percentage computed from ONE data point is not a statistic, it's a
+            coincidence. "100% rescue accept rate" from a single accepted option
+            reads like a boast and tells you nothing — and once a reader clocks
+            that, they discount every other number on the screen.
+
+            So: below three disruptions, we show the raw count instead of a rate.
+            "1 of 1" is honest and still says something. And the empty "Prediction
+            accuracy —" card is gone: a card with no value in it is furniture. */}
         <View style={s.statsGrid}>
           <StatCard
             value={disruptionsHandled > 0 ? String(disruptionsHandled) : "—"}
             label="Disruptions handled"
             sub="Delays, cancellations, cascades"
           />
-          <StatCard
-            value={rescueAcceptRate != null ? `${rescueAcceptRate}%` : "—"}
-            label="Rescue accept rate"
-            sub="Options you approved"
-          />
+          {disruptionsHandled >= 3 ? (
+            <StatCard
+              value={rescueAcceptRate != null ? `${rescueAcceptRate}%` : "—"}
+              label="Rescue accept rate"
+              sub="Options you approved"
+            />
+          ) : (
+            <StatCard
+              value={rescuesAccepted != null && disruptionsHandled > 0
+                ? `${rescuesAccepted}/${disruptionsHandled}`
+                : "—"}
+              label="Rescues accepted"
+              sub={disruptionsHandled > 0 ? "Too few for a rate yet" : "Nothing to rescue yet"}
+            />
+          )}
           <StatCard
             value={avgTimeSaved != null ? `${avgTimeSaved}m` : "—"}
             label="Avg. time saved"
             sub="Per disruption resolved"
-          />
-          <StatCard
-            value="—"
-            label="Prediction accuracy"
-            sub="Builds with each trip"
           />
         </View>
 
@@ -300,9 +323,12 @@ export default function InsightsScreen({ navigation }) {
         <View style={s.learnCard}>
           <Text style={s.learnIcon}>◈</Text>
           <View style={{ flex: 1 }}>
-            <Text style={s.learnTitle}>Compound the moat</Text>
+            {/* Was "Compound the moat" — investor-deck language, in a product, aimed
+                at someone who just wants their flight sorted. Nobody using a travel
+                app is thinking about moats. Say the thing plainly instead. */}
+            <Text style={s.learnTitle}>It gets better as you travel</Text>
             <Text style={s.learnBody}>
-              Every predicted vs. actual outcome feeds Wingman's model — compounding accuracy over time. The more you travel, the smarter it gets.
+              Every time Wingman predicts something and you tell it what actually happened, it gets sharper — about your airports, your airlines, your tolerance for a tight connection.
             </Text>
           </View>
         </View>

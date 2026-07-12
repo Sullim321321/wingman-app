@@ -176,11 +176,21 @@ export default function ActivityScreen({ navigation }) {
     return true;
   });
 
-  // Routine bookkeeping (imports, status, trip-created) is NOT an active signal. Only
-  // things that may need the traveller's attention lead the feed; imports drop below.
+  // ── Imports are plumbing, not intelligence ──────────────────────────────────
+  //
+  // The screen said "All clear. Nothing needs your attention." and then showed a
+  // wall of "Hotel imported: Grand Hôtel Stockholm", one row per booking. That is
+  // Wingman narrating its own filing. It's proof the machine is running, and worth
+  // exactly one line — not twenty.
+  //
+  // So they collapse into a single summary row. The feed below EARLIER is then
+  // what it should be: things that DID need you, and were dealt with.
   const isRoutine = (e) => ["import", "status", "hotel_email", "trip"].includes(e.type);
   const activeSignals = dedupedEvents.filter(e => isActive(e) && !isRoutine(e));
-  const olderSignals  = dedupedEvents.filter(e => !(isActive(e) && !isRoutine(e)));
+
+  const routineEvents = dedupedEvents.filter(isRoutine);
+  const olderSignals  = dedupedEvents.filter(e => !isRoutine(e) && !(isActive(e)));
+  const importCount   = routineEvents.length;
   const disruptionCount = activeSignals.filter(e =>
     ["disruption", "delay", "weather"].includes(e.type)
   ).length;
@@ -272,24 +282,43 @@ export default function ActivityScreen({ navigation }) {
             )}
 
             {/* ── Older signals ── */}
-            {olderSignals.length > 0 && (
+            {(olderSignals.length > 0 || importCount > 0) && (
               <>
                 <View style={s.earlierRule}>
                   <View style={s.earlierLine} />
                   <Text style={s.earlierLabel}>EARLIER</Text>
                   <View style={s.earlierLine} />
                 </View>
-                <View style={s.feedBlock}>
-                  {olderSignals.map((event, i) => (
-                    <SignalRow
-                      key={event.id || i}
-                      event={event}
-                      onAction={handleAction}
-                      onDismiss={handleDismiss}
-                      showBorder={i > 0}
-                    />
-                  ))}
-                </View>
+
+                {/* Every booking Wingman filed, in one line. Was twenty rows of
+                    "Hotel imported: …" — the machine narrating its own filing. */}
+                {importCount > 0 && (
+                  <Pressable
+                    style={s.importSummary}
+                    onPress={() => { tap(); navigation.navigate("Trips"); }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${importCount} bookings filed from your inbox. Open trips.`}
+                  >
+                    <Text style={s.importSummaryT}>
+                      {importCount} {importCount === 1 ? "booking" : "bookings"} filed from your inbox
+                    </Text>
+                    <Text style={s.importSummaryChev}>›</Text>
+                  </Pressable>
+                )}
+
+                {olderSignals.length > 0 && (
+                  <View style={s.feedBlock}>
+                    {olderSignals.map((event, i) => (
+                      <SignalRow
+                        key={event.id || i}
+                        event={event}
+                        onAction={handleAction}
+                        onDismiss={handleDismiss}
+                        showBorder={i > 0}
+                      />
+                    ))}
+                  </View>
+                )}
               </>
             )}
 
@@ -368,6 +397,24 @@ const s = StyleSheet.create({
   },
 
   // ── Feed block ──
+  // Twenty "Hotel imported" rows, reduced to one line. Deliberately understated —
+  // it's a receipt for work already done, not something that needs you.
+  importSummary: {
+    marginHorizontal: 24,
+    marginBottom: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  importSummaryT: { fontFamily: T.sans, fontSize: 13, color: C.mut, flex: 1 },
+  importSummaryChev: { fontFamily: T.sans, fontSize: 18, color: C.mut, marginLeft: 8 },
+
   feedBlock: {
     marginHorizontal: 24,
     backgroundColor: C.card,

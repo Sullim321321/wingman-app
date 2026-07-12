@@ -941,18 +941,41 @@ export default function TripDetailScreen({ route, navigation }) {
             const tb = b.departs_at || b.arrives_at || '';
             return ta < tb ? -1 : ta > tb ? 1 : 0;
           });
+          // ── Rides are receipts, not itinerary items ──────────────────────────
+          //
+          // A Stockholm trip was rendering 28 "bookings", most of them individual
+          // Uber rides: "Uber 10:36 AM – 10:44 AM". An eight-minute taxi is not
+          // something a chief of staff briefs you on. It's an expense — and it's
+          // already in the expense report.
+          //
+          // But we don't DELETE them, because they're real and they cost money.
+          // They collapse into one quiet line per day: "3 rides". The spine of the
+          // trip — flights, hotels, trains, the dinner you chose — stays legible.
+          const isRide = (l) =>
+            (l.type === 'car' || l.type === 'transfer') &&
+            !l.confirmation_required &&
+            // A booked car HIRE (multi-day, has a dropoff) is a real itinerary item.
+            // A point-to-point ride is not.
+            !(l.vehicle_class || l.nights);
+
           // Group by date
           const groups = {};
           for (const leg of sorted) {
             const d = fmt(leg.departs_at || leg.arrives_at) || 'TBD';
-            if (!groups[d]) groups[d] = [];
-            groups[d].push(leg);
+            if (!groups[d]) groups[d] = { legs: [], rides: 0 };
+            if (isRide(leg)) groups[d].rides += 1;
+            else groups[d].legs.push(leg);
           }
           const TYPE_ICON = { flight: 'airplane-outline', hotel: 'bed-outline', airbnb: 'home-outline', train: 'train-outline', car: 'car-outline', ferry: 'boat-outline', activity: 'ticket-outline', transfer: 'car-outline', cruise: 'boat-outline', dining: 'restaurant-outline', restaurant: 'restaurant-outline', other: 'bookmark-outline' };
           return (
             <>
               <Text style={s.sectionLabel}>ITINERARY</Text>
-              {Object.entries(groups).map(([date, dayLegs], gi) => (
+              {Object.entries(groups)
+                // A day with nothing but taxis is not a day worth a heading.
+                .filter(([, g]) => g.legs.length > 0 || g.rides > 0)
+                .map(([date, group], gi) => {
+                const dayLegs = group.legs;
+                return (
                 <View key={gi} style={s.dayGroup}>
                   <Text style={s.dayLabel}>{date}</Text>
                   {dayLegs.map((leg, li) => {
@@ -983,8 +1006,17 @@ export default function TripDetailScreen({ route, navigation }) {
                       </View>
                     );
                   })}
+
+                  {/* The day's taxis, in one line. They cost money and they're real —
+                      they're just not a briefing. Full detail lives in Trip expenses. */}
+                  {group.rides > 0 && (
+                    <Text style={s.ridesLine}>
+                      {group.rides} {group.rides === 1 ? "ride" : "rides"}
+                    </Text>
+                  )}
                 </View>
-              ))}
+                );
+              })}
             </>
           );
         })()}
@@ -1637,6 +1669,15 @@ const s = StyleSheet.create({
     borderColor: C.line,
     borderRadius: 8,
     overflow: 'hidden',
+  },
+  // Deliberately quiet: a footnote, not a row. Rides are context, not content.
+  ridesLine: {
+    fontFamily: T.sans,
+    fontSize: 12,
+    color: C.mut,
+    paddingHorizontal: 14,
+    paddingBottom: 12,
+    paddingTop: 2,
   },
   dayLabel: {
     fontFamily: T.sansM,

@@ -13,7 +13,11 @@ import { tap, FadeRise } from "../components";
 import { ShareCardModal } from "../components/ShareCard";
 import { DestinationImage } from "../components/DestinationImage";
 import { Ionicons } from "@expo/vector-icons";
-import * as Calendar from "expo-calendar";
+// SDK 56 silently swapped expo-calendar's default export to a NEW object-oriented
+// API and moved the original to /legacy. Expo filed this under "Deprecations", not
+// "Breaking changes" — so it compiles clean and then misbehaves at runtime, which
+// is the worst possible failure mode. This code uses the original API.
+import * as Calendar from "expo-calendar/legacy";
 import {
   getFlightStatus, getPrediction, refreshTrip, getTripRisk,
   recordTripOutcome, shareTripLink, getDestinationIntel,

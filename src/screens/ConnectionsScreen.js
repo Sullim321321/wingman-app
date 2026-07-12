@@ -6,7 +6,9 @@ import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
   Alert, ActivityIndicator, TextInput, Linking, AppState, Share,
 } from "react-native";
-import * as Calendar from "expo-calendar";
+// SDK 56: default export is now the NEW API; the original moved to /legacy.
+// Filed as a "Deprecation", so nothing warns — it compiles and misbehaves.
+import * as Calendar from "expo-calendar/legacy";
 import * as DocumentPicker from "expo-document-picker";
 import * as Clipboard from "expo-clipboard";
 import { C, T } from "../theme";

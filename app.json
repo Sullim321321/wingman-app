@@ -8,11 +8,6 @@
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#1A1714",
     "icon": "./assets/icon.png",
-    "splash": {
-      "backgroundColor": "#1A1714",
-      "resizeMode": "contain",
-      "image": "./assets/splash.png"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "club.welcometothefight.wingman",
@@ -36,6 +31,14 @@
       }
     },
     "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#1A1714"
+        }
+      ],
       "expo-font",
       "expo-calendar",
       [
@@ -62,7 +65,8 @@
       "@react-native-community/datetimepicker",
       "expo-asset",
       "expo-secure-store",
-      "expo-sharing"
+      "expo-sharing",
+      "expo-status-bar"
     ],
     "extra": {
       "eas": {

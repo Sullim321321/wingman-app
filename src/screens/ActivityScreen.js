@@ -312,7 +312,7 @@ export default function ActivityScreen({ navigation }) {
 
 const s = StyleSheet.create({
   root:   { flex: 1, backgroundColor: C.bg },
-  scroll: { paddingBottom: 96 },
+  scroll: { paddingBottom: 140 },   // clears the floating "Ask Wingman" pill AND the tab bar
 
   // ── Masthead ──
   masthead: {

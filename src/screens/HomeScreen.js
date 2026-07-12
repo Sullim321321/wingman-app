@@ -1349,13 +1349,26 @@ export default function HomeScreen({ navigation }) {
                 </View>
               ) : null}
 
-              {/* Add Trip shortcut — only when no trips */}
+              {/* ── Add-trip shortcut ──────────────────────────────────────────
+                  `trips` holds UPCOMING trips only. Someone with 46 past trips and
+                  nothing booked has an empty array — so this used to greet them
+                  with "+ Add your FIRST trip", directly beneath a stats bar reading
+                  "16 trips · 6,400 miles". The app knew two things and believed
+                  both.
+
+                  Truly new (no history at all) → "Add your first trip".
+                  Has history, nothing booked → "Add your next trip". */}
               {!trips.length && !briefingLoading ? (
                 <Pressable
                   style={s.addTripShortcut}
                   onPress={() => { tap(); navigation.navigate("AddTrip"); }}
+                  accessibilityRole="button"
                 >
-                  <Text style={s.addTripShortcutT}>+ Add your first trip</Text>
+                  <Text style={s.addTripShortcutT}>
+                    {Number(travelStats?.total_trips) > 0
+                      ? "+ Add your next trip"
+                      : "+ Add your first trip"}
+                  </Text>
                 </Pressable>
               ) : null}
             </>
@@ -1740,7 +1753,7 @@ const s = StyleSheet.create({
 
   // ── Scroll content ──
   scrollContent: {
-    paddingBottom: 8,
+    paddingBottom: 16,
   },
 
   // ── Edition line ──

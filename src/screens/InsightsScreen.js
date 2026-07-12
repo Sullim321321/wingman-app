@@ -150,7 +150,7 @@ export default function InsightsScreen({ navigation }) {
 
   return (
     <SafeAreaView style={s.app}>
-      <ScrollView contentContainerStyle={[g.scroll, { paddingBottom: 96 }]}>
+      <ScrollView contentContainerStyle={[g.scroll, { paddingBottom: 140 }]}>
         <BackBar nav={navigation} label="Insights" />
 
         {/* Hero ROI card — warm gold-tinted gradient, editorial serif value */}

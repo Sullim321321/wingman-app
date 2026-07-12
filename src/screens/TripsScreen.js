@@ -509,7 +509,7 @@ const s = StyleSheet.create({
     backgroundColor: C.bg,
   },
   scroll: {
-    paddingBottom: 96,
+    paddingBottom: 140,
   },
 
   // ── Segmented view control ──

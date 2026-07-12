@@ -363,31 +363,17 @@ export default function SettingsScreen({ navigation }) {
           </Text>
         </View>
 
-        {/* ── Briefing time hero — most important daily setting, first thing you see ————————————— */}
+        {/* ── Briefing time hero ────────────────────────────────────────────────
+            Was a ROW: label+time on the left, four time buttons and a switch on
+            the right. The button cluster has a fixed width, so it squeezed the
+            left column until the text broke MID-WORD — "MORNIN / G BRIEFIN / G",
+            and "7:0 / 0". A column can't be squeezed, because nothing is
+            competing for the width. */}
         <View style={s.briefingHero}>
-          <View style={s.briefingHeroLeft}>
-            <Text style={s.briefingHeroLabel}>MORNING BRIEFING</Text>
-            <Text style={s.briefingHeroTime}>{briefingHour}:00</Text>
-            <Text style={s.briefingHeroSub}>
-              {briefingEnabled ? "Your brief arrives each morning at this time." : "Daily briefing is paused."}
-            </Text>
-          </View>
-          <View style={s.briefingHeroRight}>
-            <View style={{ flexDirection: "row", gap: 6, marginBottom: 10 }}>
-              {[6, 7, 8, 9].map(h => (
-                <TouchableOpacity
-                  key={h}
-                  onPress={async () => {
-                    setBriefingHour(h);
-                    try { await updateBriefingTime(h); } catch {}
-                  }}
-                  style={[s.briefingTimeBtn, briefingHour === h && s.briefingTimeBtnActive]}
-                >
-                  <Text style={[s.briefingTimeBtnT, briefingHour === h && s.briefingTimeBtnTActive]}>
-                    {h}am
-                  </Text>
-                </TouchableOpacity>
-              ))}
+          <View style={s.briefingHeroTop}>
+            <View style={{ flex: 1, marginRight: 12 }}>
+              <Text style={s.briefingHeroLabel} numberOfLines={1}>MORNING BRIEFING</Text>
+              <Text style={s.briefingHeroTime} numberOfLines={1}>{briefingHour}:00</Text>
             </View>
             <Switch
               value={briefingEnabled}
@@ -399,6 +385,30 @@ export default function SettingsScreen({ navigation }) {
               thumbColor={briefingEnabled ? C.inkD : C.mut}
               ios_backgroundColor={C.card2}
             />
+          </View>
+
+          <Text style={s.briefingHeroSub}>
+            {briefingEnabled ? "Your brief arrives each morning at this time." : "Daily briefing is paused."}
+          </Text>
+
+          <View style={s.briefingTimeRow}>
+            {[6, 7, 8, 9].map(h => (
+              <TouchableOpacity
+                key={h}
+                onPress={async () => {
+                  setBriefingHour(h);
+                  try { await updateBriefingTime(h); } catch {}
+                }}
+                style={[s.briefingTimeBtn, briefingHour === h && s.briefingTimeBtnActive]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: briefingHour === h }}
+                accessibilityLabel={`Briefing at ${h} a.m.`}
+              >
+                <Text style={[s.briefingTimeBtnT, briefingHour === h && s.briefingTimeBtnTActive]}>
+                  {h}am
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 
@@ -649,9 +659,6 @@ const s = StyleSheet.create({
   // Quick profile shortcuts
   // ── Briefing hero card ──
   briefingHero: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
     marginHorizontal: 20,
     marginBottom: 20,
     marginTop: 4,
@@ -662,7 +669,8 @@ const s = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 18,
   },
-  briefingHeroLeft: { flex: 1, marginRight: 12 },
+  briefingHeroTop: { flexDirection: "row", alignItems: "center" },
+  briefingTimeRow: { flexDirection: "row", gap: 8, marginTop: 14 },
   briefingHeroLabel: {
     fontFamily: T.sansM,
     fontSize: 9,
@@ -685,7 +693,6 @@ const s = StyleSheet.create({
     marginTop: 4,
     lineHeight: 16,
   },
-  briefingHeroRight: { alignItems: "flex-end" },
   briefingTimeBtn: {
     paddingHorizontal: 10,
     paddingVertical: 6,

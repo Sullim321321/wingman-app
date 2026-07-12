@@ -449,9 +449,22 @@ export default function TripDetailScreen({ route, navigation }) {
     getChecklist(trip.id)
       .then(d => { if (d?.checklist) setChecklist(d.checklist); })
       .catch(() => {});
-    // Load show nights
+    // Load show nights.
+    //
+    // Only keep the ones that are actually SOMETHING. Rows arrive from the parser
+    // with no date and no name, and the UI rendered them faithfully: three cards
+    // reading "Invalid Date · Invalid Date / Show". A row with no date and no title
+    // is not a show — it's a parse failure, and showing it is worse than showing
+    // nothing. If none survive, the section hides itself.
     getShowNights(trip.id)
-      .then(d => { if (d?.show_nights?.length) setShowNights(d.show_nights); })
+      .then(d => {
+        const usable = (d?.show_nights || []).filter(sn => {
+          const when = sn.departs_at || sn.date;
+          const named = sn.carrier || sn.title || sn.venue;
+          return when && !Number.isNaN(new Date(when).getTime()) && named;
+        });
+        setShowNights(usable);
+      })
       .catch(() => {});
     // Sync companions count from trip object
     if (trip.companions_count) setCompanionsCount(trip.companions_count);

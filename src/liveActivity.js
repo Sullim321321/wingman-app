@@ -45,6 +45,13 @@ function factory() {
   }
 }
 
+// Wingman's palette. Restated here (not imported from theme.js) because these
+// values get passed INTO the widget extension, which is compiled separately and
+// shares no module graph with the app.
+const GOLD  = "#C9A96E";
+const CORAL = "#E5806B";   // delayed / cancelled
+const MINT  = "#7FC8A9";   // boarding
+
 function statusLabel(leg) {
   const s = (leg.status || "").toLowerCase();
   if (s.includes("cancel")) return "Cancelled";
@@ -56,34 +63,46 @@ function statusLabel(leg) {
   return "On time";
 }
 
-function statusKey(leg) {
+function accentFor(leg) {
   const s = (leg.status || "").toLowerCase();
-  if (s.includes("cancel")) return "cancelled";
-  if (s.includes("board"))  return "boarding";
-  if (s.includes("delay"))  return "delayed";
-  return "on_time";
+  if (s.includes("cancel") || s.includes("delay")) return CORAL;
+  if (s.includes("board")) return MINT;
+  return GOLD;
 }
 
+/**
+ * Build the widget's props.
+ *
+ * EVERYTHING is finished here — every string, colour and label arrives ready to
+ * draw. The widget is compiled to Swift, so it cannot call .toUpperCase(), cannot
+ * interpolate a template literal, and cannot run a helper. It can only render what
+ * it is handed. (A first version ignored that and the Swift compiler rejected it
+ * with "expected identifier after '.' expression" — which is what a method call
+ * looks like after it's been translated.)
+ */
 function propsFor(leg) {
   const departs = new Date(leg.departs_at);
+
   // Prefer a real boarding time. If we don't have one, count down to DEPARTURE and
-  // say so — rather than inventing a boarding time and being confidently wrong,
-  // which is the failure mode we've been chasing all week.
+  // SAY so — rather than inventing a boarding time and being confidently wrong,
+  // which is the failure mode we've spent this whole project chasing.
   const boarding = leg.boarding_time ? new Date(leg.boarding_time) : null;
   const target = boarding || departs;
 
+  const label = statusLabel(leg);
+  const route = `${leg.origin || "?"} → ${leg.destination || "?"}`;
+
   return {
-    carrier: leg.carrier || "",
     flightNumber: leg.flight_number || leg.carrier || "Flight",
-    origin: leg.origin || "",
-    destination: leg.destination || "",
-    gate: leg.gate || "",
-    terminal: leg.terminal || "",
-    status: statusKey(leg),
-    statusLabel: statusLabel(leg),
+    route,
+    statusLabel: label,
+    accent: accentFor(leg),
+    gate: leg.gate || "—",
+    // Pre-uppercased: the widget cannot do it.
+    countdownLabel: boarding ? "UNTIL BOARDING" : "UNTIL DEPARTURE",
+    detail: leg.terminal ? `${label} · Terminal ${leg.terminal}` : label,
     countdownFrom: new Date(),
     countdownTo: target,
-    countdownLabel: boarding ? "until boarding" : "until departure",
   };
 }
 

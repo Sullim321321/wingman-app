@@ -58,5 +58,8 @@
     "@babel/core": "^7.20.0",
     "patch-package": "^8.0.1"
   },
-  "private": true
+  "private": true,
+  "overrides": {
+    "react-dom": "19.2.3"
+  }
 }

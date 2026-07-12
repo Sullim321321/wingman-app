@@ -1,12 +1,16 @@
-// InviteScreen — the referral loop.
+// InviteScreen — an introduction, not a coupon.
 //
-// The pitch is deliberately not "get free stuff." Wingman's promise is that
-// someone competent is quietly handling your travel; the thing worth sharing is
-// that relief, not a coupon. So the screen leads with what your friend gets and
-// treats your own reward as a footnote.
+// The first version of this paid in Wingman Points: "they start with 250 points,
+// you get 500." That was the gamification layer talking. A private travel office
+// does not run a referral programme. It grows because one member introduces
+// another, and the introduction itself is the currency.
 //
-// It also reports invited and activated SEPARATELY. "12 invited" is a vanity
-// number — it counts people who did nothing. "3 travelling" is the real one.
+// So there is no reward here. Nothing to earn, no tier to climb. The offer is:
+// *someone you care about gets looked after*. If that isn't reason enough, a
+// discount wasn't going to fix it.
+//
+// What we DO show is the only honest number: how many of the people you brought
+// are actually travelling with Wingman. Not "invited" — travelling.
 import React, { useState, useCallback } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, StyleSheet, Share,
@@ -30,7 +34,7 @@ export default function InviteScreen({ navigation }) {
       setData(await getReferral());
       setErr("");
     } catch (_) {
-      setErr("Couldn't load your invite code. Pull to try again.");
+      setErr("Couldn't load your invitation.");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -46,9 +50,12 @@ export default function InviteScreen({ navigation }) {
     tap();
     try {
       await Share.share({
+        // Reads like a note from a person, not a promo. No exclamation marks, no
+        // "sign up today", no reward mentioned — because there isn't one.
         message:
-          `I've been using Wingman — it watches my flights and sorts out the mess before I know there is one.\n\n` +
-          `Use my invite code ${code} when you sign up and you'll start with ${data.friend_points} points.`,
+          `I've been using Wingman. It watches my flights and sorts out the mess ` +
+          `before I know there is one — hotels told, dinners moved, cars pushed back.\n\n` +
+          `If you'd like it to do the same for you, my invitation code is ${code}.`,
       });
     } catch (_) {}
   };
@@ -63,7 +70,7 @@ export default function InviteScreen({ navigation }) {
 
   return (
     <SafeAreaView style={s.app}>
-      <BackBar nav={navigation} label="Invite" />
+      <BackBar nav={navigation} label="Invitations" />
 
       <ScrollView
         contentContainerStyle={s.body}
@@ -78,23 +85,24 @@ export default function InviteScreen({ navigation }) {
         {loading ? (
           <ActivityIndicator color={C.gold} style={{ marginTop: 56 }} />
         ) : err || !data ? (
-          <Text style={s.err}>{err || "Couldn't load your invite code."}</Text>
+          <Text style={s.err}>{err || "Couldn't load your invitation."}</Text>
         ) : (
           <>
             <FadeRise delay={40}>
               <Text style={s.hed}>Give someone their evening back.</Text>
               <Text style={s.dek}>
-                Anyone who joins with your code starts with {data.friend_points} points —
-                and a Wingman watching their flights from the first day.
+                Wingman takes on a small number of travellers at a time. If there's
+                someone whose travel you'd like looked after the way yours is, this
+                is how they get in.
               </Text>
             </FadeRise>
 
             <FadeRise delay={120}>
               <View style={s.codeCard}>
-                <Text style={s.codeLabel}>YOUR INVITE CODE</Text>
+                <Text style={s.codeLabel}>YOUR INVITATION</Text>
                 <Text
                   style={s.code}
-                  accessibilityLabel={`Your invite code is ${String(code).split("").join(" ")}`}
+                  accessibilityLabel={`Your invitation code is ${String(code).split("").join(" ")}`}
                 >
                   {code}
                 </Text>
@@ -102,9 +110,9 @@ export default function InviteScreen({ navigation }) {
                   onPress={copyCode}
                   style={s.copyBtn}
                   accessibilityRole="button"
-                  accessibilityLabel="Copy invite code"
+                  accessibilityLabel="Copy invitation code"
                 >
-                  <Text style={s.copyT}>{copied ? "Copied" : "Copy code"}</Text>
+                  <Text style={s.copyT}>{copied ? "Copied" : "Copy"}</Text>
                 </Pressable>
               </View>
             </FadeRise>
@@ -114,39 +122,21 @@ export default function InviteScreen({ navigation }) {
                 onPress={shareInvite}
                 style={s.shareBtn}
                 accessibilityRole="button"
-                accessibilityLabel="Share your invitation"
+                accessibilityLabel="Send your invitation"
               >
-                <Text style={s.shareT}>Share invitation</Text>
+                <Text style={s.shareT}>Send it</Text>
               </Pressable>
             </FadeRise>
 
-            {/* Honest scoreboard. "Signed up" is context; "travelling" is the number. */}
-            <FadeRise delay={240}>
-              <View style={s.stats}>
-                <View style={s.stat}>
-                  <Text style={s.statN}>{data.activated}</Text>
-                  <Text style={s.statL}>travelling{"\n"}with Wingman</Text>
-                </View>
-                <View style={s.statDiv} />
-                <View style={s.stat}>
-                  <Text style={s.statN}>{data.invited}</Text>
-                  <Text style={s.statL}>signed up</Text>
-                </View>
-                <View style={s.statDiv} />
-                <View style={s.stat}>
-                  <Text style={s.statN}>{Number(data.points_earned || 0).toLocaleString()}</Text>
-                  <Text style={s.statL}>points{"\n"}earned</Text>
-                </View>
-              </View>
-            </FadeRise>
-
-            <FadeRise delay={300}>
-              <Text style={s.fine}>
-                Your {data.reward_points} points arrive once someone you invited actually starts
-                using Wingman — connects their email, or adds a trip. Not merely for signing up.
-                A real traveller is worth rewarding; a new row in a database isn't.
-              </Text>
-            </FadeRise>
+            {/* One number, and it's the only one that means anything. Not "12
+                invited" — that counts people who did nothing. */}
+            {data.activated > 0 && (
+              <FadeRise delay={240}>
+                <Text style={s.tally}>
+                  {data.activated} {data.activated === 1 ? "person you introduced is" : "people you introduced are"} travelling with Wingman.
+                </Text>
+              </FadeRise>
+            )}
           </>
         )}
       </ScrollView>
@@ -156,13 +146,13 @@ export default function InviteScreen({ navigation }) {
 
 const s = StyleSheet.create({
   app:  { flex: 1, backgroundColor: C.bg },
-  body: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 96 },
+  body: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 140 },
 
-  hed: { fontFamily: T.garamondSI, fontSize: 30, lineHeight: 38, color: C.ink, marginBottom: 10 },
-  dek: { fontFamily: T.sans, fontSize: 15, lineHeight: 22, color: C.mut, marginBottom: 26 },
+  hed: { fontFamily: T.garamondSI, fontSize: 30, lineHeight: 38, color: C.ink, marginBottom: 12 },
+  dek: { fontFamily: T.sans, fontSize: 15, lineHeight: 23, color: C.mut, marginBottom: 30 },
 
   codeCard: {
-    padding: 24,
+    padding: 26,
     borderRadius: 16,
     alignItems: "center",
     backgroundColor: C.card,
@@ -173,48 +163,33 @@ const s = StyleSheet.create({
     ...SHADOW.soft,
   },
   codeLabel: {
-    fontFamily: T.sans, fontSize: 10, letterSpacing: T.trackWide,
-    color: C.mut, marginBottom: 14,
+    fontFamily: T.sans, fontSize: 9, letterSpacing: T.trackWide,
+    color: C.mut, marginBottom: 16,
   },
   code: {
     fontFamily: T.serifB,
     fontSize: 38,
     color: C.gold,
     letterSpacing: 8,
-    // Trailing letter-spacing pushes the last glyph off-centre; nudge it back.
-    marginLeft: 8,
-    marginBottom: 18,
+    marginLeft: 8,   // trailing letter-spacing pushes the last glyph off-centre
+    marginBottom: 20,
   },
   copyBtn: {
-    paddingVertical: 8, paddingHorizontal: 20, borderRadius: 999,
-    // C.gold (#C9A96E) at 35%. There is no alpha helper in the theme — `g` is the
-    // shared styles OBJECT from components.js, not a function. Calling it here is
-    // what threw "Object is not a function" inside StyleSheet.create, at import
-    // time, before React could mount: the white screen.
+    paddingVertical: 8, paddingHorizontal: 22, borderRadius: 999,
     borderWidth: 1, borderColor: "rgba(201, 169, 110, 0.35)",
   },
   copyT: { fontFamily: T.sansM, fontSize: 13, color: C.gold },
 
   shareBtn: {
     backgroundColor: C.gold, borderRadius: 14,
-    paddingVertical: 16, alignItems: "center", marginBottom: 28,
+    paddingVertical: 16, alignItems: "center", marginBottom: 26,
   },
-  shareT: { fontFamily: T.sansB, fontSize: 15, color: C.bg },
+  shareT: { fontFamily: T.sansB, fontSize: 15, color: C.inkD },
 
-  stats: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    paddingVertical: 18,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: C.line,
-    marginBottom: 20,
+  tally: {
+    fontFamily: T.garamondI, fontSize: 16, lineHeight: 24,
+    color: C.mut, textAlign: "center",
   },
-  stat:    { flex: 1, alignItems: "center" },
-  statDiv: { width: StyleSheet.hairlineWidth, alignSelf: "stretch", backgroundColor: C.line },
-  statN:   { fontFamily: T.serifB, fontSize: 24, color: C.ink, marginBottom: 5 },
-  statL:   { fontFamily: T.sans, fontSize: 11, lineHeight: 15, color: C.mut, textAlign: "center" },
 
-  fine: { fontFamily: T.sans, fontSize: 13, lineHeight: 20, color: C.mut },
-  err:  { fontFamily: T.sans, fontSize: 15, color: C.mut, textAlign: "center", marginTop: 56 },
+  err: { fontFamily: T.sans, fontSize: 15, color: C.mut, textAlign: "center", marginTop: 56 },
 });

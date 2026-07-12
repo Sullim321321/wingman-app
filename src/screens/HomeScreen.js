@@ -1329,25 +1329,16 @@ export default function HomeScreen({ navigation }) {
                 </ScrollView>
               ) : null}
 
-              {/* Travel stats strip — trips this year / miles / nights */}
-              {travelStats && travelStats.total_trips > 0 && !briefingLoading ? (
-                <View style={s.statsStrip}>
-                  <View style={s.statItem}>
-                    <Text style={s.statValue}>{travelStats.trips_this_year}</Text>
-                    <Text style={s.statLabel}>trips {travelStats.year}</Text>
-                  </View>
-                  <View style={s.statDivider} />
-                  <View style={s.statItem}>
-                    <Text style={s.statValue}>{travelStats.miles_this_year > 0 ? travelStats.miles_this_year.toLocaleString() : travelStats.total_trips}</Text>
-                    <Text style={s.statLabel}>{travelStats.miles_this_year > 0 ? "est. miles" : "total trips"}</Text>
-                  </View>
-                  <View style={s.statDivider} />
-                  <View style={s.statItem}>
-                    <Text style={s.statValue}>{travelStats.nights_away_this_year}</Text>
-                    <Text style={s.statLabel}>nights away</Text>
-                  </View>
-                </View>
-              ) : null}
+              {/* ── The stats strip is gone ────────────────────────────────────
+                  "16 TRIPS · 6,400 EST. MILES · 81 NIGHTS AWAY."
+
+                  That's a fitness tracker. It flatters the reader and tells them
+                  nothing they can act on — and a private travel office does not
+                  congratulate you on your mileage. It's the same instinct as the
+                  points system: performing value instead of delivering it.
+
+                  travelStats is still fetched; the concierge uses it for context.
+                  It just doesn't get a trophy cabinet on the front page. */}
 
               {/* ── Add-trip shortcut ──────────────────────────────────────────
                   `trips` holds UPCOMING trips only. Someone with 46 past trips and
@@ -1882,43 +1873,6 @@ const s = StyleSheet.create({
   },
 
   // ── Travel stats strip ──
-  statsStrip: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginHorizontal: 24,
-    marginTop: 18,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: "rgba(200,168,106,0.06)",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "rgba(200,168,106,0.12)",
-  },
-  statItem: {
-    flex: 1,
-    alignItems: "center",
-  },
-  statValue: {
-    // There is no garamondB — EB Garamond ships Regular / Italic / Medium-Italic /
-    // SemiBold-Italic here. The `|| T.garamond` fallback was quietly saving us.
-    fontFamily: T.garamond,
-    fontSize: 22,
-    color: C.gold,
-    letterSpacing: -0.3,
-  },
-  statLabel: {
-    fontFamily: T.sans,
-    fontSize: 10,
-    color: C.mut,
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-    marginTop: 2,
-  },
-  statDivider: {
-    width: 1,
-    height: 28,
-    backgroundColor: "rgba(200,168,106,0.15)",
-  },
 
   // ── Prose briefing ──
   prose: {

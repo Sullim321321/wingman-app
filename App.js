@@ -77,7 +77,6 @@ import WingmanWrappedScreen from "./src/screens/WingmanWrappedScreen";
 import CompensationScreen from "./src/screens/CompensationScreen";
 import UpgradeBidScreen from "./src/screens/UpgradeBidScreen";
 import GroundTransportScreen from "./src/screens/GroundTransportScreen";
-import WingmanPointsScreen from "./src/screens/WingmanPointsScreen";
 import DestinationScreen from "./src/screens/DestinationScreen";
 import AirportDiningScreen from "./src/screens/AirportDiningScreen";
 import AirportNavigationScreen from "./src/screens/AirportNavigationScreen";
@@ -320,7 +319,7 @@ function Root() {
       const PARAM_ROUTES = [
         "Alert", "TripDetail", "Concierge",
         "AirportDining", "AirportNavigation", "GroundTransport",
-        "Destination", "WingmanPoints", "InsightsFull",
+        "Destination", "InsightsFull",
         "Compensation", "UpgradeBid",
         "Disruption",
       ];
@@ -348,7 +347,7 @@ function Root() {
         const FG_PARAM_ROUTES = [
           "Alert", "TripDetail", "Concierge",
           "AirportDining", "AirportNavigation", "GroundTransport",
-          "Destination", "WingmanPoints", "InsightsFull",
+          "Destination", "InsightsFull",
           "Compensation", "UpgradeBid", "Disruption",
         ];
         if (FG_PARAM_ROUTES.includes(route)) {
@@ -436,7 +435,6 @@ function Root() {
             <Stack.Screen name="Compensation"     component={CompensationScreen} />
             <Stack.Screen name="UpgradeBid"         component={UpgradeBidScreen} />
             <Stack.Screen name="GroundTransport"    component={GroundTransportScreen} />
-            <Stack.Screen name="WingmanPoints"     component={WingmanPointsScreen} />
             <Stack.Screen name="Destination"       component={DestinationScreen} />
             <Stack.Screen name="AirportDining"      component={AirportDiningScreen} />
             <Stack.Screen name="AirportNavigation"  component={AirportNavigationScreen} />

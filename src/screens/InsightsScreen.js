@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet, ActivityIndicator, Share,
+  SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet, ActivityIndicator,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { C, T, SHADOW, litEdge } from "../theme";
 import { BackBar, g, tap, FadeRise } from "../components";
-import { ShareCardModal } from "../components/ShareCard";
 import { getInsightsROI, getActivity, getInsightsHistory } from "../api";
 
 function StatCard({ value, label, sub }) {
@@ -81,7 +80,6 @@ export default function InsightsScreen({ navigation }) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("all");
-  const [showShare, setShowShare] = useState(false);
   const [history, setHistory] = useState([]);
 
   const fetchData = useCallback((p) => {
@@ -124,15 +122,11 @@ export default function InsightsScreen({ navigation }) {
     ? new Date(protectedSince).toLocaleDateString("en-US", { month: "short", year: "numeric" })
     : null;
 
-  const handleShare = async () => {
-    try {
-      await Share.share({
-        message: totalSaved > 0
-          ? `Wingman has protected $${totalSaved.toLocaleString()} across ${disruptionsHandled} disruption${disruptionsHandled !== 1 ? "s" : ""} on my trips. Best rescue: $${bestRescueValue}${bestRescueFlight ? ` on ${bestRescueFlight}` : ""}. Try Wingman — wingmantravel.app`
-          : `I use Wingman to protect my travel. ${tripsTotal} trips and counting — wingmantravel.app`,
-      });
-    } catch {}
-  };
+  // handleShare() lived here. It composed a message reading "Wingman has protected
+  // $430 across 1 disruption on my trips… Try Wingman — wingmantravel.app" and put
+  // it in the client's mouth. That is the app using the person it serves as an
+  // advertising channel. A private office is discreet by definition; discretion is
+  // most of what you're paying for. Gone, along with the button that opened it.
 
   if (loading) {
     return (
@@ -175,11 +169,10 @@ export default function InsightsScreen({ navigation }) {
               ? `Across ${disruptionsHandled} disruption${disruptionsHandled !== 1 ? "s" : ""} handled by Wingman`
               : "Nothing's gone wrong on your watch yet. The moment it does, I'll handle it — and the value I protect will show here."}
           </Text>
-          {totalSaved > 0 && (
-            <Pressable style={s.shareBtn} onPress={() => { tap(); setShowShare(true); }}>
-              <Text style={s.shareBtnT}>Share your ROI  ↗</Text>
-            </Pressable>
-          )}
+          {/* "Share your ROI ↗" lived here.
+              It asked the client to broadcast how much money their concierge had
+              saved them. No private office has ever asked that of anyone. It is
+              the app using the user as a billboard, dressed up as a feature. Gone. */}
         </LinearGradient>
         </FadeRise>
 
@@ -390,13 +383,6 @@ export default function InsightsScreen({ navigation }) {
           </View>
         )}
       </ScrollView>
-
-      <ShareCardModal
-        visible={showShare}
-        onClose={() => setShowShare(false)}
-        variant="roi"
-        data={{ totalSaved, disruptions: disruptionsHandled }}
-      />
     </SafeAreaView>
   );
 }
@@ -411,8 +397,6 @@ const s = StyleSheet.create({
   roiValue: { color: C.ink, fontSize: 56, fontFamily: T.serifB, lineHeight: 64, marginBottom: 8 },
   roiValueEmpty: { color: C.ink, fontSize: 40, fontFamily: T.garamondSI, lineHeight: 46, marginBottom: 8, opacity: 0.9 },
   roiSub: { color: C.mut, fontSize: 14, lineHeight: 20 },
-  shareBtn: { marginTop: 18, alignSelf: "flex-start", paddingHorizontal: 16, paddingVertical: 9, borderRadius: 12, borderWidth: 1, borderColor: C.gold + "50", backgroundColor: C.gold + "12" },
-  shareBtnT: { color: C.gold, fontSize: 12, fontFamily: T.sansB, letterSpacing: 0.5 },
 
   periodRow: { flexDirection: "row", gap: 8, marginBottom: 20 },
   periodBtn: { flex: 1, paddingVertical: 9, borderRadius: 12, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, alignItems: "center" },

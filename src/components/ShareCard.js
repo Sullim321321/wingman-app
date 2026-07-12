@@ -10,7 +10,7 @@ import * as Sharing from "expo-sharing";
 import { C, T } from "../theme";
 import { tap, WMark, Wordmark } from "../components";
 
-export function ShareCardModal({ visible, onClose, variant = "roi", data = {} }) {
+export function ShareCardModal({ visible, onClose, data = {} }) {
   const cardRef = useRef(null);
   const [busy, setBusy] = useState(false);
 
@@ -41,23 +41,19 @@ export function ShareCardModal({ visible, onClose, variant = "roi", data = {} })
                 <Wordmark size={12} color={C.gold} />
               </View>
 
-              {variant === "roi" ? (
-                <View style={st.body}>
-                  <Text style={st.kicker}>TOTAL VALUE PROTECTED</Text>
-                  <Text style={st.big}>${Number(data.totalSaved || 0).toLocaleString()}</Text>
-                  <Text style={st.sub}>
-                    {data.disruptions
-                      ? `Across ${data.disruptions} disruption${data.disruptions !== 1 ? "s" : ""} Wingman handled for me.`
-                      : "Handled quietly by Wingman."}
-                  </Text>
-                </View>
-              ) : (
-                <View style={st.body}>
-                  <Text style={st.kicker}>{(data.dates || "TRACKED BY WINGMAN").toUpperCase()}</Text>
-                  <Text style={st.bigTrip}>{data.title || "My next trip"}</Text>
-                  {data.route ? <Text style={st.sub}>{data.route}</Text> : null}
-                </View>
-              )}
+              {/* The "roi" variant lived here — a card reading "TOTAL VALUE
+                  PROTECTED · $430 · Across 1 disruption Wingman handled for me."
+                  Made to be posted.
+
+                  Sharing a beautiful card of a trip you're taking is a pleasure.
+                  Sharing a receipt for how much your concierge saved you is a
+                  boast, and it makes the service look like it needs the publicity.
+                  A trip is worth sharing. A refund is not. */}
+              <View style={st.body}>
+                <Text style={st.kicker}>{(data.dates || "TRACKED BY WINGMAN").toUpperCase()}</Text>
+                <Text style={st.bigTrip}>{data.title || "My next trip"}</Text>
+                {data.route ? <Text style={st.sub}>{data.route}</Text> : null}
+              </View>
 
               <View style={st.footRule} />
               <Text style={st.foot}>My chief of staff for travel · wingmantravel.app</Text>

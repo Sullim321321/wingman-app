@@ -162,12 +162,7 @@ export const getFlightStatusPublic = (ident) =>
 export const getFlightStatus = (ident) =>
   req("/flight-status/" + encodeURIComponent(ident));
 export const getNextTripWindow = () => req("/me/next-trip-window");
-// ─── Wingman Points ───────────────────────────────────────────────────────────
-export const getPoints = () => req("/points");
-export const awardPointsAction = (action, dedup_key) =>
-  req("/points/award", { method: "POST", body: JSON.stringify({ action, dedup_key }) });
-export const redeemPoints = (perk_id) =>
-  req("/points/redeem", { method: "POST", body: JSON.stringify({ perk_id }) });
+
 export const getDestinationIntel = ({ iata, city, trip_id } = {}) => {
   const params = new URLSearchParams();
   if (iata)    params.set("iata", iata);

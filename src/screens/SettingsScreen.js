@@ -448,8 +448,10 @@ export default function SettingsScreen({ navigation }) {
         <Text style={g.sectionT}>AUTOMATION & DATA</Text>
         <View style={g.group}>
           <SetRow icon="options-outline" iconColor={C.gold} t="Autonomy & delegation" sub="How much Wingman does on its own, approval limits" right={<Chip color={C.gold}>Edit ›</Chip>} onPress={() => navigation.navigate("Autonomy")} />
+          <SetRow icon="link-outline" iconColor={C.gold} t="Connected accounts & privacy" sub="Gmail, Calendar, Messages — explicit opt-in only" right={<Chip color={C.teal}>Manage ›</Chip>} onPress={() => navigation.navigate("Connections")} />
           <View style={{ borderBottomWidth: 0 }}>
-            <SetRow icon="link-outline" iconColor={C.gold} t="Connected accounts & privacy" sub="Gmail, Calendar, Messages — explicit opt-in only" right={<Chip color={C.teal}>Manage ›</Chip>} onPress={() => navigation.navigate("Connections")} />
+            {/* The alternative to handing over the mailbox. */}
+            <SetRow icon="mail-outline" iconColor={C.gold} t="Forward your bookings" sub="Your private import address — no Gmail access needed" right={<Chip color={C.gold}>Set up ›</Chip>} onPress={() => navigation.navigate("Forwarding")} />
           </View>
         </View>
 

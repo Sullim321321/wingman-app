@@ -185,6 +185,47 @@ export const sendConciergeMessage = (message, history = [], location = null) =>
     signal: timeoutSignal(65000), // 65s — Render cold-start (up to 50s) + Claude latency
   });
 
+// ─── Situation (the cascade, as a graph walk) ─────────────────────────────────
+// Each node carries a verdict it can defend: broken, at_risk, or unknown. The old
+// cascade called everything scheduled after a delay "at risk" without ever checking.
+export const getSituation = (legId, delay = 0) => req(`/situation/${legId}?delay=${delay}`);
+
+// Rescue options — ranked by what they PROTECT, not by price. Real Duffel offers only.
+// Takes a while: it's a live flight search plus a graph walk per option.
+//
+// NOT `getRescueOptions` — that name is already taken by the older cash-vs-points
+// engine further down this file. I redeclared it and every single screen white-screened,
+// because a duplicate export makes the whole module throw at import. Which is the exact
+// failure `npm run check` exists to catch, and did.
+export const getSituationOptions = (legId, delay = 0) =>
+  req(`/situation/${legId}/options?delay=${delay}`, { signal: timeoutSignal(60000) });
+
+// ─── Inbound forwarding (the no-Gmail path) ───────────────────────────────────
+// gmail.readonly is a RESTRICTED scope: it triggers a mandatory annual CASA security
+// assessment by a Google-approved assessor. Forwarding needs zero Google scopes, and
+// with a Gmail auto-forward filter it is just as ambient.
+export const getInboundAddress = () => req("/me/inbound-address");
+
+// ─── Plan (the front door) ─────────────────────────────────────────────────────
+// A conversation goes in; a constraint graph comes out, with the reason on every
+// line. This is the half of the product that never existed — Wingman could file a
+// trip, it could never make one.
+//
+// 90s, not 65s: a planning turn may run a web search before it answers, because
+// entry rules and alliance cutoffs must be looked up rather than recalled.
+export const planMessage = (message, tripId = null, history = []) =>
+  req("/plan/message", {
+    method: "POST",
+    body: JSON.stringify({ message, tripId, history }),
+    signal: timeoutSignal(90000),
+  });
+
+export const getPlan = (tripId) => req(`/plan/${tripId}`);
+
+// An inference becomes a fact. The only way that ever happens.
+export const confirmConstraint = (id) =>
+  req(`/plan/constraint/${id}/confirm`, { method: "POST" });
+
 // ─── Decisions (chief-of-staff decision cards) ─────────────────────────────────
 export const getDecisions = () => req("/decisions");
 export const confirmDecision = (id, optionId) =>

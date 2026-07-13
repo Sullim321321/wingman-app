@@ -51,6 +51,9 @@ import TrackScreen from "./src/screens/TrackScreen";
 import ExecScreen from "./src/screens/ExecScreen";
 import DoneScreen from "./src/screens/DoneScreen";
 import PlanScreen from "./src/screens/PlanScreen";
+import ForwardingScreen from "./src/screens/ForwardingScreen";
+import SituationScreen from "./src/screens/SituationScreen";
+import RescueScreen from "./src/screens/RescueScreen";
 import DetourScreen from "./src/screens/DetourScreen";
 import PlanDoneScreen from "./src/screens/PlanDoneScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
@@ -101,6 +104,7 @@ const Tab   = createBottomTabNavigator();
 // \uFE0E = text presentation selector — prevents OS emoji substitution
 const TAB_ICONS = {
   Home:         { active: "\u2302\uFE0E", inactive: "\u2302\uFE0E" },
+  Plan:         { active: "\u2726\uFE0E", inactive: "\u2727\uFE0E" },   // \u2726 / \u2727 \u2014 the front door
   Trips:        { active: "\u2708\uFE0E", inactive: "\u2708\uFE0E" },
   Intelligence: { active: "\u25CE\uFE0E", inactive: "\u25CB\uFE0E" },
   Insights:     { active: "\u25C6\uFE0E", inactive: "\u25C7\uFE0E" },
@@ -109,6 +113,7 @@ const TAB_ICONS = {
 // Tab labels — wide-tracked all-caps (kept short to prevent bleed)
 const TAB_LABELS = {
   Home:         "HOME",
+  Plan:         "PLAN",
   Trips:        "TRIPS",
   Intelligence: "SIGNALS",
   Insights:     "INSIGHTS",
@@ -189,6 +194,10 @@ function Tabs({ navigation }) {
       })}
     >
       <Tab.Screen name="Home"         component={HomeScreen} />
+      {/* PLAN — the front door. Wingman could file a trip; it could never make one,
+          so the forty turns where the trip actually gets decided happened in someone
+          else's chat window and we met the trip afterwards as a pile of receipts. */}
+      <Tab.Screen name="Plan"         component={PlanScreen} />
       <Tab.Screen name="Trips"        component={TripsScreen} />
       <Tab.Screen
         name="Intelligence"
@@ -201,9 +210,12 @@ function Tabs({ navigation }) {
       <Tab.Screen name="Insights"     component={InsightsScreen} />
     </Tab.Navigator>
 
-    {/* Always-present concierge affordance (UI #1) — hidden on Home, which already
-        has the concierge input inline (avoids covering the send button). */}
-    {activeRoute !== "Home" && (
+    {/* Always-present concierge affordance (UI #1) — hidden on Home and Plan, both of
+        which already have their own input inline. On Plan the floating pill sat
+        directly on top of the composer's send button: the one control the entire
+        screen exists to serve. An "always-present" affordance has to know when to be
+        absent. */}
+    {activeRoute !== "Home" && activeRoute !== "Plan" && (
       <Pressable
         onPress={() => { try { require("./src/components").tap?.(); } catch {} navigation.navigate("Concierge"); }}
         style={({ pressed }) => [
@@ -311,6 +323,7 @@ function Root() {
       const params = {};
       if (data.tripId)      params.tripId      = data.tripId;
       if (data.legId)       params.legId       = data.legId;
+      if (data.delay)       params.delay       = Number(data.delay) || 0;   // Situation
       if (data.flightIdent) params.flightIdent = data.flightIdent;
       if (data.prefill)     params.prefill     = data.prefill;
       if (data.iata)        params.iata        = data.iata;
@@ -322,6 +335,10 @@ function Root() {
         "Destination", "InsightsFull",
         "Compensation", "UpgradeBid",
         "Disruption",
+        // The cascade takeover. Without this on the allowlist the disruption push —
+        // the single most important notification Wingman sends — navigates with no
+        // params and lands on an empty screen.
+        "Situation",
       ];
       if (PARAM_ROUTES.includes(route)) {
         navRef.navigate(route, Object.keys(params).length ? params : undefined);
@@ -411,12 +428,25 @@ function Root() {
             <Stack.Screen name="Track"        component={TrackScreen} />
             <Stack.Screen name="Exec"         component={ExecScreen}         options={{ gestureEnabled: false }} />
             <Stack.Screen name="Done"         component={DoneScreen}         options={{ gestureEnabled: false }} />
-            <Stack.Screen name="Plan"         component={PlanScreen} />
+            {/* "Plan" is a TAB now, not a stack screen. Registering the same route
+                name in both navigators makes navigate("Plan") ambiguous — it resolves
+                to whichever is nearest, which is the kind of thing that works in
+                testing and breaks in someone's hand. Nothing navigated here anyway;
+                the old PlanScreen was a hardcoded mockup reachable from nowhere. */}
             <Stack.Screen name="Detour"       component={DetourScreen} />
             <Stack.Screen name="PlanDone"     component={PlanDoneScreen}     options={{ gestureEnabled: false }} />
             <Stack.Screen name="Settings"     component={SettingsScreen} />
             <Stack.Screen name="Welcome"      component={WelcomeScreen} />
             <Stack.Screen name="Connections"  component={ConnectionsScreen} />
+            {/* Forward bookings instead of surrendering the whole mailbox.
+                gmail.readonly is a RESTRICTED scope — annual CASA assessment, in
+                perpetuity — and this path needs zero Google scopes. */}
+            <Stack.Screen name="Forwarding"   component={ForwardingScreen} />
+            {/* THE product. The cascade takeover — every node carries a verdict it
+                can defend, and says UNKNOWN when it can't. */}
+            <Stack.Screen name="Situation"    component={SituationScreen} options={{ presentation: "modal" }} />
+            {/* Ranked by what they protect, not by price. The graph's whole payoff. */}
+            <Stack.Screen name="Rescue"       component={RescueScreen} />
             <Stack.Screen name="Signal"       component={SignalScreen} />
             <Stack.Screen name="AddTrip"      component={AddTripScreen} />
             <Stack.Screen name="TripDetail"   component={TripDetailScreen} />

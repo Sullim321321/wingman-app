@@ -181,9 +181,30 @@ export const getWeather = (lat, lng) =>
 export const sendConciergeMessage = (message, history = [], location = null) =>
   req("/concierge", {
     method: "POST",
-    body: JSON.stringify({ message, history, ...(location ? { location } : {}) }),
+    body: JSON.stringify({
+      message, history,
+      ...(location ? { location } : {}),
+      // ── Send the clock from the DEVICE, not the datacentre ──────────────────
+      // The server was building its time context from `new Date()`, and Render runs
+      // in UTC. At 6:30am Pacific the model was told it was 13:30 — early afternoon —
+      // so it recommended somewhere for dinner. It wasn't confused; it was misinformed.
+      //
+      // The phone is the only thing here that actually knows what time it is where
+      // you are. Nothing downstream should have to infer it.
+      now: new Date().toISOString(),
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      localTime: new Date().toLocaleString(undefined, {
+        weekday: "long", hour: "numeric", minute: "2-digit", hour12: true,
+      }),
+    }),
     signal: timeoutSignal(65000), // 65s — Render cold-start (up to 50s) + Claude latency
   });
+
+// ─── The Brief ────────────────────────────────────────────────────────────────
+// "Nothing needs you" as a computed fact: no broken or tight dependency, no unresolved
+// must, no inference awaiting your word, no pending decision. Every travel app writes
+// that sentence. This one checks it first.
+export const getBrief = () => req("/brief");
 
 // ─── Situation (the cascade, as a graph walk) ─────────────────────────────────
 // Each node carries a verdict it can defend: broken, at_risk, or unknown. The old

@@ -172,6 +172,8 @@ export default function ConciergeScreen({ route, navigation }) {
   const [input, setInput]               = useState("");
   const [loading, setLoading]           = useState(false);
   const [threadLoading, setThreadLoading] = useState(false);
+  // A stale conversation held back, offered rather than imposed. See loadThread().
+  const [pendingThread, setPendingThread] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const listRef      = useRef(null);
   const prefillSent  = useRef(false);
@@ -198,7 +200,28 @@ export default function ConciergeScreen({ route, navigation }) {
       if (v !== "true") { setUserLocation(null); return; }
       try {
         const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+
+        // Resolve the coordinates to an actual PLACE, on device, before sending.
+        //
+        // We were shipping bare lat/lng and letting the model infer the neighbourhood
+        // from them — which it does by guessing, confidently, and getting it wrong.
+        // "48.8584, 2.2945" is not a location a person can act on; "Rue Cler, 7th
+        // arrondissement, Paris" is. Same class of bug as everything else today:
+        // asserting on evidence we never actually resolved.
+        try {
+          const [place] = await Location.reverseGeocodeAsync(pos.coords);
+          if (place) {
+            loc.city     = place.city || place.subregion || null;
+            loc.district = place.district || place.subregion || null;
+            loc.street   = place.street || null;
+            loc.region   = place.region || null;
+            loc.country  = place.country || null;
+            loc.postal   = place.postalCode || null;
+          }
+        } catch { /* coordinates alone are still better than nothing */ }
+
+        setUserLocation(loc);
       } catch { setUserLocation(null); }
     }).catch(() => {});
   }, []));
@@ -228,16 +251,48 @@ export default function ConciergeScreen({ route, navigation }) {
       const saved = (data.messages || []).filter(m =>
         m && (m.content || m.transit || m.places || m.action)
       );
-      if (saved.length > 0) {
+
+      // ── Don't silently resume a stale conversation ──────────────────────────
+      // Reopening the concierge dumped you back into whatever you were last talking
+      // about, with no seam. That's disorienting at the best of times, and actively
+      // misleading when the old thread is hours or days old: you carry on as though
+      // the context is current, and it isn't. Wingman was answering "I'm hungry" with
+      // dinner suggestions from a conversation that happened yesterday evening.
+      //
+      // A stale thread is offered, not imposed.
+      const STALE_AFTER_MS = 2 * 60 * 60 * 1000;   // two hours
+      const lastAt = data.updated_at ? new Date(data.updated_at).getTime() : null;
+      const stale  = lastAt ? (Date.now() - lastAt) > STALE_AFTER_MS : false;
+
+      if (saved.length > 0 && stale) {
+        setPendingThread(saved);
+        setMessages([{ role: "assistant", content: buildWelcome(tripsRef.current) }]);
+      } else if (saved.length > 0) {
+        setPendingThread(null);
         setMessages([{ role: "assistant", content: buildWelcome(tripsRef.current) }, ...saved]);
       } else {
+        setPendingThread(null);
         setMessages([{ role: "assistant", content: buildWelcome(tripsRef.current) }]);
       }
     } catch {
+      setPendingThread(null);
       setMessages([{ role: "assistant", content: buildWelcome(tripsRef.current) }]);
     } finally {
       setThreadLoading(false);
     }
+  }
+
+  function resumeThread() {
+    if (!pendingThread) return;
+    tap();
+    setMessages((prev) => [...prev, ...pendingThread]);
+    setPendingThread(null);
+  }
+
+  function startFresh() {
+    tap();
+    setPendingThread(null);
+    clearConciergeThread(activeTripId).catch(() => {});
   }
 
   function confirmClearThread() {
@@ -606,6 +661,25 @@ export default function ConciergeScreen({ route, navigation }) {
           />
         )}
 
+        {/* An old conversation is offered, never resumed behind your back. Picking it
+            back up silently is how "I'm hungry" at 6:30am got answered with last
+            night's dinner list. */}
+        {pendingThread ? (
+          <View style={s.resumeBar}>
+            <Text style={s.resumeT}>
+              You were talking to me earlier — want to pick that back up?
+            </Text>
+            <View style={s.resumeBtns}>
+              <Pressable style={s.resumeYes} onPress={resumeThread}>
+                <Text style={s.resumeYesT}>Continue</Text>
+              </Pressable>
+              <Pressable style={s.resumeNo} onPress={startFresh}>
+                <Text style={s.resumeNoT}>Start fresh</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
+
         <View style={s.inputRow}>
           <TextInput
             style={s.textInput}
@@ -688,6 +762,17 @@ const s = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 9,
   },
   quickChipT: { color: C.gold, fontSize: 13, fontFamily: T.sansM, letterSpacing: 0.1 },
+  resumeBar: {
+    marginHorizontal: 16, marginBottom: 10, padding: 14,
+    borderWidth: 1, borderColor: C.line, borderRadius: 14, backgroundColor: C.card,
+  },
+  resumeT: { fontFamily: T.garamondI, fontSize: 15.5, lineHeight: 22, color: C.mut, fontStyle: "italic" },
+  resumeBtns: { flexDirection: "row", gap: 10, marginTop: 12 },
+  resumeYes: { flex: 1, backgroundColor: C.gold, borderRadius: 10, paddingVertical: 11, alignItems: "center" },
+  resumeYesT: { fontFamily: T.sansB, fontSize: 13.5, color: C.inkD },
+  resumeNo: { flex: 1, borderWidth: 1, borderColor: C.line, borderRadius: 10, paddingVertical: 11, alignItems: "center" },
+  resumeNoT: { fontFamily: T.sansM, fontSize: 13.5, color: C.mut },
+
   inputRow: {
     flexDirection: "row", alignItems: "flex-end", gap: 10,
     paddingHorizontal: 16, paddingBottom: 20, paddingTop: 12,

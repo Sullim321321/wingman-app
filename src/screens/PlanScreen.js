@@ -77,7 +77,11 @@ export default function PlanScreen({ navigation, route }) {
     try {
       const r = await planMessage(message, tripId, turns);
       if (r.trip_id && !tripId) setTripId(r.trip_id);
-      setTurns([...next, { role: "assistant", content: r.reply || "" }]);
+      // Belt and braces: the server guarantees a reply now, but an empty assistant
+      // bubble is such a bad failure — you speak, and the app stares back — that it
+      // shouldn't be possible from either end.
+      const reply = (r.reply || "").trim();
+      setTurns([...next, ...(reply ? [{ role: "assistant", content: reply }] : [])]);
       setCs(r.constraints || []);
       setLegs(r.legs || []);
       setGaps(r.gaps || []);

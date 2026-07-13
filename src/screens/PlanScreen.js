@@ -14,7 +14,7 @@
 import React, { useState, useRef, useCallback } from "react";
 import {
   SafeAreaView, View, Text, TextInput, ScrollView, Pressable,
-  StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
+  StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, Linking,
 } from "react-native";
 import { C, T } from "../theme";
 import { WMark, tap, success, FadeRise, SerifText } from "../components";
@@ -105,6 +105,15 @@ export default function PlanScreen({ navigation, route }) {
     } catch (_) { /* stays proposed; they can tap again */ }
   };
 
+  // Rejecting is as important as confirming. Wingman put Beijing and Guangzhou on the
+  // tour when they weren't; without a way to say "no", a wrong MUST just sits there
+  // anchoring the whole trip. Saying so is also how it learns.
+  const reject = (c) => {
+    tap();
+    setCs((prev) => prev.filter((x) => x.id !== c.id));
+    send(`No — "${c.rationale}" isn't right. Drop it.`);
+  };
+
   const proposed = constraints.filter((c) => c.status === "proposed");
   const active   = constraints.filter((c) => c.status !== "proposed");
   // trip_id === null means a STANDING constraint — true of you, on every trip.
@@ -185,8 +194,20 @@ export default function PlanScreen({ navigation, route }) {
               {proposed.map((c) => (
                 <View key={c.id} style={s.pro}>
                   <Text style={s.proT}>{c.rationale}</Text>
+                  {/* "Sourced" must be CHECKABLE, not a badge you're asked to trust.
+                      The planner found a real page about the LANY tour and still got
+                      two cities wrong — so the link goes where you can see it. */}
+                  {c.evidence?.url ? (
+                    <Pressable onPress={() => { tap(); Linking.openURL(c.evidence.url).catch(() => {}); }}>
+                      <Text style={s.srcLink} numberOfLines={1}>
+                        Source: {String(c.evidence.url).replace(/^https?:\/\//, "").split("/")[0]} ↗
+                      </Text>
+                    </Pressable>
+                  ) : null}
                   <View style={s.proRow}>
-                    {c.evidence?.url ? <Text style={s.src}>sourced</Text> : null}
+                    <Pressable style={s.proNo} onPress={() => reject(c)}>
+                      <Text style={s.proNoT}>Not right</Text>
+                    </Pressable>
                     <Pressable style={s.proBtn} onPress={() => confirm(c)}>
                       <Text style={s.proBtnT}>Confirm</Text>
                     </Pressable>
@@ -364,10 +385,13 @@ const s = StyleSheet.create({
 
   pro: { borderWidth: 1, borderColor: "rgba(212,144,42,0.4)", borderRadius: 12, padding: 14, marginBottom: 10 },
   proT: { fontFamily: T.sansM, fontSize: 14, lineHeight: 20, color: C.ink, marginBottom: 10 },
-  proRow: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 12 },
+  proRow: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 10, marginTop: 4 },
   src: { fontFamily: T.sansM, fontSize: 11, color: C.teal },
+  srcLink: { fontFamily: T.sansM, fontSize: 11.5, color: C.teal, marginBottom: 10 },
   proBtn: { backgroundColor: C.gold, borderRadius: 9, paddingHorizontal: 16, paddingVertical: 8 },
   proBtnT: { fontFamily: T.sansB, fontSize: 13, color: C.inkD },
+  proNo: { borderWidth: 1, borderColor: C.line, borderRadius: 9, paddingHorizontal: 14, paddingVertical: 8 },
+  proNoT: { fontFamily: T.sansM, fontSize: 13, color: C.mut },
 
   // Dashed border, muted fill, an explicit SKETCH tag. A proposed leg must be
   // recognisable as unbooked at a glance, from across a room, half-asleep.

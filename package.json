@@ -6,7 +6,8 @@
     "start": "expo start",
     "ios": "expo run:ios",
     "android": "expo run:android",
-    "build:ios": "eas build -p ios --profile preview",
+    "build:ios": "eas build -p ios --profile production --auto-submit",
+    "build:adhoc": "eas build -p ios --profile preview",
     "submit:ios": "eas submit -p ios --latest",
     "postinstall": "patch-package",
     "check": "node scripts/check-module-scope.js"

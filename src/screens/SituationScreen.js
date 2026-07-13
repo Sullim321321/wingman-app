@@ -31,7 +31,11 @@ import { getSituation } from "../api";
 
 const VERDICT = {
   broken:  { label: "WON'T SURVIVE", color: C.coral, dot: C.coral },
-  at_risk: { label: "AT RISK",       color: C.amber, dot: C.amber },
+  at_risk: { label: "TIGHT",         color: C.amber, dot: C.amber },
+  // Has slack to spare. Shown, quietly, so you can see Wingman checked it — but never
+  // pushed about, and never counted as a problem. "At risk" has to mean something, or
+  // it means nothing and you learn to ignore the alerts that matter.
+  safe:    { label: "HOLDS",         color: C.teal,  dot: "transparent" },
   unknown: { label: "UNKNOWN",       color: C.mut,   dot: "transparent" },
 };
 
@@ -81,33 +85,50 @@ export default function SituationScreen({ navigation, route }) {
   // Honest headline. If everything downstream is unknown, SAY that — don't dress a
   // shrug up as an assessment.
   const allUnknown = summary.broken === 0 && summary.at_risk === 0 && summary.unknown > 0;
+  const tight = summary.at_risk;
   const headline =
     summary.broken  ? "I've worked out what this breaks."
-    : summary.at_risk ? "Nothing's broken yet. Two things are tight."
-    : allUnknown      ? "I can't yet tell what this affects."
+    : tight         ? (tight === 1 ? "Nothing's broken. One thing is tight."
+                                   : `Nothing's broken. ${tight} things are tight.`)
+    : allUnknown    ? "I can't yet tell what this affects."
+    // Everything downstream has slack to spare. Say so, and mean it.
+    : nodes.length  ? "Everything downstream still holds."
     : "Nothing downstream depends on this.";
+
+  // Opened from a push, this is a disruption. Opened from the trip, it's a question:
+  // "what hangs off this flight?" Same graph, entirely different tone. A red bar and
+  // the word DISRUPTION on a flight that is running perfectly on time is its own small
+  // lie — and it teaches people to distrust the colour.
+  const isAlarm = delay > 0;
 
   return (
     <SafeAreaView style={s.app}>
-      <View style={s.topRule} />
+      <View style={[s.topRule, !isAlarm && { backgroundColor: C.gold, opacity: 0.5 }]} />
       <ScrollView contentContainerStyle={s.scroll}>
         <View style={s.bar}>
           <Pressable onPress={() => { tap(); navigation.goBack(); }} hitSlop={12}>
             <Text style={s.close}>Close</Text>
           </Pressable>
-          <Text style={s.barT}>SITUATION</Text>
+          <Text style={s.barT}>{isAlarm ? "SITUATION" : "DEPENDENCIES"}</Text>
         </View>
 
         <FadeRise>
           <View style={s.head}>
             <View style={{ flex: 1 }}>
-              <Text style={s.kicker}>{delay ? "FLIGHT DELAYED" : "DISRUPTION"}</Text>
+              <Text style={[s.kicker, !isAlarm && { color: C.gold }]}>
+                {isAlarm ? "FLIGHT DELAYED" : "WHAT HANGS ON THIS"}
+              </Text>
               <Text style={s.flight}>{flight}{route_ ? `  ·  ${route_}` : ""}</Text>
             </View>
-            {delay ? <SerifText style={s.delay}>+{delay} min</SerifText> : null}
+            {isAlarm ? <SerifText style={s.delay}>+{delay} min</SerifText> : null}
           </View>
 
-          <Text style={s.voice}>{headline}</Text>
+          <Text style={s.voice}>
+            {isAlarm ? headline
+              : nodes.length
+                ? `${nodes.length} ${nodes.length === 1 ? "booking hangs" : "bookings hang"} on this flight. Here's what, and why.`
+                : "Nothing else on this trip depends on this flight."}
+          </Text>
         </FadeRise>
 
         {/* ── the dependency spine ──────────────────────────────────────────── */}

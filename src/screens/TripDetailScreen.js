@@ -196,6 +196,18 @@ function FlightLegRow({ leg, isCompleted, tripId, navigation, onEdit, onDelete }
 
       {/* Action row */}
       <View style={s.legActions}>
+        {/* "We protect what depends on them." Until now, the only way to see the
+            dependency spine was to receive a disruption push — you could learn what
+            hung off a flight only once it had already gone wrong. This makes it
+            answerable at any time, which is the entire promise of the graph. */}
+        {!isCompleted && leg.id && (
+          <Pressable
+            style={s.legAction}
+            onPress={() => { tap(); navigation.navigate("Situation", { legId: leg.id, delay: 0 }); }}
+          >
+            <Text style={s.legActionT}>What depends on this</Text>
+          </Pressable>
+        )}
         {leg.id && (
           <Pressable
             style={s.legAction}

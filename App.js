@@ -54,6 +54,7 @@ import PlanScreen from "./src/screens/PlanScreen";
 import ForwardingScreen from "./src/screens/ForwardingScreen";
 import SituationScreen from "./src/screens/SituationScreen";
 import RescueScreen from "./src/screens/RescueScreen";
+import BookLegScreen from "./src/screens/BookLegScreen";
 import DetourScreen from "./src/screens/DetourScreen";
 import PlanDoneScreen from "./src/screens/PlanDoneScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
@@ -366,6 +367,11 @@ function Root() {
           "AirportDining", "AirportNavigation", "GroundTransport",
           "Destination", "InsightsFull",
           "Compensation", "UpgradeBid", "Disruption",
+          // This list had drifted out of sync with PARAM_ROUTES above. The background
+          // path carried legId through; the FOREGROUND path silently dropped it — so
+          // tapping the disruption push while the app was open landed on an empty
+          // Situation screen. Two allowlists, one of them quietly wrong.
+          "Situation", "BookLeg",
         ];
         if (FG_PARAM_ROUTES.includes(route)) {
           navRef.navigate(route, Object.keys(params).length ? params : undefined);
@@ -447,6 +453,9 @@ function Root() {
             <Stack.Screen name="Situation"    component={SituationScreen} options={{ presentation: "modal" }} />
             {/* Ranked by what they protect, not by price. The graph's whole payoff. */}
             <Stack.Screen name="Rescue"       component={RescueScreen} />
+            {/* The plan stops being a sketch. Promotes the proposed leg in place, so the
+                booking inherits every reason the proposal was made for. */}
+            <Stack.Screen name="BookLeg"      component={BookLegScreen} />
             <Stack.Screen name="Signal"       component={SignalScreen} />
             <Stack.Screen name="AddTrip"      component={AddTripScreen} />
             <Stack.Screen name="TripDetail"   component={TripDetailScreen} />

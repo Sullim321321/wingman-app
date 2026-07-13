@@ -236,9 +236,23 @@ export default function PlanScreen({ navigation, route }) {
                     <Text style={s.legT}>
                       {l.property_name || l.destination || l.destination_city}
                     </Text>
-                    <Text style={s.legTag}>SKETCH</Text>
+                    <Text style={s.legTag}>
+                      {l.state === "booked" ? "BOOKED" : "SKETCH"}
+                    </Text>
                   </View>
                   {l.raw_data?.why ? <Text style={s.legWhy}>{l.raw_data.why}</Text> : null}
+
+                  {/* The plan stops being a sketch here. Only flights, only proposals —
+                      and the screen it opens is allowed to come back and say "I can't
+                      book this yet, and here's what I'd have had to invent to try." */}
+                  {l.type === "flight" && l.state === "proposed" ? (
+                    <Pressable
+                      style={s.legBook}
+                      onPress={() => navigation.navigate("BookLeg", { legId: l.id })}
+                    >
+                      <Text style={s.legBookT}>Make it real →</Text>
+                    </Pressable>
+                  ) : null}
                 </View>
               ))}
             </View>
@@ -402,6 +416,8 @@ const s = StyleSheet.create({
   legTag: { fontFamily: T.sansB, fontSize: 8, letterSpacing: 1.4, color: C.gold, opacity: 0.75 },
   legWhy: { fontFamily: T.garamondI, fontSize: 14, lineHeight: 19, color: C.mut,
             fontStyle: "italic", marginTop: 5 },
+  legBook:  { marginTop: 10, alignSelf: "flex-start" },
+  legBookT: { fontFamily: T.sansM, fontSize: 13, color: C.gold },
 
   cRow: { flexDirection: "row", gap: 11, marginBottom: 14 },
   cDot: { width: 6, height: 6, borderRadius: 3, marginTop: 7 },

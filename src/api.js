@@ -221,6 +221,23 @@ export const getSituation = (legId, delay = 0) => req(`/situation/${legId}?delay
 export const getSituationOptions = (legId, delay = 0) =>
   req(`/situation/${legId}/options?delay=${delay}`, { signal: timeoutSignal(60000) });
 
+// ─── Booking (the plan becomes a commitment) ──────────────────────────────────
+// The verb the deck promised and the code never had. Note what these DON'T do: they
+// never create a trip. They promote the leg the planner already wrote, in place, so
+// it carries its reasons across. A booking that forgot why it exists is a booking the
+// cascade can't defend.
+//
+// 60s: this fans out to every airline behind Duffel.
+export const getLegBooking = (legId, cabin) =>
+  req(`/plan/leg/${legId}/book${cabin ? `?cabin=${cabin}` : ""}`, { signal: timeoutSignal(60000) });
+
+export const bookLeg = (legId, offerId, by = "you") =>
+  req(`/plan/leg/${legId}/book`, {
+    method: "POST",
+    body: JSON.stringify({ offer_id: offerId, by }),
+    signal: timeoutSignal(90000),
+  });
+
 // ─── Inbound forwarding (the no-Gmail path) ───────────────────────────────────
 // gmail.readonly is a RESTRICTED scope: it triggers a mandatory annual CASA security
 // assessment by a Google-approved assessor. Forwarding needs zero Google scopes, and

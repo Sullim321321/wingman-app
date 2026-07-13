@@ -847,9 +847,12 @@ export default function TripDetailScreen({ route, navigation }) {
         const d = fmt(leg.departs_at || leg.arrives_at);
         if (d && d !== lastDate) { lines.push(``); lines.push(d.toUpperCase()); lastDate = d; }
         const typeLabel = TYPE_LABEL[leg.type] || leg.type?.toUpperCase() || 'BOOKING';
+        // Same two bugs as the on-screen timeline: no space between carrier and
+        // flight number, and property_name never read — so the exported itinerary
+        // said "hotel" where it meant "Palace Hotel Tokyo".
         const name = leg.type === 'flight'
-          ? `${leg.carrier || ''}${leg.flight_number || ''} · ${leg.origin || '?'} → ${leg.destination || '?'}`
-          : leg.carrier || leg.destination || '';
+          ? `${[leg.carrier, leg.flight_number].filter(Boolean).join(' ')} · ${leg.origin || '?'} → ${leg.destination || '?'}`
+          : leg.property_name || leg.destination_city || leg.carrier || leg.destination || '';
         const time = fmtTime(leg.departs_at);
         const endTime = fmtTime(leg.arrives_at);
         const timeStr = time ? ` · ${time}${endTime && endTime !== time ? ` – ${endTime}` : ''}` : '';
@@ -968,7 +971,18 @@ export default function TripDetailScreen({ route, navigation }) {
             !l.confirmation_required &&
             // A booked car HIRE (multi-day, has a dropoff) is a real itinerary item.
             // A point-to-point ride is not.
-            !(l.vehicle_class || l.nights);
+            !(l.vehicle_class || l.nights) &&
+            // ...and a NAMED transfer is not a ride either.
+            //
+            // This rule swallowed the seaplane. It's type 'transfer', so it collapsed
+            // into "1 ride" and vanished from the itinerary — while the cascade was
+            // simultaneously calling it the single most fragile thing in the trip.
+            // The dependency graph and the itinerary disagreed about what was even IN
+            // the trip, which is the sort of contradiction that erodes trust in both.
+            //
+            // An Uber has no name. "Seaplane transfer" does. That's the difference
+            // between an expense and an appointment.
+            !l.property_name;
 
           // Group by date
           const groups = {};
@@ -993,9 +1007,15 @@ export default function TripDetailScreen({ route, navigation }) {
                   {dayLegs.map((leg, li) => {
                     const icon = TYPE_ICON[leg.type] || 'bookmark-outline';
                     const isStay = leg.type === 'hotel' || leg.type === 'airbnb';
+                    // "Japan AirlinesJL 623" — carrier and flight number were being
+                    // concatenated with no space. And a non-flight fell through to
+                    // `leg.type`, so the Palace Hotel Tokyo rendered as the word
+                    // "hotel" and Kikunoi as "dining": the itinerary was showing you
+                    // the shape of your trip with the names filed off. property_name
+                    // was there all along; nothing ever read it.
                     const name = leg.type === 'flight'
-                      ? `${leg.carrier || ''}${leg.flight_number || ''} · ${leg.origin || '?'} → ${leg.destination || '?'}`
-                      : leg.carrier || leg.destination || leg.type;
+                      ? `${[leg.carrier, leg.flight_number].filter(Boolean).join(' ')} · ${leg.origin || '?'} → ${leg.destination || '?'}`
+                      : leg.property_name || leg.destination_city || leg.carrier || leg.destination || leg.type;
                     const time = fmtTime(leg.departs_at);
                     const endTime = fmtTime(leg.arrives_at);
                     const conf = leg.confirmation;

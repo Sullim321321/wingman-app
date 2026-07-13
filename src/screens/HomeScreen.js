@@ -26,6 +26,7 @@ import {
   getLocalNews, getLocalTraffic, getTodayEvents, getTravelStats,
   createTrip, addLeg,
   getDecisions, confirmDecision, dismissDecision, undoDecision,
+  getBrief,
 } from "../api";
 import { scheduleDisruption, schedulePreDepartureBriefing, schedulePostTripDebrief } from "../notify";
 import * as Speech from "expo-speech";
@@ -386,6 +387,8 @@ export default function HomeScreen({ navigation }) {
   const [isSpeaking, setIsSpeaking]     = useState(false);
   const [isRefreshing, setIsRefreshing]  = useState(false);
   const [briefingLoading, setBriefingLoading] = useState(true); // skeleton state
+  // The Brief. "Nothing needs you" as a graph query rather than a greeting.
+  const [brief, setBrief] = useState(null);
 
   // Chat state
   const [messages, setMessages]         = useState([{ role: "assistant", content: "" }]);
@@ -405,8 +408,16 @@ export default function HomeScreen({ navigation }) {
   // ── Data loading ────────────────────────────────────────────────────────────
 
   // ── Manual refresh ─────────────────────────────────────────────────────────
+  // Pull the Brief. Best-effort: if it fails, Home simply doesn't show the line —
+  // it must never be the reason the screen won't load.
+  const loadBrief = useCallback(async () => {
+    try { setBrief(await getBrief()); } catch { /* silent */ }
+  }, []);
+  useEffect(() => { loadBrief(); }, [loadBrief]);
+
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
+    loadBrief();
     try {
       const [tripsData, meData] = await Promise.allSettled([getTrips(), getMe()]);
       if (tripsData.status === "fulfilled") {
@@ -774,7 +785,26 @@ export default function HomeScreen({ navigation }) {
   function scrollToBottom(animated = true) {
     setTimeout(() => { listRef.current?.scrollToEnd({ animated }); }, 80);
   }
-  useEffect(() => { if (messages.length > 0) scrollToBottom(); }, [messages.length]);
+
+  // ── Open on the BRIEF, not on the tail of yesterday's conversation ──────────
+  // This used to fire on every mount: `if (messages.length > 0) scrollToBottom()`.
+  // Since a restored thread always has messages, opening the app scrolled you
+  // straight past the briefing to the bottom of a chat from last night. The first
+  // thing you saw each morning was the end of a conversation you'd already had.
+  //
+  // Now it only scrolls when the conversation actually grows — i.e. when YOU said
+  // something. Arriving is not a reason to scroll.
+  const mountedMsgCount = useRef(null);
+  useEffect(() => {
+    if (mountedMsgCount.current === null) {
+      mountedMsgCount.current = messages.length;   // first paint: stay at the top
+      return;
+    }
+    if (messages.length > mountedMsgCount.current) {
+      mountedMsgCount.current = messages.length;
+      scrollToBottom();
+    }
+  }, [messages.length]);
 
   function confirmClear() {
     Alert.alert(
@@ -1258,6 +1288,31 @@ export default function HomeScreen({ navigation }) {
             </View>
           </View>
 
+          {/* ── The one line that matters ────────────────────────────────────
+              "Nothing needs you" as a COMPUTED FACT, not a greeting: no broken or
+              tight dependency, no unresolved must, nothing awaiting your word, no
+              pending decision. Every travel app writes this sentence. /brief checks
+              it first — and when there's no upcoming travel it says "Nothing on the
+              horizon" instead, because 0 of 0 is 100% and means nothing. */}
+          {brief ? (
+            <Pressable
+              style={s.briefLine}
+              onPress={() => {
+                if (!brief.needs_you) return;
+                tap();
+                const n = brief.needs[0];
+                if (n?.kind === "cascade" && n.leg_id) navigation.navigate("Situation", { legId: n.leg_id, delay: 0 });
+                else if (n?.kind === "confirm") navigation.navigate("Plan", { tripId: n.trip_id });
+                else navigation.navigate("Decisions");
+              }}
+              disabled={!brief.needs_you}
+            >
+              <View style={[s.briefDot, { backgroundColor: brief.needs_you ? C.amber : C.teal }]} />
+              <Text style={[s.briefText, brief.needs_you && { color: C.ink }]}>{brief.headline}</Text>
+              {brief.needs_you ? <Text style={s.briefArrow}>›</Text> : null}
+            </Pressable>
+          ) : null}
+
           {/* ── Disruption alert banner ── */}
           {(() => {
             const disrupted = (trips || []).flatMap(t => (t.legs || []).filter(l =>
@@ -1715,6 +1770,16 @@ const s = StyleSheet.create({
   // ── Hero briefing wrapper ──
   // Sits between masthead and CONVERSATION divider.
   // Does NOT scroll — it is always visible above the fold.
+  // The Brief line. Teal dot = nothing needs you, and that is a checked fact.
+  // Amber + arrow = something does, and tapping takes you straight to it.
+  briefLine: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    marginTop: 14, marginBottom: 4,
+  },
+  briefDot: { width: 7, height: 7, borderRadius: 4 },
+  briefText: { flex: 1, fontFamily: T.garamondI, fontSize: 17, lineHeight: 24, color: C.mut },
+  briefArrow: { fontFamily: T.sansM, fontSize: 18, color: C.amber },
+
   heroWrap: {
     paddingBottom: 16,
     borderBottomWidth: 1,

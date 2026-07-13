@@ -19,6 +19,7 @@ import { SerifText, tap } from "../components";
 const WARMUP_MSG = "One moment — just gathering your details.";
 import { sendConciergeMessage, getTrips, getConciergeThread, saveConciergeThread, clearConciergeThread } from "../api";
 import { LOCATION_OPT_IN_KEY } from "./SettingsScreen";
+import * as fid from "../flightid";
 
 // WELCOME is now dynamically generated based on trip context — see buildWelcome()
 const WELCOME_DEFAULT = "Good day. I'm watching your trips, tracking disruption risk, and ready to act the moment something changes. What can I do for you?";
@@ -36,7 +37,7 @@ function buildWelcome(trips) {
   else if (days === 1)  timeStr = "tomorrow";
   else                  timeStr = `in ${days} days`;
   const route = (next.origin && next.destination) ? `${next.origin} → ${next.destination}` : null;
-  const ident = (next.carrier && next.flight_number) ? `${next.carrier}${next.flight_number}` : null;
+  const ident = fid.displayName(next);
   const parts = [route, ident].filter(Boolean).join(" · ");
   return `Good day. Your next flight${parts ? ` (${parts})` : ""} departs ${timeStr}. I'm monitoring it now — what can I do for you?`;
 }
@@ -48,7 +49,7 @@ function buildTripContext(trips) {
     const legs = (trip.legs || []).map(leg => {
       if (leg.type === "flight") {
         const parts = [
-          leg.carrier && leg.flight_number ? `${leg.carrier}${leg.flight_number}` : null,
+          fid.displayName(leg),
           leg.origin && leg.destination ? `${leg.origin}→${leg.destination}` : null,
           leg.departs_at ? new Date(leg.departs_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : null,
         ].filter(Boolean);
@@ -83,22 +84,22 @@ function buildInitialChips(trips) {
     const daysAway = Math.ceil(diff / 86400000);
     if (daysAway <= 0) {
       // In transit or today
-      if (next.carrier && next.flight_number) chips.push(`Is ${next.carrier}${next.flight_number} on time?`);
+      if (next.carrier && next.flight_number) chips.push(`Is ${fid.displayName(next)} on time?`);
       chips.push(`What's the weather in ${next.destination}?`);
       chips.push("Which lounge can I access?");
     } else if (daysAway <= 1) {
       // Tomorrow
-      if (next.carrier && next.flight_number) chips.push(`Is ${next.carrier}${next.flight_number} on time?`);
+      if (next.carrier && next.flight_number) chips.push(`Is ${fid.displayName(next)} on time?`);
       chips.push(`What should I pack for ${next.destination}?`);
       chips.push("Any disruption risks?");
     } else if (daysAway <= 7) {
       // This week
       chips.push(`Weather risk for ${next.origin} → ${next.destination}?`);
       chips.push(`Best restaurants in ${next.destination}?`);
-      if (next.carrier && next.flight_number) chips.push(`Upgrade options on ${next.carrier}${next.flight_number}?`);
+      if (next.carrier && next.flight_number) chips.push(`Upgrade options on ${fid.displayName(next)}?`);
     } else {
       chips.push(`Weather risk for ${next.origin} → ${next.destination}?`);
-      if (next.carrier && next.flight_number) chips.push(`Is ${next.carrier}${next.flight_number} on time?`);
+      if (next.carrier && next.flight_number) chips.push(`Is ${fid.displayName(next)} on time?`);
     }
   }
   if (trips.length > 0 && chips.length < 4) chips.push("What's my next trip?");
@@ -228,8 +229,16 @@ export default function ConciergeScreen({ route, navigation }) {
 
   useEffect(() => {
     if (!tripsLoaded) return;
-    loadThread(activeTripId);
-  }, [activeTripId, tripsLoaded]);
+    // ── ONE conversation. ──────────────────────────────────────────────────────
+    // This used to be loadThread(activeTripId) — a separate thread per trip, plus a
+    // third one on Home (trip_id null). So "Wingman remembers" was quietly conditional
+    // on which surface you'd typed into, and switching trips silently swapped your
+    // history out from under you. There is now a single thread, always.
+    //
+    // activeTripId still selects what Wingman is LOOKING at. It no longer decides what
+    // Wingman REMEMBERS. Those were never the same thing.
+    loadThread(null);
+  }, [tripsLoaded]);
 
   useEffect(() => {
     if (prefill && !prefillSent.current && tripsLoaded) {
@@ -292,7 +301,7 @@ export default function ConciergeScreen({ route, navigation }) {
   function startFresh() {
     tap();
     setPendingThread(null);
-    clearConciergeThread(activeTripId).catch(() => {});
+    clearConciergeThread(null).catch(() => {});
   }
 
   function confirmClearThread() {
@@ -305,7 +314,7 @@ export default function ConciergeScreen({ route, navigation }) {
           text: "Clear",
           style: "destructive",
           onPress: async () => {
-            try { await clearConciergeThread(activeTripId); } catch {}
+            try { await clearConciergeThread(null); } catch {}
             setMessages([{ role: "assistant", content: buildWelcome(tripsRef.current) }]);
           },
         },
@@ -356,7 +365,7 @@ export default function ConciergeScreen({ route, navigation }) {
       };
       const updated = [...newMessages, aiMsg];
       setMessages(updated);
-      scheduleSave(updated.slice(1), activeTripId);
+      scheduleSave(updated.slice(1), null);   // one thread — see loadThread(null) above
     } catch (err) {
       clearTimeout(warmupTimer);
       const msg = err?.message || "";
@@ -398,9 +407,22 @@ export default function ConciergeScreen({ route, navigation }) {
   const hasUserMessages = messages.some(m => m.role === "user");
   const isWelcomeMsg = (c) => !c || c.startsWith("Good day.");
   const lastAiReply = [...messages].reverse().find(m => m.role === "assistant" && !isWelcomeMsg(m.content))?.content || null;
-  const chips = !hasUserMessages
-    ? buildInitialChips(trips)
-    : (!loading && lastAiReply ? buildFollowUpChips(lastAiReply, trips) : []);
+  // Always offer a way in, or a way on.
+  //
+  // buildFollowUpChips reads the last reply and proposes the obvious next questions —
+  // but it can come back empty, and when it did you were left facing a bare text box.
+  // That's the moment where a blank input becomes an interrogation: the burden of
+  // knowing what to ask lands back on you, which is precisely the burden a chief of
+  // staff exists to carry. So when it has nothing specific to suggest, it falls back to
+  // what it can always suggest — never to silence.
+  //
+  // You can still just type. The chips are an offer, not a menu.
+  const chips = (() => {
+    if (loading) return [];                              // don't suggest while it's thinking
+    if (!hasUserMessages) return buildInitialChips(trips);
+    const followUps = lastAiReply ? buildFollowUpChips(lastAiReply, trips) : [];
+    return followUps.length ? followUps : buildInitialChips(trips);
+  })();
 
   const renderItem = ({ item }) => {
     const isUser = item.role === "user";

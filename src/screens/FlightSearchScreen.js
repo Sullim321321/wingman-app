@@ -11,6 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BackBar, Btn, Segmented, g, tap } from "../components";
 import { C, T } from "../theme";
 import * as api from "../api";
+import * as fid from "../flightid";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -217,7 +218,7 @@ function ConfirmationCard({ trip }) {
           <Text style={s.legType}>{leg.type?.toUpperCase()}</Text>
           <Text style={s.legDetail}>
             {leg.type === "flight"
-              ? `${leg.carrier || ""}${leg.flight_number || ""} · ${leg.origin || ""}→${leg.destination || ""}`
+              ? `${fid.displayName(leg) || ""} · ${leg.origin || ""}→${leg.destination || ""}`
               : leg.carrier || leg.destination || ""}
           </Text>
           {leg.departs_at && (

@@ -29,6 +29,7 @@ import {
 } from "../api";
 import { UpgradeSheet } from "../components/UpgradeSheet";
 import { API_BASE } from "../config";
+import * as fid from "../flightid";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -140,8 +141,12 @@ function FlightLegRow({ leg, isCompleted, tripId, navigation, onEdit, onDelete }
   const [risk, setRisk]             = useState(null);
 
   useEffect(() => {
-    if (!leg.carrier || !leg.flight_number) return;
-    getFlightStatus(leg.carrier, leg.flight_number, leg.departs_at)
+    // getFlightStatus takes ONE argument — an ident. This passed THREE, so the request
+    // went to /flight-status/Japan%20Airlines and quietly 404'd forever. The extra two
+    // arguments were silently dropped by JavaScript, which is why nobody ever saw it.
+    const key = fid.apiKey(leg);
+    if (!key) return;
+    getFlightStatus(key)
       .then(d => { if (d?.status) setLiveStatus(d); })
       .catch(() => {});
     if (leg.origin && leg.destination) {
@@ -151,7 +156,7 @@ function FlightLegRow({ leg, isCompleted, tripId, navigation, onEdit, onDelete }
     }
   }, [leg.carrier, leg.flight_number]);
 
-  const ident      = [leg.carrier, leg.flight_number].filter(Boolean).join("");
+  const ident      = fid.displayName(leg) || "";   // a NAME. The key is fid.apiKey(leg).
   const depTime    = fmtTime(leg.departs_at);
   const arrTime    = fmtTime(leg.arrives_at);
   const depDate    = fmt(leg.departs_at);
@@ -548,7 +553,7 @@ export default function TripDetailScreen({ route, navigation }) {
   const openConcierge = () => {
     const context = `I'm asking about my trip: "${trip.title}"` +
       (depDate ? ` departing ${depDate}` : "") +
-      (firstFlight ? `. My first flight is ${firstFlight.carrier || ""}${firstFlight.flight_number || ""} from ${firstFlight.origin || "?"} to ${firstFlight.destination || "?"}` : "") +
+      (firstFlight ? `. My first flight is ${fid.displayName(firstFlight) || ""} from ${firstFlight.origin || "?"} to ${firstFlight.destination || "?"}` : "") +
       ". What should I know?";
     navigation.navigate("Concierge", { prefill: context });
   };

@@ -238,6 +238,12 @@ export const bookLeg = (legId, offerId, by = "you") =>
     signal: timeoutSignal(90000),
   });
 
+// ─── What Wingman believes is always true of you ──────────────────────────────
+// Lives in Settings, not on Plan: these apply to every trip, so they say nothing about
+// the one you're planning — they just crowd out the things that do.
+export const getMyConstraints  = ()   => req("/me/constraints");
+export const forgetConstraint  = (id) => req(`/me/constraints/${id}`, { method: "DELETE" });
+
 // ─── Inbound forwarding (the no-Gmail path) ───────────────────────────────────
 // gmail.readonly is a RESTRICTED scope: it triggers a mandatory annual CASA security
 // assessment by a Google-approved assessor. Forwarding needs zero Google scopes, and

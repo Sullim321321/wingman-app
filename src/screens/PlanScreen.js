@@ -265,14 +265,25 @@ export default function PlanScreen({ navigation, route }) {
             </View>
           ) : null}
 
-          {/* Standing constraints — true of you on every trip. Wingman is applying
-              them without being asked, which is the promise; but they belong in
-              their own quiet block, not competing with the trip being planned. */}
+          {/* Standing constraints used to be listed here in full — "ALWAYS TRUE OF YOU",
+              vegetarian, prefers Marriott — under the trip being planned.
+              They don't belong in the workspace. They're true of every trip, so they say
+              nothing about THIS one; they just push the live decisions off the screen. A
+              chief of staff doesn't re-read your dietary requirements back to you every
+              time you mention a city.
+              One quiet line confirms they're being applied, and Settings is where you go
+              to change them. Reference, not workspace. */}
           {aboutYou.length > 0 ? (
-            <View style={s.block}>
-              <Text style={[s.blockH, { color: C.mut }]}>ALWAYS TRUE OF YOU</Text>
-              {aboutYou.map((c) => <CRow key={c.id} c={c} dim />)}
-            </View>
+            <Pressable
+              style={s.standing}
+              onPress={() => { tap(); navigation.navigate("Settings"); }}
+            >
+              <Text style={s.standingT}>
+                Applying {aboutYou.length} thing{aboutYou.length === 1 ? "" : "s"} that are
+                always true of you
+              </Text>
+              <Text style={s.standingA}>›</Text>
+            </Pressable>
           ) : null}
 
           {gaps.length > 0 && !busy && !empty ? (
@@ -418,6 +429,12 @@ const s = StyleSheet.create({
             fontStyle: "italic", marginTop: 5 },
   legBook:  { marginTop: 10, alignSelf: "flex-start" },
   legBookT: { fontFamily: T.sansM, fontSize: 13, color: C.gold },
+
+  standing:  { flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+               paddingVertical: 12, paddingHorizontal: 14, marginTop: 4,
+               borderRadius: 10, backgroundColor: C.card2 },
+  standingT: { fontFamily: T.sans, fontSize: 12.5, color: C.mut, flex: 1, paddingRight: 8 },
+  standingA: { fontFamily: T.sans, fontSize: 16, color: C.mut },
 
   cRow: { flexDirection: "row", gap: 11, marginBottom: 14 },
   cDot: { width: 6, height: 6, borderRadius: 3, marginTop: 7 },

@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { C, T } from "../theme";
 import { SerifText, BackBar, tap } from "../components";
-import { getMemory, updateMemory, deleteMemoryField } from "../api";
+import { getMemory, updateMemory, deleteMemoryField, getMyConstraints, forgetConstraint } from "../api";
 
 const FIELD_META = [
   { key: "identity",        label: "Who you are",             hint: "e.g. Founder, based in London, frequent traveller" },
@@ -143,6 +143,8 @@ export default function MemoryScreen({ navigation }) {
   const [memory, setMemory]     = useState({});
   const [updatedAt, setUpdatedAt] = useState(null);
 
+  const [standing, setStanding] = useState([]);
+
   const load = useCallback(async () => {
     try {
       const data = await getMemory();
@@ -153,7 +155,35 @@ export default function MemoryScreen({ navigation }) {
     } finally {
       setLoading(false);
     }
+    // Separate call, separate failure. The profile loading and the constraint graph
+    // loading are different questions, and one being down must not blank the other.
+    try {
+      const c = await getMyConstraints();
+      setStanding(c?.constraints || []);
+    } catch { /* leave it empty rather than inventing one */ }
   }, []);
+
+  // "No, that isn't true of me." Retires it — it stops being applied to anything from
+  // now on, but the row survives, because what Wingman used to believe (and when it
+  // stopped) is part of how it explains a decision it made last month.
+  const forget = (c) => {
+    Alert.alert(
+      "Not true of you?",
+      `"${c.rationale || c.kind}"\n\nI'll stop applying this to your trips.`,
+      [
+        { text: "Keep it", style: "cancel" },
+        {
+          text: "Forget it",
+          style: "destructive",
+          onPress: async () => {
+            setStanding((prev) => prev.filter((x) => x.id !== c.id));
+            try { await forgetConstraint(c.id); }
+            catch { load(); }   // put it back — don't pretend it worked
+          },
+        },
+      ]
+    );
+  };
 
   useEffect(() => { load(); }, [load]);
 
@@ -212,6 +242,48 @@ export default function MemoryScreen({ navigation }) {
           </View>
         )}
 
+        {/* ── ALWAYS TRUE OF YOU ────────────────────────────────────────────────
+            These used to be listed on the Plan screen, under the trip being planned.
+            They don't belong there: they're true of EVERY trip, so they say nothing
+            about the one in front of you — they just push the live decisions off the
+            bottom of the screen. A chief of staff doesn't recite your dietary
+            requirements back to you every time you mention a city.
+
+            Each one shows HOW it was learned, and that is not decoration. "You told me"
+            and "I worked it out" are different kinds of fact, and rendering them
+            identically is how an inference acquires the authority of a statement. */}
+        {standing.length > 0 && (
+          <View style={s.stdSection}>
+            <Text style={s.stdH}>ALWAYS TRUE OF YOU</Text>
+            <Text style={s.stdSub}>
+              Applied to every trip, without you asking. Tap to correct.
+            </Text>
+            {standing.map((c) => (
+              <View key={c.id} style={s.std}>
+                <View style={s.stdTop}>
+                  <Text style={s.stdT}>{c.rationale || c.kind}</Text>
+                  <Text style={[
+                    s.stdHard,
+                    c.hardness === "must" && { color: C.gold },
+                  ]}>{String(c.hardness || "").toUpperCase()}</Text>
+                </View>
+                <View style={s.stdBot}>
+                  <Text style={s.stdSrc}>
+                    {c.source === "stated"     ? "You told me"
+                     : c.source === "observed" ? "I saw you do it"
+                     : c.source === "researched" ? "I looked it up"
+                     : "I worked it out"}
+                    {c.status === "proposed" ? " · not applied until you confirm" : ""}
+                  </Text>
+                  <Pressable onPress={() => forget(c)} hitSlop={8}>
+                    <Text style={s.stdX}>Not true</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
         {FIELD_META.map(({ key, label, hint }) => (
           <MemoryField
             key={key}
@@ -265,6 +337,19 @@ export default function MemoryScreen({ navigation }) {
 }
 
 const s = StyleSheet.create({
+  // Always true of you — the constraint graph, rendered where you can change it.
+  stdSection: { marginTop: 26, marginBottom: 10 },
+  stdH:    { fontFamily: T.sansB, fontSize: 11, letterSpacing: 1.6, color: C.gold, marginBottom: 6 },
+  stdSub:  { fontFamily: T.sans, fontSize: 13, color: C.mut, marginBottom: 14, lineHeight: 18 },
+  std:     { backgroundColor: C.card, borderRadius: 12, padding: 14, marginBottom: 10,
+             borderWidth: 1, borderColor: C.line },
+  stdTop:  { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 10 },
+  stdT:    { fontFamily: T.sans, fontSize: 15, color: C.ink, flex: 1, lineHeight: 21 },
+  stdHard: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 1.2, color: C.mut, marginTop: 3 },
+  stdBot:  { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 10 },
+  stdSrc:  { fontFamily: T.sans, fontSize: 12, color: C.mut, flex: 1, paddingRight: 10 },
+  stdX:    { fontFamily: T.sansM, fontSize: 12, color: C.coral },
+
   root:       { flex: 1, backgroundColor: C.ink },
   scroll:     { paddingBottom: 60 },
 

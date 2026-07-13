@@ -7,8 +7,8 @@ import React, {
   useState, useCallback, useEffect, useRef, useMemo,
 } from "react";
 import {
-  SafeAreaView, View, Text, TextInput, Pressable, FlatList,
-  StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
+  SafeAreaView, View, Text, Pressable, RefreshControl,
+  StyleSheet, Platform, ActivityIndicator,
   Alert, Animated, Easing, AppState, ScrollView, Linking,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -32,6 +32,7 @@ import { scheduleDisruption, schedulePreDepartureBriefing, schedulePostTripDebri
 import * as Speech from "expo-speech";
 import { LOCATION_OPT_IN_KEY } from "./SettingsScreen";
 import { syncFlightActivity } from "../liveActivity";
+import * as fid from "../flightid";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -160,7 +161,7 @@ function buildTripContext(trips) {
     const legs = (trip.legs || []).map(leg => {
       if (leg.type === "flight") {
         const parts = [
-          leg.carrier && leg.flight_number ? `${leg.carrier}${leg.flight_number}` : null,
+          fid.displayName(leg),
           leg.origin && leg.destination ? `${leg.origin}→${leg.destination}` : null,
           leg.departs_at ? new Date(leg.departs_at).toLocaleDateString("en-US", {
             month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
@@ -224,7 +225,7 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPr
 
   if (hs?.state === "in_transit" && leg) {
     statusDotColor = C.gold;
-    statusLabel    = `Airborne · ${[leg.carrier, leg.flight_number].filter(Boolean).join("")}`;
+    statusLabel    = `Airborne · ${(fid.displayName(leg) || "")}`;
     const landMins = leg.arrives_at ? Math.round((new Date(leg.arrives_at).getTime() - Date.now()) / 60000) : null;
     const timeToLand = landMins && landMins > 0
       ? (landMins >= 60 ? `${Math.floor(landMins / 60)} hour${Math.floor(landMins / 60) !== 1 ? "s" : ""}` : `${landMins} minutes`)
@@ -242,7 +243,7 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPr
   } else if (hs?.state === "at_airport" && leg) {
     statusDotColor = C.teal;
     statusLabel    = "On time";
-    const ident = [leg.carrier, leg.flight_number].filter(Boolean).join("");
+    const ident = (fid.displayName(leg) || "");
     const minsAway = hs.hours_to_depart != null ? Math.round(hs.hours_to_depart * 60) : null;
     const timeStr  = minsAway != null ? (minsAway >= 120 ? `in ${Math.round(minsAway / 60)} hours` : `in ${minsAway} minutes`) : null;
     editionSuffix = suffix(weatherCity || leg.destination);
@@ -288,7 +289,7 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPr
 
   } else if ((hs?.state === "pre_departure" || !hs?.state) && next) {
     const daysAway  = Math.ceil((new Date(next.departs_at).getTime() - Date.now()) / 86400000);
-    const ident     = [next.carrier, next.flight_number].filter(Boolean).join("");
+    const ident     = (fid.displayName(next) || "");
     const dest      = next.destination || "your destination";
     editionSuffix = suffix(dest);
     if (daysAway <= 0) { statusDotColor = C.teal; statusLabel = "Today"; headline = `${dest} today.`; }
@@ -360,7 +361,7 @@ function buildWelcomeMessage(trips, firstName, city) {
     : days === 1 ? "tomorrow"
     : `in ${days} days`;
   const route = next.origin && next.destination ? `${next.origin} → ${next.destination}` : null;
-  const ident = next.carrier && next.flight_number ? `${next.carrier}${next.flight_number}` : null;
+  const ident = fid.displayName(next);
   const parts = [route, ident].filter(Boolean).join(" · ");
   return `Good day. Your next flight${parts ? ` (${parts})` : ""} departs ${timeStr}. I'm monitoring it now — what can I do for you?`;
 }
@@ -566,11 +567,13 @@ export default function HomeScreen({ navigation }) {
     return () => { cancelled = true; };
   }, []));
 
-  // Load persisted thread once trips are ready
-  useEffect(() => {
-    if (!tripsLoaded) return;
-    loadThread();
-  }, [tripsLoaded]);
+  // Home no longer loads a conversation thread.
+  //
+  // It used to load its OWN — getConciergeThread(null) — while the Concierge screen
+  // loaded a different one keyed to the active trip. Two threads, two composers, and
+  // a promise of persistent memory that silently depended on which of them you'd used.
+  // The conversation now lives in exactly one place, so there is exactly one thing to
+  // remember. Home is the briefing.
 
   // ── Context-aware opener based on thread recency ─────────────────────────────
   function buildContextOpener(updatedAt, trips, firstName, city) {
@@ -587,7 +590,7 @@ export default function HomeScreen({ navigation }) {
             : hours < 24 ? `in ${hours}h`
             : days === 1 ? "tomorrow"
             : `in ${days} days`;
-          const ident = next.carrier && next.flight_number ? `${next.carrier}${next.flight_number}` : null;
+          const ident = fid.displayName(next);
           return `Welcome back${firstName ? `, ${firstName}` : ""}. ${ident ? `${ident} departs ${timeStr}` : `Your next flight departs ${timeStr}`} — anything you need?`;
         }
         return `Welcome back${firstName ? `, ${firstName}` : ""}. What can I help with?`;
@@ -792,19 +795,9 @@ export default function HomeScreen({ navigation }) {
   // straight past the briefing to the bottom of a chat from last night. The first
   // thing you saw each morning was the end of a conversation you'd already had.
   //
-  // Now it only scrolls when the conversation actually grows — i.e. when YOU said
-  // something. Arriving is not a reason to scroll.
-  const mountedMsgCount = useRef(null);
-  useEffect(() => {
-    if (mountedMsgCount.current === null) {
-      mountedMsgCount.current = messages.length;   // first paint: stay at the top
-      return;
-    }
-    if (messages.length > mountedMsgCount.current) {
-      mountedMsgCount.current = messages.length;
-      scrollToBottom();
-    }
-  }, [messages.length]);
+  // (The old auto-scroll effect lived here. With no message list on Home, there is
+  //  nothing to scroll to — and the bug it was written to fix, "the app opens at the
+  //  bottom of last night's chat", cannot happen on a screen that has no chat.)
 
   function confirmClear() {
     Alert.alert(
@@ -921,7 +914,7 @@ export default function HomeScreen({ navigation }) {
       chips.push("What's on this week?");
       chips.push("Best way to get around?");
     } else if (next) {
-      const ident = next.carrier && next.flight_number ? `${next.carrier}${next.flight_number}` : null;
+      const ident = fid.displayName(next);
       if (ident) chips.push(`Is ${ident} on time?`);
       if (next.origin && next.destination) chips.push(`Weather risk: ${next.origin} → ${next.destination}?`);
       chips.push("Upgrade options on my next flight?");
@@ -1076,7 +1069,7 @@ export default function HomeScreen({ navigation }) {
     const items = [
       {
         icon: "eye-outline",
-        text: `Monitoring ${`${flt.carrier || ""}${flt.flight_number || ""}`.trim() || "your flight"} ${flt.origin || "?"}→${flt.destination || "?"} for delays and gate changes`,
+        text: `Monitoring ${(fid.displayName(flt) || "").trim() || "your flight"} ${flt.origin || "?"}→${flt.destination || "?"} for delays and gate changes`,
       },
     ];
     if (riskScore != null) {
@@ -1179,7 +1172,7 @@ export default function HomeScreen({ navigation }) {
               </View>
               <Text style={s.dayOfRoute}>{inTransit.leg.origin || "?"} → {inTransit.leg.destination || "?"}</Text>
               <Text style={s.dayOfMeta}>
-                {`${inTransit.leg.carrier || ""}${inTransit.leg.flight_number || ""}`.trim()} · I'm watching your connections and onward bookings.
+                {(fid.displayName(inTransit.leg) || "").trim()} · I'm watching your connections and onward bookings.
               </Text>
               <Text style={[s.dayOfCta, { color: C.gold }]}>Live status  ›</Text>
             </Pressable>
@@ -1225,7 +1218,7 @@ export default function HomeScreen({ navigation }) {
             <Text style={s.dayOfRoute}>{dayOf.leg.origin || "?"} → {dayOf.leg.destination || "?"}</Text>
             {(() => {
               const meta = [
-                `${dayOf.leg.carrier || ""}${dayOf.leg.flight_number || ""}`.trim(),
+                (fid.displayName(dayOf.leg) || "").trim(),
                 dayOf.leg.gate ? `Gate ${dayOf.leg.gate}` : null,
                 dayOf.leg.terminal ? `Terminal ${dayOf.leg.terminal}` : null,
                 dayOf.leg.status || null,
@@ -1446,130 +1439,79 @@ export default function HomeScreen({ navigation }) {
           ) : null}
         </View>
 
-        {/* ── CONVERSATION divider ──────────────────────────────────────── */}
-        <View style={s.sectionRule}>
-          <View style={s.sectionRuleLine} />
-          <Text style={s.sectionRuleLabel}>CONVERSATION</Text>
-          <View style={s.sectionRuleLine} />
-        </View>
     </>
   );
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HOME IS THE BRIEFING. There is no chat here any more.
+  //
+  // Home used to be a briefing with a chat bolted underneath it, and that had two
+  // costs, one obvious and one not.
+  //
+  // The obvious one: a composer at the bottom of a screen is an instruction to type.
+  // So the first thing Wingman did every morning was ask you a question — which is
+  // exactly backwards for something that claims to have been working while you slept.
+  // A chief of staff opens with what happened, not with "how can I help?"
+  //
+  // The one that actually mattered: Home kept its own conversation thread (trip_id
+  // null) while Concierge kept another (trip_id = the active trip). Two composers,
+  // two threads. So "Wingman remembers" was quietly conditional on WHICH BOX you
+  // happened to type into — and there was no way to tell them apart from the outside.
+  // Deleting this composer doesn't just tidy the screen; it makes the memory claim
+  // true, because now there is only one conversation to remember.
+  //
+  // The chat is one tap away, floating, and it keeps everything you said.
+  // ═══════════════════════════════════════════════════════════════════════════
   return (
     <SafeAreaView style={s.root}>
-        <KeyboardAvoidingView
+      <ScrollView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={0}
+        contentContainerStyle={s.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={C.mut} />
+        }
+        showsVerticalScrollIndicator={false}
       >
-        {/* ── Scrollable conversation thread (masthead + hero ride in the header) ── */}
-        <FlatList
-          ref={listRef}
-          style={{ flex: 1 }}
-          contentContainerStyle={s.scrollContent}
-          data={messages}
-          keyExtractor={(_, i) => String(i)}
-          renderItem={renderMessage}
-          refreshing={isRefreshing}
-          onRefresh={handleRefresh}
-          ListHeaderComponent={listHeader}
-          ListFooterComponent={() => (
-            <>
-              {chatLoading && (
-                <View style={[s.msgRow, s.msgRowWing]}>
-                  <View style={s.wingMark}>
-                    <Text style={s.wingMarkT}>W</Text>
-                  </View>
-                  <View style={[s.bubble, s.bubbleWing, s.bubbleLoading]}>
-                    <TypingDots />
-                  </View>
-                </View>
-              )}
-              {/* Dev mode: TEST NOTIFICATIONS */}
-              {devMode && (
-                <View style={s.devSection}>
-                  <Text style={s.devLabel}>TEST NOTIFICATIONS</Text>
-                  <Pressable style={s.devBtn} onPress={async () => {
-                    await scheduleDisruption(nextFlight);
-                    setTimeout(() => navigation.navigate("Alert", { flight: nextFlight }), 3500);
-                  }}>
-                    <Text style={s.devBtnT}>Simulate disruption</Text>
-                  </Pressable>
-                  <Pressable style={s.devBtn} onPress={async () => {
-                    await schedulePreDepartureBriefing(nextFlight, null);
-                  }}>
-                    <Text style={s.devBtnT}>Simulate pre-departure briefing</Text>
-                  </Pressable>
-                  <Pressable style={s.devBtn} onPress={async () => {
-                    const t = trips[trips.length - 1];
-                    await schedulePostTripDebrief(t?.title || "your trip", t?.id || null);
-                  }}>
-                    <Text style={s.devBtnT}>Simulate post-trip debrief</Text>
-                  </Pressable>
-                </View>
-              )}
-              <View style={{ height: 16 }} />
-            </>
-          )}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        />
+        {listHeader}
 
-        {/* ── Input bar ─────────────────────────────────────────────────── */}
-        <View style={s.inputWrap}>
-          {/* Context-aware suggestion chips — only before first user message */}
-          {suggestionChips.length > 0 && !chatLoading ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={s.chipsRow}
-              keyboardShouldPersistTaps="handled"
-            >
-              {suggestionChips.map(chip => (
-                <Pressable key={chip} style={s.chip} onPress={() => { tap(); send(chip); }}>
-                  <Text style={s.chipT}>{chip}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          ) : null}
-          <View style={s.inputInner}>
-            <TextInput
-              style={s.inputField}
-              value={input}
-              onChangeText={setInput}
-              placeholder={inputPlaceholder}
-              placeholderTextColor={C.mut}
-              onSubmitEditing={() => send()}
-              returnKeyType="send"
-              multiline={false}
-              editable={!chatLoading}
-              autoCorrect={true}
-              spellCheck={true}
-              autoCapitalize="sentences"
-              autoComplete="off"
-              keyboardAppearance="dark"
-            />
-            <Pressable
-              style={[s.sendBtn, (!input.trim() || chatLoading) && s.sendBtnDim]}
-              onPress={() => send()}
-              disabled={!input.trim() || chatLoading}
-            >
-              <Text style={s.sendBtnT}>›</Text>
+        {devMode && (
+          <View style={s.devSection}>
+            <Text style={s.devLabel}>TEST NOTIFICATIONS</Text>
+            <Pressable style={s.devBtn} onPress={async () => {
+              await scheduleDisruption(nextFlight);
+              setTimeout(() => navigation.navigate("Alert", { flight: nextFlight }), 3500);
+            }}>
+              <Text style={s.devBtnT}>Simulate disruption</Text>
+            </Pressable>
+            <Pressable style={s.devBtn} onPress={async () => {
+              await schedulePreDepartureBriefing(nextFlight, null);
+            }}>
+              <Text style={s.devBtnT}>Simulate pre-departure briefing</Text>
+            </Pressable>
+            <Pressable style={s.devBtn} onPress={async () => {
+              const t = trips[trips.length - 1];
+              await schedulePostTripDebrief(t?.title || "your trip", t?.id || null);
+            }}>
+              <Text style={s.devBtnT}>Simulate post-trip debrief</Text>
             </Pressable>
           </View>
-          {/* 5-tap gesture on the input area bottom label to unlock dev mode */}
-          <Pressable
-            onPress={() => {
-              devTapCount.current += 1;
-              if (devTapCount.current >= 5) {
-                devTapCount.current = 0;
-                setDevMode(v => !v);
-              }
-            }}
-            style={s.devTapTarget}
-          />
-        </View>
-      </KeyboardAvoidingView>
+        )}
+
+        {/* 5-tap to unlock dev mode — now lives at the foot of the briefing. */}
+        <Pressable
+          onPress={() => {
+            devTapCount.current += 1;
+            if (devTapCount.current >= 5) {
+              devTapCount.current = 0;
+              setDevMode(v => !v);
+            }
+          }}
+          style={s.devTapTarget}
+        />
+
+        {/* Room for the floating "Ask Wingman" pill, which now shows on Home. */}
+        <View style={{ height: 96 }} />
+      </ScrollView>
     </SafeAreaView>
   );
 }

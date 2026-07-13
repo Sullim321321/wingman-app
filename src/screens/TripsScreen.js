@@ -15,6 +15,7 @@ import { C, T, SHADOW, litEdge } from "../theme";
 import { tap, FadeRise } from "../components";
 import { getTrips, deleteTrip, getPrediction, getOnboardingSummary } from "../api";
 import { getCachedTrips } from "../offlineCache";
+import * as fid from "../flightid";
 
 const BACKFILL_KEY = "wingman_backfill_recap_seen";
 
@@ -128,7 +129,7 @@ function TripRow({ trip, navigation, onDelete }) {
 
   // Flight ident
   const ident = firstFlight
-    ? [firstFlight.carrier, firstFlight.flight_number].filter(Boolean).join("")
+    ? (fid.displayName(firstFlight) || "")
     : null;
 
   // Derived title

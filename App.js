@@ -211,12 +211,16 @@ function Tabs({ navigation }) {
       <Tab.Screen name="Insights"     component={InsightsScreen} />
     </Tab.Navigator>
 
-    {/* Always-present concierge affordance (UI #1) — hidden on Home and Plan, both of
-        which already have their own input inline. On Plan the floating pill sat
-        directly on top of the composer's send button: the one control the entire
-        screen exists to serve. An "always-present" affordance has to know when to be
-        absent. */}
-    {activeRoute !== "Home" && activeRoute !== "Plan" && (
+    {/* The one way into the conversation.
+        Hidden only on Plan, which has its own composer and is a different conversation
+        (planning a trip, not asking about one) — there the floating pill sat directly on
+        top of the send button, and an "always-present" affordance has to know when to be
+        absent.
+        It now shows on HOME, because Home no longer has a chat in it. Home is the
+        briefing. The chat is one tap away and REMEMBERS — which it could not honestly
+        claim before, when Home and Concierge kept two separate threads and "persistent
+        memory" quietly depended on which box you happened to type into. */}
+    {activeRoute !== "Plan" && (
       <Pressable
         onPress={() => { try { require("./src/components").tap?.(); } catch {} navigation.navigate("Concierge"); }}
         style={({ pressed }) => [

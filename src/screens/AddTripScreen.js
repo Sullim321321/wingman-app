@@ -10,6 +10,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { C, T } from "../theme";
 import { BackBar, Btn, g, tap } from "../components";
 import { createTrip, getFlightStatus, draftTripFromText, importPasteItinerary } from "../api";
+import * as fid from "../flightid";
 
 // ── Trip mode ────────────────────────────────────────────────────────────────
 const MODES = [
@@ -43,7 +44,7 @@ function legSummary(leg) {
   const icon = t ? t.icon : "·";
   switch (leg.type) {
     case "flight":
-      return `${icon} ${leg.carrier || ""}${leg.flight_number || ""} · ${leg.origin || "?"} → ${leg.destination || "?"}`;
+      return `${icon} ${fid.displayName(leg) || ""} · ${leg.origin || "?"} → ${leg.destination || "?"}`;
     case "hotel":
     case "airbnb":
       return `${icon} ${leg.property_name || "Hotel"} · ${leg.departs_at ? new Date(leg.departs_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : ""}`;

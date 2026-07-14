@@ -71,10 +71,9 @@ import FlightSearchScreen from "./src/screens/FlightSearchScreen";
 import FlightBookScreen from "./src/screens/FlightBookScreen";
 import FlightConfirmScreen from "./src/screens/FlightConfirmScreen";
 import AutonomySettingsScreen from "./src/screens/AutonomySettingsScreen";
-import InsightsScreen from "./src/screens/InsightsScreen";
+import LedgerScreen from "./src/screens/LedgerScreen";
 import ProfileSetupScreen from "./src/screens/ProfileSetupScreen";
 import WelcomeScreen from "./src/screens/WelcomeScreen";
-import WingmanWrappedScreen from "./src/screens/WingmanWrappedScreen";
 import CompensationScreen from "./src/screens/CompensationScreen";
 import UpgradeBidScreen from "./src/screens/UpgradeBidScreen";
 import GroundTransportScreen from "./src/screens/GroundTransportScreen";
@@ -103,7 +102,7 @@ const TAB_ICONS = {
   Plan:         { active: "\u2726\uFE0E", inactive: "\u2727\uFE0E" },   // \u2726 / \u2727 \u2014 the front door
   Trips:        { active: "\u2708\uFE0E", inactive: "\u2708\uFE0E" },
   Intelligence: { active: "\u25CE\uFE0E", inactive: "\u25CB\uFE0E" },
-  Insights:     { active: "\u25C6\uFE0E", inactive: "\u25C7\uFE0E" },
+  Ledger:       { active: "\u25C6\uFE0E", inactive: "\u25C7\uFE0E" },
 };
 
 // Tab labels — wide-tracked all-caps (kept short to prevent bleed)
@@ -112,7 +111,7 @@ const TAB_LABELS = {
   Plan:         "PLAN",
   Trips:        "TRIPS",
   Intelligence: "SIGNALS",
-  Insights:     "INSIGHTS",
+  Ledger:       "LEDGER",
 };
 
 function TabIcon({ name, focused }) {
@@ -203,7 +202,9 @@ function Tabs({ navigation }) {
           tabBarBadgeStyle: { backgroundColor: C.coral, fontSize: 9, minWidth: 16, height: 16, borderRadius: 8 },
         }}
       />
-      <Tab.Screen name="Insights"     component={InsightsScreen} />
+      {/* The Ledger: what Wingman did, and what it was defending. This tab used to be
+          Insights — a dashboard whose headline number was a counterfactual nobody measured. */}
+      <Tab.Screen name="Ledger"       component={LedgerScreen} />
     </Tab.Navigator>
 
     {/* The one way into the conversation.
@@ -459,7 +460,6 @@ function Root() {
             <Stack.Screen name="FlightConfirm" component={FlightConfirmScreen} options={{ gestureEnabled: false }} />
             <Stack.Screen name="Autonomy"          component={AutonomySettingsScreen} />
             <Stack.Screen name="PassengerProfile"   component={PassengerProfileScreen} />
-            <Stack.Screen name="Wrapped"      component={WingmanWrappedScreen} />
             <Stack.Screen name="Compensation"     component={CompensationScreen} />
             <Stack.Screen name="UpgradeBid"         component={UpgradeBidScreen} />
             <Stack.Screen name="GroundTransport"    component={GroundTransportScreen} />

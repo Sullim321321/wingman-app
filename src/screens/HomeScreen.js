@@ -132,14 +132,16 @@ function buildSignalPills({ homeState, weather, trafficData, todayEvents, riskSc
   return pills.slice(0, 6); // max 6 pills
 }
 
-// Map pill color name to actual hex
+// Map pill colour NAME to the palette. These used to be hardcoded hexes — a fifth
+// copy of the colour system, hiding inside a lookup table. Every one of them is now
+// resolved from theme.js, so the palette cannot drift out from under this screen again.
 const PILL_COLORS = {
-  teal:   "#2DB896",
-  coral:  "#D95F5F",
-  amber:  "#D4902A",
-  gold:   "#C9A96E",
-  indigo: "#818CF8",
-  mut:    "#8A7F70",
+  teal:   C.teal,
+  coral:  C.coral,
+  amber:  C.amber,
+  gold:   C.gold,
+  indigo: C.premium,
+  mut:    C.mut,
 };
 
 function findNextFlight(trips) {

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { C } from "../theme";
 
 // PlanCard — rendered below a concierge message when Claude returns a PLAN tag
 // Shows trip highlights, recommended hotels, and a "Save this trip" CTA
@@ -107,7 +108,7 @@ const ps = StyleSheet.create({
   title: {
     fontFamily: 'PlayfairDisplay_700Bold_Italic',
     fontSize: 15,
-    color: '#C9A96E',
+    color: C.gold,
     marginBottom: 2,
   },
   meta: {
@@ -178,9 +179,9 @@ const ps = StyleSheet.create({
     margin: 12,
     paddingVertical: 11,
     borderRadius: 8,
-    backgroundColor: '#C9A96E18',
+    backgroundColor: C.goldGlass,
     borderWidth: 1,
-    borderColor: '#C9A96E',
+    borderColor: C.gold,
     alignItems: 'center',
   },
   saveBtnDone: {
@@ -190,7 +191,7 @@ const ps = StyleSheet.create({
   saveBtnT: {
     fontFamily: 'DMSans_500Medium',
     fontSize: 13,
-    color: '#C9A96E',
+    color: C.gold,
     letterSpacing: 0.5,
   },
   saveBtnTDone: {

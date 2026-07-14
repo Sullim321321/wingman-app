@@ -45,12 +45,17 @@ function factory() {
   }
 }
 
-// Wingman's palette. Restated here (not imported from theme.js) because these
-// values get passed INTO the widget extension, which is compiled separately and
-// shares no module graph with the app.
-const GOLD  = "#C9A96E";
-const CORAL = "#E5806B";   // delayed / cancelled
-const MINT  = "#7FC8A9";   // boarding
+// Wingman's palette. Restated here — NOT imported from theme.js — because these values
+// are passed INTO the native widget extension, which is compiled separately and shares
+// no module graph with the app. This is the one duplication that cannot be removed.
+//
+// So it is marked, loudly: IF YOU CHANGE theme.js, CHANGE THESE. There is no mechanism
+// that will catch it if you don't — the widget will simply render last season's colours
+// on the lock screen and nothing anywhere will complain. (That is precisely how the tab
+// bar ended up espresso-and-gold inside a black-and-cream app.)
+const GOLD  = "#EDEBE7";   // theme.js C.gold  — the accent is CREAM now
+const CORAL = "#C8564C";   // theme.js C.coral — delayed / cancelled
+const MINT  = "#5C8A72";   // theme.js C.teal  — boarding / holds
 
 function statusLabel(leg) {
   const s = (leg.status || "").toLowerCase();

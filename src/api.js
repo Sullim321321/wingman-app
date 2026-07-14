@@ -238,6 +238,11 @@ export const bookLeg = (legId, offerId, by = "you") =>
     signal: timeoutSignal(90000),
   });
 
+// ─── The Ledger ───────────────────────────────────────────────────────────────
+// What Wingman DID, and what it was protecting. Replaces Insights, which showed an
+// "avg. time saved" figure measured against a counterfactual nobody ever ran.
+export const getLedger = () => req("/ledger");
+
 // ─── What Wingman believes is always true of you ──────────────────────────────
 // Lives in Settings, not on Plan: these apply to every trip, so they say nothing about
 // the one you're planning — they just crowd out the things that do.

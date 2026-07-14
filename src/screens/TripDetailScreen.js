@@ -1180,7 +1180,7 @@ export default function TripDetailScreen({ route, navigation }) {
                   {action.cta && (
                     <Pressable
                       style={[s.intelCta, { paddingHorizontal: 0, paddingVertical: 8, borderTopWidth: 0, marginTop: 6 }]}
-                      onPress={() => { tap(); navigation.navigate("Disruption", { tripId: trip.id, legId: disruptionLeg.id, leg: disruptionLeg }); }}
+                      onPress={() => { tap(); navigation.navigate("Situation", { legId: disruptionLeg.id, delay: 0 }); }}
                     >
                       <Text style={s.intelCtaT}>{action.cta}  ›</Text>
                     </Pressable>
@@ -1190,7 +1190,7 @@ export default function TripDetailScreen({ route, navigation }) {
             })}
             <Pressable
               style={[s.intelCta, { paddingHorizontal: 24, paddingVertical: 12, borderTopWidth: 0 }]}
-              onPress={() => { tap(); navigation.navigate("Disruption", { tripId: trip.id, legId: disruptionLeg.id, leg: disruptionLeg }); }}
+              onPress={() => { tap(); navigation.navigate("Situation", { legId: disruptionLeg.id, delay: 0 }); }}
             >
               <Text style={s.intelCtaT}>See all alternatives  ›</Text>
             </Pressable>

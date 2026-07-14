@@ -40,7 +40,7 @@ export default function DecisionsScreen({ navigation }) {
     if (decision.kind === "rebook" && opt?.recommended && decision.trip_id && decision.leg_id) {
       confirmDecision(decision.id, optionId).catch(() => {});
       setDecisions(prev => prev.filter(d => d.id !== decision.id));
-      navigation.navigate("Disruption", { tripId: String(decision.trip_id), legId: String(decision.leg_id) });
+      navigation.navigate("Situation", { legId: decision.leg_id, delay: 0 });
       return;
     }
     setBusy(true);

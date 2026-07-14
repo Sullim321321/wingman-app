@@ -77,7 +77,7 @@ export async function scheduleDisruption(flight = null, tripId = null, legId = n
       title: "Heads up — act before takeoff",
       body: `Conditions on ${route} are deteriorating. ${flightLabel} has a high disruption risk. Tap to review your options.`,
       data: {
-        route: "Alert",
+        route: "Situation",
         tripId: tripId ? String(tripId) : null,
         legId: legId ? String(legId) : null,
         flightIdent: flightLabel,

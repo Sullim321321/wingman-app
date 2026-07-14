@@ -1,195 +1,265 @@
-// Wingman Design System — Obsidian v3.1
-// Exact match to pre-seed deck visual language (Jun 2026)
-// Warm espresso bg · pure white ink · champagne gold accent (restrained)
-// Parchment Next Up card · Playfair Display serif + DM Sans
+// Wingman Design System — THE FAMILY OFFICE (v4)
+//
+// Black ground · cream ink · editorial structure · real depth
+// Source Serif 4 (voice) · Inter (interface) · IBM Plex Mono (measured)
+//
+// ─────────────────────────────────────────────────────────────────────────────
+// WHAT WAS WRONG WITH v3, AND WHY IT MATTERED
+//
+// v3 was espresso + champagne gold + Playfair. Three problems, and they compound:
+//
+// 1. THE GOLD DID THREE JOBS AT ONCE. It was the brand colour, the "you can tap
+//    this" colour, and the section-label colour. So it appeared on every screen,
+//    on every element, constantly — which meant the interface could never RAISE
+//    ITS VOICE. When a flight is cancelled and something must scream, there was
+//    no register left to scream in. A palette that is loud all the time is a
+//    palette that is silent when it counts.
+//
+//    Gold is now a hairline and a monogram. Nothing else. The signal colour is
+//    held in reserve and appears, on most screens, never.
+//
+// 2. IT WAS FLAT. #221E1A cards on a #1A1714 page — flat colour on flat colour,
+//    no light, no shadow, no material. That is why it read as a website rather
+//    than an object you paid for.
+//
+//    There are now exactly THREE PLANES, and elevation MEANS something:
+//      ground  → the page. Type only.
+//      raised  → facts. A hairline of light on the top edge, soft shadow beneath.
+//      lifted  → the one thing that needs you. Highest, hardest shadow.
+//    The most urgent object on any screen is literally the closest to your thumb.
+//    Hierarchy, made physical.
+//
+// 3. PLAYFAIR WAS A DISPLAY FACE DOING BODY WORK. Beautiful at 60pt on a deck,
+//    mushy at 15pt on a phone. Replaced with Source Serif 4 — a TEXT serif, which
+//    is a different tool for a different job.
+//
+// ─────────────────────────────────────────────────────────────────────────────
+// THE TYPE RULE — three faces, three jobs, no overlap
+//
+//   T.serif  Source Serif 4  → Wingman's VOICE. What it is saying to you.
+//   T.serifI (italic)        → Wingman's REASONS. "the only transfer that day."
+//                              Every explanation is set in italic. The system
+//                              explaining itself has its own register.
+//   T.sans   Inter           → THE INTERFACE. Anything you tap, scan, or skim.
+//   T.mono   IBM Plex Mono   → MEASURED VALUES ONLY. 40 MIN · −80 · 95.
+//
+// That last rule is the honesty architecture made visible. Mono is reserved for
+// numbers the system actually MEASURED and can defend — the arrival-to-departure
+// gap, the slack left, the delay. Never for a number it guessed, rounded for
+// effect, or inherited from a source it can't cite. A reader learns to trust the
+// distinction without ever being told it exists, which is the only kind of trust
+// worth having.
+//
+// If you are about to set an unverified number in mono: don't. That is the whole
+// point of the rule, and it is the same rule that runs through constraints.js.
+// ─────────────────────────────────────────────────────────────────────────────
 
 export const C = {
-  // ─── Backgrounds ────────────────────────────────────────────────────────────
-  bg:    "#1A1714",   // Warm espresso — exact deck background colour
-  card:  "#221E1A",   // Elevated dark card surface
-  card2: "#2A2520",   // Secondary card / input background
-  card3: "#302B25",   // Tertiary — skeleton shimmer base
-  parch: "#F5EDD8",   // Parchment cream — Next Up card (inverted light)
-  parch2:"#EDE4CC",   // Slightly deeper parchment for inner elements
+  // ─── Grounds ────────────────────────────────────────────────────────────────
+  // Near-black with a breath of warmth — a true #000 is a void, and a void has no
+  // material. These are surfaces, and they catch light.
+  bg:    "#0E0E10",   // THE GROUND. Nothing sits at this level except type.
+  card:  "#16161A",   // RAISED — facts, ledger rows, resting cards
+  card2: "#1D1D22",   // LIFTED — the thing that needs you; inputs; pressed states
+  card3: "#232329",   // Tertiary — skeleton shimmer, hover, deepest lift
+  parch: "#EDEBE7",   // CREAM — the inverted plane (primary CTA, "Next Up" card)
+  parch2:"#D8D5CF",   // Deeper cream for inner elements / gradient end
 
-  // ─── Borders ────────────────────────────────────────────────────────────────
-  line:  "#2E2A24",   // Warm hairline border
-  lineP: "#C9A96E33", // Gold-tinted hairline for parchment card borders
-  lineHi:"#FFFFFF08", // Subtle top-edge highlight
-  lineSh:"#00000040", // Subtle bottom-edge shadow
+  // ─── Structure ──────────────────────────────────────────────────────────────
+  // Hairlines do the editorial work. NYT rules, not borders.
+  line:  "#1F1F24",   // The standard hairline. Everywhere.
+  lineP: "#0E0E1022", // Hairline on cream surfaces
+  lineHi:"rgba(255,255,255,0.07)",  // TOP-EDGE LIGHT — the thing that makes a
+                                     // surface feel like a surface. Do not skip it.
+  lineSh:"rgba(0,0,0,0.55)",         // Shadow beneath
 
-  // ─── Typography ─────────────────────────────────────────────────────────────
-  ink:   "#FFFFFF",   // Pure white — primary text (deck exact)
-  inkD:  "#1A1510",   // Dark ink for parchment card text
-  mut:   "#8A7F70",   // Warm muted secondary text
-  mutD:  "#6B5F50",   // Dark muted for parchment card secondary text
+  // ─── Ink ────────────────────────────────────────────────────────────────────
+  ink:   "#EDEBE7",   // CREAM, not white. Pure white on near-black is a headache
+                      // at 6am; cream is the colour of paper and it reads as one.
+  inkD:  "#0E0E10",   // Ink on the cream plane
+  mut:   "#918E88",   // Secondary — still fully readable
+  mutD:  "#5F5D59",   // Tertiary — quiet, structural, "I checked this and it's fine"
 
-  // ─── Accents ────────────────────────────────────────────────────────────────
-  gold:  "#C9A96E",   // Champagne gold — wordmark, section labels, date ranges
-  accent:"#C9A96E",   // Alias → gold
-  goldD: "#A8884E",   // Deeper gold for pressed states
-  goldL: "#D4B483",   // Lighter gold for gradient start
-  goldBtn:"#E8D5A3",  // Primary action button fill (points/parchment CTA)
-  goldGlass: "#C9A96E18", // Gold 10% opacity glass tint
+  // ─── The accent, demoted ────────────────────────────────────────────────────
+  // Brass, and it appears in exactly two places: the monogram, and the hairline
+  // under the masthead. It is NOT the button colour. It is NOT the label colour.
+  // In v3 it was all three, and that is why nothing could ever be urgent.
+  gold:  "#A98C57",
+  accent:"#A98C57",
+  goldD: "#8A7043",
+  goldL: "#C4A874",
+  goldBtn:"#EDEBE7",  // The primary CTA is CREAM. Not gold. Cream is louder here,
+                      // because it is the only bright thing on a black page.
+  goldGlass: "#A98C5714",
 
   // ─── Status ─────────────────────────────────────────────────────────────────
-  teal:   "#2DB896",   // "ON TIME" badge
-  coral:  "#D95F5F",   // Disruption / high risk alert
-  amber:  "#D4902A",   // Moderate delay risk
-  indigo: "#818CF8",   // Landed / elite / premium accent (Tailwind indigo-400)
+  // Muted, editorial, adult. These are not iOS system colours — they are ink.
+  teal:   "#5C8A72",   // HOLDS. Sage, not neon. Quiet reassurance is still quiet.
+  coral:  "#C8564C",   // WON'T SURVIVE. The signal. Appears roughly once a month,
+                       // and when it does it is the only coloured thing on screen.
+  amber:  "#A98C57",   // TIGHT. Brass doubles as the caution note — deliberately,
+                       // so the palette has ONE warm and ONE hot, not a rainbow.
+  indigo: "#7E8BA3",   // Premium / landed — slate, not lavender.
 
-  // ─── Semantic shortcuts ──────────────────────────────────────────────────────
-  ok:    "#2DB896",
-  warn:  "#D4902A",
-  risk:  "#D95F5F",
+  ok:    "#5C8A72",
+  warn:  "#A98C57",
+  risk:  "#C8564C",
 
-  // ─── Codified color semantics (Design #4) ────────────────────────────────────
-  // One rule, used everywhere. Prefer these names over raw palette colours when the
-  // colour is carrying *meaning* (not just decoration):
-  //   action     → gold   · anything the user can tap / the primary next step
-  //   confirmed  → teal   · done, booked, on-time, "handled"
-  //   attention  → coral  · needs the user now (disruption, high risk, error)
-  //   attentionM → amber  · worth noting, not urgent (moderate risk, minor delay)
-  //   premium    → indigo · elite / upgraded / landed
-  //   neutral    → mut    · quiet, routine, informational
-  action:     "#C9A96E",
-  confirmed:  "#2DB896",
-  attention:  "#D95F5F",
-  attentionM: "#D4902A",
-  premium:    "#818CF8",
-  neutral:    "#8A7F70",
-  // Soft tinted fills for the above (backgrounds behind semantic content)
-  actionFill:    "#C9A96E14",
-  confirmedFill: "#2DB89614",
-  attentionFill: "#D95F5F14",
+  // ─── Codified semantics (unchanged contract, new values) ────────────────────
+  //   action     → cream  · the primary next step. The brightest thing on a black
+  //                         page IS the affordance. No colour needed.
+  //   confirmed  → sage   · done, booked, on-time, handled
+  //   attention  → signal · needs you NOW
+  //   attentionM → brass  · worth knowing, not urgent
+  //   premium    → slate
+  //   neutral    → mut
+  action:     "#EDEBE7",
+  confirmed:  "#5C8A72",
+  attention:  "#C8564C",
+  attentionM: "#A98C57",
+  premium:    "#7E8BA3",
+  neutral:    "#918E88",
+  actionFill:    "#EDEBE70F",
+  confirmedFill: "#5C8A7218",
+  attentionFill: "#C8564C1C",
 
-  // ─── Glass / Blur layer ──────────────────────────────────────────────────────
-  glassTab:  "rgba(10,9,6,0.92)",    // Tab bar glass background
-  glassBg:   "rgba(28,25,21,0.95)",  // Modal / overlay glass
-  glassCard: "rgba(37,33,25,0.85)",  // Floating card glass
+  // ─── Glass ──────────────────────────────────────────────────────────────────
+  glassTab:  "rgba(10,10,12,0.94)",
+  glassBg:   "rgba(14,14,16,0.96)",
+  glassCard: "rgba(22,22,26,0.88)",
 };
 
-// Typography scale — exact match to deck
+// ─────────────────────────────────────────────────────────────────────────────
+// TYPE
+// ─────────────────────────────────────────────────────────────────────────────
 export const T = {
-  // Serif — Playfair Display
-  serif: "PlayfairDisplay_400Regular",
-  serifI:"PlayfairDisplay_400Regular_Italic",
-  serifB:"PlayfairDisplay_700Bold",
-  // Editorial serif — EB Garamond (used in new Home screen briefing)
-  garamond:  "EBGaramond_400Regular",
-  garamondI: "EBGaramond_400Regular_Italic",
-  garamondMI:"EBGaramond_500Medium_Italic",
-  garamondSI:"EBGaramond_600SemiBold_Italic",
-  // Sans — DM Sans
-  sans:  "DMSans_400Regular",
-  sansM: "DMSans_500Medium",
-  sansB: "DMSans_700Bold",
-  // Tracking values (letterSpacing)
-  trackWide:  3.5,   // Section labels ("NEXT UP", "DISRUPTION DETECTED")
-  trackMed:   2.0,   // Status badges, date ranges
-  trackTight: -0.4,  // Serif headlines
-  trackXWide: 4.0,   // Header "WINGMAN" brand label
-  // Header monogram
-  headerW:    "W",   // Serif italic W monogram (rendered in serifI font)
+  // VOICE — Source Serif 4. What Wingman is saying.
+  serif:  "SourceSerif4_300Light",
+  serifI: "SourceSerif4_300Light_Italic",
+  serifB: "SourceSerif4_500Medium",
+
+  // REASONS — the italic. Every explanation Wingman gives is set in this.
+  // (Aliased to the old Garamond names so the 70 existing screens keep working;
+  //  the names lie about the family now, but the ROLE they encode is identical —
+  //  garamondI was already "the voice of a reason" everywhere it was used.)
+  garamond:  "SourceSerif4_400Regular",
+  garamondI: "SourceSerif4_300Light_Italic",
+  garamondMI:"SourceSerif4_400Regular_Italic",
+  garamondSI:"SourceSerif4_500Medium_Italic",
+
+  // INTERFACE — Inter. Anything you tap or scan.
+  sans:  "Inter_400Regular",
+  sansM: "Inter_500Medium",
+  sansB: "Inter_600SemiBold",
+
+  // MEASURED — IBM Plex Mono. Numbers the system measured and can defend.
+  // See the type rule at the top of this file before you use it for anything else.
+  mono:  "IBMPlexMono_400Regular",
+  monoM: "IBMPlexMono_500Medium",
+
+  // Tracking. Editorial labels are SMALL and WIDE — that ratio is the whole look.
+  trackWide:  3.6,
+  trackMed:   2.0,
+  trackTight: -0.3,
+  trackXWide: 4.4,
+  headerW:    "W",
 };
 
-// Elevation system
+// ─────────────────────────────────────────────────────────────────────────────
+// DEPTH — three planes, strictly ranked. Elevation is not decoration; it is rank.
+// ─────────────────────────────────────────────────────────────────────────────
 export const E = {
   card: {
-    borderTopColor:    "#FFFFFF08",
-    borderBottomColor: "#00000050",
-    borderLeftColor:   "#FFFFFF04",
-    borderRightColor:  "#00000030",
+    borderTopColor:    "rgba(255,255,255,0.07)",
+    borderBottomColor: "rgba(0,0,0,0.5)",
+    borderLeftColor:   "rgba(255,255,255,0.03)",
+    borderRightColor:  "rgba(0,0,0,0.3)",
   },
   modal: {
-    borderTopColor:    "#FFFFFF10",
-    borderBottomColor: "#00000060",
-    borderLeftColor:   "#FFFFFF06",
-    borderRightColor:  "#00000040",
+    borderTopColor:    "rgba(255,255,255,0.1)",
+    borderBottomColor: "rgba(0,0,0,0.6)",
+    borderLeftColor:   "rgba(255,255,255,0.05)",
+    borderRightColor:  "rgba(0,0,0,0.4)",
   },
 };
 
-// ─── Depth & materials (Design #6) ───────────────────────────────────────────
-// Two reusable presets so elevation reads consistently against the obsidian bg.
-//   SHADOW.soft  → resting cards (barely-there lift)
-//   SHADOW.sheet → floating surfaces / bottom sheets (clear separation)
-// `litEdge` adds a faint top-highlight hairline — a subtle lit bevel that makes a
-// card feel like a physical surface catching light. Spread it into a card style
-// that already sets borderWidth/borderColor; it only overrides the top edge.
+// SHADOW.soft   → RAISED. A fact at rest.
+// SHADOW.sheet  → LIFTED. The thing that needs you, and modals.
+// Pair either with `litEdge`: the top-edge highlight is what makes a rectangle
+// read as a lit surface rather than a coloured hole. It is the single cheapest
+// thing in this file and it does more work than any colour in it.
 export const SHADOW = {
   soft: {
     shadowColor: "#000",
-    shadowOpacity: 0.22,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    shadowOpacity: 0.45,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 4,
   },
   sheet: {
     shadowColor: "#000",
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: -6 },
-    elevation: 12,
+    shadowOpacity: 0.62,
+    shadowRadius: 30,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 14,
   },
 };
 
-export const litEdge = { borderTopColor: "#FFFFFF12" };
+export const litEdge = { borderTopColor: "rgba(255,255,255,0.09)" };
 
-// Button gradient stops
+// Gradients — subtle, top-lit, 168°. A surface catching light from above, never a
+// decorative sweep. If a gradient is visible AS a gradient, it is wrong.
 export const GRAD = {
-  gold:    ["#D4B483", "#C9A96E", "#A8884E"],
-  goldSub: ["#C9A96E", "#A8884E"],
-  teal:    ["#3ECBA8", "#2DB896", "#1E9B7A"],
-  dark:    ["#2A261F", "#1C1915"],
-  parch:   ["#F5EDD8", "#EDE4CC"],
-  goldBtn: ["#EDE4CC", "#E8D5A3", "#D4B483"],
+  gold:    ["#C4A874", "#A98C57", "#8A7043"],
+  goldSub: ["#A98C57", "#8A7043"],
+  teal:    ["#6D9B82", "#5C8A72", "#48705B"],
+  dark:    ["#1D1D22", "#141418"],
+  parch:   ["#EDEBE7", "#D8D5CF"],
+  goldBtn: ["#EDEBE7", "#D8D5CF"],   // the CTA is cream
+  raised:  ["#1A1A1F", "#141418"],   // RAISED plane
+  lifted:  ["#232329", "#191920"],   // LIFTED plane
 };
 
-// ─── Locked type ramp (Design #2) ────────────────────────────────────────────
-// One named scale, used everywhere. Each entry is { size, line, track } — pair it
-// with the right family from T (serif/garamond for editorial, sans for UI).
-// Replaces ad-hoc fontSize literals so headings/body stay consistent across screens.
-//   display  → hero editorial headline (route, greeting)   · Garamond/Playfair
-//   title    → screen title ("Your trips.")                · Garamond italic
-//   headline → card headline, decision headline            · Garamond/serif
-//   body     → reading prose (briefing)                    · Garamond or sans
-//   callout  → primary UI text, list row title             · sans medium
-//   sub      → secondary UI text, meta                     · sans
-//   caption  → small meta, timestamps                      · sans
-//   label    → all-caps tracked section labels             · sans bold
+// ─────────────────────────────────────────────────────────────────────────────
+// TYPE RAMP — editorial scale contrast.
+//
+// The luxury move is the JUMP: a 10px tracked label sitting directly above a 34px
+// serif headline. That ratio is confidence — a page that assumes it already has
+// your attention. v3 had everything clustered at 13–17px, which is why it read as
+// a form. Do not close the gap.
+// ─────────────────────────────────────────────────────────────────────────────
 export const TR = {
-  display:  { size: 34, line: 40, track: -0.4 },
-  title:    { size: 30, line: 36, track: -0.3 },
-  headline: { size: 22, line: 28, track: -0.2 },
-  body:     { size: 17, line: 25, track: 0 },
-  callout:  { size: 15, line: 20, track: 0 },
-  sub:      { size: 13, line: 18, track: 0 },
-  caption:  { size: 12, line: 16, track: 0.2 },
-  label:    { size: 10, line: 13, track: 1.6 },
+  display:  { size: 34, line: 39, track: -0.3 },   // serif — the verdict
+  title:    { size: 30, line: 35, track: -0.3 },   // serif
+  headline: { size: 22, line: 28, track: -0.2 },   // serif
+  body:     { size: 16, line: 27, track: 0 },      // Inter, generous leading
+  callout:  { size: 15, line: 20, track: 0 },      // Inter medium — row titles
+  sub:      { size: 13, line: 19, track: 0 },      // Inter — meta
+  caption:  { size: 11, line: 15, track: 0.2 },    // Inter — timestamps
+  label:    { size: 10, line: 13, track: 2.6 },    // Inter — SMALL AND WIDE
+  measured: { size: 11, line: 15, track: 1.0 },    // MONO ONLY. See the type rule.
 };
 
-// Convenience: spread a ramp entry into a style ({ fontSize, lineHeight, letterSpacing }).
 export const ramp = (key) => {
   const r = TR[key] || TR.body;
   return { fontSize: r.size, lineHeight: r.line, letterSpacing: r.track };
 };
 
-// Typography size constants — exact deck scale
 export const TS = {
-  greetingH:   34,   // Deck: ~34pt Playfair Display serif greeting
+  greetingH:   34,
   greetingSub: 15,
   sectionLabel:10,
-  nextUpTitle: 36,   // Deck: 'JFK to LAX' is VERY large — dominant serif headline
+  nextUpTitle: 34,
   nextUpSub:   13,
   nextUpRoute: 13,
   nextUpMeta:  13,
   tripDate:    10,
-  tripName:    17,
+  tripName:    16,
   tripSub:     12,
-  headerMark:  28,
-  headerBrand: 11,
-  alertLabel:  11,
-  alertTitle:  28,   // Deck: disruption headline ~28pt
+  headerMark:  26,
+  headerBrand: 10,
+  alertLabel:  10,
+  alertTitle:  30,
   alertBody:   14,
   btnLabel:    15,
   btnSub:      13,

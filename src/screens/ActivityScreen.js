@@ -146,16 +146,17 @@ export default function ActivityScreen({ navigation }) {
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
+  // ONE disruption surface. Alert/Disruption/Reason/Track/Exec/Done are gone — they
+  // were four different answers to "your flight broke," built at different times, and
+  // they did not agree with each other. Situation is the one built on the constraint
+  // graph, which means it is the only one that can say "unknown" honestly.
+  //
+  // /activity has always returned leg_id. This screen simply never read it, and threw
+  // away the only thing the cascade needs.
   const handleAction = (event) => {
-    const flight = event.flight || {
-      origin:        event.origin        || null,
-      destination:   event.destination   || null,
-      carrier:       event.carrier       || null,
-      flight_number: event.flight_number || null,
-      departs_at:    event.departs_at    || null,
-      tripTitle:     event.trip_title    || null,
-    };
-    navigation.navigate("Alert", { flight });
+    if (event.leg_id) return navigation.navigate("Situation", { legId: event.leg_id, delay: 0 });
+    if (event.trip_id) return navigation.navigate("TripDetail", { tripId: event.trip_id });
+    // No leg, no trip — say nothing rather than open an empty screen.
   };
 
   const handleDismiss = (event) => {

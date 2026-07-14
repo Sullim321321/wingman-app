@@ -14,24 +14,29 @@ import * as Notifications from "expo-notifications";
 import * as Linking from "expo-linking";
 import * as SecureStore from "expo-secure-store";
 
-// Google Fonts — Playfair Display + DM Sans + EB Garamond
+// Google Fonts — THE FAMILY OFFICE (v4)
+//   Source Serif 4 → Wingman's voice (and its italic → Wingman's reasons)
+//   Inter          → the interface
+//   IBM Plex Mono  → measured values ONLY. See the type rule in theme.js.
+// Playfair is retired: a display face doing body work is why 15pt text looked soft.
 import {
   useFonts,
-  PlayfairDisplay_400Regular,
-  PlayfairDisplay_400Regular_Italic,
-  PlayfairDisplay_700Bold,
-} from "@expo-google-fonts/playfair-display";
+  SourceSerif4_300Light,
+  SourceSerif4_300Light_Italic,
+  SourceSerif4_400Regular,
+  SourceSerif4_400Regular_Italic,
+  SourceSerif4_500Medium,
+  SourceSerif4_500Medium_Italic,
+} from "@expo-google-fonts/source-serif-4";
 import {
-  DMSans_400Regular,
-  DMSans_500Medium,
-  DMSans_700Bold,
-} from "@expo-google-fonts/dm-sans";
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+} from "@expo-google-fonts/inter";
 import {
-  EBGaramond_400Regular,
-  EBGaramond_400Regular_Italic,
-  EBGaramond_500Medium_Italic,
-  EBGaramond_600SemiBold_Italic,
-} from "@expo-google-fonts/eb-garamond";
+  IBMPlexMono_400Regular,
+  IBMPlexMono_500Medium,
+} from "@expo-google-fonts/ibm-plex-mono";
 
 import { C, T } from "./src/theme";
 import { ThemeProvider, useTheme } from "./src/ThemeContext";
@@ -45,21 +50,14 @@ import HomeScreen from "./src/screens/HomeScreen";
 import ConciergeScreen from "./src/screens/ConciergeScreen";
 import ActivityScreen from "./src/screens/ActivityScreen";
 import TripsScreen from "./src/screens/TripsScreen";
-import AlertScreen from "./src/screens/AlertScreen";
-import ReasonScreen from "./src/screens/ReasonScreen";
-import TrackScreen from "./src/screens/TrackScreen";
-import ExecScreen from "./src/screens/ExecScreen";
-import DoneScreen from "./src/screens/DoneScreen";
 import PlanScreen from "./src/screens/PlanScreen";
 import ForwardingScreen from "./src/screens/ForwardingScreen";
 import SituationScreen from "./src/screens/SituationScreen";
 import RescueScreen from "./src/screens/RescueScreen";
 import BookLegScreen from "./src/screens/BookLegScreen";
-import DetourScreen from "./src/screens/DetourScreen";
 import PlanDoneScreen from "./src/screens/PlanDoneScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import ConnectionsScreen from "./src/screens/ConnectionsScreen";
-import SignalScreen from "./src/screens/SignalScreen";
 import OnboardingScreen from "./src/screens/OnboardingScreen";
 import SignInScreen from "./src/screens/SignInScreen";
 import AddTripScreen from "./src/screens/AddTripScreen";
@@ -72,7 +70,6 @@ import HomeAddressScreen from "./src/screens/HomeAddressScreen";
 import FlightSearchScreen from "./src/screens/FlightSearchScreen";
 import FlightBookScreen from "./src/screens/FlightBookScreen";
 import FlightConfirmScreen from "./src/screens/FlightConfirmScreen";
-import DataSourcesScreen from "./src/screens/DataSourcesScreen";
 import AutonomySettingsScreen from "./src/screens/AutonomySettingsScreen";
 import InsightsScreen from "./src/screens/InsightsScreen";
 import ProfileSetupScreen from "./src/screens/ProfileSetupScreen";
@@ -83,9 +80,7 @@ import UpgradeBidScreen from "./src/screens/UpgradeBidScreen";
 import GroundTransportScreen from "./src/screens/GroundTransportScreen";
 import DestinationScreen from "./src/screens/DestinationScreen";
 import AirportDiningScreen from "./src/screens/AirportDiningScreen";
-import AirportNavigationScreen from "./src/screens/AirportNavigationScreen";
 import LoungeCardsScreen from "./src/screens/LoungeCardsScreen";
-import DisruptionScreen from "./src/screens/DisruptionScreen";
 import JourneySimulatorScreen from "./src/screens/JourneySimulatorScreen";
 import TravelProfileScreen from "./src/screens/TravelProfileScreen";
 import MemoryScreen from "./src/screens/MemoryScreen";
@@ -323,7 +318,7 @@ function Root() {
       }
 
       if (!navRef.isReady()) return;
-      const route = data.route || "Alert";
+      const route = data.route || "Situation";   // Alert no longer exists — a default pointing at a deleted screen is a silent no-op
       // Pass tripId / legId / flightIdent through to the target screen
       const params = {};
       if (data.tripId)      params.tripId      = data.tripId;
@@ -335,11 +330,10 @@ function Root() {
       if (data.gate)        params.gate        = data.gate;
       // All deep-linkable routes — pass params where relevant
       const PARAM_ROUTES = [
-        "Alert", "TripDetail", "Concierge",
-        "AirportDining", "AirportNavigation", "GroundTransport",
-        "Destination", "InsightsFull",
+        "TripDetail", "Concierge",
+        "AirportDining", "GroundTransport",
+        "Destination",
         "Compensation", "UpgradeBid",
-        "Disruption",
         // The cascade takeover. Without this on the allowlist the disruption push —
         // the single most important notification Wingman sends — navigates with no
         // params and lands on an empty screen.
@@ -355,7 +349,7 @@ function Root() {
     // Foreground notification — navigate to Alert tab
     const recv = Notifications.addNotificationReceivedListener((n) => {
       const data = n.request.content.data || {};
-      const route = data.route || "Alert";
+      const route = data.route || "Situation";   // Alert no longer exists — a default pointing at a deleted screen is a silent no-op
       setTimeout(() => {
         if (!navRef.isReady()) return;
         const params = {};
@@ -367,10 +361,10 @@ function Root() {
         if (data.gate)        params.gate        = data.gate;
         if (data.prefill)     params.prefill     = data.prefill;
         const FG_PARAM_ROUTES = [
-          "Alert", "TripDetail", "Concierge",
-          "AirportDining", "AirportNavigation", "GroundTransport",
-          "Destination", "InsightsFull",
-          "Compensation", "UpgradeBid", "Disruption",
+          "TripDetail", "Concierge",
+          "AirportDining", "GroundTransport",
+          "Destination",
+          "Compensation", "UpgradeBid",
           // This list had drifted out of sync with PARAM_ROUTES above. The background
           // path carried legId through; the FOREGROUND path silently dropped it — so
           // tapping the disruption push while the app was open landed on an empty
@@ -433,17 +427,11 @@ function Root() {
               <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
             )}
             <Stack.Screen name="Tabs"         component={Tabs} />
-            <Stack.Screen name="Alert"        component={AlertScreen} />
-            <Stack.Screen name="Reason"       component={ReasonScreen} />
-            <Stack.Screen name="Track"        component={TrackScreen} />
-            <Stack.Screen name="Exec"         component={ExecScreen}         options={{ gestureEnabled: false }} />
-            <Stack.Screen name="Done"         component={DoneScreen}         options={{ gestureEnabled: false }} />
             {/* "Plan" is a TAB now, not a stack screen. Registering the same route
                 name in both navigators makes navigate("Plan") ambiguous — it resolves
                 to whichever is nearest, which is the kind of thing that works in
                 testing and breaks in someone's hand. Nothing navigated here anyway;
                 the old PlanScreen was a hardcoded mockup reachable from nowhere. */}
-            <Stack.Screen name="Detour"       component={DetourScreen} />
             <Stack.Screen name="PlanDone"     component={PlanDoneScreen}     options={{ gestureEnabled: false }} />
             <Stack.Screen name="Settings"     component={SettingsScreen} />
             <Stack.Screen name="Welcome"      component={WelcomeScreen} />
@@ -460,7 +448,6 @@ function Root() {
             {/* The plan stops being a sketch. Promotes the proposed leg in place, so the
                 booking inherits every reason the proposal was made for. */}
             <Stack.Screen name="BookLeg"      component={BookLegScreen} />
-            <Stack.Screen name="Signal"       component={SignalScreen} />
             <Stack.Screen name="AddTrip"      component={AddTripScreen} />
             <Stack.Screen name="TripDetail"   component={TripDetailScreen} />
             <Stack.Screen name="TasteSetup"   component={TasteSetupScreen} />
@@ -470,20 +457,16 @@ function Root() {
             <Stack.Screen name="FlightSearch" component={FlightSearchScreen} />
             <Stack.Screen name="FlightBook"   component={FlightBookScreen} />
             <Stack.Screen name="FlightConfirm" component={FlightConfirmScreen} options={{ gestureEnabled: false }} />
-            <Stack.Screen name="DataSources"  component={DataSourcesScreen} />
             <Stack.Screen name="Autonomy"          component={AutonomySettingsScreen} />
             <Stack.Screen name="PassengerProfile"   component={PassengerProfileScreen} />
-            <Stack.Screen name="InsightsFull" component={InsightsScreen} />
             <Stack.Screen name="Wrapped"      component={WingmanWrappedScreen} />
             <Stack.Screen name="Compensation"     component={CompensationScreen} />
             <Stack.Screen name="UpgradeBid"         component={UpgradeBidScreen} />
             <Stack.Screen name="GroundTransport"    component={GroundTransportScreen} />
             <Stack.Screen name="Destination"       component={DestinationScreen} />
             <Stack.Screen name="AirportDining"      component={AirportDiningScreen} />
-            <Stack.Screen name="AirportNavigation"  component={AirportNavigationScreen} />
             <Stack.Screen name="LoungeCards"          component={LoungeCardsScreen} />
             <Stack.Screen name="Concierge"            component={ConciergeScreen} />
-            <Stack.Screen name="Disruption"           component={DisruptionScreen} />
             <Stack.Screen name="JourneySimulator"     component={JourneySimulatorScreen} />
             <Stack.Screen name="TravelProfile"        component={TravelProfileScreen} />
             <Stack.Screen name="Memory"               component={MemoryScreen} />
@@ -508,16 +491,17 @@ function Root() {
 
 export default function App() {
   const [fontsLoaded, fontError] = useFonts({
-    PlayfairDisplay_400Regular,
-    PlayfairDisplay_400Regular_Italic,
-    PlayfairDisplay_700Bold,
-    DMSans_400Regular,
-    DMSans_500Medium,
-    DMSans_700Bold,
-    EBGaramond_400Regular,
-    EBGaramond_400Regular_Italic,
-    EBGaramond_500Medium_Italic,
-    EBGaramond_600SemiBold_Italic,
+    SourceSerif4_300Light,
+    SourceSerif4_300Light_Italic,
+    SourceSerif4_400Regular,
+    SourceSerif4_400Regular_Italic,
+    SourceSerif4_500Medium,
+    SourceSerif4_500Medium_Italic,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    IBMPlexMono_400Regular,
+    IBMPlexMono_500Medium,
   });
 
   // Safety timeout: if fonts haven't loaded after 5 s (e.g. native module stuck on iOS 26),

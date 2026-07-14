@@ -963,7 +963,7 @@ export default function HomeScreen({ navigation }) {
     if (decision.kind === "rebook" && optionId === decision.recommended_option_id && decision.trip_id && decision.leg_id) {
       confirmDecision(decision.id, optionId).catch(() => {});
       setDecisions(prev => prev.filter(d => d.id !== decision.id));
-      navigation.navigate("Disruption", { tripId: String(decision.trip_id), legId: String(decision.leg_id) });
+      navigation.navigate("Situation", { legId: decision.leg_id, delay: 0 });
       return;
     }
     // Otherwise: acknowledge with a "Done" state (with a short undo window), then fade out.
@@ -1159,11 +1159,7 @@ export default function HomeScreen({ navigation }) {
           <FadeRise delay={70}>
             <Pressable
               style={s.transitCard}
-              onPress={() => { tap(); navigation.navigate("Alert", { flight: {
-                carrier: inTransit.leg.carrier, flight_number: inTransit.leg.flight_number,
-                origin: inTransit.leg.origin, destination: inTransit.leg.destination,
-                departs_at: inTransit.leg.departs_at, tripTitle: inTransit.leg.tripTitle,
-              } }); }}
+              onPress={() => { tap(); navigation.navigate("Situation", { legId: inTransit.leg.id, delay: 0 }); }}
             >
               <View style={s.dayOfHead}>
                 <View style={[s.dayOfDot, { backgroundColor: C.gold }]} />
@@ -1204,11 +1200,7 @@ export default function HomeScreen({ navigation }) {
           <FadeRise delay={70}>
           <Pressable
             style={s.dayOfCard}
-            onPress={() => { tap(); navigation.navigate("Alert", { flight: {
-              carrier: dayOf.leg.carrier, flight_number: dayOf.leg.flight_number,
-              origin: dayOf.leg.origin, destination: dayOf.leg.destination,
-              departs_at: dayOf.leg.departs_at, tripTitle: dayOf.leg.tripTitle,
-            } }); }}
+            onPress={() => { tap(); navigation.navigate("Situation", { legId: dayOf.leg.id, delay: 0 }); }}
           >
             <View style={s.dayOfHead}>
               <View style={s.dayOfDot} />
@@ -1479,7 +1471,7 @@ export default function HomeScreen({ navigation }) {
             <Text style={s.devLabel}>TEST NOTIFICATIONS</Text>
             <Pressable style={s.devBtn} onPress={async () => {
               await scheduleDisruption(nextFlight);
-              setTimeout(() => navigation.navigate("Alert", { flight: nextFlight }), 3500);
+              setTimeout(() => navigation.navigate("Situation", { legId: nextFlight?.id, delay: 120 }), 3500);
             }}>
               <Text style={s.devBtnT}>Simulate disruption</Text>
             </Pressable>

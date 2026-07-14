@@ -16,14 +16,50 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet, ActivityIndicator,
+  Linking,
 } from "react-native";
 import { C, T } from "../theme";
 import { WMark, tap, FadeRise, SerifText } from "../components";
-import { getSituationOptions } from "../api";
+import { getSituationOptions, getDisruptionAlternatives } from "../api";
+
+// ─── What you are OWED ───────────────────────────────────────────────────────
+// Salvaged from DisruptionScreen before it was deleted. It was the only load-bearing
+// thing in 1,500 lines of duplicated disruption UI: the rest was a second, older,
+// contradicting answer to a question Situation already answers from the graph.
+//
+// The maths lives on the server — the screen only renders the verdict. Which is why
+// this survives as thirty lines rather than a screen.
+//
+// Note the restraint: eligibility is asserted ONLY when the server says eligible.
+// A "you might be owed €600" that turns out to be nothing is worse than silence,
+// because you'd have spent an hour on the phone to find out.
+function Entitlement({ ec261, cancelled }) {
+  if (!ec261?.eligible) return null;
+  return (
+    <View style={s.owed}>
+      <View style={s.owedTop}>
+        <Text style={s.owedT}>{cancelled ? "You're owed a refund" : "You're owed compensation"}</Text>
+        {!cancelled && ec261.amount_eur ? (
+          <Text style={s.owedAmt}>€{ec261.amount_eur}</Text>
+        ) : null}
+      </View>
+      <Text style={s.owedWhy}>
+        {cancelled
+          ? "A full refund of the ticket price, under EU Regulation 261/2004."
+          : ec261.basis}
+      </Text>
+      {ec261.how_to_claim ? <Text style={s.owedHow}>{ec261.how_to_claim}</Text> : null}
+      <Pressable onPress={() => Linking.openURL("https://www.aviationclaims.co.uk/")}>
+        <Text style={s.owedLink}>{cancelled ? "Start refund claim →" : "Start claim →"}</Text>
+      </Pressable>
+    </View>
+  );
+}
 
 export default function RescueScreen({ navigation, route }) {
-  const { legId, delay = 0 } = route.params || {};
+  const { legId, delay = 0, tripId = null } = route.params || {};
   const [data, setData] = useState(null);
+  const [owed, setOwed] = useState(null);
   const [busy, setBusy] = useState(true);
   const [err, setErr]   = useState(null);
 
@@ -37,7 +73,15 @@ export default function RescueScreen({ navigation, route }) {
     } finally {
       setBusy(false);
     }
-  }, [legId, delay]);
+    // Separate call, separate failure. What you're owed and what you can rebook onto
+    // are different questions, and one being down must not blank the other.
+    if (tripId) {
+      try {
+        const d = await getDisruptionAlternatives(tripId, legId);
+        setOwed(d?.ec261 ? { ec261: d.ec261, cancelled: !!d.is_cancelled } : null);
+      } catch { /* say nothing rather than guess at money */ }
+    }
+  }, [legId, delay, tripId]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -80,6 +124,15 @@ export default function RescueScreen({ navigation, route }) {
           </SerifText>
           <Text style={s.sub}>Ranked by what they protect, not by what they cost.</Text>
         </FadeRise>
+
+        {/* What you're owed. Rendered above the options, because money you are entitled
+            to is true regardless of which flight you take next — and the old screen
+            buried it below a fold nobody scrolled to. */}
+        {owed ? (
+          <FadeRise delay={40}>
+            <Entitlement ec261={owed.ec261} cancelled={owed.cancelled} />
+          </FadeRise>
+        ) : null}
 
         {/* When Wingman can't stand behind an answer, it says so — rather than
             recommending the least-bad option and letting you assume it approved. */}
@@ -200,6 +253,16 @@ function fmt(iso) {
 }
 
 const s = StyleSheet.create({
+  // What you're owed — salvaged from the deleted DisruptionScreen.
+  owed:    { backgroundColor: C.card, borderRadius: 14, padding: 15, marginBottom: 16,
+             borderWidth: 1, borderColor: C.line, borderLeftWidth: 2, borderLeftColor: C.gold },
+  owedTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" },
+  owedT:   { fontFamily: T.sansM, fontSize: 14, color: C.ink },
+  owedAmt: { fontFamily: T.monoM, fontSize: 15, color: C.gold, letterSpacing: 0.5 },
+  owedWhy: { fontFamily: T.sans, fontSize: 12.5, color: C.mut, lineHeight: 18, marginTop: 6 },
+  owedHow: { fontFamily: T.sans, fontSize: 12, color: C.mutD, lineHeight: 17, marginTop: 6 },
+  owedLink:{ fontFamily: T.sansM, fontSize: 12.5, color: C.gold, marginTop: 11 },
+
   app: { flex: 1, backgroundColor: C.bg },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16, padding: 40 },
   loading: { fontFamily: T.garamondI, fontSize: 16, lineHeight: 23, color: C.mut,

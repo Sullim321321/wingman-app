@@ -234,7 +234,7 @@ const s = StyleSheet.create({
     marginHorizontal: 24, marginTop: 12, padding: 22, borderRadius: 18,
     backgroundColor: C.card, borderWidth: 1, borderColor: "rgba(201,169,110,0.3)", ...litEdge, ...SHADOW.soft,
   },
-  heroKicker: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 1.6, color: C.gold, marginBottom: 8 },
+  heroKicker: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 1.6, color: C.mutD, marginBottom: 8 },
   heroValue: { fontFamily: T.serifB, fontSize: 44, color: C.ink, lineHeight: 50 },
   heroSub: { fontFamily: T.sans, fontSize: 13, color: C.mut, marginTop: 6 },
   exportBtn: {

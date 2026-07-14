@@ -294,7 +294,7 @@ const s = StyleSheet.create({
     borderColor: "rgba(201,169,110,0.35)",
     marginBottom: 24,
   },
-  connectKicker: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2, color: C.gold, marginBottom: 4 },
+  connectKicker: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2, color: C.mutD, marginBottom: 4 },
   connectTitle: { fontFamily: T.garamondSI, fontSize: 20, color: C.ink, marginBottom: 4 },
   connectSub: { fontFamily: T.sans, fontSize: 13, lineHeight: 19, color: C.mut },
   connectArrow: { fontFamily: T.sans, fontSize: 22, color: C.gold },

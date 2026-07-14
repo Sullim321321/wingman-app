@@ -400,7 +400,7 @@ const s = StyleSheet.create({
   bannerIcon: { fontSize: 16, marginTop: 1 },
   bannerText: { flex: 1, color: C.mut, fontSize: 12, fontFamily: T.sans, lineHeight: 18 },
 
-  sectionLabel: { color: C.gold, fontSize: 10, fontFamily: T.sansB, letterSpacing: 3.5, textTransform: "uppercase", marginTop: 24, marginBottom: 10, marginLeft: 2 },
+  sectionLabel: { color: C.mutD, fontSize: 10, fontFamily: T.sansB, letterSpacing: 3.5, textTransform: "uppercase", marginTop: 24, marginBottom: 10, marginLeft: 2 },
   optionalTag:  { color: C.mut, fontSize: 10, fontFamily: T.sans, letterSpacing: 0.5 },
 
   card:   { backgroundColor: C.card, borderRadius: 14, borderWidth: 1, borderColor: C.line, marginBottom: 20, overflow: "hidden" },

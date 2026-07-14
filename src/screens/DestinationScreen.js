@@ -256,7 +256,7 @@ const s = StyleSheet.create({
   sectionHead:    { fontSize: 10, fontFamily: T.sansB, color: C.mut, letterSpacing: 1.4, marginTop: 24, marginBottom: 12 },
   // Weather
   weatherCard:    { backgroundColor: C.card, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: C.line, marginBottom: 4 },
-  weatherLabel:   { fontSize: 10, fontFamily: T.sansB, color: C.gold, letterSpacing: 1.2, marginBottom: 8 },
+  weatherLabel:   { fontSize: 10, fontFamily: T.sansB, color: C.mutD, letterSpacing: 1.2, marginBottom: 8 },
   weatherBody:    { color: C.ink, fontSize: 14, fontFamily: T.sans, lineHeight: 20 },
   weatherBest:    { color: C.mut, fontSize: 12, fontFamily: T.sans, marginTop: 6 },
   // Neighborhoods

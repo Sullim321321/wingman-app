@@ -294,7 +294,7 @@ const s = StyleSheet.create({
 
   // Recommendation card
   recommendCard: { margin: 16, marginBottom: 8, backgroundColor: "rgba(201,169,110,0.08)", borderRadius: 12, padding: 16, borderWidth: 1, borderColor: "rgba(201,169,110,0.3)" },
-  recommendLabel: { color: C.gold, fontSize: 11, fontFamily: T.sansB, letterSpacing: 1, marginBottom: 8 },
+  recommendLabel: { color: C.mutD, fontSize: 11, fontFamily: T.sansB, letterSpacing: 1, marginBottom: 8 },
   recommendText: { color: C.ink, fontSize: 14, lineHeight: 21 },
 
   // Generic note

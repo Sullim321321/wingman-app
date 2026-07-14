@@ -269,7 +269,7 @@ const s = StyleSheet.create({
   headerSub: { color: C.mut, fontSize: 13, marginTop: 2 },
   // Overview
   overviewBanner: { margin: 16, backgroundColor: "rgba(201,169,110,0.08)", borderRadius: 14, padding: 16, borderWidth: 1, borderColor: "rgba(201,169,110,0.25)" },
-  overviewLabel: { color: C.gold, fontSize: 10, fontFamily: T.sansB, letterSpacing: 1.5, marginBottom: 8 },
+  overviewLabel: { color: C.mutD, fontSize: 10, fontFamily: T.sansB, letterSpacing: 1.5, marginBottom: 8 },
   overviewText: { color: C.ink, fontSize: 14, lineHeight: 21 },
   prefRow: { flexDirection: "row", marginTop: 10, flexWrap: "wrap" },
   prefLabel: { color: C.mut, fontSize: 12 },
@@ -332,6 +332,6 @@ const s = StyleSheet.create({
   tipText: { color: "#FFC107", fontSize: 12, lineHeight: 18, flex: 1 },
   // Wingman tip
   wingmanTip: { marginHorizontal: 16, marginTop: 4, marginBottom: 8, backgroundColor: "rgba(201,169,110,0.06)", borderRadius: 12, padding: 14, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)" },
-  wingmanTipLabel: { color: C.gold, fontSize: 10, fontFamily: T.sansB, letterSpacing: 1.5, marginBottom: 6 },
+  wingmanTipLabel: { color: C.mutD, fontSize: 10, fontFamily: T.sansB, letterSpacing: 1.5, marginBottom: 6 },
   wingmanTipText: { color: C.mut, fontSize: 13, lineHeight: 19 },
 });

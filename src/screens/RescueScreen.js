@@ -89,7 +89,7 @@ export default function RescueScreen({ navigation, route }) {
     return (
       <SafeAreaView style={s.app}>
         <View style={s.center}>
-          <WMark size={26} color={C.gold} />
+          <WMark size={26} color={C.brass} />
           <Text style={s.loading}>Working out what each option would cost you…</Text>
         </View>
       </SafeAreaView>

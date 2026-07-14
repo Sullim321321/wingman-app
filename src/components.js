@@ -161,7 +161,7 @@ export function FadeRise({ children, delay = 0, distance = 10, duration = 460, s
 // One locked mark + wordmark, used everywhere the brand appears (headers, push,
 // share cards, Wallet). The "W" is a serif-italic monogram in a hairline gold box;
 // the wordmark is wide-tracked DM Sans caps.
-export function WMark({ size = 26, color = C.gold, style }) {
+export function WMark({ size = 26, color = C.brass, style }) {
   return (
     <View
       style={[
@@ -178,7 +178,7 @@ export function WMark({ size = 26, color = C.gold, style }) {
   );
 }
 
-export function Wordmark({ size = 12, color = C.gold, style }) {
+export function Wordmark({ size = 12, color = C.brass, style }) {
   return (
     <Text style={[{ fontFamily: T.sansB, fontSize: size, letterSpacing: size * 0.25, color }, style]}>
       WINGMAN
@@ -187,7 +187,7 @@ export function Wordmark({ size = 12, color = C.gold, style }) {
 }
 
 // Mark + wordmark lockup for headers and mastheads.
-export function Masthead({ markSize = 24, gap = 9, color = C.gold, style }) {
+export function Masthead({ markSize = 24, gap = 9, color = C.brass, style }) {
   return (
     <View style={[{ flexDirection: "row", alignItems: "center", gap }, style]}>
       <WMark size={markSize} color={color} />
@@ -244,8 +244,8 @@ export function SetRow({ ic, icon, iconColor, t, sub, right, onPress }) {
     <Wrap style={g.setRow} onPress={onPress ? () => { tap(); onPress(); } : undefined}>
       <View style={[g.setIc, { borderTopColor: "#FFFFFF0A", borderBottomColor: "#00000040" }]}>
         {icon
-          ? <Ionicons name={icon} size={17} color={iconColor || C.gold} />
-          : <Text style={{ fontSize: 15, color: iconColor || C.gold, fontFamily: T.sans }}>{ic}</Text>}
+          ? <Ionicons name={icon} size={17} color={iconColor || C.mut} />
+          : <Text style={{ fontSize: 15, color: iconColor || C.mut, fontFamily: T.sans }}>{ic}</Text>}
       </View>
       <View style={{ flex: 1 }}>
         <Text style={g.setT}>{t}</Text>
@@ -329,7 +329,7 @@ const dcS = StyleSheet.create({
   },
   head: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.gold },
-  kicker: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2, color: C.gold },
+  kicker: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2.6, color: C.mutD },
   headline: { fontFamily: T.garamondSI, fontSize: 22, color: C.ink, lineHeight: 28, marginBottom: 6 },
   rationale: { fontFamily: T.garamondI, fontSize: 14, color: C.mut, lineHeight: 21, marginBottom: 14 },
   primary: {
@@ -387,7 +387,7 @@ export function ReasonCard({ icon, t, w, wColor, p }) {
     <View style={g.rcard}>
       <View style={g.rcardH}>
         <View style={[g.rcardIc, { borderTopColor: "#FFFFFF0A", borderBottomColor: "#00000040" }]}>
-          <Ionicons name={icon} size={15} color={C.gold} />
+          <Ionicons name={icon} size={15} color={C.mut} />
         </View>
         <Text style={g.rcardT}>{t}</Text>
         <Text style={[g.rcardW, { color: wColor }]}>{w}</Text>
@@ -727,7 +727,7 @@ export const g = StyleSheet.create({
 
   // Empty state
   empty: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 40, paddingVertical: 60 },
-  emptyIc: { fontSize: 36, color: C.gold, marginBottom: 16, fontFamily: T.sans },
+  emptyIc: { fontSize: 36, color: C.mutD, marginBottom: 16, fontFamily: T.sans },
   emptyH: { color: C.ink, fontSize: 22, textAlign: "center", marginBottom: 10 },
   emptyS: { color: C.mut, fontSize: 14, fontFamily: T.sans, textAlign: "center", lineHeight: 22 },
 });

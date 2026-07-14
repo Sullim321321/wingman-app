@@ -838,7 +838,7 @@ const s = StyleSheet.create({
     fontFamily: T.sansM,
     fontSize: 9,
     letterSpacing: 2.5,
-    color: C.gold,
+    color: C.mutD,
     marginBottom: 6,
     opacity: 0.8,
   },

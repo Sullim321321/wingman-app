@@ -557,7 +557,7 @@ const s = StyleSheet.create({
     fontFamily: T.sansB,
     fontSize: 10,
     letterSpacing: 1.4,
-    color: C.gold,
+    color: C.mutD,
   },
   recapBody: {
     fontFamily: T.garamondI,

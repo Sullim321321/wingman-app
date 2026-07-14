@@ -267,7 +267,7 @@ const s = StyleSheet.create({
 
   dialWrap: { marginBottom: 26 },
   dialLabels: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
-  dialLabelL: { color: C.gold, fontSize: 10, letterSpacing: 2, fontFamily: T.sansM, lineHeight: 14 },
+  dialLabelL: { color: C.mutD, fontSize: 10, letterSpacing: 2, fontFamily: T.sansM, lineHeight: 14 },
   dialLabelR: { color: C.mut, fontSize: 10, letterSpacing: 2, fontFamily: T.sansM, lineHeight: 14, textAlign: "right" },
   dialTrack: { flexDirection: "row", alignItems: "center", height: 40, position: "relative" },
   dialLine: { position: "absolute", left: 12, right: 12, height: 1, backgroundColor: "rgba(201,169,110,0.35)" },

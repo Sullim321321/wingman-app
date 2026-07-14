@@ -130,7 +130,7 @@ export default function PlanScreen({ navigation, route }) {
           <Text style={s.back}>‹</Text>
         </Pressable>
         <View style={s.barMid}>
-          <WMark size={20} color={C.gold} />
+          <WMark size={20} color={C.brass} />
           <Text style={s.barT}>PLAN</Text>
         </View>
         {constraints.length > 0
@@ -155,7 +155,7 @@ export default function PlanScreen({ navigation, route }) {
               <FadeRise key={i}>
                 <View style={s.wm}>
                   <View style={s.wmHead}>
-                    <WMark size={16} color={C.gold} />
+                    <WMark size={16} color={C.brass} />
                     <Text style={s.wmName}>WINGMAN</Text>
                   </View>
                   <Rich text={t.content} style={s.wmT} />
@@ -166,7 +166,7 @@ export default function PlanScreen({ navigation, route }) {
 
           {busy ? (
             <View style={s.think}>
-              <WMark size={16} color={C.gold} />
+              <WMark size={16} color={C.brass} />
               <Text style={s.thinkT}>thinking…</Text>
             </View>
           ) : null}
@@ -405,7 +405,7 @@ const s = StyleSheet.create({
   errA: { fontFamily: T.sansB, fontSize: 13, color: C.gold },
 
   block: { marginTop: 12, marginBottom: 6, borderTopWidth: 1, borderTopColor: C.line, paddingTop: 18 },
-  blockH: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2.6, color: C.gold, marginBottom: 10 },
+  blockH: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2.6, color: C.mutD, marginBottom: 10 },
   blockSub: { fontFamily: T.garamondI, fontSize: 14.5, lineHeight: 20, color: C.mut, marginBottom: 14 },
 
   pro: { borderWidth: 1, borderColor: "rgba(212,144,42,0.4)", borderRadius: 12, padding: 14, marginBottom: 10 },

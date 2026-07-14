@@ -1691,7 +1691,7 @@ const s = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 6,
   },
-  prepKicker: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2, color: C.gold },
+  prepKicker: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2, color: C.mutD },
   prepDays: { fontFamily: T.sansM, fontSize: 11, color: C.mut },
   prepRoute: { fontFamily: T.garamondSI, fontSize: 26, color: C.ink, lineHeight: 30, marginBottom: 12 },
   prepList: { gap: 10 },

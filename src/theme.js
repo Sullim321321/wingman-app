@@ -81,16 +81,30 @@ export const C = {
   mutD:  "#5F5D59",   // Tertiary — quiet, structural, "I checked this and it's fine"
 
   // ─── The accent, demoted ────────────────────────────────────────────────────
-  // Brass, and it appears in exactly two places: the monogram, and the hairline
-  // under the masthead. It is NOT the button colour. It is NOT the label colour.
-  // In v3 it was all three, and that is why nothing could ever be urgent.
-  gold:  "#A98C57",
-  accent:"#A98C57",
-  goldD: "#8A7043",
-  goldL: "#C4A874",
-  goldBtn:"#EDEBE7",  // The primary CTA is CREAM. Not gold. Cream is louder here,
-                      // because it is the only bright thing on a black page.
-  goldGlass: "#A98C5714",
+  //
+  // `gold` used to mean five things at once — brand, button, icon, section label,
+  // and border — across 534 call sites. That is why the interface could never raise
+  // its voice: the loudest colour on screen was already spent on "here is a label."
+  //
+  // So the TOKEN is repointed rather than the 534 call sites. `C.gold` now resolves
+  // to CREAM, because in every one of those places what the code MEANT was "this is
+  // the accent — the thing your eye should go to," and on a black page the accent is
+  // the brightest thing, not the most saturated one.
+  //
+  // Brass survives under its own name, and appears in exactly two places: the
+  // monogram, and the hairline under the masthead. Nowhere else. If you find yourself
+  // reaching for C.brass for a button, you are rebuilding the bug.
+  gold:  "#EDEBE7",   // → cream. The accent. (Kept as `gold` so 534 sites keep working.)
+  accent:"#EDEBE7",
+  goldD: "#C8C4BC",   // pressed
+  goldL: "#FFFFFF",   // gradient start
+  goldBtn:"#EDEBE7",
+  goldGlass: "#EDEBE70F",
+
+  // The only brass in the system.
+  brass:  "#A98C57",
+  brassD: "#8A7043",
+  brassL: "#C4A874",
 
   // ─── Status ─────────────────────────────────────────────────────────────────
   // Muted, editorial, adult. These are not iOS system colours — they are ink.
@@ -210,8 +224,11 @@ export const litEdge = { borderTopColor: "rgba(255,255,255,0.09)" };
 // Gradients — subtle, top-lit, 168°. A surface catching light from above, never a
 // decorative sweep. If a gradient is visible AS a gradient, it is wrong.
 export const GRAD = {
-  gold:    ["#C4A874", "#A98C57", "#8A7043"],
-  goldSub: ["#A98C57", "#8A7043"],
+  // The CTA gradient is cream — top-lit, the way a real surface catches light.
+  // It was brass; a brass button on a black page is a costume, not an affordance.
+  gold:    ["#FFFFFF", "#EDEBE7", "#D8D5CF"],
+  goldSub: ["#EDEBE7", "#D8D5CF"],
+  brass:   ["#C4A874", "#A98C57", "#8A7043"],   // monogram only
   teal:    ["#6D9B82", "#5C8A72", "#48705B"],
   dark:    ["#1D1D22", "#141418"],
   parch:   ["#EDEBE7", "#D8D5CF"],

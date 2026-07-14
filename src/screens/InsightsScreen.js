@@ -392,7 +392,7 @@ const s = StyleSheet.create({
 
   roiCard: { borderRadius: 20, padding: 28, borderWidth: 1, borderColor: C.gold + "4D", marginBottom: 20 },
   roiEyebrowRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
-  roiEyebrow: { color: C.gold, fontSize: 11, fontFamily: T.sansB, letterSpacing: 2.5 },
+  roiEyebrow: { color: C.mutD, fontSize: 11, fontFamily: T.sansB, letterSpacing: 2.5 },
   roiYear: { color: C.mut, fontSize: 11, fontFamily: T.sansM, letterSpacing: 0.5 },
   roiValue: { color: C.ink, fontSize: 56, fontFamily: T.serifB, lineHeight: 64, marginBottom: 8 },
   roiValueEmpty: { color: C.ink, fontSize: 40, fontFamily: T.garamondSI, lineHeight: 46, marginBottom: 8, opacity: 0.9 },

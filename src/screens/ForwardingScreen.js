@@ -105,7 +105,7 @@ export default function ForwardingScreen({ navigation }) {
                 d="Tick Also apply filter to matching conversations to sweep up the trips you've already booked." />
 
           <View style={s.note}>
-            <WMark size={16} color={C.gold} />
+            <WMark size={16} color={C.brass} />
             <Text style={s.noteT}>
               This is why Wingman doesn't ask to read your Gmail. It doesn't need to.
             </Text>
@@ -167,14 +167,14 @@ const s = StyleSheet.create({
   sub: { fontFamily: T.garamondI, fontSize: 17, lineHeight: 25, color: C.mut, marginBottom: 24 },
 
   card: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 18, marginBottom: 34 },
-  label: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2.4, color: C.gold, marginBottom: 10 },
+  label: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2.4, color: C.mutD, marginBottom: 10 },
   addr: { fontFamily: T.sansM, fontSize: 15, color: C.ink, lineHeight: 22, marginBottom: 16 },
   copy: { backgroundColor: C.gold, borderRadius: 11, paddingVertical: 13, alignItems: "center" },
   copyT: { fontFamily: T.sansB, fontSize: 14, color: C.inkD },
   warn: { fontFamily: T.sansM, fontSize: 11.5, lineHeight: 17, color: C.mut, marginTop: 14 },
   err: { fontFamily: T.sansM, fontSize: 13, color: C.coral },
 
-  sectionH: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2.4, color: C.gold, marginBottom: 8 },
+  sectionH: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2.4, color: C.mutD, marginBottom: 8 },
   sectionSub: { fontFamily: T.garamondI, fontSize: 15.5, lineHeight: 22, color: C.mut, marginBottom: 22 },
 
   step: { flexDirection: "row", gap: 13, marginBottom: 20 },

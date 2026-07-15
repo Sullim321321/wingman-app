@@ -338,6 +338,7 @@ export default function PlanScreen({ navigation, route }) {
             horizontal
             showsHorizontalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            style={s.chipsScroll}
             contentContainerStyle={s.chips}
           >
             {suggestions.map((q) => (
@@ -437,9 +438,13 @@ function Opening({ onPick }) {
 
 const s = StyleSheet.create({
   cWrong: { fontFamily: T.sans, fontSize: 11, color: C.coral, marginLeft: 2 },
-  chips:  { paddingHorizontal: 16, paddingBottom: 10, gap: 8 },
-  chip:   { backgroundColor: C.card2, borderRadius: 999, paddingHorizontal: 14,
-            paddingVertical: 9, borderWidth: 1, borderColor: C.line },
+  // flexGrow:0 stops the row eating leftover vertical space; alignItems:center stops
+  // each pill stretching to fill it. Without both, a horizontal ScrollView renders its
+  // children as full-height ovals — which is exactly what happened.
+  chipsScroll: { flexGrow: 0, flexShrink: 0 },
+  chips:  { paddingHorizontal: 16, paddingBottom: 10, gap: 8, alignItems: "center" },
+  chip:   { backgroundColor: C.card2, borderRadius: 18, paddingHorizontal: 14,
+            paddingVertical: 9, borderWidth: 1, borderColor: C.line, alignSelf: "flex-start" },
   chipT:  { fontFamily: T.sans, fontSize: 13, color: C.ink },
 
   app: { flex: 1, backgroundColor: C.bg },

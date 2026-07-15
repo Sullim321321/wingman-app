@@ -84,8 +84,12 @@ export async function req(path, opts = {}) {
     throw err;
   }
   if (!r.ok) {
-    const err = new Error(body.error || "HTTP " + r.status);
+    // Prefer `reason` — a sentence written for a person — over `error`, which is a
+    // machine code like "plan_failed" that told the user nothing and made them guess
+    // whether the app was broken. The server now says what actually happened; surface it.
+    const err = new Error(body.reason || body.error || "HTTP " + r.status);
     err.status = r.status;
+    err.code = body.error || null;
     err.detail = body.detail || null;
     throw err;
   }

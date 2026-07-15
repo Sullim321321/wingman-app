@@ -190,7 +190,7 @@ function TripRow({ trip, navigation, onDelete }) {
     >
     <Pressable
       style={s.tripRow}
-      onPress={() => { tap(); navigation.navigate("TripDetail", { trip }); }}
+      onPress={() => { tap(); navigation.navigate("Dossier", { tripId: trip.id }); }}
     >
       {/* Date anchor */}
       <View style={s.dateAnchor}>

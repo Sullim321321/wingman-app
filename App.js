@@ -72,6 +72,7 @@ import FlightBookScreen from "./src/screens/FlightBookScreen";
 import FlightConfirmScreen from "./src/screens/FlightConfirmScreen";
 import AutonomySettingsScreen from "./src/screens/AutonomySettingsScreen";
 import LedgerScreen from "./src/screens/LedgerScreen";
+import DossierScreen from "./src/screens/DossierScreen";
 import ProfileSetupScreen from "./src/screens/ProfileSetupScreen";
 import WelcomeScreen from "./src/screens/WelcomeScreen";
 import CompensationScreen from "./src/screens/CompensationScreen";
@@ -442,6 +443,10 @@ function Root() {
                 booking inherits every reason the proposal was made for. */}
             <Stack.Screen name="BookLeg"      component={BookLegScreen} />
             <Stack.Screen name="AddTrip"      component={AddTripScreen} />
+            {/* The Dossier is the primary trip view — the trip as one document, with
+                the dependency spine. TripDetail stays reachable from it as the editing
+                back-room, so we keep inline editing without two primary trip screens. */}
+            <Stack.Screen name="Dossier"      component={DossierScreen} />
             <Stack.Screen name="TripDetail"   component={TripDetailScreen} />
             <Stack.Screen name="TasteSetup"   component={TasteSetupScreen} />
             <Stack.Screen name="Subscription" component={SubscriptionScreen} />

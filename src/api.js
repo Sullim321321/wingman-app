@@ -173,6 +173,11 @@ export const getDestinationIntel = ({ iata, city, trip_id } = {}) => {
 export const refreshTrip = (id) =>
   req("/trips/" + id + "/refresh", { method: "POST" });
 
+// The Dossier — the trip as one document, in four chapters, with the dependency line
+// under every booking that hangs off a flight. The one view no other travel app can
+// draw, because no other app kept the graph.
+export const getDossier = (id) => req("/trips/" + id + "/dossier");
+
 // Weather widget
 export const getWeather = (lat, lng) =>
   req(`/weather?lat=${lat}&lng=${lng}`);

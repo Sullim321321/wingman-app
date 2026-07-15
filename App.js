@@ -55,7 +55,6 @@ import ForwardingScreen from "./src/screens/ForwardingScreen";
 import SituationScreen from "./src/screens/SituationScreen";
 import RescueScreen from "./src/screens/RescueScreen";
 import BookLegScreen from "./src/screens/BookLegScreen";
-import PlanDoneScreen from "./src/screens/PlanDoneScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import ConnectionsScreen from "./src/screens/ConnectionsScreen";
 import OnboardingScreen from "./src/screens/OnboardingScreen";
@@ -79,7 +78,6 @@ import CompensationScreen from "./src/screens/CompensationScreen";
 import UpgradeBidScreen from "./src/screens/UpgradeBidScreen";
 import GroundTransportScreen from "./src/screens/GroundTransportScreen";
 import DestinationScreen from "./src/screens/DestinationScreen";
-import AirportDiningScreen from "./src/screens/AirportDiningScreen";
 import LoungeCardsScreen from "./src/screens/LoungeCardsScreen";
 import JourneySimulatorScreen from "./src/screens/JourneySimulatorScreen";
 import TravelProfileScreen from "./src/screens/TravelProfileScreen";
@@ -321,7 +319,7 @@ function Root() {
       // All deep-linkable routes — pass params where relevant
       const PARAM_ROUTES = [
         "TripDetail", "Concierge",
-        "AirportDining", "GroundTransport",
+        "GroundTransport",
         "Destination",
         "Compensation", "UpgradeBid",
         // The cascade takeover. Without this on the allowlist the disruption push —
@@ -352,7 +350,7 @@ function Root() {
         if (data.prefill)     params.prefill     = data.prefill;
         const FG_PARAM_ROUTES = [
           "TripDetail", "Concierge",
-          "AirportDining", "GroundTransport",
+          "GroundTransport",
           "Destination",
           "Compensation", "UpgradeBid",
           // This list had drifted out of sync with PARAM_ROUTES above. The background
@@ -422,7 +420,6 @@ function Root() {
                 to whichever is nearest, which is the kind of thing that works in
                 testing and breaks in someone's hand. Nothing navigated here anyway;
                 the old PlanScreen was a hardcoded mockup reachable from nowhere. */}
-            <Stack.Screen name="PlanDone"     component={PlanDoneScreen}     options={{ gestureEnabled: false }} />
             <Stack.Screen name="Settings"     component={SettingsScreen} />
             {/* No longer tabs. Reachable from the Home masthead — the record and the
                 signal feed, kept one tap from the brief without cluttering the bar. */}
@@ -461,7 +458,6 @@ function Root() {
             <Stack.Screen name="UpgradeBid"         component={UpgradeBidScreen} />
             <Stack.Screen name="GroundTransport"    component={GroundTransportScreen} />
             <Stack.Screen name="Destination"       component={DestinationScreen} />
-            <Stack.Screen name="AirportDining"      component={AirportDiningScreen} />
             <Stack.Screen name="LoungeCards"          component={LoungeCardsScreen} />
             <Stack.Screen name="Concierge"            component={ConciergeScreen} />
             <Stack.Screen name="JourneySimulator"     component={JourneySimulatorScreen} />

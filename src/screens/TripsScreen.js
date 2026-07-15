@@ -257,6 +257,7 @@ function EmptyState({ navigation }) {
 export default function TripsScreen({ navigation }) {
   const [trips,      setTrips]      = useState([]);
   const [loading,    setLoading]    = useState(true);
+  const [loadError,  setLoadError]  = useState(null);   // a failed load ≠ an empty life
   const [refreshing, setRefreshing] = useState(false);
   const [showPast,   setShowPast]   = useState(false);
   const [pastTrips,  setPastTrips]  = useState([]);
@@ -289,8 +290,15 @@ export default function TripsScreen({ navigation }) {
     try {
       const result = await getCachedTrips(() => getTrips());
       setTrips(result.data?.trips || []);
+      setLoadError(null);
     } catch (e) {
+      // "No trips yet" and "I couldn't reach the server" are DIFFERENT FACTS, and this
+      // used to render them identically — the empty state showed either way. That is the
+      // same class of bug as the delay monitor reading a 404 as calm: a failure disguised
+      // as a clean result. Keep the error so the screen can tell the truth about which
+      // one this is.
       console.error("[trips]", e.message);
+      setLoadError(e?.message || "Couldn't reach Wingman.");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -447,6 +455,17 @@ export default function TripsScreen({ navigation }) {
                     </FadeRise>
                   ))}
                 </>
+              ) : loadError ? (
+                // The honest failure. NOT the empty state — a server we couldn't reach
+                // is a different thing from a life with no trips in it, and pretending
+                // otherwise would tell you to add a trip when the real problem is the network.
+                <View style={s.errWrap}>
+                  <Text style={s.errHed}>I couldn't reach Wingman.</Text>
+                  <Text style={s.errSub}>This isn't "no trips" — it's a connection I couldn't make. Your trips are safe; I just can't show them this second.</Text>
+                  <Pressable style={s.errBtn} onPress={() => { tap(); setLoading(true); load(); }}>
+                    <Text style={s.errBtnT}>Try again</Text>
+                  </Pressable>
+                </View>
               ) : (!hasPast && pastTrips.length === 0) ? (
                 <EmptyState navigation={navigation} />
               ) : (
@@ -505,6 +524,12 @@ export default function TripsScreen({ navigation }) {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
+  errWrap: { alignItems: "center", paddingHorizontal: 34, paddingTop: 60 },
+  errHed:  { fontFamily: T.serif, fontSize: 22, color: C.ink, marginBottom: 10, textAlign: "center" },
+  errSub:  { fontFamily: T.sans, fontSize: 14, color: C.mut, textAlign: "center", lineHeight: 21, marginBottom: 20 },
+  errBtn:  { borderWidth: 1, borderColor: C.line, borderRadius: 10, paddingHorizontal: 20, paddingVertical: 11 },
+  errBtnT: { fontFamily: T.sansM, fontSize: 14, color: C.ink },
+
   root: {
     flex: 1,
     backgroundColor: C.bg,

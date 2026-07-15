@@ -101,8 +101,6 @@ const TAB_ICONS = {
   Home:         { active: "\u2302\uFE0E", inactive: "\u2302\uFE0E" },
   Plan:         { active: "\u2726\uFE0E", inactive: "\u2727\uFE0E" },   // \u2726 / \u2727 \u2014 the front door
   Trips:        { active: "\u2708\uFE0E", inactive: "\u2708\uFE0E" },
-  Intelligence: { active: "\u25CE\uFE0E", inactive: "\u25CB\uFE0E" },
-  Ledger:       { active: "\u25C6\uFE0E", inactive: "\u25C7\uFE0E" },
 };
 
 // Tab labels — wide-tracked all-caps (kept short to prevent bleed)
@@ -110,8 +108,6 @@ const TAB_LABELS = {
   Home:         "HOME",
   Plan:         "PLAN",
   Trips:        "TRIPS",
-  Intelligence: "SIGNALS",
-  Ledger:       "LEDGER",
 };
 
 function TabIcon({ name, focused }) {
@@ -188,23 +184,15 @@ function Tabs({ navigation }) {
         tabBarIcon: ({ focused }) => <TabIcon name={route.name} focused={focused} />,
       })}
     >
+      {/* THREE TABS, because the product has three verbs: watch (Home), plan, and see
+          what's real (Trips). It had five. "Signals" and "Ledger" were both *look at
+          things* screens that never asked you to act — and a second inbox is a second
+          place to miss something. Signals now folds into the Home brief (which already
+          answers "what needs me"); the Ledger is reachable from the masthead, where the
+          record belongs, not competing for a thumb with the three things you actually do. */}
       <Tab.Screen name="Home"         component={HomeScreen} />
-      {/* PLAN — the front door. Wingman could file a trip; it could never make one,
-          so the forty turns where the trip actually gets decided happened in someone
-          else's chat window and we met the trip afterwards as a pile of receipts. */}
       <Tab.Screen name="Plan"         component={PlanScreen} />
       <Tab.Screen name="Trips"        component={TripsScreen} />
-      <Tab.Screen
-        name="Intelligence"
-        component={ActivityScreen}
-        options={{
-          tabBarBadge: signalBadge ?? undefined,
-          tabBarBadgeStyle: { backgroundColor: C.coral, fontSize: 9, minWidth: 16, height: 16, borderRadius: 8 },
-        }}
-      />
-      {/* The Ledger: what Wingman did, and what it was defending. This tab used to be
-          Insights — a dashboard whose headline number was a counterfactual nobody measured. */}
-      <Tab.Screen name="Ledger"       component={LedgerScreen} />
     </Tab.Navigator>
 
     {/* The one way into the conversation.
@@ -435,6 +423,10 @@ function Root() {
                 the old PlanScreen was a hardcoded mockup reachable from nowhere. */}
             <Stack.Screen name="PlanDone"     component={PlanDoneScreen}     options={{ gestureEnabled: false }} />
             <Stack.Screen name="Settings"     component={SettingsScreen} />
+            {/* No longer tabs. Reachable from the Home masthead — the record and the
+                signal feed, kept one tap from the brief without cluttering the bar. */}
+            <Stack.Screen name="Ledger"       component={LedgerScreen} />
+            <Stack.Screen name="Intelligence" component={ActivityScreen} />
             <Stack.Screen name="Welcome"      component={WelcomeScreen} />
             <Stack.Screen name="Connections"  component={ConnectionsScreen} />
             {/* Forward bookings instead of surrendering the whole mailbox.

@@ -131,6 +131,24 @@ export default function SituationScreen({ navigation, route }) {
           </Text>
         </FadeRise>
 
+        {/* ── WHAT I ALREADY HANDLED ─────────────────────────────────────────────
+            The deck's promise: the work is done before you arrive. So the screen leads
+            with what Wingman already did on its own — not with the damage. Only shown
+            when there is something to show; it never invents a reassurance. */}
+        {(data?.already_handled || []).length > 0 ? (
+          <FadeRise delay={40}>
+            <View style={s.handled}>
+              <Text style={s.handledH}>I'VE ALREADY HANDLED</Text>
+              {data.already_handled.map((h, i) => (
+                <View key={i} style={s.handledRow}>
+                  <Text style={s.handledDid}>{h.did}</Text>
+                  {h.why ? <Text style={s.handledWhy}>{h.why}</Text> : null}
+                </View>
+              ))}
+            </View>
+          </FadeRise>
+        ) : null}
+
         {/* ── the dependency spine ──────────────────────────────────────────── */}
         {nodes.length > 0 ? (
           <FadeRise delay={70}>
@@ -227,6 +245,15 @@ export default function SituationScreen({ navigation, route }) {
 }
 
 const s = StyleSheet.create({
+  // "I've already handled" — the work done before you arrived. Sage, because these are
+  // things that are DONE, not things that need you.
+  handled:    { backgroundColor: C.card, borderRadius: 14, padding: 15, marginBottom: 18,
+                borderWidth: 1, borderColor: C.line, borderLeftWidth: 2, borderLeftColor: C.teal },
+  handledH:   { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2, color: C.teal, marginBottom: 10 },
+  handledRow: { marginBottom: 9 },
+  handledDid: { fontFamily: T.sansM, fontSize: 14, color: C.ink },
+  handledWhy: { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 14, color: C.mut, lineHeight: 20, marginTop: 3 },
+
   app: { flex: 1, backgroundColor: C.bg },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
   err: { fontFamily: T.sansM, fontSize: 14, color: C.coral },

@@ -1116,6 +1116,15 @@ export default function HomeScreen({ navigation }) {
             {mastheadRight ? (
               <Text style={s.mastLoc}>{mastheadRight}</Text>
             ) : null}
+            {/* The Ledger left the tab bar and lives here — the record, one tap from the
+                brief, without taking a fifth of the bottom bar. */}
+            <Pressable
+              onPress={() => { tap(); navigation.navigate("Ledger"); }}
+              hitSlop={8}
+              accessibilityLabel="The Ledger — what Wingman did and what it protected"
+            >
+              <Text style={s.mastLink}>◆</Text>
+            </Pressable>
             <Pressable
               style={s.avatar}
               onPress={() => { tap(); navigation.navigate("Settings"); }}
@@ -1596,6 +1605,7 @@ const s = StyleSheet.create({
     flex: 1,
     textTransform: "uppercase",
   },
+  mastLink: { fontFamily: T.sans, fontSize: 15, color: C.mutD, marginRight: 4 },
   mastRight: {
     flexDirection: "row",
     alignItems: "center",

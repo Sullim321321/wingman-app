@@ -228,6 +228,11 @@ export const getSituationOptions = (legId, delay = 0) =>
 // cascade can't defend.
 //
 // 60s: this fans out to every airline behind Duffel.
+// Is Duffel in test mode? A test key produces a confirmation number and NO seat. The
+// booking screen asks this so it can REFUSE to let a fake ticket look like a real one.
+export const getDuffelMode = () =>
+  fetch(`${API_BASE}/duffel-mode`).then(r => r.json()).catch(() => ({ duffel_mode: "unknown" }));
+
 export const getLegBooking = (legId, cabin) =>
   req(`/plan/leg/${legId}/book${cabin ? `?cabin=${cabin}` : ""}`, { signal: timeoutSignal(60000) });
 
@@ -262,12 +267,21 @@ export const getInboundAddress = () => req("/me/inbound-address");
 //
 // 90s, not 65s: a planning turn may run a web search before it answers, because
 // entry rules and alliance cutoffs must be looked up rather than recalled.
-export const planMessage = (message, tripId = null, history = []) =>
-  req("/plan/message", {
+export const planMessage = (message, tripId = null, history = []) => {
+  // The phone's clock, not Render's. Wingman asked her whether the 16th was a Thursday
+  // — a question it can answer itself, and only asked because it had no idea what day
+  // it was. Same fix the concierge needed when it offered her dinner at 6:30am.
+  let now = null, timezone = null;
+  try {
+    now = new Date().toISOString();
+    timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+  } catch {}
+  return req("/plan/message", {
     method: "POST",
-    body: JSON.stringify({ message, tripId, history }),
+    body: JSON.stringify({ message, tripId, history, now, timezone }),
     signal: timeoutSignal(90000),
   });
+};
 
 export const getPlan = (tripId) => req(`/plan/${tripId}`);
 

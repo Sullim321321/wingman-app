@@ -114,6 +114,38 @@ export default function PlanScreen({ navigation, route }) {
     send(`No — "${c.rationale}" isn't right. Drop it.`);
   };
 
+  // Same move, but for a constraint that is already ACTIVE. It ended up holding two
+  // contradictory departure dates at once and there was no way to tell it which was
+  // true — you could see the mistake and not correct it.
+  const wrong = (c) => {
+    tap();
+    setCs((prev) => prev.filter((x) => x.id !== c.id));
+    send(`That's wrong: "${c.rationale}". Correct it and drop the old one.`);
+  };
+
+  // The gaps ARE the suggestions. `coverage()` on the server already computes exactly
+  // what it still needs to know; we were rendering that as a passive grey label
+  // ("Still to settle: …") and then making her type the answer anyway.
+  const GAP_PROMPTS = {
+    dates:    ["Dates are firm", "I'm flexible by a day"],
+    origin:   ["Flying from JFK", "Flying from LGA"],
+    party:    ["Just me", "Two of us"],
+    rooms:    ["One room", "Two rooms"],
+    budget:   ["No hard budget", "Keep it sensible"],
+    lodging:  ["Somewhere with a pool", "Walkable to dinner"],
+    cabin:    ["Economy is fine", "Business on anything long"],
+  };
+  const suggestions = (() => {
+    const out = [];
+    for (const g of gaps) {
+      const key = Object.keys(GAP_PROMPTS).find((k) => String(g).toLowerCase().includes(k));
+      if (key) out.push(...GAP_PROMPTS[key]);
+    }
+    // Always leave a way to push the trip forward rather than only answering questions.
+    if (out.length < 4) out.push("What would you book?", "What am I missing?");
+    return [...new Set(out)].slice(0, 6);
+  })();
+
   const proposed = constraints.filter((c) => c.status === "proposed");
   const active   = constraints.filter((c) => c.status !== "proposed");
   // trip_id === null means a STANDING constraint — true of you, on every trip.
@@ -261,7 +293,7 @@ export default function PlanScreen({ navigation, route }) {
           {thisTrip.length > 0 ? (
             <View style={s.block}>
               <Text style={s.blockH}>THIS TRIP</Text>
-              {thisTrip.map((c) => <CRow key={c.id} c={c} />)}
+              {thisTrip.map((c) => <CRow key={c.id} c={c} onWrong={wrong} />)}
             </View>
           ) : null}
 
@@ -293,6 +325,29 @@ export default function PlanScreen({ navigation, route }) {
           <View style={{ height: 20 }} />
         </ScrollView>
 
+        {/* ── SUGGESTED REPLIES ────────────────────────────────────────────────
+            You were typing every word. A blank composer hands the burden of knowing
+            what to say next straight back to you — which is exactly the burden a chief
+            of staff exists to carry.
+
+            These are not canned prompts. They are derived from the HOLES IN THE GRAPH:
+            `gaps` is the server telling us what it still doesn't know. So the chips are
+            literally the questions Wingman needs answered, made tappable. */}
+        {!empty && !busy && suggestions.length > 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={s.chips}
+          >
+            {suggestions.map((q) => (
+              <Pressable key={q} style={s.chip} onPress={() => send(q)}>
+                <Text style={s.chipT}>{q}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        ) : null}
+
         <View style={s.composer}>
           <TextInput
             style={s.input}
@@ -318,7 +373,15 @@ export default function PlanScreen({ navigation, route }) {
 }
 
 /* ── one constraint, with its reason and its provenance ─────────────────────── */
-function CRow({ c, dim }) {
+// Every constraint is correctable — not just the proposed ones.
+//
+// The graph ended up holding BOTH "depart Thursday July 17" and "depart Thursday
+// July 16" — a self-contradiction, at STRONG, with no affordance anywhere on the
+// screen to say which was true. She could see it was wrong and had no way to say so.
+//
+// A system that records what you tell it, and cannot be told it is wrong, is not
+// listening. It is filing.
+function CRow({ c, dim, onWrong }) {
   const h = HARD[c.hardness] || HARD.nice;
   return (
     <View style={s.cRow}>
@@ -333,6 +396,11 @@ function CRow({ c, dim }) {
             <Text style={s.cExp}>
               · until {new Date(c.expires_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
             </Text>
+          ) : null}
+          {onWrong ? (
+            <Pressable onPress={() => onWrong(c)} hitSlop={8}>
+              <Text style={s.cWrong}>· not right</Text>
+            </Pressable>
           ) : null}
         </View>
       </View>
@@ -368,6 +436,12 @@ function Opening({ onPick }) {
 }
 
 const s = StyleSheet.create({
+  cWrong: { fontFamily: T.sans, fontSize: 11, color: C.coral, marginLeft: 2 },
+  chips:  { paddingHorizontal: 16, paddingBottom: 10, gap: 8 },
+  chip:   { backgroundColor: C.card2, borderRadius: 999, paddingHorizontal: 14,
+            paddingVertical: 9, borderWidth: 1, borderColor: C.line },
+  chipT:  { fontFamily: T.sans, fontSize: 13, color: C.ink },
+
   app: { flex: 1, backgroundColor: C.bg },
 
   bar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between",

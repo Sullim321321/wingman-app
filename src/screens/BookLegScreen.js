@@ -30,7 +30,7 @@ import {
 } from "react-native";
 import { C, T } from "../theme";
 import { WMark, tap, FadeRise, SerifText } from "../components";
-import { getLegBooking, bookLeg } from "../api";
+import { getLegBooking, bookLeg, getDuffelMode } from "../api";
 
 const money = (a, c) => {
   const n = parseFloat(a);
@@ -56,11 +56,16 @@ export default function BookLegScreen({ route, navigation }) {
   const [data, setData] = useState(null);
   const [err, setErr] = useState(null);
   const [busy, setBusy] = useState(true);
-  const [booking, setBooking] = useState(null);   // offer id currently being bought
+  const [booking, setBooking] = useState(null);
+  const [testMode, setTestMode] = useState(false);
 
   const load = useCallback(async () => {
     setBusy(true); setErr(null);
-    try { setData(await getLegBooking(legId)); }
+    try {
+      const [d, mode] = await Promise.all([getLegBooking(legId), getDuffelMode()]);
+      setData(d);
+      setTestMode(mode?.duffel_mode === "test");
+    }
     catch (e) { setErr(e.message || "Couldn't look this up."); }
     finally { setBusy(false); }
   }, [legId]);
@@ -68,6 +73,18 @@ export default function BookLegScreen({ route, navigation }) {
   useEffect(() => { load(); }, [load]);
 
   const buy = async (opt) => {
+    // A test key does not produce a seat. Booking would return a confirmation number
+    // for a ticket that does not exist — the exact "reports success while lying" failure
+    // this whole project is built to prevent, except here it strands you at a gate.
+    // So we don't warn and proceed. We refuse.
+    if (testMode) {
+      Alert.alert(
+        "Not a real booking",
+        "Duffel is in test mode, so this would create a confirmation number with no actual seat. Book this flight directly with the airline, then forward the confirmation email to Wingman and I'll watch it.",
+        [{ text: "Got it" }]
+      );
+      return;
+    }
     // The confirmation names the money AND the consequence. A price alone is not
     // informed consent when the system knows something the price doesn't say.
     const cost = money(opt.price, opt.currency);
@@ -164,6 +181,16 @@ export default function BookLegScreen({ route, navigation }) {
     <SafeAreaView style={s.wrap}>
       <ScrollView contentContainerStyle={s.pad}>
         <WMark />
+        {testMode ? (
+          <View style={s.testBanner}>
+            <Text style={s.testH}>TEST MODE — I CAN'T BUY THIS</Text>
+            <Text style={s.testT}>
+              These are real fares, but the booking key is a sandbox one: it makes a
+              confirmation number with no seat behind it. Book directly with the airline,
+              then forward me the email and I'll watch the flight.
+            </Text>
+          </View>
+        ) : null}
         <SerifText style={s.h1}>
           {resolved?.from?.name} → {resolved?.to?.name}
         </SerifText>
@@ -279,6 +306,11 @@ export default function BookLegScreen({ route, navigation }) {
 }
 
 const s = StyleSheet.create({
+  testBanner: { backgroundColor: C.card2, borderRadius: 12, padding: 14, marginBottom: 16,
+                borderWidth: 1, borderColor: C.amber, borderLeftWidth: 2, borderLeftColor: C.amber },
+  testH: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 1.6, color: C.amber, marginBottom: 6 },
+  testT: { fontFamily: T.sans, fontSize: 13, color: C.mut, lineHeight: 19 },
+
   wrap:   { flex: 1, backgroundColor: C.bg },
   pad:    { padding: 20, paddingTop: 8 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 30 },

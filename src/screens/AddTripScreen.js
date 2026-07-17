@@ -69,6 +69,22 @@ function blankLeg() {
   };
 }
 
+// Parse a user-typed date WITHOUT crashing.
+//
+// Every line below used to be `new Date(input).toISOString()`. That throws a hard
+// RangeError ("Invalid time value") the instant the input doesn't parse — and there is
+// no try/catch around buildPayload, so a single unparseable date took down the whole
+// Add screen. A form that crashes when you mistype a date is not a form; it's a trap.
+//
+// Returns null on anything it can't read. A missing date is a fine, honest state — the
+// leg just isn't monitorable until it has one — and infinitely better than a crash.
+function safeISO(input) {
+  const s = String(input || "").trim();
+  if (!s) return null;
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 function buildPayload(legType, leg) {
   const base = { type: legType, confirmation: leg.confirmation.trim() || null };
   switch (legType) {
@@ -79,7 +95,7 @@ function buildPayload(legType, leg) {
         flight_number: leg.flightNum.trim() || null,
         origin: leg.origin.trim().toUpperCase() || null,
         destination: leg.destination.trim().toUpperCase() || null,
-        departs_at: leg.depDate.trim() ? new Date(leg.depDate.trim()).toISOString() : null,
+        departs_at: safeISO(leg.depDate),
         cabin_class: leg.cabinClass.trim() || null,
         seat: leg.seat.trim() || null,
       };
@@ -89,8 +105,8 @@ function buildPayload(legType, leg) {
         ...base,
         property_name: leg.propertyName.trim() || null,
         property_address: leg.address.trim() || null,
-        departs_at: leg.checkIn.trim() ? new Date(leg.checkIn.trim()).toISOString() : null,
-        arrives_at: leg.checkOut.trim() ? new Date(leg.checkOut.trim()).toISOString() : null,
+        departs_at: safeISO(leg.checkIn),
+        arrives_at: safeISO(leg.checkOut),
         nights: leg.nights ? parseInt(leg.nights, 10) : null,
         guests: leg.guests ? parseInt(leg.guests, 10) : null,
       };
@@ -100,8 +116,8 @@ function buildPayload(legType, leg) {
         carrier: leg.carrier.trim() || null,
         station_from: leg.stationFrom.trim() || null,
         station_to: leg.stationTo.trim() || null,
-        departs_at: leg.depDate.trim() ? new Date(leg.depDate.trim()).toISOString() : null,
-        arrives_at: leg.arrDate.trim() ? new Date(leg.arrDate.trim()).toISOString() : null,
+        departs_at: safeISO(leg.depDate),
+        arrives_at: safeISO(leg.arrDate),
         seat: leg.seat.trim() || null,
       };
     case "car":
@@ -111,8 +127,8 @@ function buildPayload(legType, leg) {
         vehicle_class: leg.vehicleClass.trim() || null,
         pickup_location: leg.pickupLocation.trim() || null,
         dropoff_location: leg.dropoffLocation.trim() || null,
-        departs_at: leg.depDate.trim() ? new Date(leg.depDate.trim()).toISOString() : null,
-        arrives_at: leg.arrDate.trim() ? new Date(leg.arrDate.trim()).toISOString() : null,
+        departs_at: safeISO(leg.depDate),
+        arrives_at: safeISO(leg.arrDate),
       };
     case "ferry":
       return {
@@ -120,8 +136,8 @@ function buildPayload(legType, leg) {
         carrier: leg.carrier.trim() || null,
         origin: leg.origin.trim() || null,
         destination: leg.destination.trim() || null,
-        departs_at: leg.depDate.trim() ? new Date(leg.depDate.trim()).toISOString() : null,
-        arrives_at: leg.arrDate.trim() ? new Date(leg.arrDate.trim()).toISOString() : null,
+        departs_at: safeISO(leg.depDate),
+        arrives_at: safeISO(leg.arrDate),
       };
     case "activity":
       return {
@@ -129,7 +145,7 @@ function buildPayload(legType, leg) {
         property_name: leg.propertyName.trim() || null,
         carrier: leg.carrier.trim() || null,
         property_address: leg.address.trim() || null,
-        departs_at: leg.depDate.trim() ? new Date(leg.depDate.trim()).toISOString() : null,
+        departs_at: safeISO(leg.depDate),
         guests: leg.guests ? parseInt(leg.guests, 10) : null,
       };
     case "event":
@@ -137,7 +153,7 @@ function buildPayload(legType, leg) {
         ...base,
         property_name: leg.propertyName.trim() || null,
         property_address: leg.address.trim() || null,
-        departs_at: leg.depDate.trim() ? new Date(leg.depDate.trim()).toISOString() : null,
+        departs_at: safeISO(leg.depDate),
         guests: leg.guests ? parseInt(leg.guests, 10) : null,
       };
     default:
@@ -749,7 +765,7 @@ export default function AddTripScreen({ navigation, route }) {
         navigation.goBack();
       }
     } catch (e) {
-      Alert.alert("Error", e.message);
+      Alert.alert("Couldn't save", e?.message || "Something went wrong saving this trip. Nothing was lost — try again.");
     } finally {
       setLoading(false);
     }

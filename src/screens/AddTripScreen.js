@@ -82,7 +82,22 @@ function safeISO(input) {
   const s = String(input || "").trim();
   if (!s) return null;
   const d = new Date(s);
-  return isNaN(d.getTime()) ? null : d.toISOString();
+  if (isNaN(d.getTime())) return null;
+
+  // A date typed WITHOUT a year — "Jul 17", "7/17" — is parsed by JS as year 2001, so
+  // the flight files into the deep past and never gets watched. Same class of bug as
+  // the planner recording a Friday as "Thursday": the machine filled a gap with a wrong
+  // default instead of the obvious one.
+  //
+  // If the input names no explicit 4-digit year, assume THIS year — and if that date has
+  // already passed, assume NEXT year, because a booking is almost never in the past.
+  // An explicit year in the text is always honoured; we only fill the gap, never override.
+  if (!/\b\d{4}\b/.test(s)) {
+    const now = new Date();
+    d.setFullYear(now.getFullYear());
+    if (d.getTime() < now.getTime() - 86400000) d.setFullYear(now.getFullYear() + 1);
+  }
+  return d.toISOString();
 }
 
 function buildPayload(legType, leg) {

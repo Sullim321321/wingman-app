@@ -72,6 +72,7 @@ import FlightConfirmScreen from "./src/screens/FlightConfirmScreen";
 import AutonomySettingsScreen from "./src/screens/AutonomySettingsScreen";
 import LedgerScreen from "./src/screens/LedgerScreen";
 import DossierScreen from "./src/screens/DossierScreen";
+import LedgerEntryScreen from "./src/screens/LedgerEntryScreen";
 import ProfileSetupScreen from "./src/screens/ProfileSetupScreen";
 import WelcomeScreen from "./src/screens/WelcomeScreen";
 import CompensationScreen from "./src/screens/CompensationScreen";
@@ -424,6 +425,7 @@ function Root() {
             {/* No longer tabs. Reachable from the Home masthead — the record and the
                 signal feed, kept one tap from the brief without cluttering the bar. */}
             <Stack.Screen name="Ledger"       component={LedgerScreen} />
+            <Stack.Screen name="LedgerEntry"  component={LedgerEntryScreen} />
             <Stack.Screen name="Intelligence" component={ActivityScreen} />
             <Stack.Screen name="Welcome"      component={WelcomeScreen} />
             <Stack.Screen name="Connections"  component={ConnectionsScreen} />

@@ -31,10 +31,10 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import {
-  SafeAreaView, ScrollView, View, Text, StyleSheet, ActivityIndicator, RefreshControl,
+  SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet, ActivityIndicator, RefreshControl,
 } from "react-native";
 import { C, T } from "../theme";
-import { BackBar, SerifText, FadeRise } from "../components";
+import { BackBar, SerifText, FadeRise, tap } from "../components";
 import { getLedger } from "../api";
 
 const when = (iso) => {
@@ -125,7 +125,7 @@ export default function LedgerScreen({ navigation }) {
 
         {entries.map((e, i) => (
           <FadeRise key={e.id} delay={100 + i * 40}>
-            <View style={s.row}>
+            <Pressable style={s.row} onPress={() => { tap(); navigation.navigate("LedgerEntry", { id: e.id }); }}>
               <View style={s.rowTop}>
                 <Text style={[s.by, e.by === "wingman" ? s.byW : s.byU]}>
                   {e.by === "wingman" ? "I DECIDED" : "YOU DECIDED"}
@@ -158,7 +158,7 @@ export default function LedgerScreen({ navigation }) {
               {(e.what || e.trip) ? (
                 <Text style={s.meta}>{[e.what, e.trip].filter(Boolean).join("  ·  ")}</Text>
               ) : null}
-            </View>
+            </Pressable>
           </FadeRise>
         ))}
 

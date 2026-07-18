@@ -256,6 +256,8 @@ export const bookLeg = (legId, offerId, by = "you") =>
 // What Wingman DID, and what it was protecting. Replaces Insights, which showed an
 // "avg. time saved" figure measured against a counterfactual nobody ever ran.
 export const getLedger = () => req("/ledger");
+// One decision in full — options weighed, what it protected, whether it's still reversible.
+export const getLedgerEntry = (id) => req("/ledger/" + id);
 
 // ─── What Wingman believes is always true of you ──────────────────────────────
 // Lives in Settings, not on Plan: these apply to every trip, so they say nothing about

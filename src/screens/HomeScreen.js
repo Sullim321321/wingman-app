@@ -202,7 +202,7 @@ function seatLabel(seatPref) {
 }
 
 // Build the chief-of-staff briefing (greeting + upright opening + prose) from home state + trip data
-function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPrefs, newsData, trafficData, todayEvents, restaurantSuggestion }) {
+function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPrefs, newsData, trafficData, todayEvents, restaurantSuggestion, errored }) {
   const hs    = homeState;
   const leg   = hs?.active_leg;
   const trip  = hs?.active_trip;
@@ -319,6 +319,15 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPr
     if (preSeat) parts.push(`I'll watch for your ${preSeat} at check-in`);
     prose = `${parts.join(". ")}. Anything you'd like handled before you go?`;
 
+  } else if (errored && (!trips || trips.length === 0)) {
+    // The load FAILED and there's nothing cached to fall back on. Say that — do not
+    // render it as an empty life. "Nothing on your calendar" when the truth is "I
+    // couldn't reach the server" is the dark-monitor bug wearing a calm face.
+    statusDotColor = C.amber;
+    statusLabel    = "Can't reach Wingman";
+    headline = "I can't reach the server right now.";
+    prose = "This isn't an empty calendar — it's a connection I couldn't make. Pull to refresh, or try again in a moment. Nothing's lost.";
+    return { greeting: "", headline, prose, statusDotColor, statusLabel, editionSuffix: "" };
   } else {
     statusDotColor = C.mut;
     statusLabel    = "Standing by";
@@ -390,6 +399,7 @@ export default function HomeScreen({ navigation }) {
   const [isSpeaking, setIsSpeaking]     = useState(false);
   const [isRefreshing, setIsRefreshing]  = useState(false);
   const [briefingLoading, setBriefingLoading] = useState(true); // skeleton state
+  const [briefError, setBriefError] = useState(false);          // load FAILED ≠ empty day
   // The Brief. "Nothing needs you" as a graph query rather than a greeting.
   const [brief, setBrief] = useState(null);
 
@@ -528,10 +538,15 @@ export default function HomeScreen({ navigation }) {
           if (hs.value?.ok) setLoadedAt(new Date());
         }
         }
+        // If the state call itself failed (rejected, or ok:false), remember THAT —
+        // distinct from a genuinely empty day. Otherwise the briefing below falls to
+        // "Nothing on your calendar yet," and a dropped connection reads as an empty
+        // life. Same bug the Trips screen had; same class as the dark monitor.
+        if (!cancelled) setBriefError(hs.status !== "fulfilled" || !hs.value?.ok);
       } catch {
         if (!cancelled) {
           setBriefingLoading(false);
-          // Don't stamp timestamp on error — no content to show
+          setBriefError(true);
         }
       }
     })();
@@ -821,8 +836,8 @@ export default function HomeScreen({ navigation }) {
   // ── Derived briefing ─────────────────────────────────────────────────────────
 
   const { greeting, headline, prose, statusDotColor, statusLabel, editionSuffix } = useMemo(
-    () => buildBriefing({ homeState, trips, weather, firstName, riskScore, userPrefs, newsData, trafficData, todayEvents, restaurantSuggestion }),
-    [homeState, trips, weather, firstName, riskScore, userPrefs, newsData, trafficData, todayEvents, restaurantSuggestion]
+    () => buildBriefing({ homeState, trips, weather, firstName, riskScore, userPrefs, newsData, trafficData, todayEvents, restaurantSuggestion, errored: briefError }),
+    [homeState, trips, weather, firstName, riskScore, userPrefs, newsData, trafficData, todayEvents, restaurantSuggestion, briefError]
   );
 
   const nextFlight = useMemo(() => findNextFlight(trips), [trips]);

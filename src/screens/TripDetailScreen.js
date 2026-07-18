@@ -149,12 +149,20 @@ function FlightLegRow({ leg, isCompleted, tripId, navigation, onEdit, onDelete }
     getFlightStatus(key)
       .then(d => { if (d?.status) setLiveStatus(d); })
       .catch(() => {});
-    if (leg.origin && leg.destination) {
+    // A weather-based risk score is only meaningful inside the forecast horizon. The
+    // model reads TODAY's METAR, so a "47% risk" for a flight weeks out is fabricated
+    // precision — and it showed the SAME number on every far-out flight, which is the
+    // tell. Only ask for (and show) a risk once the flight is close enough for the
+    // weather to be real. Beyond that, "monitoring" is the honest state.
+    const depMs = leg.departs_at ? new Date(leg.departs_at).getTime() : null;
+    const daysOut = depMs ? (depMs - Date.now()) / 86400000 : null;
+    const withinHorizon = daysOut != null && daysOut >= -0.5 && daysOut <= 4;
+    if (withinHorizon && leg.origin && leg.destination) {
       getPrediction({ dep: leg.origin, arr: leg.destination })
         .then(p => { if (p?.risk != null) setRisk(p.risk); })
         .catch(() => {});
     }
-  }, [leg.carrier, leg.flight_number]);
+  }, [leg.carrier, leg.flight_number, leg.departs_at]);
 
   const ident      = fid.displayName(leg) || "";   // a NAME. The key is fid.apiKey(leg).
   const depTime    = fmtTime(leg.departs_at);

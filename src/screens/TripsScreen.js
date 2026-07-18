@@ -111,10 +111,15 @@ function TripRow({ trip, navigation, onDelete }) {
   useEffect(() => {
     if (status === "past") return;
     if (!firstFlight?.origin || !firstFlight?.destination) return;
+    // Only inside the weather horizon — a % risk for a flight weeks out is invented
+    // precision (today's METAR can't forecast July). See TripDetailScreen for the why.
+    const depMs = firstFlight.departs_at ? new Date(firstFlight.departs_at).getTime() : null;
+    const daysOut = depMs ? (depMs - Date.now()) / 86400000 : null;
+    if (!(daysOut != null && daysOut >= -0.5 && daysOut <= 4)) return;
     getPrediction({ dep: firstFlight.origin, arr: firstFlight.destination })
       .then(p => { if (p?.risk != null) setRiskScore(p.risk); })
       .catch(() => {});
-  }, [firstFlight?.origin, firstFlight?.destination, status]);
+  }, [firstFlight?.origin, firstFlight?.destination, firstFlight?.departs_at, status]);
 
   // Date anchor — large day number
   const dayNum  = startTs ? new Date(startTs).getDate() : null;

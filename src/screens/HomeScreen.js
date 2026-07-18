@@ -400,6 +400,7 @@ export default function HomeScreen({ navigation }) {
   const [isRefreshing, setIsRefreshing]  = useState(false);
   const [briefingLoading, setBriefingLoading] = useState(true); // skeleton state
   const [briefError, setBriefError] = useState(false);          // load FAILED ≠ empty day
+  const [homeSignals, setHomeSignals] = useState([]);           // Signals, folded into Home
   // The Brief. "Nothing needs you" as a graph query rather than a greeting.
   const [brief, setBrief] = useState(null);
 
@@ -425,6 +426,14 @@ export default function HomeScreen({ navigation }) {
   // it must never be the reason the screen won't load.
   const loadBrief = useCallback(async () => {
     try { setBrief(await getBrief()); } catch { /* silent */ }
+    // Signals, folded into Home — only the ones that mattered. Imports/status/hotel_email
+    // are plumbing (the machine narrating its own filing); they belong nowhere on Home.
+    try {
+      const { getActivity } = require("../api");
+      const data = await getActivity(30);
+      const routine = new Set(["import", "status", "hotel_email", "trip"]);
+      setHomeSignals((data?.events || []).filter((e) => e && !routine.has(e.type)));
+    } catch { /* leave empty rather than invent one */ }
   }, []);
   useEffect(() => { loadBrief(); }, [loadBrief]);
 
@@ -1457,6 +1466,45 @@ export default function HomeScreen({ navigation }) {
           ) : null}
         </View>
 
+        {/* ── SIGNALS, folded in ─────────────────────────────────────────────────
+            When the tabs collapsed from five to three I said Signals "folds into Home"
+            and then only deleted the tab — the feed itself never landed here. This is
+            that feed, at last: ONLY things that needed you, and what was handled. The
+            import plumbing that used to fill the old Signals tab is deliberately not
+            here — the brief above already says whether anything needs you; this is the
+            evidence behind it, not a changelog of your own inbox. Nothing to show →
+            nothing rendered. */}
+        {homeSignals.length > 0 ? (
+          <View style={s.sigWrap}>
+            <View style={s.sigHead}>
+              <Text style={s.sigLabel}>RECENT SIGNALS</Text>
+              <Pressable onPress={() => { tap(); navigation.navigate("Intelligence"); }} hitSlop={8}>
+                <Text style={s.sigAll}>All ›</Text>
+              </Pressable>
+            </View>
+            {homeSignals.slice(0, 4).map((e) => (
+              <Pressable
+                key={e.id}
+                style={s.sigRow}
+                onPress={() => {
+                  tap();
+                  if (e.leg_id) navigation.navigate("Situation", { legId: e.leg_id, delay: 0 });
+                  else if (e.trip_id) navigation.navigate("Dossier", { tripId: e.trip_id });
+                }}
+              >
+                <View style={[s.sigDot, {
+                  backgroundColor: ["disruption", "delay", "weather"].includes(e.type) ? C.coral
+                    : e.type === "recovery" ? C.teal : C.mutD,
+                }]} />
+                <View style={{ flex: 1 }}>
+                  <Text style={s.sigTitle} numberOfLines={1}>{e.title}</Text>
+                  {e.body ? <Text style={s.sigBody} numberOfLines={1}>{e.body}</Text> : null}
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
+
     </>
   );
 
@@ -1733,6 +1781,16 @@ const s = StyleSheet.create({
   // Does NOT scroll — it is always visible above the fold.
   // The Brief line. Teal dot = nothing needs you, and that is a checked fact.
   // Amber + arrow = something does, and tapping takes you straight to it.
+  sigWrap:  { marginHorizontal: 20, marginTop: 26 },
+  sigHead:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+  sigLabel: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2.4, color: C.mutD },
+  sigAll:   { fontFamily: T.sansM, fontSize: 12, color: C.gold },
+  sigRow:   { flexDirection: "row", alignItems: "flex-start", gap: 10, paddingVertical: 11,
+              borderTopWidth: 1, borderTopColor: C.line },
+  sigDot:   { width: 6, height: 6, borderRadius: 3, marginTop: 6 },
+  sigTitle: { fontFamily: T.sansM, fontSize: 14, color: C.ink },
+  sigBody:  { fontFamily: T.sans, fontSize: 12.5, color: C.mut, marginTop: 2 },
+
   briefLine: {
     flexDirection: "row", alignItems: "center", gap: 10,
     marginTop: 14, marginBottom: 4,

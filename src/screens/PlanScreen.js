@@ -62,6 +62,7 @@ export default function PlanScreen({ navigation, route }) {
   const [gaps, setGaps]      = useState([]);
   const [err, setErr]        = useState(null);
   const scroller = useRef(null);
+  const inputRef = useRef(null);
 
   const send = useCallback(async (text) => {
     const message = String(text ?? draft).trim();
@@ -176,7 +177,12 @@ export default function PlanScreen({ navigation, route }) {
         keyboardVerticalOffset={Platform.OS === "ios" ? 88 : 0}
       >
         <ScrollView ref={scroller} contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
-          {empty ? <Opening onPick={send} /> : null}
+          {empty ? <Opening onPick={send} onPasteMode={() => {
+            // Focus the composer with a lead-in, so the pasted thread arrives as one
+            // planner turn framed as "these are my texts — build the schedule."
+            setDraft("Here are messages about my trip — build the schedule from them:\n\n");
+            setTimeout(() => inputRef.current?.focus(), 60);
+          }} /> : null}
 
           {turns.map((t, i) =>
             t.role === "user" ? (
@@ -351,10 +357,11 @@ export default function PlanScreen({ navigation, route }) {
 
         <View style={s.composer}>
           <TextInput
+            ref={inputRef}
             style={s.input}
             value={draft}
             onChangeText={setDraft}
-            placeholder={empty ? "Where are you going?" : "Tell me more…"}
+            placeholder={empty ? "Paste your messages, or tell me where you're going…" : "Tell me more…"}
             placeholderTextColor={C.mut}
             multiline
             editable={!busy}
@@ -410,7 +417,7 @@ function CRow({ c, dim, onWrong }) {
 }
 
 /* ── the empty state, which is really the pitch ─────────────────────────────── */
-function Opening({ onPick }) {
+function Opening({ onPick, onPasteMode }) {
   const seeds = [
     "Six shows across Asia in September — help me plan it",
     "A week somewhere warm in March, just the two of us",
@@ -424,6 +431,22 @@ function Opening({ onPick }) {
           I'll ask what I need, look up what I can't be sure of, and remember why —
           so when something breaks, I know what's worth protecting.
         </Text>
+
+        {/* ── Dump the mess ──────────────────────────────────────────────────────
+            The itinerary that lives in scattered texts — "dinner Thursday 8", "swing by
+            the office at 2", a half-plan from a business partner — has nowhere to land in
+            most travel apps. Here it does: paste the raw thread and the planner turns each
+            fragment into a timed constraint, with the reason attached, so transport and
+            scheduling can actually reason about it. No need to tidy it first. */}
+        <Pressable style={s.pasteCard} onPress={onPasteMode}>
+          <Text style={s.pasteH}>Paste your messages</Text>
+          <Text style={s.pasteT}>
+            A thread of texts, half-plans from friends, a confirmation — drop it all in,
+            however messy. I'll build the schedule and keep watching it.
+          </Text>
+        </Pressable>
+
+        <Text style={s.openOr}>or start from scratch</Text>
         <View style={s.seeds}>
           {seeds.map((sd) => (
             <Pressable key={sd} style={s.seed} onPress={() => onPick(sd)}>
@@ -462,7 +485,12 @@ const s = StyleSheet.create({
   open: { paddingVertical: 30 },
   openH: { fontFamily: T.serifB, fontSize: 27, color: C.ink, letterSpacing: -0.5, marginBottom: 12 },
   openSub: { fontFamily: T.garamondI, fontSize: 17, lineHeight: 25, color: C.mut, fontStyle: "italic" },
-  seeds: { marginTop: 26, gap: 10 },
+  pasteCard: { marginTop: 24, borderWidth: 1, borderColor: C.gold + "55", backgroundColor: C.card,
+               borderRadius: 14, padding: 16, borderTopColor: C.lineHi },
+  pasteH:    { fontFamily: T.sansB, fontSize: 15, color: C.gold, marginBottom: 6 },
+  pasteT:    { fontFamily: T.sans, fontSize: 13.5, color: C.mut, lineHeight: 20 },
+  openOr:    { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2, color: C.mutD, marginTop: 24, marginBottom: 2 },
+  seeds: { marginTop: 14, gap: 10 },
   seed: { borderWidth: 1, borderColor: C.line, backgroundColor: C.card, borderRadius: 14, padding: 15 },
   seedT: { fontFamily: T.sansM, fontSize: 14, color: C.ink, lineHeight: 20 },
 

@@ -133,6 +133,60 @@ export default function AutonomySettingsScreen({ navigation }) {
           <Text style={s.dialCurrent}>{MODES[dialIndex].title}</Text>
         </View>
 
+        {/* ── WHAT THIS MEANS, IN SENTENCES ──────────────────────────────────────
+            The dial by itself is meaningless — "auto-approve under threshold" tells you
+            nothing about what will actually happen at 2am when a flight dies. So this
+            panel reads your current setting back as concrete promises, and updates live
+            as you move the dial. You should be able to state your own autonomy from
+            memory after seeing this once.
+
+            Crucially, it is FAITHFUL to what the server actually enforces (mayActAlone /
+            booking.permission), not to a marketing description. Even Full autonomy still
+            wakes you for a rule it can't satisfy or an option it can't fully assess —
+            because the code genuinely refuses to act past those, and the panel must not
+            promise an autonomy the system won't exercise. */}
+        {(() => {
+          const money = `$${threshold}`;
+          const alone = [], wake = [];
+          if (autonomyMode === "always_ask") {
+            wake.push("Everything. I find the options and lay them out; you make every call.");
+          } else if (autonomyMode === "auto_under_threshold") {
+            alone.push(`Rebook or rearrange when it costs under ${money}, and nothing you called non-negotiable is at stake.`);
+            wake.push(`Anything over ${money}.`);
+            wake.push("Anything that would break something you told me was a must.");
+            wake.push("Cancelling a booking, or moving money.");
+            wake.push("Anything I can't fully assess — I won't act past a question I can't answer.");
+          } else { // fully_auto
+            alone.push("Book the option I'd have recommended, at any price, and tell you after.");
+            alone.push("Rearrange downstream bookings to protect what you told me matters.");
+            wake.push("A rule you called non-negotiable that no option can satisfy — that call stays yours.");
+            wake.push("Anything I can't fully assess. Unknown never gets a silent yes.");
+            wake.push("Cancelling a booking, or moving money.");
+          }
+          return (
+            <View style={s.plain}>
+              {alone.length > 0 && (
+                <>
+                  <Text style={s.plainH}>I'LL JUST DO IT</Text>
+                  {alone.map((t, i) => (
+                    <View key={i} style={s.plainRow}>
+                      <View style={[s.plainDot, { backgroundColor: C.teal }]} />
+                      <Text style={s.plainT}>{t}</Text>
+                    </View>
+                  ))}
+                </>
+              )}
+              <Text style={[s.plainH, { marginTop: alone.length ? 16 : 0 }]}>I'LL WAKE YOU FOR</Text>
+              {wake.map((t, i) => (
+                <View key={i} style={s.plainRow}>
+                  <View style={[s.plainDot, { backgroundColor: C.amber }]} />
+                  <Text style={s.plainT}>{t}</Text>
+                </View>
+              ))}
+            </View>
+          );
+        })()}
+
         {/* Autonomy mode detail */}
         <Text style={g.sectionT}>WHAT EACH LEVEL DOES</Text>
         <View style={g.group}>
@@ -276,6 +330,13 @@ const s = StyleSheet.create({
   dialKnob: { width: 26, height: 26, borderRadius: 13, borderWidth: 1, borderColor: C.gold, backgroundColor: C.bg, alignItems: "center", justifyContent: "center" },
   dialKnobDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: C.gold },
   dialCurrent: { color: C.gold, fontSize: 15, fontFamily: T.serifB, textAlign: "center", marginTop: 10 },
+
+  plain:     { backgroundColor: C.card, borderRadius: 14, padding: 16, marginTop: 18,
+               borderWidth: 1, borderColor: C.line, borderTopColor: C.lineHi },
+  plainH:    { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2, color: C.mutD, marginBottom: 10 },
+  plainRow:  { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 9 },
+  plainDot:  { width: 6, height: 6, borderRadius: 3, marginTop: 6 },
+  plainT:    { fontFamily: T.sans, fontSize: 14, color: C.ink, flex: 1, lineHeight: 20 },
 
   modeRow: { flexDirection: "row", alignItems: "flex-start", gap: 14, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.line },
   modeRadio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: C.line, alignItems: "center", justifyContent: "center", marginTop: 2 },

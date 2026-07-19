@@ -1215,7 +1215,7 @@ export default function HomeScreen({ navigation }) {
           <FadeRise delay={70}>
             <Pressable
               style={s.postTripCard}
-              onPress={() => { tap(); navigation.navigate("TripDetail", { trip: postTrip.trip }); }}
+              onPress={() => { tap(); navigation.navigate("Dossier", { tripId: postTrip.trip?.id }); }}
             >
               <View style={s.dayOfHead}>
                 <View style={[s.dayOfDot, { backgroundColor: C.teal }]} />

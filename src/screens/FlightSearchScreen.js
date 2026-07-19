@@ -558,7 +558,7 @@ export default function FlightSearchScreen({ navigation }) {
                   <View style={{ marginTop: 16, marginBottom: 40 }}>
                     <Btn
                       title="Open Trip"
-                      onPress={() => navigation.navigate("TripDetail", { tripId: confirmResult.id })}
+                      onPress={() => navigation.navigate("Dossier", { tripId: confirmResult.id })}
                       kind="primary"
                     />
                   </View>

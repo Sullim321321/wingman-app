@@ -155,7 +155,7 @@ export default function ActivityScreen({ navigation }) {
   // away the only thing the cascade needs.
   const handleAction = (event) => {
     if (event.leg_id) return navigation.navigate("Situation", { legId: event.leg_id, delay: 0 });
-    if (event.trip_id) return navigation.navigate("TripDetail", { tripId: event.trip_id });
+    if (event.trip_id) return navigation.navigate("Dossier", { tripId: event.trip_id });
     // No leg, no trip — say nothing rather than open an empty screen.
   };
 

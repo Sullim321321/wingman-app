@@ -593,7 +593,7 @@ export default function ConciergeScreen({ route, navigation }) {
           {activeTripId && (
             <Pressable
               style={s.tripLinkBtn}
-              onPress={() => { tap(); navigation.navigate("TripDetail", { tripId: activeTripId }); }}
+              onPress={() => { tap(); navigation.navigate("Dossier", { tripId: activeTripId }); }}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Text style={s.tripLinkBtnT}>Trip ›</Text>

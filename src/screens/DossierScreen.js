@@ -135,7 +135,8 @@ export default function DossierScreen({ route, navigation }) {
 
         {CHAPTERS.map((ch, ci) => {
           const legs = chapters[ch.key] || [];
-          if (!legs.length) return null;
+          const rideCount = data?.rides?.[ch.key] || 0;
+          if (!legs.length && !rideCount) return null;
           return (
             <FadeRise key={ch.key} delay={80 + ci * 40}>
               <View style={s.chapter}>
@@ -144,6 +145,14 @@ export default function DossierScreen({ route, navigation }) {
                   <Text style={s.chapterBlurb}>{ch.blurb}</Text>
                 </View>
                 {legs.map((l) => <Leg key={l.id} leg={l} />)}
+                {/* Rides, counted rather than listed. An eight-minute taxi isn't something
+                    a chief of staff briefs you on — but pretending it didn't happen would
+                    be its own lie, so it gets one quiet line. */}
+                {(data?.rides?.[ch.key] || 0) > 0 ? (
+                  <Text style={s.rides}>
+                    + {data.rides[ch.key]} {data.rides[ch.key] === 1 ? "ride" : "rides"}
+                  </Text>
+                ) : null}
               </View>
             </FadeRise>
           );
@@ -206,6 +215,7 @@ const s = StyleSheet.create({
                paddingVertical: 14, alignItems: "center" },
   spineBtnT: { fontFamily: T.sansM, fontSize: 13.5, color: C.gold },
 
+  rides: { fontFamily: T.sans, fontSize: 12.5, color: C.mutD, marginTop: 2, marginLeft: 2 },
   empty: { fontFamily: T.sans, fontSize: 14.5, color: C.mut, marginTop: 20, lineHeight: 22 },
   err:   { fontFamily: T.sans, fontSize: 14, color: C.coral, marginTop: 16 },
 });

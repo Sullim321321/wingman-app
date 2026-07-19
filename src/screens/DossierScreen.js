@@ -122,7 +122,16 @@ export default function DossierScreen({ route, navigation }) {
               <Text style={s.edit}>Edit</Text>
             </Pressable>
           </View>
-          {data?.in_motion ? <Text style={s.live}>● IN MOTION</Text> : null}
+          {/* ── SAY IT, DON'T IMPLY IT ───────────────────────────────────────
+              A trip with nothing committed is an idea Wingman had, not a plan you
+              made. The legs were always drawn as sketches — but a dashed border is
+              a hint, and the title above is an assertion, and the assertion wins.
+              So the trip states its own status in words before anything else. */}
+          {data?.certainty === "idea" ? (
+            <Text style={s.idea}>NOTHING HERE IS BOOKED — THIS IS AN IDEA</Text>
+          ) : data?.in_motion ? (
+            <Text style={s.live}>● IN MOTION</Text>
+          ) : null}
         </FadeRise>
 
         {err ? <Text style={s.err}>{err}</Text> : null}
@@ -215,6 +224,7 @@ const s = StyleSheet.create({
                paddingVertical: 14, alignItems: "center" },
   spineBtnT: { fontFamily: T.sansM, fontSize: 13.5, color: C.gold },
 
+  idea: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 1.8, color: C.amber, marginTop: 8, marginBottom: 4 },
   rides: { fontFamily: T.sans, fontSize: 12.5, color: C.mutD, marginTop: 2, marginLeft: 2 },
   empty: { fontFamily: T.sans, fontSize: 14.5, color: C.mut, marginTop: 20, lineHeight: 22 },
   err:   { fontFamily: T.sans, fontSize: 14, color: C.coral, marginTop: 16 },

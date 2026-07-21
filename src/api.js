@@ -182,6 +182,12 @@ export const refreshTrip = (id) =>
 // draw, because no other app kept the graph.
 export const getDossier = (id) => req("/trips/" + id + "/dossier");
 
+// Today's page of the same document. Not a different endpoint shape — the same
+// chapters, the same leg cards, the same dependency lines, filtered to what's
+// happening now and what's close enough to need you. Reads across ALL trips,
+// because a day doesn't respect trip boundaries.
+export const getToday = (hours) => req("/today" + (hours ? `?hours=${hours}` : ""));
+
 // Weather widget
 export const getWeather = (lat, lng) =>
   req(`/weather?lat=${lat}&lng=${lng}`);

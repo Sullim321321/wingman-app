@@ -149,7 +149,11 @@ function findNextFlight(trips) {
   let best = null, bestTime = Infinity;
   for (const trip of (trips || [])) {
     for (const leg of (trip.legs || [])) {
+      // A SUGGESTION IS NOT A FLIGHT. This function fed the "TODAY - YOUR FLIGHT"
+      // card, which cheerfully announced a Smoky Mountains leg Wingman had proposed
+      // itself — origin unknown, rendered as "?", nine hours out, never booked.
       if (leg.type !== "flight" || !leg.departs_at) continue;
+      if (leg.state === "proposed") continue;
       const t = new Date(leg.departs_at).getTime();
       if (t > now && t < bestTime) { bestTime = t; best = { ...leg, tripTitle: trip.title }; }
     }

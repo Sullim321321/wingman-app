@@ -74,6 +74,50 @@ export function Leg({ leg, compact = false }) {
   );
 }
 
+/**
+ * When does this trip actually start and end, and is it happening now?
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * The Trips list showed "Nashville · 16 MAY 2012 · ACTIVE · In progress" on a
+ * 2026 trip. Three separate faults compounded:
+ *
+ *   1. It took `legs.find(l => l.type === "flight")` — the first flight in ARRAY
+ *      order — as the trip's start. Array order is not chronological order.
+ *   2. It ignored `state`, so a Smoky Mountains sketch dated tonight set the end.
+ *   3. Nothing checked whether the resulting span was plausible. A stray 2012 leg
+ *      and a proposal fourteen years apart satisfied `start <= now && end >= now`,
+ *      so the trip declared itself live.
+ *
+ * A trip is "active" only if committed bookings put you inside it, and only if the
+ * span is short enough to be a journey. Fourteen years is a data problem, and a
+ * data problem must never render as a confident status.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+const MAX_TRIP_DAYS = 30;
+
+export function tripSpan(trip) {
+  const legs = (trip?.legs || []).filter((l) => l && l.state !== "proposed" && l.departs_at);
+  const starts = legs.map((l) => new Date(l.departs_at).getTime()).filter((n) => !Number.isNaN(n));
+  const ends = legs
+    .map((l) => new Date(l.arrives_at || l.departs_at).getTime())
+    .filter((n) => !Number.isNaN(n));
+  if (!starts.length) return { start: 0, end: 0, days: 0, plausible: false };
+  const start = Math.min(...starts);
+  const end = Math.max(...ends, start);
+  const days = Math.round((end - start) / 86400000);
+  return { start, end, days, plausible: days <= MAX_TRIP_DAYS };
+}
+
+export function statusForTrip(trip, nowMs = Date.now()) {
+  const { start, end, plausible } = tripSpan(trip);
+  if (!start) return "upcoming";
+  if (end < nowMs - 86400000) return "past";
+  // An implausible span cannot claim to be happening. It says "upcoming" rather
+  // than "active" — wrong in the quiet direction instead of the loud one.
+  if (plausible && start <= nowMs && end >= nowMs) return "active";
+  return end < nowMs ? "past" : "upcoming";
+}
+
 /** "+ 3 rides" — counted, never listed. An eight-minute taxi isn't a briefing item. */
 export function RideCount({ n }) {
   if (!n) return null;

@@ -16,6 +16,7 @@ import { tap, FadeRise } from "../components";
 import { getTrips, deleteTrip, getPrediction, getOnboardingSummary } from "../api";
 import { getCachedTrips } from "../offlineCache";
 import * as fid from "../flightid";
+import { tripSpan, statusForTrip } from "../tripdoc";
 
 const BACKFILL_KEY = "wingman_backfill_recap_seen";
 
@@ -34,32 +35,11 @@ function isVisible(t) {
   return true;
 }
 
-function tripEndTime(trip) {
-  const legs = trip.legs || [];
-  if (trip.trip_end) return new Date(trip.trip_end).getTime();
-  return legs.reduce((latest, l) => {
-    const t = l.arrives_at || l.departs_at;
-    const ts = t ? new Date(t).getTime() : 0;
-    return ts > latest ? ts : latest;
-  }, 0);
-}
-
-function tripStartTime(trip) {
-  const legs = trip.legs || [];
-  if (trip.trip_start) return new Date(trip.trip_start).getTime();
-  const firstFlight = legs.find(l => l.type === "flight");
-  const first = firstFlight?.departs_at || legs[0]?.departs_at;
-  return first ? new Date(first).getTime() : 0;
-}
-
-function statusForTrip(trip) {
-  const now = Date.now();
-  const start = tripStartTime(trip);
-  const end   = tripEndTime(trip);
-  if (end > 0 && end < now - 86400000) return "past";
-  if (start > 0 && start <= now && end >= now) return "active";
-  return "upcoming";
-}
+// Span and status now live in ../tripdoc, shared with the Dossier and Home. The
+// local copies used array order for "first flight" and counted sketches, which is
+// how a 2012 leg and a proposal fourteen years apart rendered as "In progress".
+const tripStartTime = (trip) => tripSpan(trip).start;
+const tripEndTime   = (trip) => tripSpan(trip).end;
 
 // ─── Status Pill ──────────────────────────────────────────────────────────────
 

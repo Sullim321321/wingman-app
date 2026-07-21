@@ -393,6 +393,7 @@ export default function HomeScreen({ navigation }) {
   // Today's page of the trip document — the same legs the Dossier shows, filtered to
   // what's happening now and what's close enough to need you.
   const [today, setToday]               = useState(null);
+  const [todayErr, setTodayErr]         = useState(null);
   const [weather, setWeather]           = useState(null);
   const [firstName, setFirstName]       = useState("");
   const [riskScore, setRiskScore]       = useState(null);
@@ -460,7 +461,11 @@ export default function HomeScreen({ navigation }) {
       // Today's page refreshes on pull, ALWAYS — it doesn't depend on having a
       // location fix. A leg you're inside is true whether or not the GPS answered,
       // and gating the document on location is how Home goes blank in a basement.
-      try { const td = await getToday(); if (td?.ok) setToday(td); } catch {}
+      try {
+        const td = await getToday();
+        if (td?.ok) { setToday(td); setTodayErr(null); }
+        else setTodayErr(td?.error || "couldn't load today");
+      } catch (e) { setTodayErr(e?.message || "couldn't load today"); }
 
       // Re-fetch home state with current location
       const lat = userLocation?.lat;
@@ -556,7 +561,14 @@ export default function HomeScreen({ navigation }) {
           // Today's page. Deliberately independent of homeState: the document is the
           // truth about what's happening, and it must render even if the state machine
           // above has nothing to say.
-          if (td.status === "fulfilled" && td.value?.ok) setToday(td.value);
+          //
+          // AND IT SAYS WHEN IT FAILED. The first version of this line set `today`
+          // only on success, so a 500 left the section simply absent — no error, no
+          // gap, just a Home screen quietly missing the thing it was built to show.
+          // That is the dark monitor again, and I wrote it the same day I fixed it
+          // somewhere else. An empty day and an unanswered question are not the same.
+          if (td.status === "fulfilled" && td.value?.ok) { setToday(td.value); setTodayErr(null); }
+          else setTodayErr(td.reason?.message || td.value?.error || "couldn't load today");
           if (w.status === "fulfilled" && w.value?.ok) setWeather(w.value);
           if (!cancelled) {
           setBriefingLoading(false);
@@ -1491,6 +1503,16 @@ export default function HomeScreen({ navigation }) {
             woman sitting in the Kimpton: the old brief asked for the next FLIGHT and,
             finding none, concluded she had no life. A hotel you are inside is the most
             concrete fact available about where you are. */}
+        {todayErr ? (
+          <View style={s.docWrap}>
+            <Text style={s.docLabel}>TODAY</Text>
+            <Text style={s.docErr}>
+              I couldn't load today's page. This isn't an empty day — it's a question I
+              couldn't get answered. Pull to refresh.
+            </Text>
+          </View>
+        ) : null}
+
         {(today?.chapters?.in_motion?.length || today?.chapters?.prepare?.length) ? (
           <View style={s.docWrap}>
             {(today.chapters.in_motion || []).length ? (
@@ -1835,6 +1857,7 @@ const s = StyleSheet.create({
   // The Brief line. Teal dot = nothing needs you, and that is a checked fact.
   // Amber + arrow = something does, and tapping takes you straight to it.
   docWrap:  { marginTop: 26 },
+  docErr:   { fontFamily: T.sans, fontSize: 14, color: C.amber, lineHeight: 21 },
   docLabel: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.6, color: C.gold, marginBottom: 12 },
   sigWrap:  { marginHorizontal: 20, marginTop: 26 },
   sigHead:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },

@@ -20,7 +20,7 @@ import { C, T, SHADOW, litEdge } from "../theme";
 import { tap, DecisionCard, FadeRise } from "../components";
 import { PlanCard } from "../components/PlanCard";
 import {
-  getTrips, getHomeState, getWeather, getMe,
+  getTrips, getHomeState, getWeather, getMe, getToday,
   sendConciergeMessage, getConciergeThread, saveConciergeThread, clearConciergeThread,
   getTripBriefing, getPrediction, triggerGmailScan, getTravelProfile,
   getLocalNews, getLocalTraffic, getTodayEvents, getTravelStats,
@@ -386,6 +386,9 @@ export default function HomeScreen({ navigation }) {
   const decisionTimers                  = useRef({});
   const [tripsLoaded, setTripsLoaded]   = useState(false);
   const [homeState, setHomeState]       = useState(null);
+  // Today's page of the trip document — the same legs the Dossier shows, filtered to
+  // what's happening now and what's close enough to need you.
+  const [today, setToday]               = useState(null);
   const [weather, setWeather]           = useState(null);
   const [firstName, setFirstName]       = useState("");
   const [riskScore, setRiskScore]       = useState(null);
@@ -450,6 +453,11 @@ export default function HomeScreen({ navigation }) {
       if (meData.status === "fulfilled" && meData.value?.first_name) {
         setFirstName(meData.value.first_name);
       }
+      // Today's page refreshes on pull, ALWAYS — it doesn't depend on having a
+      // location fix. A leg you're inside is true whether or not the GPS answered,
+      // and gating the document on location is how Home goes blank in a basement.
+      try { const td = await getToday(); if (td?.ok) setToday(td); } catch {}
+
       // Re-fetch home state with current location
       const lat = userLocation?.lat;
       const lng = userLocation?.lng;
@@ -531,15 +539,20 @@ export default function HomeScreen({ navigation }) {
             if (!cancelled) setUserLocation({ lat, lng });
           }
         }
-        const [hs, w] = await Promise.allSettled([
+        const [hs, w, td] = await Promise.allSettled([
           getHomeState(lat, lng),
           lat && lng ? getWeather(lat, lng) : Promise.resolve(null),
+          getToday(),
         ]);
         if (!cancelled) {
           if (hs.status === "fulfilled" && hs.value?.ok) {
             setHomeState(hs.value);
             if (hs.value?.restaurant_suggestion) setRestaurantSuggestion(hs.value.restaurant_suggestion);
           }
+          // Today's page. Deliberately independent of homeState: the document is the
+          // truth about what's happening, and it must render even if the state machine
+          // above has nothing to say.
+          if (td.status === "fulfilled" && td.value?.ok) setToday(td.value);
           if (w.status === "fulfilled" && w.value?.ok) setWeather(w.value);
           if (!cancelled) {
           setBriefingLoading(false);
@@ -1466,6 +1479,42 @@ export default function HomeScreen({ navigation }) {
           ) : null}
         </View>
 
+        {/* ── TODAY'S PAGE OF THE DOCUMENT ───────────────────────────────────────
+            Not a summary of the trip — the trip itself, narrowed to now. Same cards as
+            the Dossier, same dependency lines, from ../tripdoc so the two can't drift.
+
+            This is what was missing when Home said "Nothing on your calendar yet" to a
+            woman sitting in the Kimpton: the old brief asked for the next FLIGHT and,
+            finding none, concluded she had no life. A hotel you are inside is the most
+            concrete fact available about where you are. */}
+        {(today?.chapters?.in_motion?.length || today?.chapters?.prepare?.length) ? (
+          <View style={s.docWrap}>
+            {(today.chapters.in_motion || []).length ? (
+              <>
+                <Text style={s.docLabel}>NOW</Text>
+                {today.chapters.in_motion.map((l) => (
+                  <Pressable key={l.id} onPress={() => { tap(); navigation.navigate("Dossier", { tripId: l.trip_id }); }}>
+                    <Leg leg={l} compact />
+                  </Pressable>
+                ))}
+                <RideCount n={today.rides?.in_motion || 0} />
+              </>
+            ) : null}
+
+            {(today.chapters.prepare || []).length ? (
+              <>
+                <Text style={[s.docLabel, { marginTop: 22 }]}>NEXT</Text>
+                {today.chapters.prepare.map((l) => (
+                  <Pressable key={l.id} onPress={() => { tap(); navigation.navigate("Dossier", { tripId: l.trip_id }); }}>
+                    <Leg leg={l} compact />
+                  </Pressable>
+                ))}
+                <RideCount n={today.rides?.prepare || 0} />
+              </>
+            ) : null}
+          </View>
+        ) : null}
+
         {/* ── SIGNALS, folded in ─────────────────────────────────────────────────
             When the tabs collapsed from five to three I said Signals "folds into Home"
             and then only deleted the tab — the feed itself never landed here. This is
@@ -1781,6 +1830,8 @@ const s = StyleSheet.create({
   // Does NOT scroll — it is always visible above the fold.
   // The Brief line. Teal dot = nothing needs you, and that is a checked fact.
   // Amber + arrow = something does, and tapping takes you straight to it.
+  docWrap:  { marginTop: 26 },
+  docLabel: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.6, color: C.gold, marginBottom: 12 },
   sigWrap:  { marginHorizontal: 20, marginTop: 26 },
   sigHead:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
   sigLabel: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2.4, color: C.mutD },

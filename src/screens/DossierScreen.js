@@ -25,6 +25,7 @@ import {
 } from "react-native";
 import { C, T } from "../theme";
 import { BackBar, SerifText, FadeRise, tap } from "../components";
+import { Leg, RideCount } from "../tripdoc";
 import { getDossier } from "../api";
 
 const CHAPTERS = [
@@ -34,53 +35,9 @@ const CHAPTERS = [
   { key: "after",     label: "AFTER",     blurb: "Done." },
 ];
 
-const when = (iso) => {
-  if (!iso) return null;
-  const d = new Date(iso);
-  return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) +
-    "  ·  " + d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-};
-
-const slackTone = (m) => (m == null ? C.mut : m < 45 ? C.coral : m < 120 ? C.amber : C.teal);
-
-function Leg({ leg }) {
-  const isSketch = leg.state === "proposed" || !leg.departs_at;
-  return (
-    <View style={[s.leg, isSketch && s.sketch]}>
-      <View style={s.legTop}>
-        <Text style={s.legName}>{leg.display_name || leg.destination || leg.type}</Text>
-        {isSketch ? <Text style={s.sketchTag}>SKETCH</Text> : null}
-      </View>
-
-      {leg.departs_at ? (
-        <Text style={s.legWhen}>
-          {when(leg.departs_at)}
-          {leg.origin && leg.destination ? `   ·   ${leg.origin} → ${leg.destination}` : ""}
-        </Text>
-      ) : leg.raw_data?.why ? (
-        <Text style={s.legWhy}>{leg.raw_data.why}</Text>
-      ) : null}
-
-      {/* ── THE LINE THE INDUSTRY CAN'T PRINT ──
-          What this booking hangs on, and how much slack. Measured slack is in mono,
-          because it was measured. An inferred edge says so rather than posing as fact. */}
-      {(leg.depends_on || []).map((d, i) => (
-        <View key={i} style={s.dep}>
-          <View style={[s.depDot, { backgroundColor: slackTone(d.slack_minutes) }]} />
-          <Text style={s.depText}>
-            Depends on {d.on}
-            {d.slack_minutes != null ? (
-              <Text style={[s.depSlack, { color: slackTone(d.slack_minutes) }]}>
-                {"  ·  "}{d.slack_minutes} min slack
-              </Text>
-            ) : null}
-            {!d.certain ? <Text style={s.depGuess}>  · inferred</Text> : null}
-          </Text>
-        </View>
-      ))}
-    </View>
-  );
-}
+// `when`, `slackTone` and the Leg card now live in ../tripdoc, shared with Home.
+// A booking that renders one way here and another way on Home is two objects in the
+// user's head, whatever the database says.
 
 export default function DossierScreen({ route, navigation }) {
   const { tripId } = route.params || {};
@@ -157,11 +114,7 @@ export default function DossierScreen({ route, navigation }) {
                 {/* Rides, counted rather than listed. An eight-minute taxi isn't something
                     a chief of staff briefs you on — but pretending it didn't happen would
                     be its own lie, so it gets one quiet line. */}
-                {(data?.rides?.[ch.key] || 0) > 0 ? (
-                  <Text style={s.rides}>
-                    + {data.rides[ch.key]} {data.rides[ch.key] === 1 ? "ride" : "rides"}
-                  </Text>
-                ) : null}
+                <RideCount n={data?.rides?.[ch.key] || 0} />
               </View>
             </FadeRise>
           );
@@ -204,28 +157,13 @@ const s = StyleSheet.create({
   chapterLabel: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.6, color: C.gold },
   chapterBlurb: { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 14, color: C.mut, marginTop: 4 },
 
-  leg:    { backgroundColor: C.card, borderRadius: 14, padding: 15, marginBottom: 10,
-            borderWidth: 1, borderColor: C.line, borderTopColor: C.lineHi },
-  sketch: { backgroundColor: "transparent", borderStyle: "dashed", borderColor: C.mutD, borderTopColor: C.mutD },
-  legTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  legName:{ fontFamily: T.sansM, fontSize: 15.5, color: C.ink, flex: 1, paddingRight: 8 },
-  sketchTag: { fontFamily: T.sansB, fontSize: 7.5, letterSpacing: 1.6, color: C.mutD, marginTop: 3 },
-  legWhen:{ fontFamily: T.mono, fontSize: 11, color: C.mut, marginTop: 7, letterSpacing: 0.3 },
-  legWhy: { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 14, color: C.mut, marginTop: 6, lineHeight: 20 },
 
-  dep:     { flexDirection: "row", alignItems: "flex-start", gap: 8, marginTop: 11,
-             paddingTop: 11, borderTopWidth: 1, borderTopColor: C.line },
-  depDot:  { width: 5, height: 5, borderRadius: 3, marginTop: 6 },
-  depText: { fontFamily: T.sans, fontSize: 12.5, color: C.mut, flex: 1, lineHeight: 18 },
-  depSlack:{ fontFamily: T.monoM, fontSize: 11.5, letterSpacing: 0.3 },
-  depGuess:{ fontFamily: T.sans, fontSize: 11, color: C.mutD, fontStyle: "italic" },
 
   spineBtn:  { marginTop: 24, borderWidth: 1, borderColor: C.line, borderRadius: 12,
                paddingVertical: 14, alignItems: "center" },
   spineBtnT: { fontFamily: T.sansM, fontSize: 13.5, color: C.gold },
 
   idea: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 1.8, color: C.amber, marginTop: 8, marginBottom: 4 },
-  rides: { fontFamily: T.sans, fontSize: 12.5, color: C.mutD, marginTop: 2, marginLeft: 2 },
   empty: { fontFamily: T.sans, fontSize: 14.5, color: C.mut, marginTop: 20, lineHeight: 22 },
   err:   { fontFamily: T.sans, fontSize: 14, color: C.coral, marginTop: 16 },
 });

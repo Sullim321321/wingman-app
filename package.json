@@ -10,7 +10,7 @@
     "build:adhoc": "eas build -p ios --profile preview",
     "submit:ios": "eas submit -p ios --latest",
     "postinstall": "patch-package",
-    "check": "node scripts/check-module-scope.js"
+    "check": "node scripts/check-module-scope.js && node scripts/check-jsx-imports.js"
   },
   "dependencies": {
     "@expo-google-fonts/dm-sans": "^0.2.3",

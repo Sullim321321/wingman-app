@@ -8,6 +8,7 @@ import {
   StyleSheet, Platform, KeyboardAvoidingView, FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { BackBar, Btn, Segmented, g, tap } from "../components";
 import { C, T } from "../theme";
 import * as api from "../api";

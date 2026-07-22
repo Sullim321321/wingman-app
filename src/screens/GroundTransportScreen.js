@@ -4,7 +4,7 @@ import {
   ActivityIndicator, Share,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { req } from "../api";
 import { C as _C, T } from "../theme";
 import { tap } from "../components";

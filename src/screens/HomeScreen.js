@@ -17,6 +17,7 @@ import * as Location from "expo-location";
 import { useFocusEffect } from "@react-navigation/native";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { C, T, SHADOW, litEdge } from "../theme";
+import { Leg, RideCount } from "../tripdoc";
 import { tap, DecisionCard, FadeRise } from "../components";
 import { PlanCard } from "../components/PlanCard";
 import {

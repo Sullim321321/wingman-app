@@ -89,7 +89,10 @@ export default function DossierScreen({ route, navigation }) {
             <SerifText style={s.h1}>{title}</SerifText>
             {/* Editing lives in the old TripDetail — kept as the back-room so the Dossier
                 stays a document, not a form. One link, not a second primary screen. */}
-            <Pressable onPress={() => { tap(); navigation.navigate("TripDetail", { trip: data.trip }); }} hitSlop={8}>
+            {/* Pass tripId, NOT the trip object. The dossier's `trip` has no legs
+                joined onto it, so handing it over made TripDetail show "No bookings
+                yet" and hid every delete control. tripId makes it fetch the full trip. */}
+            <Pressable onPress={() => { tap(); navigation.navigate("TripDetail", { tripId: data.trip.id }); }} hitSlop={8}>
               <Text style={s.edit}>Edit</Text>
             </Pressable>
           </View>

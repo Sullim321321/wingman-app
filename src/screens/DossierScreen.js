@@ -21,12 +21,12 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
-  ActivityIndicator, RefreshControl,
+  ActivityIndicator, RefreshControl, Alert,
 } from "react-native";
 import { C, T } from "../theme";
 import { BackBar, SerifText, FadeRise, tap } from "../components";
 import { Leg, RideCount } from "../tripdoc";
-import { getDossier } from "../api";
+import { getDossier, deleteLeg } from "../api";
 
 const CHAPTERS = [
   { key: "in_motion", label: "IN MOTION", blurb: "Happening now." },
@@ -53,6 +53,20 @@ export default function DossierScreen({ route, navigation }) {
   }, [tripId]);
 
   useEffect(() => { load(); }, [load]);
+
+  // A sketch is a suggestion Wingman made; dismissing it removes a proposal, never a
+  // booking. The Leg card only offers this on sketches, and we confirm anyway — then
+  // reload so the document reflects the truth immediately.
+  const dismissSketch = useCallback((leg) => {
+    const name = leg.display_name || leg.destination || "this suggestion";
+    Alert.alert("Dismiss suggestion?", `Remove "${name}"? This only clears a proposal — nothing you booked.`, [
+      { text: "Keep", style: "cancel" },
+      { text: "Dismiss", style: "destructive", onPress: async () => {
+        try { await deleteLeg(tripId, leg.id); load(); }
+        catch (e) { Alert.alert("Couldn't dismiss", e?.message || "Try again in a moment."); }
+      } },
+    ]);
+  }, [tripId, load]);
 
   if (busy) {
     return <SafeAreaView style={s.app}><View style={s.center}><ActivityIndicator color={C.mut} /></View></SafeAreaView>;
@@ -110,7 +124,7 @@ export default function DossierScreen({ route, navigation }) {
                   <Text style={s.chapterLabel}>{ch.label}</Text>
                   <Text style={s.chapterBlurb}>{ch.blurb}</Text>
                 </View>
-                {legs.map((l) => <Leg key={l.id} leg={l} />)}
+                {legs.map((l) => <Leg key={l.id} leg={l} onDismiss={dismissSketch} />)}
                 {/* Rides, counted rather than listed. An eight-minute taxi isn't something
                     a chief of staff briefs you on — but pretending it didn't happen would
                     be its own lie, so it gets one quiet line. */}

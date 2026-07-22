@@ -13,7 +13,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { C, T } from "./theme";
 
 export const when = (iso) => {
@@ -35,13 +35,20 @@ export const slackTone = (m) => (m == null ? C.mut : m < 45 ? C.coral : m < 120 
  * the route line but NEVER the dependency line. That line is the product; if it only
  * appears in the archive, the product only exists in the archive.
  */
-export function Leg({ leg, compact = false }) {
+export function Leg({ leg, compact = false, onDismiss = null }) {
   const isSketch = leg.state === "proposed" || !leg.departs_at;
   return (
     <View style={[s.leg, isSketch && s.sketch]}>
       <View style={s.legTop}>
         <Text style={s.legName}>{leg.display_name || leg.destination || leg.type}</Text>
-        {isSketch ? <Text style={s.sketchTag}>SKETCH</Text> : null}
+        {/* A sketch is a suggestion, and a suggestion you can't dismiss is a nag.
+            Only sketches get this — a real booking is removed through Edit, deliberately,
+            not swiped away by accident. */}
+        {isSketch && onDismiss ? (
+          <Pressable onPress={() => onDismiss(leg)} hitSlop={10}>
+            <Text style={s.dismiss}>Dismiss</Text>
+          </Pressable>
+        ) : isSketch ? <Text style={s.sketchTag}>SKETCH</Text> : null}
       </View>
 
       {leg.departs_at ? (
@@ -142,4 +149,5 @@ const s = StyleSheet.create({
   depGuess:{ fontFamily: T.sans, fontSize: 11, color: C.mutD, fontStyle: "italic" },
 
   rides: { fontFamily: T.sans, fontSize: 12.5, color: C.mutD, marginTop: 2, marginLeft: 2 },
+  dismiss: { fontFamily: T.sansM, fontSize: 12, color: C.coral, marginTop: 1 },
 });

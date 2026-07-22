@@ -41,12 +41,14 @@ export function Leg({ leg, compact = false, onDismiss = null }) {
     <View style={[s.leg, isSketch && s.sketch]}>
       <View style={s.legTop}>
         <Text style={s.legName}>{leg.display_name || leg.destination || leg.type}</Text>
-        {/* A sketch is a suggestion, and a suggestion you can't dismiss is a nag.
-            Only sketches get this — a real booking is removed through Edit, deliberately,
-            not swiped away by accident. */}
-        {isSketch && onDismiss ? (
+        {/* Every leg can be removed from the document itself — a sketch you dismiss,
+            a booking you remove. Routing real bookings through a separate Edit screen
+            left this trip un-fixable when that screen failed to load its legs. The
+            confirm copy below makes the two cases feel different; deletion is deliberate
+            either way. */}
+        {onDismiss ? (
           <Pressable onPress={() => onDismiss(leg)} hitSlop={10}>
-            <Text style={s.dismiss}>Dismiss</Text>
+            <Text style={isSketch ? s.dismiss : s.remove}>{isSketch ? "Dismiss" : "Remove"}</Text>
           </Pressable>
         ) : isSketch ? <Text style={s.sketchTag}>SKETCH</Text> : null}
       </View>
@@ -150,4 +152,5 @@ const s = StyleSheet.create({
 
   rides: { fontFamily: T.sans, fontSize: 12.5, color: C.mutD, marginTop: 2, marginLeft: 2 },
   dismiss: { fontFamily: T.sansM, fontSize: 12, color: C.coral, marginTop: 1 },
+  remove:  { fontFamily: T.sansM, fontSize: 12, color: C.mutD, marginTop: 1 },
 });

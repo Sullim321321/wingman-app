@@ -58,12 +58,17 @@ export default function DossierScreen({ route, navigation }) {
   // booking. The Leg card only offers this on sketches, and we confirm anyway — then
   // reload so the document reflects the truth immediately.
   const dismissSketch = useCallback((leg) => {
-    const name = leg.display_name || leg.destination || "this suggestion";
-    Alert.alert("Dismiss suggestion?", `Remove "${name}"? This only clears a proposal — nothing you booked.`, [
+    const name = leg.display_name || leg.destination || leg.type || "this item";
+    const isSketch = leg.state === "proposed" || !leg.departs_at;
+    const title = isSketch ? "Dismiss suggestion?" : "Remove booking?";
+    const body = isSketch
+      ? `Remove "${name}"? This only clears a proposal — nothing you booked.`
+      : `Remove "${name}" from this trip? This deletes the booking from Wingman (it won't cancel anything with the airline or hotel).`;
+    Alert.alert(title, body, [
       { text: "Keep", style: "cancel" },
-      { text: "Dismiss", style: "destructive", onPress: async () => {
+      { text: isSketch ? "Dismiss" : "Remove", style: "destructive", onPress: async () => {
         try { await deleteLeg(tripId, leg.id); load(); }
-        catch (e) { Alert.alert("Couldn't dismiss", e?.message || "Try again in a moment."); }
+        catch (e) { Alert.alert("Couldn't remove", e?.message || "Try again in a moment."); }
       } },
     ]);
   }, [tripId, load]);

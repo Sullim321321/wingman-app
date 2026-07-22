@@ -51,6 +51,7 @@
     "expo-speech": "~56.0.3",
     "expo-splash-screen": "~56.0.12",
     "expo-status-bar": "~56.0.4",
+    "expo-updates": "~56.0.22",
     "expo-widgets": "~56.0.22",
     "react": "19.2.3",
     "react-native": "0.85.3",

@@ -188,6 +188,19 @@ export const getDossier = (id) => req("/trips/" + id + "/dossier");
 // because a day doesn't respect trip boundaries.
 export const getToday = (hours) => req("/today" + (hours ? `?hours=${hours}` : ""));
 
+// What your calendar implies you need to travel for, judged from where you are.
+// Send device coords when we have them (truest signal); city string otherwise.
+// Returns { connected, readable, from, trips:[...], asks:[...] } — nothing booked,
+// nothing certain; these are proposals and open questions.
+export const getTravel = ({ from, lat, lng, days } = {}) => {
+  const q = new URLSearchParams();
+  if (days) q.set("days", String(days));
+  if (from) q.set("from", from);
+  if (lat != null && lng != null) { q.set("from_lat", String(lat)); q.set("from_lng", String(lng)); }
+  const qs = q.toString();
+  return req("/calendar/travel" + (qs ? "?" + qs : ""));
+};
+
 // Weather widget
 export const getWeather = (lat, lng) =>
   req(`/weather?lat=${lat}&lng=${lng}`);

@@ -20,8 +20,9 @@ import { C, T, SHADOW, litEdge } from "../theme";
 import { Leg, RideCount } from "../tripdoc";
 import { tap, DecisionCard, FadeRise } from "../components";
 import { PlanCard } from "../components/PlanCard";
+import { InferredTravel } from "../components/InferredTravel";
 import {
-  getTrips, getHomeState, getWeather, getMe, getToday,
+  getTrips, getHomeState, getWeather, getMe, getToday, getTravel,
   sendConciergeMessage, getConciergeThread, saveConciergeThread, clearConciergeThread,
   getTripBriefing, getPrediction, triggerGmailScan, getTravelProfile,
   getLocalNews, getLocalTraffic, getTodayEvents, getTravelStats,
@@ -394,6 +395,7 @@ export default function HomeScreen({ navigation }) {
   // Today's page of the trip document — the same legs the Dossier shows, filtered to
   // what's happening now and what's close enough to need you.
   const [today, setToday]               = useState(null);
+  const [travel, setTravel]             = useState(null);
   const [todayErr, setTodayErr]         = useState(null);
   const [weather, setWeather]           = useState(null);
   const [firstName, setFirstName]       = useState("");
@@ -549,10 +551,11 @@ export default function HomeScreen({ navigation }) {
             if (!cancelled) setUserLocation({ lat, lng });
           }
         }
-        const [hs, w, td] = await Promise.allSettled([
+        const [hs, w, td, tv] = await Promise.allSettled([
           getHomeState(lat, lng),
           lat && lng ? getWeather(lat, lng) : Promise.resolve(null),
           getToday(),
+          getTravel({ lat, lng }),
         ]);
         if (!cancelled) {
           if (hs.status === "fulfilled" && hs.value?.ok) {
@@ -571,6 +574,10 @@ export default function HomeScreen({ navigation }) {
           if (td.status === "fulfilled" && td.value?.ok) { setToday(td.value); setTodayErr(null); }
           else setTodayErr(td.reason?.message || td.value?.error || "couldn't load today");
           if (w.status === "fulfilled" && w.value?.ok) setWeather(w.value);
+          // What the calendar implies you need to travel for. Proposals + honest
+          // questions; never booked, never certain. Absent silently if it fails —
+          // an empty travel section is fine, a crash is not.
+          if (tv.status === "fulfilled" && tv.value?.ok) setTravel(tv.value);
           if (!cancelled) {
           setBriefingLoading(false);
           // Stamp timestamp whenever homeState loaded successfully (briefing is derived client-side)
@@ -1216,6 +1223,21 @@ export default function HomeScreen({ navigation }) {
                 <Text style={s.decisionsMoreT}>View all {decisions.length} decisions  ›</Text>
               </Pressable>
             ) : null}
+          </FadeRise>
+        ) : null}
+
+        {/* ── What your calendar implies you need to travel for ──
+            Proposals + honest questions, from your meetings and where you are.
+            Renders only when there's something to say; silent otherwise. */}
+        {travel && ((travel.trips || []).length || (travel.asks || []).length) ? (
+          <FadeRise delay={60}>
+            <InferredTravel
+              trips={travel.trips || []}
+              asks={travel.asks || []}
+              from={travel.from}
+              onPlan={(t) => { tap(); setInput(`Plan my ${t.destination} trip — ${t.reason}`); }}
+              onAnswer={(a) => { tap(); setInput(`About "${a.driver?.title || "that meeting"}": I'll be attending `); }}
+            />
           </FadeRise>
         ) : null}
 

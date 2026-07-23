@@ -142,6 +142,22 @@ export default function DossierScreen({ route, navigation }) {
           );
         })}
 
+        {/* A PROPOSED flight is one you haven't booked — offer to price and hold it.
+            This is the flight-picker on-ramp from inside a trip, independent of Home. */}
+        {(chapters.plan || []).some((l) => l.type === "flight") ? (
+          <FadeRise delay={260}>
+            <Pressable
+              style={s.bookBtn}
+              onPress={() => {
+                const f = (chapters.plan || []).find((l) => l.type === "flight");
+                if (f) { tap(); navigation.navigate("BookLeg", { legId: f.id }); }
+              }}
+            >
+              <Text style={s.bookBtnT}>Book this flight →</Text>
+            </Pressable>
+          </FadeRise>
+        ) : null}
+
         {/* A flight that's still ahead can be looked at through the cascade — "what
             hangs on this" — without waiting for it to break. */}
         {(chapters.prepare || []).some((l) => l.type === "flight") ? (
@@ -184,6 +200,10 @@ const s = StyleSheet.create({
   spineBtn:  { marginTop: 24, borderWidth: 1, borderColor: C.line, borderRadius: 12,
                paddingVertical: 14, alignItems: "center" },
   spineBtnT: { fontFamily: T.sansM, fontSize: 13.5, color: C.gold },
+
+  bookBtn:   { marginTop: 24, backgroundColor: C.gold, borderRadius: 12,
+               paddingVertical: 15, alignItems: "center" },
+  bookBtnT:  { fontFamily: T.sansB, fontSize: 14, color: C.bg, letterSpacing: 0.3 },
 
   idea: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 1.8, color: C.amber, marginTop: 8, marginBottom: 4 },
   empty: { fontFamily: T.sans, fontSize: 14.5, color: C.mut, marginTop: 20, lineHeight: 22 },

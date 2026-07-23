@@ -11,7 +11,7 @@
     "submit:ios": "eas submit -p ios --latest",
     "postinstall": "patch-package",
     "check": "node scripts/check-module-scope.js && node scripts/check-jsx-imports.js",
-    "ota": "npm run check && eas update --branch production --message \"$(git log -1 --pretty=%s 2>/dev/null || echo ota)\""
+    "ota": "npm run check && eas update --branch production --environment production --message \"$(git log -1 --pretty=%s 2>/dev/null || echo ota)\""
   },
   "dependencies": {
     "@expo-google-fonts/dm-sans": "^0.2.3",

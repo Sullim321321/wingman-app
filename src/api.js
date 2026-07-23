@@ -387,6 +387,18 @@ export const bookFlight = (body) =>
   req("/flights/book", { method: "POST", body: JSON.stringify(body) });
 export const getFlightOrders = () => req("/flights/orders");
 
+// Duffel Stays — hold-then-confirm hotels (C6a).
+// search → real availability; rates → bookable rooms; hold → a quote (no money);
+// confirm → the charge, which the server refuses without { confirm:true } matching the hold.
+export const searchStays = (body) =>
+  req("/stays/search", { method: "POST", body: JSON.stringify(body) });
+export const getStayRates = (search_result_id) =>
+  req("/stays/rates", { method: "POST", body: JSON.stringify({ search_result_id }) });
+export const holdStay = (rate) =>
+  req("/stays/hold", { method: "POST", body: JSON.stringify({ rate }) });
+export const confirmStay = (body) =>
+  req("/stays/confirm", { method: "POST", body: JSON.stringify(body) });
+
 // ─── AMBIENT INGESTION ────────────────────────────────────────────────────────
 // Natural language trip drafting ("One sentence. A complete trip drafted.")
 export const draftTripFromText = (text) =>

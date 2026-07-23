@@ -26,8 +26,9 @@ const RATIONALE = {
   memory:    { icon: "time-outline",     label: "You loved it" },
 };
 
-export default function CuratorScreen() {
+export default function CuratorScreen({ navigation }) {
   const [city, setCity] = useState("");
+  const [coords, setCoords] = useState(null); // { latitude, longitude } — for real booking
   const [data, setData] = useState(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
@@ -52,6 +53,7 @@ export default function CuratorScreen() {
         const { status } = await Location.getForegroundPermissionsAsync();
         if (status !== "granted") return;
         const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
+        setCoords({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
         const [place] = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
         const c = place?.city || place?.subregion || "";
         if (c) { setCity(c); load(c); }
@@ -138,7 +140,15 @@ export default function CuratorScreen() {
 
         {picks?.stay?.length ? (
           <>
-            <Text style={s.section}>WHERE TO STAY</Text>
+            <View style={s.sectionRow}>
+              <Text style={s.section}>WHERE TO STAY</Text>
+              <Pressable
+                onPress={() => navigation?.navigate?.("StayBook", { city: city.trim(), latitude: coords?.latitude, longitude: coords?.longitude })}
+                hitSlop={8}
+              >
+                <Text style={s.bookLink}>Book a room →</Text>
+              </Pressable>
+            </View>
             <View style={s.group}>
               {picks.stay.map((h, i) => {
                 const rt = RATIONALE[h.rationale] || RATIONALE.discovery;
@@ -217,6 +227,8 @@ const s = StyleSheet.create({
   wishGoT:   { fontFamily: T.sansM, fontSize: 13, color: PAPER },
 
   section: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.4, color: BRONZE, marginTop: 22, marginBottom: 11 },
+  sectionRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  bookLink: { fontFamily: T.sansM, fontSize: 12.5, color: BRONZE, marginTop: 22, marginBottom: 11 },
   kicker:  { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.4, color: BRONZE, padding: 15, paddingBottom: 0 },
 
   group:   { backgroundColor: CARD, borderWidth: 1, borderColor: LINE, borderRadius: 14, overflow: "hidden" },

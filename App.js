@@ -69,6 +69,7 @@ import LoyaltyScreen from "./src/screens/LoyaltyScreen";
 import HomeAddressScreen from "./src/screens/HomeAddressScreen";
 import FlightSearchScreen from "./src/screens/FlightSearchScreen";
 import FlightBookScreen from "./src/screens/FlightBookScreen";
+import StayBookScreen from "./src/screens/StayBookScreen";
 import FlightConfirmScreen from "./src/screens/FlightConfirmScreen";
 import AutonomySettingsScreen from "./src/screens/AutonomySettingsScreen";
 import LedgerScreen from "./src/screens/LedgerScreen";
@@ -457,6 +458,7 @@ function Root() {
             <Stack.Screen name="HomeAddress"  component={HomeAddressScreen} />
             <Stack.Screen name="FlightSearch" component={FlightSearchScreen} />
             <Stack.Screen name="FlightBook"   component={FlightBookScreen} />
+            <Stack.Screen name="StayBook"     component={StayBookScreen} />
             <Stack.Screen name="FlightConfirm" component={FlightConfirmScreen} options={{ gestureEnabled: false }} />
             <Stack.Screen name="Autonomy"          component={AutonomySettingsScreen} />
             <Stack.Screen name="PassengerProfile"   component={PassengerProfileScreen} />

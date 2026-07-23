@@ -33,58 +33,42 @@ export function InferredTravel({ trips = [], asks = [], from, onPlan, onAnswer }
       <Text style={s.kicker}>WHAT YOUR CALENDAR IMPLIES</Text>
       {from?.city ? <Text style={s.sub}>Reading from {from.city}.</Text> : null}
 
-      {trips.map((t, i) => (
-        <View key={"t" + i} style={s.card}>
-          <Text style={s.dest}>{t.destination || "A trip"}</Text>
-          <Text style={s.dates}>{span(t.arrive_by, t.depart_after)}</Text>
-          <Text style={s.reason}>{t.reason}</Text>
-          {(t.drivers || []).slice(0, 3).map((d, j) => (
-            <Text key={j} style={s.driver}>· {d.title}</Text>
-          ))}
-
-          {/* The skeleton — how you'd make it. Targets, not fares; it says so. */}
-          {t.itinerary ? (
-            <View style={s.itin}>
-              {t.itinerary.flight_in?.to ? (
-                <Text style={s.itinLine}>
-                  {(t.itinerary.flight_in.from || "you")} → {t.itinerary.flight_in.to}
-                  {t.itinerary.flight_in.target_arrival ? `  ·  in ${when(t.itinerary.flight_in.target_arrival)}` : ""}
-                </Text>
-              ) : null}
-              {t.itinerary.nights > 0 ? (
-                <Text style={s.itinLine}>
-                  {t.itinerary.nights} night{t.itinerary.nights > 1 ? "s" : ""}
-                  {t.itinerary.hotel?.name ? `  ·  ${t.itinerary.hotel.name}` : `  ·  a hotel in ${t.destination}`}
-                </Text>
-              ) : null}
-              {t.itinerary.flight_out?.from ? (
-                <Text style={s.itinLine}>
-                  {t.itinerary.flight_out.from} → {t.itinerary.flight_out.to || "home"}
-                  {t.itinerary.flight_out.target_departure ? `  ·  after ${when(t.itinerary.flight_out.target_departure)}` : ""}
-                </Text>
-              ) : null}
-              {t.itinerary.note ? <Text style={s.itinNote}>{t.itinerary.note}</Text> : null}
-            </View>
-          ) : null}
-
-          {onPlan ? (
-            <Pressable style={s.cta} onPress={() => onPlan(t)} hitSlop={8}>
-              <Text style={s.ctaT}>Plan this trip →</Text>
-            </Pressable>
-          ) : null}
+      {trips.length ? (
+        <View style={s.group}>
+          {trips.map((t, i) => {
+            const it = t.itinerary;
+            const route = it && it.flight_in?.from && it.flight_in?.to
+              ? `${it.flight_in.from}→${it.flight_in.to}${it.nights > 0 ? ` · ${it.nights}n` : ""}`
+              : null;
+            return (
+              <Pressable
+                key={"t" + i}
+                style={[s.row, i > 0 && s.rowDiv]}
+                onPress={() => onPlan && onPlan(t)}
+                hitSlop={6}
+              >
+                <View style={{ flex: 1, paddingRight: 10 }}>
+                  <Text style={s.dest}>{t.destination || "A trip"}</Text>
+                  <Text style={s.meta}>{[when(t.arrive_by), route].filter(Boolean).join("  ·  ")}</Text>
+                </View>
+                <Text style={s.plan}>Plan →</Text>
+              </Pressable>
+            );
+          })}
         </View>
-      ))}
+      ) : null}
 
       {asks.map((a, i) => (
-        <View key={"a" + i} style={[s.card, s.ask]}>
-          <Text style={s.askLabel}>ONE QUESTION</Text>
-          <Text style={s.askQ}>{a.question}</Text>
-          {onAnswer ? (
-            <Pressable style={s.cta} onPress={() => onAnswer(a)} hitSlop={8}>
-              <Text style={s.ctaT}>Answer →</Text>
-            </Pressable>
-          ) : null}
-        </View>
+        <Pressable
+          key={"a" + i}
+          style={s.askRow}
+          onPress={() => onAnswer && onAnswer(a)}
+          hitSlop={6}
+        >
+          <View style={s.askDot} />
+          <Text style={s.askQ} numberOfLines={2}>{a.question}</Text>
+          <Text style={s.plan}>Answer →</Text>
+        </Pressable>
       ))}
     </View>
   );
@@ -93,22 +77,20 @@ export function InferredTravel({ trips = [], asks = [], from, onPlan, onAnswer }
 const s = StyleSheet.create({
   wrap:   { marginTop: 24, marginBottom: 8 },
   kicker: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.4, color: C.gold },
-  sub:    { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 13.5, color: C.mut, marginTop: 4 },
+  sub:    { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 13.5, color: C.mut, marginTop: 4, marginBottom: 12 },
 
-  card:   { marginTop: 14, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 16 },
-  dest:   { fontFamily: T.serif, fontSize: 24, lineHeight: 28, color: C.ink },
-  dates:  { fontFamily: T.sansM, fontSize: 13, color: C.teal, marginTop: 3 },
+  // Trips: one tight tappable row each, grouped in a single bordered container.
+  // The full itinerary lives on the plan screen — Home is a glance, not a form.
+  group:  { borderWidth: 1, borderColor: C.line, borderRadius: 14, overflow: "hidden" },
+  row:    { flexDirection: "row", alignItems: "center", paddingVertical: 15, paddingHorizontal: 16 },
+  rowDiv: { borderTopWidth: 1, borderTopColor: C.line },
+  dest:   { fontFamily: T.serif, fontSize: 19, lineHeight: 23, color: C.ink },
+  meta:   { fontFamily: T.sansM, fontSize: 12.5, color: C.mut, marginTop: 3 },
+  plan:   { fontFamily: T.sansM, fontSize: 12.5, color: C.gold, marginLeft: 8 },
 
-  itin:     { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.line },
-  itinLine: { fontFamily: T.sansM, fontSize: 13.5, color: C.ink, marginBottom: 4 },
-  itinNote: { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 12.5, color: C.mut, marginTop: 4, lineHeight: 17 },
-  reason: { fontFamily: T.sans, fontSize: 14, color: C.mut, marginTop: 8, lineHeight: 20 },
-  driver: { fontFamily: T.sans, fontSize: 13, color: C.mut, marginTop: 4 },
-
-  ask:    { borderColor: C.amber },
-  askLabel:{ fontFamily: T.sansB, fontSize: 9, letterSpacing: 2, color: C.amber },
-  askQ:   { fontFamily: T.serif, fontSize: 18, lineHeight: 24, color: C.ink, marginTop: 6 },
-
-  cta:    { marginTop: 14 },
-  ctaT:   { fontFamily: T.sansM, fontSize: 13.5, color: C.gold },
+  // A question is one quiet line with an amber tick, not a full card.
+  askRow: { flexDirection: "row", alignItems: "center", marginTop: 12, paddingVertical: 13, paddingHorizontal: 15,
+            borderWidth: 1, borderColor: C.amber, borderRadius: 12 },
+  askDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.amber, marginRight: 10 },
+  askQ:   { flex: 1, fontFamily: T.sans, fontSize: 13.5, lineHeight: 18, color: C.ink, paddingRight: 8 },
 });

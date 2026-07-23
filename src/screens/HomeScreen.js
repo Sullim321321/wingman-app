@@ -443,7 +443,22 @@ export default function HomeScreen({ navigation }) {
       const { getActivity } = require("../api");
       const data = await getActivity(30);
       const routine = new Set(["import", "status", "hotel_email", "trip"]);
-      setHomeSignals((data?.events || []).filter((e) => e && !routine.has(e.type)));
+      // A signal on Home must be recent AND unique AND still true. Drop plumbing,
+      // drop anything older than a few days (a signal is not a changelog), collapse
+      // duplicates, and hide "disconnected" notices once you've reconnected — the
+      // exact stale junk (old Gmail-disconnect, doubled disruption lines) that made
+      // Home read like a machine narrating its own history.
+      const cutoff = Date.now() - 4 * 86400000;
+      const seen = new Set();
+      setHomeSignals((data?.events || []).filter((e) => {
+        if (!e || routine.has(e.type)) return false;
+        if (e.created_at && new Date(e.created_at).getTime() < cutoff) return false;
+        if (/disconnect/i.test(e.title || "")) return false;
+        const k = (e.type || "") + "|" + (e.title || "");
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      }));
     } catch { /* leave empty rather than invent one */ }
   }, []);
   useEffect(() => { loadBrief(); }, [loadBrief]);

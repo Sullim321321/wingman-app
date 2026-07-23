@@ -41,6 +41,32 @@ export function InferredTravel({ trips = [], asks = [], from, onPlan, onAnswer }
           {(t.drivers || []).slice(0, 3).map((d, j) => (
             <Text key={j} style={s.driver}>· {d.title}</Text>
           ))}
+
+          {/* The skeleton — how you'd make it. Targets, not fares; it says so. */}
+          {t.itinerary ? (
+            <View style={s.itin}>
+              {t.itinerary.flight_in?.to ? (
+                <Text style={s.itinLine}>
+                  {(t.itinerary.flight_in.from || "you")} → {t.itinerary.flight_in.to}
+                  {t.itinerary.flight_in.target_arrival ? `  ·  in ${when(t.itinerary.flight_in.target_arrival)}` : ""}
+                </Text>
+              ) : null}
+              {t.itinerary.nights > 0 ? (
+                <Text style={s.itinLine}>
+                  {t.itinerary.nights} night{t.itinerary.nights > 1 ? "s" : ""}
+                  {t.itinerary.hotel?.name ? `  ·  ${t.itinerary.hotel.name}` : `  ·  a hotel in ${t.destination}`}
+                </Text>
+              ) : null}
+              {t.itinerary.flight_out?.from ? (
+                <Text style={s.itinLine}>
+                  {t.itinerary.flight_out.from} → {t.itinerary.flight_out.to || "home"}
+                  {t.itinerary.flight_out.target_departure ? `  ·  after ${when(t.itinerary.flight_out.target_departure)}` : ""}
+                </Text>
+              ) : null}
+              {t.itinerary.note ? <Text style={s.itinNote}>{t.itinerary.note}</Text> : null}
+            </View>
+          ) : null}
+
           {onPlan ? (
             <Pressable style={s.cta} onPress={() => onPlan(t)} hitSlop={8}>
               <Text style={s.ctaT}>Plan this trip →</Text>
@@ -72,6 +98,10 @@ const s = StyleSheet.create({
   card:   { marginTop: 14, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 16 },
   dest:   { fontFamily: T.serif, fontSize: 24, lineHeight: 28, color: C.ink },
   dates:  { fontFamily: T.sansM, fontSize: 13, color: C.teal, marginTop: 3 },
+
+  itin:     { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.line },
+  itinLine: { fontFamily: T.sansM, fontSize: 13.5, color: C.ink, marginBottom: 4 },
+  itinNote: { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 12.5, color: C.mut, marginTop: 4, lineHeight: 17 },
   reason: { fontFamily: T.sans, fontSize: 14, color: C.mut, marginTop: 8, lineHeight: 20 },
   driver: { fontFamily: T.sans, fontSize: 13, color: C.mut, marginTop: 4 },
 

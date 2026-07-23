@@ -188,6 +188,11 @@ export const getDossier = (id) => req("/trips/" + id + "/dossier");
 // because a day doesn't respect trip boundaries.
 export const getToday = (hours) => req("/today" + (hours ? `?hours=${hours}` : ""));
 
+// Materialize an inferred travel proposal into a real trip + proposed flight leg,
+// then the existing book flow (BookLeg) prices and holds it. Returns { trip_id, leg_id }.
+export const proposeTripFromInference = (data) =>
+  req("/plan/propose-trip", { method: "POST", body: JSON.stringify(data) });
+
 // What your calendar implies you need to travel for, judged from where you are.
 // Send device coords when we have them (truest signal); city string otherwise.
 // Returns { connected, readable, from, trips:[...], asks:[...] } — nothing booked,

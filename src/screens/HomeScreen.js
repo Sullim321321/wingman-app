@@ -22,7 +22,7 @@ import { tap, DecisionCard, FadeRise } from "../components";
 import { PlanCard } from "../components/PlanCard";
 import { InferredTravel } from "../components/InferredTravel";
 import {
-  getTrips, getHomeState, getWeather, getMe, getToday, getTravel,
+  getTrips, getHomeState, getWeather, getMe, getToday, getTravel, proposeTripFromInference,
   sendConciergeMessage, getConciergeThread, saveConciergeThread, clearConciergeThread,
   getTripBriefing, getPrediction, triggerGmailScan, getTravelProfile,
   getLocalNews, getLocalTraffic, getTodayEvents, getTravelStats,
@@ -1056,6 +1056,26 @@ export default function HomeScreen({ navigation }) {
     dismissDecision(decision.id).catch(() => {});
   };
 
+  // "Plan this trip" on an inferred proposal → materialize it into a real proposed
+  // flight leg, then hand off to the existing book flow (BookLeg), which prices real
+  // offers and holds one with permission. We don't book here; we open the picker.
+  const handlePlanTrip = useCallback(async (t) => {
+    tap();
+    try {
+      const it = t.itinerary || {};
+      const departs = (it.flight_in && it.flight_in.target_arrival) || t.arrive_by;
+      const r = await proposeTripFromInference({
+        destination: t.destination,
+        from_city: (travel && travel.from && travel.from.city) || null,
+        departs_at: departs,
+      });
+      if (r && r.leg_id) navigation.navigate("BookLeg", { legId: r.leg_id });
+      else Alert.alert("Couldn't start booking", "Try again in a moment.");
+    } catch (e) {
+      Alert.alert("Couldn't start booking", e?.message || "Try again in a moment.");
+    }
+  }, [travel, navigation]);
+
   // Day-of-travel: a focused panel when a flight departs within ~18h — gate, status,
   // countdown, and a tap into live tracking. Home becomes "today" on travel days.
   // ── Live Activity (lock screen / Dynamic Island) ──────────────────────────
@@ -1108,6 +1128,12 @@ export default function HomeScreen({ navigation }) {
   // Just landed — close the loop and capture the outcome while it's fresh.
   const postTrip = (() => {
     if (inTransit || dayOf) return null;
+    // You can't rate a trip you're still on. If home-state says you're mid-trip —
+    // in the air, at the airport, or at your destination — the "how was it?" debrief
+    // waits. This is the contradiction that put "You're in your destination" and
+    // "How was Nashville?" on screen at the same time.
+    const hs = homeState?.state;
+    if (hs === "in_transit" || hs === "at_airport" || hs === "at_destination") return null;
     const now = Date.now();
     let best = null, bestT = 0;
     for (const trip of (trips || [])) {
@@ -1235,7 +1261,7 @@ export default function HomeScreen({ navigation }) {
               trips={travel.trips || []}
               asks={travel.asks || []}
               from={travel.from}
-              onPlan={(t) => { tap(); setInput(`Plan my ${t.destination} trip — ${t.reason}`); }}
+              onPlan={handlePlanTrip}
               onAnswer={(a) => { tap(); setInput(`About "${a.driver?.title || "that meeting"}": I'll be attending `); }}
             />
           </FadeRise>

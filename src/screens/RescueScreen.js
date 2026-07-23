@@ -286,7 +286,7 @@ const s = StyleSheet.create({
 
   card: { borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 16,
           marginBottom: 14, backgroundColor: C.card },
-  cardRec: { borderColor: C.gold, backgroundColor: "#262019" },
+  cardRec: { borderColor: C.gold, backgroundColor: C.actionFill },
 
   cardTop: { flexDirection: "row", alignItems: "center", gap: 12 },
   rank: { width: 24, height: 24, borderRadius: 12, borderWidth: 1, borderColor: C.gold,

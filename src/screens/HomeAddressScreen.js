@@ -191,7 +191,7 @@ const s = StyleSheet.create({
     fontSize: 15,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    backgroundColor: "#0A0E1C",
+    backgroundColor: C.card2,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: C.line,

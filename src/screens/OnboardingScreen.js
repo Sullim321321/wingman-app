@@ -480,7 +480,7 @@ export default function OnboardingScreen({ navigation }) {
   if (showPush) {
     return (
       <SafeAreaView style={s.root}>
-        <LinearGradient colors={[C.inkD, "#1A1610", C.inkD]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={[C.inkD, C.card3, C.inkD]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
           <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }} keyboardShouldPersistTaps="handled">
             <PushPermissionSlide onDone={handlePushDone} />
@@ -492,7 +492,7 @@ export default function OnboardingScreen({ navigation }) {
 
   return (
     <SafeAreaView style={s.root}>
-      <LinearGradient colors={[C.inkD, "#1A1610", C.inkD]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={[C.inkD, C.card3, C.inkD]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
 
       {/* Top bar */}
       {!isSignUp && (

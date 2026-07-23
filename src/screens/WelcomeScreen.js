@@ -67,7 +67,7 @@ export default function WelcomeScreen({ navigation, route }) {
   return (
     <SafeAreaView style={s.root}>
       <LinearGradient
-        colors={[C.inkD, "#1A1610", C.inkD]}
+        colors={[C.inkD, C.card3, C.inkD]}
         locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
       />

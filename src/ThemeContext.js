@@ -24,56 +24,22 @@ export const THEME_KEY = "wingman_appearance"; // "system" | "dark" | "light"
 // duplicate is gone for good.
 import { C as PALETTE } from "./theme";
 
-const DARK = { ...PALETTE, isDark: true };
-
-// ─── Light palette (Parchment — warm cream inversion) ────────────────────────
-// ─── Light palette — the same identity, inverted ─────────────────────────────
-// Cream ground, ink type, brass monogram. The accent flips: on black the accent is
-// the brightest thing (cream); on cream it must be the DARKEST thing (ink).
-const LIGHT = {
-  ...PALETTE,
-  bg:    "#EDEBE7",   // cream — the ground
-  card:  "#E4E1DA",   // raised
-  card2: "#DAD6CD",   // lifted / inputs
-  card3: "#D0CBC0",   // shimmer
-  parch: "#0E0E10",   // the inverted plane is now BLACK
-  parch2:"#1D1D22",
-  line:  "#D5D1C7",
-  lineP: "#0E0E1022",
-  lineHi:"rgba(255,255,255,0.7)",
-  lineSh:"rgba(0,0,0,0.08)",
-  ink:   "#191817",   // ink on paper
-  inkD:  "#EDEBE7",   // cream, for the inverted (black) plane
-  mut:   "#6E6B64",
-  mutD:  "#98948B",
-
-  // On a cream page, the accent is INK — the darkest thing, not the brightest.
-  // Keeping cream here would have made every button invisible, which is exactly
-  // the failure the dark sweep was checked against.
-  gold:  "#191817",
-  accent:"#191817",
-  goldD: "#3A3833",
-  goldL: "#000000",
-  goldBtn:"#191817",
-  goldGlass: "#1918170D",
-
-  brass: "#8A7043",   // deeper brass — the pale one vanishes on cream
-  teal:  "#3F6B52",
-  coral: "#A8342C",
-  amber: "#8A7043",
-  ok:    "#3F6B52",
-  warn:  "#8A7043",
-  risk:  "#A8342C",
-  action:     "#191817",
-  confirmed:  "#3F6B52",
-  attention:  "#A8342C",
-  attentionM: "#8A7043",
-  neutral:    "#6E6B64",
-  glassTab:  "rgba(237,235,231,0.94)",
-  glassBg:   "rgba(237,235,231,0.97)",
-  glassCard: "rgba(228,225,218,0.90)",
-  isDark: false,
-};
+// ─── One identity, one palette ───────────────────────────────────────────────
+//
+// Wingman's identity is now the ivory / bronze / sage "quiet luxury" palette,
+// defined once in theme.js. It is a LIGHT theme — ivory ground, deep-ink type,
+// bronze accent, sage for what Wingman knows — so isDark is false and the status
+// bar / nav chrome render dark content on the cream ground.
+//
+// There used to be two palettes here (a dark espresso variant and a hand-written
+// cream inversion) with a resolver switching between them. That's exactly the
+// two-sources-of-truth trap the comment below warns about: theme.js got the new
+// palette and this file didn't. So both variants now collapse to the single
+// theme.js palette. The Settings appearance toggle is a no-op until a proper
+// dark variant of the quiet-luxury identity is designed and approved.
+const IVORY = { ...PALETTE, isDark: false };
+const DARK = IVORY;
+const LIGHT = IVORY;
 
 const ThemeContext = createContext({ C: DARK, appearance: "system", setAppearance: () => {} });
 

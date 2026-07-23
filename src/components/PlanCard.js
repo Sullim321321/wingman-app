@@ -92,10 +92,10 @@ export function PlanCard({ plan, onSave }) {
 const ps = StyleSheet.create({
   card: {
     marginTop: 8,
-    backgroundColor: '#221E1A',
+    backgroundColor: C.parch,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#2E2A24',
+    borderColor: C.lineP,
     overflow: 'hidden',
   },
   header: {
@@ -103,7 +103,7 @@ const ps = StyleSheet.create({
     paddingTop: 14,
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#2E2A24',
+    borderBottomColor: C.lineP,
   },
   title: {
     fontFamily: 'PlayfairDisplay_700Bold_Italic',
@@ -114,27 +114,27 @@ const ps = StyleSheet.create({
   meta: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 12,
-    color: '#8A7F70',
+    color: C.mutD,
     letterSpacing: 0.3,
   },
   section: {
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#2E2A24',
+    borderBottomColor: C.lineP,
     gap: 4,
   },
   sectionLabel: {
     fontFamily: 'DMSans_500Medium',
     fontSize: 10,
-    color: '#8A7F70',
+    color: C.mutD,
     letterSpacing: 1.4,
     marginBottom: 6,
   },
   highlight: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 13,
-    color: '#FFFFFF',
+    color: C.inkD,
     lineHeight: 20,
   },
   hotelRow: {
@@ -144,35 +144,35 @@ const ps = StyleSheet.create({
   hotelCity: {
     fontFamily: 'DMSans_500Medium',
     fontSize: 10,
-    color: '#8A7F70',
+    color: C.mutD,
     letterSpacing: 1.2,
   },
   hotelName: {
     fontFamily: 'DMSans_500Medium',
     fontSize: 13,
-    color: '#FFFFFF',
+    color: C.inkD,
   },
   hotelMeta: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 11,
-    color: '#8A7F70',
+    color: C.mutD,
   },
   hotelWhy: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 12,
-    color: '#8A7F70',
+    color: C.mutD,
     lineHeight: 17,
   },
   flightRow: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 13,
-    color: '#FFFFFF',
+    color: C.inkD,
     lineHeight: 20,
   },
   trainingNotes: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 12,
-    color: '#8A7F70',
+    color: C.mutD,
     lineHeight: 18,
   },
   saveBtn: {

@@ -286,7 +286,7 @@ export default function SignInScreen() {
 
   return (
     <SafeAreaView style={s.app}>
-      <LinearGradient colors={[C.inkD, "#1A1610", C.inkD]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={[C.inkD, C.card3, C.inkD]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
       <View style={s.glowTop} />
       <KeyboardAvoidingView style={s.wrap} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <Animated.View style={[s.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>

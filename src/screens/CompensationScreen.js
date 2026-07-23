@@ -168,7 +168,7 @@ export default function CompensationScreen({ navigation, route }) {
   if (!loading && submitted) {
     return (
       <SafeAreaView style={s.root}>
-        <LinearGradient colors={[C.inkD, "#1A1610", C.inkD]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={[C.inkD, C.card3, C.inkD]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
         <BackBar nav={navigation} label="Compensation" />
         <View style={s.successWrap}>
           <View style={s.successIcon}>
@@ -202,7 +202,7 @@ export default function CompensationScreen({ navigation, route }) {
   if (loading) {
     return (
       <SafeAreaView style={s.root}>
-        <LinearGradient colors={[C.inkD, "#1A1610", C.inkD]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={[C.inkD, C.card3, C.inkD]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
         <BackBar nav={navigation} label="Compensation" />
         <View style={s.loadingWrap}>
           <ActivityIndicator color={C.gold} size="small" />
@@ -215,7 +215,7 @@ export default function CompensationScreen({ navigation, route }) {
   // ── Main content ──────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={s.root}>
-      <LinearGradient colors={[C.inkD, "#1A1610", C.inkD]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={[C.inkD, C.card3, C.inkD]} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
       <BackBar nav={navigation} label="Compensation" />
 
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>

@@ -55,92 +55,71 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const C = {
-  // ─── Grounds ────────────────────────────────────────────────────────────────
-  // Near-black with a breath of warmth — a true #000 is a void, and a void has no
-  // material. These are surfaces, and they catch light.
-  bg:    "#0E0E10",   // THE GROUND. Nothing sits at this level except type.
-  card:  "#16161A",   // RAISED — facts, ledger rows, resting cards
-  card2: "#1D1D22",   // LIFTED — the thing that needs you; inputs; pressed states
-  card3: "#232329",   // Tertiary — skeleton shimmer, hover, deepest lift
-  parch: "#EDEBE7",   // CREAM — the inverted plane (primary CTA, "Next Up" card)
-  parch2:"#D8D5CF",   // Deeper cream for inner elements / gradient end
+  // ─── QUIET LUXURY (v5) — ivory paper · deep ink · one bronze · sage for "known" ──
+  // The whole app is rethemed by these values alone; names are unchanged so every
+  // existing call site keeps working. The important moves are the INVERSIONS:
+  // `parch`/`inkD` were the cream CTA plane + its dark text; on ivory they flip to an
+  // ink fill with paper text, so cream-on-dark CTAs become ink-on-paper CTAs for free.
+
+  // ─── Grounds ──────────────────────────────────────────────────────────────────
+  bg:    "#F5F2EC",   // THE GROUND — warm ivory paper. Type sits here.
+  card:  "#FCFAF5",   // RAISED — facts, ledger rows, resting cards (near-white)
+  card2: "#FFFFFF",   // LIFTED — the thing that needs you; inputs; pressed states
+  card3: "#EFEBE2",   // Tertiary — skeleton shimmer, hover, pressed
+  parch: "#211E1A",   // THE INVERTED PLANE — deep ink (primary CTA, "Next Up" card)
+  parch2:"#2C2A24",   // Deeper ink for inner elements / gradient end
 
   // ─── Structure ──────────────────────────────────────────────────────────────
-  // Hairlines do the editorial work. NYT rules, not borders.
-  line:  "#1F1F24",   // The standard hairline. Everywhere.
-  lineP: "#0E0E1022", // Hairline on cream surfaces
-  lineHi:"rgba(255,255,255,0.07)",  // TOP-EDGE LIGHT — the thing that makes a
-                                     // surface feel like a surface. Do not skip it.
-  lineSh:"rgba(0,0,0,0.55)",         // Shadow beneath
+  line:  "rgba(33,30,26,0.10)",     // The standard hairline on ivory.
+  lineP: "rgba(255,255,255,0.14)",  // Hairline on the inverted (ink) plane
+  lineHi:"rgba(0,0,0,0.03)",         // Faint top edge on light cards
+  lineSh:"rgba(0,0,0,0.10)",         // Soft shadow beneath
 
   // ─── Ink ────────────────────────────────────────────────────────────────────
-  ink:   "#EDEBE7",   // CREAM, not white. Pure white on near-black is a headache
-                      // at 6am; cream is the colour of paper and it reads as one.
-  inkD:  "#0E0E10",   // Ink on the cream plane
-  mut:   "#918E88",   // Secondary — still fully readable
-  mutD:  "#5F5D59",   // Tertiary — quiet, structural, "I checked this and it's fine"
+  ink:   "#211E1A",   // Deep warm ink — the reading colour on paper.
+  inkD:  "#F5F2EC",   // Ink on the inverted (ink) plane → paper
+  mut:   "#6B655C",   // Secondary — fully readable on ivory
+  mutD:  "#9A948A",   // Tertiary — quiet, structural
 
-  // ─── The accent, demoted ────────────────────────────────────────────────────
-  //
-  // `gold` used to mean five things at once — brand, button, icon, section label,
-  // and border — across 534 call sites. That is why the interface could never raise
-  // its voice: the loudest colour on screen was already spent on "here is a label."
-  //
-  // So the TOKEN is repointed rather than the 534 call sites. `C.gold` now resolves
-  // to CREAM, because in every one of those places what the code MEANT was "this is
-  // the accent — the thing your eye should go to," and on a black page the accent is
-  // the brightest thing, not the most saturated one.
-  //
-  // Brass survives under its own name, and appears in exactly two places: the
-  // monogram, and the hairline under the masthead. Nowhere else. If you find yourself
-  // reaching for C.brass for a button, you are rebuilding the bug.
-  gold:  "#EDEBE7",   // → cream. The accent. (Kept as `gold` so 534 sites keep working.)
-  accent:"#EDEBE7",
-  goldD: "#C8C4BC",   // pressed
-  goldL: "#FFFFFF",   // gradient start
-  goldBtn:"#EDEBE7",
-  goldGlass: "#EDEBE70F",
+  // ─── The accent — one bronze ────────────────────────────────────────────────
+  // On a black page the accent was the brightest thing (cream). On ivory the accent
+  // is the one warm, saturated thing: bronze. Same role, repointed value.
+  gold:  "#96754A",   // → bronze. The accent. (Kept as `gold` so all sites work.)
+  accent:"#96754A",
+  goldD: "#7C5F3B",   // pressed
+  goldL: "#A98C57",   // gradient start / lighter bronze
+  goldBtn:"#96754A",
+  goldGlass: "#96754A14",
 
-  // The only brass in the system.
-  brass:  "#A98C57",
-  brassD: "#8A7043",
-  brassL: "#C4A874",
+  brass:  "#96754A",
+  brassD: "#7C5F3B",
+  brassL: "#B08E5A",
 
   // ─── Status ─────────────────────────────────────────────────────────────────
-  // Muted, editorial, adult. These are not iOS system colours — they are ink.
-  teal:   "#5C8A72",   // HOLDS. Sage, not neon. Quiet reassurance is still quiet.
-  coral:  "#C8564C",   // WON'T SURVIVE. The signal. Appears roughly once a month,
-                       // and when it does it is the only coloured thing on screen.
-  amber:  "#A98C57",   // TIGHT. Brass doubles as the caution note — deliberately,
-                       // so the palette has ONE warm and ONE hot, not a rainbow.
-  indigo: "#7E8BA3",   // Premium / landed — slate, not lavender.
+  teal:   "#5E7A63",   // HOLDS / handled. Sage.
+  coral:  "#B0433A",   // WON'T SURVIVE. The signal, deepened for contrast on ivory.
+  amber:  "#96754A",   // TIGHT. Bronze doubles as caution.
+  indigo: "#5E6B85",   // Premium / landed — slate.
 
-  ok:    "#5C8A72",
-  warn:  "#A98C57",
-  risk:  "#C8564C",
+  ok:    "#5E7A63",
+  warn:  "#96754A",
+  risk:  "#B0433A",
 
-  // ─── Codified semantics (unchanged contract, new values) ────────────────────
-  //   action     → cream  · the primary next step. The brightest thing on a black
-  //                         page IS the affordance. No colour needed.
-  //   confirmed  → sage   · done, booked, on-time, handled
-  //   attention  → signal · needs you NOW
-  //   attentionM → brass  · worth knowing, not urgent
-  //   premium    → slate
-  //   neutral    → mut
-  action:     "#EDEBE7",
-  confirmed:  "#5C8A72",
-  attention:  "#C8564C",
-  attentionM: "#A98C57",
-  premium:    "#7E8BA3",
-  neutral:    "#918E88",
-  actionFill:    "#EDEBE70F",
-  confirmedFill: "#5C8A7218",
-  attentionFill: "#C8564C1C",
+  // ─── Codified semantics (same contract) ─────────────────────────────────────
+  action:     "#96754A",   // the primary accent affordance → bronze
+  confirmed:  "#5E7A63",
+  attention:  "#B0433A",
+  attentionM: "#96754A",
+  premium:    "#5E6B85",
+  neutral:    "#6B655C",
+  actionFill:    "#96754A12",
+  confirmedFill: "#5E7A6318",
+  attentionFill: "#B0433A1C",
 
-  // ─── Glass ──────────────────────────────────────────────────────────────────
-  glassTab:  "rgba(10,10,12,0.94)",
-  glassBg:   "rgba(14,14,16,0.96)",
-  glassCard: "rgba(22,22,26,0.88)",
+  // ─── Glass (light) ──────────────────────────────────────────────────────────
+  glassTab:  "rgba(245,242,236,0.94)",
+  glassBg:   "rgba(245,242,236,0.96)",
+  glassCard: "rgba(252,250,245,0.90)",
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -183,17 +162,19 @@ export const T = {
 // DEPTH — three planes, strictly ranked. Elevation is not decoration; it is rank.
 // ─────────────────────────────────────────────────────────────────────────────
 export const E = {
+  // On ivory, depth comes from a soft shadow beneath, not a lit top edge. Borders
+  // are faint dark hairlines rather than the dark-theme white-top/black-bottom trick.
   card: {
-    borderTopColor:    "rgba(255,255,255,0.07)",
-    borderBottomColor: "rgba(0,0,0,0.5)",
-    borderLeftColor:   "rgba(255,255,255,0.03)",
-    borderRightColor:  "rgba(0,0,0,0.3)",
+    borderTopColor:    "rgba(0,0,0,0.03)",
+    borderBottomColor: "rgba(0,0,0,0.08)",
+    borderLeftColor:   "rgba(0,0,0,0.03)",
+    borderRightColor:  "rgba(0,0,0,0.05)",
   },
   modal: {
-    borderTopColor:    "rgba(255,255,255,0.1)",
-    borderBottomColor: "rgba(0,0,0,0.6)",
-    borderLeftColor:   "rgba(255,255,255,0.05)",
-    borderRightColor:  "rgba(0,0,0,0.4)",
+    borderTopColor:    "rgba(0,0,0,0.04)",
+    borderBottomColor: "rgba(0,0,0,0.10)",
+    borderLeftColor:   "rgba(0,0,0,0.04)",
+    borderRightColor:  "rgba(0,0,0,0.06)",
   },
 };
 
@@ -204,37 +185,36 @@ export const E = {
 // thing in this file and it does more work than any colour in it.
 export const SHADOW = {
   soft: {
-    shadowColor: "#000",
-    shadowOpacity: 0.45,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 4,
+    shadowColor: "#3A2E1C",
+    shadowOpacity: 0.10,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
   sheet: {
-    shadowColor: "#000",
-    shadowOpacity: 0.62,
-    shadowRadius: 30,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 14,
+    shadowColor: "#3A2E1C",
+    shadowOpacity: 0.16,
+    shadowRadius: 26,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 12,
   },
 };
 
-export const litEdge = { borderTopColor: "rgba(255,255,255,0.09)" };
+export const litEdge = { borderTopColor: "rgba(0,0,0,0.03)" };
 
 // Gradients — subtle, top-lit, 168°. A surface catching light from above, never a
 // decorative sweep. If a gradient is visible AS a gradient, it is wrong.
 export const GRAD = {
-  // The CTA gradient is cream — top-lit, the way a real surface catches light.
-  // It was brass; a brass button on a black page is a costume, not an affordance.
-  gold:    ["#FFFFFF", "#EDEBE7", "#D8D5CF"],
-  goldSub: ["#EDEBE7", "#D8D5CF"],
-  brass:   ["#C4A874", "#A98C57", "#8A7043"],   // monogram only
-  teal:    ["#6D9B82", "#5C8A72", "#48705B"],
-  dark:    ["#1D1D22", "#141418"],
-  parch:   ["#EDEBE7", "#D8D5CF"],
-  goldBtn: ["#EDEBE7", "#D8D5CF"],   // the CTA is cream
-  raised:  ["#1A1A1F", "#141418"],   // RAISED plane
-  lifted:  ["#232329", "#191920"],   // LIFTED plane
+  // On ivory the CTA is INK (dark on light), and the "dark" planes become light.
+  gold:    ["#2C2A24", "#211E1A", "#1A1815"],   // primary CTA → ink
+  goldSub: ["#2C2A24", "#211E1A"],
+  brass:   ["#B08E5A", "#96754A", "#7C5F3B"],   // monogram — bronze
+  teal:    ["#6E8B74", "#5E7A63", "#4C6551"],   // sage
+  dark:    ["#FCFAF5", "#EFEBE2"],              // was a dark plane → light card
+  parch:   ["#2C2A24", "#211E1A"],              // the inverted plane → ink
+  goldBtn: ["#211E1A", "#1A1815"],              // the CTA is ink
+  raised:  ["#FFFFFF", "#FCFAF5"],              // RAISED plane
+  lifted:  ["#FFFFFF", "#F7F4EE"],              // LIFTED plane
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

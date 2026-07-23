@@ -72,7 +72,7 @@ export default function ForwardingScreen({ navigation }) {
                 <Text style={s.label}>YOUR ADDRESS</Text>
                 <Text style={s.addr} selectable>{addr}</Text>
                 <Pressable style={[s.copy, copied && { backgroundColor: C.teal }]} onPress={copy}>
-                  <Text style={[s.copyT, copied && { color: "#0B1F1A" }]}>
+                  <Text style={[s.copyT, copied && { color: C.inkD }]}>
                     {copied ? "Copied" : "Copy address"}
                   </Text>
                 </Pressable>

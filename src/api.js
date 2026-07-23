@@ -193,6 +193,12 @@ export const getToday = (hours) => req("/today" + (hours ? `?hours=${hours}` : "
 export const proposeTripFromInference = (data) =>
   req("/plan/propose-trip", { method: "POST", body: JSON.stringify(data) });
 
+// ── Curator ─────────────────────────────────────────────────────────────────
+export const getCurate = (city) => req("/curate?city=" + encodeURIComponent(city));
+export const curateDining = (body) => req("/curate/dining", { method: "POST", body: JSON.stringify(body) });
+export const getCuratorSources = () => req("/curator/sources");
+export const setCuratorSources = (sources) => req("/curator/sources", { method: "POST", body: JSON.stringify({ sources }) });
+
 // What your calendar implies you need to travel for, judged from where you are.
 // Send device coords when we have them (truest signal); city string otherwise.
 // Returns { connected, readable, from, trips:[...], asks:[...] } — nothing booked,

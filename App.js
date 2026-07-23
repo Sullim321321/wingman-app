@@ -51,6 +51,7 @@ import ConciergeScreen from "./src/screens/ConciergeScreen";
 import ActivityScreen from "./src/screens/ActivityScreen";
 import TripsScreen from "./src/screens/TripsScreen";
 import PlanScreen from "./src/screens/PlanScreen";
+import CuratorScreen from "./src/screens/CuratorScreen";
 import ForwardingScreen from "./src/screens/ForwardingScreen";
 import SituationScreen from "./src/screens/SituationScreen";
 import RescueScreen from "./src/screens/RescueScreen";
@@ -99,6 +100,7 @@ const Tab   = createBottomTabNavigator();
 // \uFE0E = text presentation selector — prevents OS emoji substitution
 const TAB_ICONS = {
   Home:         { active: "\u2302\uFE0E", inactive: "\u2302\uFE0E" },
+  Curator:      { active: "\u25C9\uFE0E", inactive: "\u25CE\uFE0E" },   // \u25C9 / \u25CE \u2014 the lens
   Plan:         { active: "\u2726\uFE0E", inactive: "\u2727\uFE0E" },   // \u2726 / \u2727 \u2014 the front door
   Trips:        { active: "\u2708\uFE0E", inactive: "\u2708\uFE0E" },
 };
@@ -106,6 +108,7 @@ const TAB_ICONS = {
 // Tab labels — wide-tracked all-caps (kept short to prevent bleed)
 const TAB_LABELS = {
   Home:         "HOME",
+  Curator:      "EXPLORE",
   Plan:         "PLAN",
   Trips:        "TRIPS",
 };
@@ -191,6 +194,7 @@ function Tabs({ navigation }) {
           answers "what needs me"); the Ledger is reachable from the masthead, where the
           record belongs, not competing for a thumb with the three things you actually do. */}
       <Tab.Screen name="Home"         component={HomeScreen} />
+      <Tab.Screen name="Curator"      component={CuratorScreen} />
       <Tab.Screen name="Plan"         component={PlanScreen} />
       <Tab.Screen name="Trips"        component={TripsScreen} />
     </Tab.Navigator>

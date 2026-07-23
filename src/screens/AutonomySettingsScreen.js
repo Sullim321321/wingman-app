@@ -49,6 +49,8 @@ export default function AutonomySettingsScreen({ navigation }) {
   const [paymentPref, setPaymentPref] = useState("best_value");
   const [cabinPref, setCabinPref] = useState("economy");
   const [notifyOnAction, setNotifyOnAction] = useState(true);
+  const [noRedEyes, setNoRedEyes] = useState(false);
+  const [refundableOnly, setRefundableOnly] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -63,6 +65,8 @@ export default function AutonomySettingsScreen({ navigation }) {
           if (p.payment_preference) setPaymentPref(p.payment_preference);
           if (p.cabin_preference) setCabinPref(p.cabin_preference);
           if (p.notify_on_action != null) setNotifyOnAction(p.notify_on_action);
+          if (p.no_red_eyes != null) setNoRedEyes(p.no_red_eyes);
+          if (p.require_refundable != null) setRefundableOnly(p.require_refundable);
         }
       })
       .catch(() => {})
@@ -78,6 +82,8 @@ export default function AutonomySettingsScreen({ navigation }) {
         payment_preference: paymentPref,
         cabin_preference: cabinPref,
         notify_on_action: notifyOnAction,
+        no_red_eyes: noRedEyes,
+        require_refundable: refundableOnly,
       });
       tap("medium");
       Alert.alert("Policy saved", "Wingman will follow these rules for all future disruptions.");
@@ -283,6 +289,35 @@ export default function AutonomySettingsScreen({ navigation }) {
               <Text style={[s.cabinChipT, cabinPref === c.id && s.cabinChipTOn]}>{c.label}</Text>
             </Pressable>
           ))}
+        </View>
+
+        {/* Standing orders — hard walls the dial can never cross, at any level. */}
+        <Text style={g.sectionT}>STANDING ORDERS</Text>
+        <View style={g.group}>
+          <View style={s.switchRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={s.switchTitle}>Never a red-eye</Text>
+              <Text style={s.switchSub}>Wingman won't hold or book an overnight departure, even if it's the cheapest and I'm on Full.</Text>
+            </View>
+            <Switch
+              value={noRedEyes}
+              onValueChange={setNoRedEyes}
+              trackColor={{ false: C.line, true: "rgba(201,169,110,0.4)" }}
+              thumbColor={noRedEyes ? C.gold : C.mut}
+            />
+          </View>
+          <View style={s.switchRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={s.switchTitle}>Refundable fares only</Text>
+              <Text style={s.switchSub}>Only fares I can cancel qualify for an autonomous hold or booking.</Text>
+            </View>
+            <Switch
+              value={refundableOnly}
+              onValueChange={setRefundableOnly}
+              trackColor={{ false: C.line, true: "rgba(201,169,110,0.4)" }}
+              thumbColor={refundableOnly ? C.gold : C.mut}
+            />
+          </View>
         </View>
 
         {/* Notify on action */}

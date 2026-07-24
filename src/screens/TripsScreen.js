@@ -101,10 +101,23 @@ function TripRow({ trip, navigation, onDelete }) {
       .catch(() => {});
   }, [firstFlight?.origin, firstFlight?.destination, firstFlight?.departs_at, status]);
 
-  // Date anchor — large day number
-  const dayNum  = startTs ? new Date(startTs).getDate() : null;
-  const monthAb = startTs ? new Date(startTs).toLocaleDateString("en-US", { month: "short" }).toUpperCase() : null;
-  const yearStr = startTs ? new Date(startTs).getFullYear() : null;
+  // Date anchor — large day number.
+  // For an UPCOMING trip, anchor on the NEXT committed departure, not the earliest one.
+  // A trip that wrongly groups an old leg with a future one (a 17-year span) would
+  // otherwise anchor on the old date and count down from it — rendering a 2009 leg as
+  // "Today". The honest anchor is the next thing that actually happens.
+  const anchorTs = (() => {
+    if (status !== "upcoming") return startTs;
+    const future = (trip.legs || [])
+      .filter((l) => l && l.state !== "proposed" && l.departs_at)
+      .map((l) => new Date(l.departs_at).getTime())
+      .filter((n) => !Number.isNaN(n) && n >= Date.now() - 2 * 3600000)
+      .sort((a, b) => a - b);
+    return future.length ? future[0] : startTs;
+  })();
+  const dayNum  = anchorTs ? new Date(anchorTs).getDate() : null;
+  const monthAb = anchorTs ? new Date(anchorTs).toLocaleDateString("en-US", { month: "short" }).toUpperCase() : null;
+  const yearStr = anchorTs ? new Date(anchorTs).getFullYear() : null;
   const nowYear = new Date().getFullYear();
 
   // Route label
@@ -121,22 +134,26 @@ function TripRow({ trip, navigation, onDelete }) {
   const derivedTitle = trip.title ||
     (firstFlight?.destination ? firstFlight.destination : "Trip");
 
-  // Days away
-  const daysAway = startTs
-    ? Math.ceil((startTs - Date.now()) / 86400000)
+  // Days away — measured to the NEXT departure (anchorTs), and only meaningful when the
+  // trip is genuinely ahead. A negative value means the anchor is in the past, which is a
+  // data problem, not "Today" — so we never let it speak as if the trip were imminent.
+  const daysAway = anchorTs
+    ? Math.ceil((anchorTs - Date.now()) / 86400000)
     : null;
-  const daysLabel = status === "upcoming" && daysAway != null
-    ? (daysAway <= 0 ? "Today" : daysAway === 1 ? "Tomorrow" : `${daysAway}d`)
+  const daysLabel = status === "upcoming" && daysAway != null && daysAway >= 0
+    ? (daysAway === 0 ? "Today" : daysAway === 1 ? "Tomorrow" : `${daysAway}d`)
     : null;
 
-  // Next-action nudge — one proactive prompt per trip
+  // Next-action nudge — one proactive prompt per trip. Every branch requires a
+  // non-negative countdown so a stale/mis-grouped date can't claim "Wingman is watching".
   const nextNudge = (() => {
     if (status === "past") return null;
     if (status === "active") return "In progress — tap for live status";
+    if (daysAway == null || daysAway < 0) return null;
     if (daysAway === 0) return "Check-in may be open — tap to check";
     if (daysAway === 1) return "Flight tomorrow — check gate & lounge";
-    if (daysAway != null && daysAway <= 3) return "Check-in opens soon — Wingman is watching";
-    if (daysAway != null && daysAway <= 7) {
+    if (daysAway <= 3) return "Check-in opens soon — Wingman is watching";
+    if (daysAway <= 7) {
       if (riskScore != null && riskScore >= 40) return `${riskScore}% disruption risk — tap to see options`;
       return "Wingman is monitoring for delays & price drops";
     }

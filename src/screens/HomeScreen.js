@@ -1168,6 +1168,10 @@ export default function HomeScreen({ navigation }) {
     if (dayOf || inTransit || postTrip) return null; // a nearer-term phase takes over
     const flt = findNextFlight(trips);
     if (!flt?.departs_at) return null;
+    // Don't claim to monitor a flight we can't identify. If the next flight has no
+    // airports (an unresolved / mis-parsed leg), the honest move is to show nothing
+    // rather than "Monitoring your flight ?→?". Unknown blocks the panel, not the user.
+    if (!flt.origin || !flt.destination) return null;
     const days = Math.ceil((new Date(flt.departs_at).getTime() - Date.now()) / 86400000);
     if (days < 0 || days > 14) return null;
     const items = [

@@ -28,7 +28,7 @@ import {
   getLocalNews, getLocalTraffic, getTodayEvents, getTravelStats,
   createTrip, addLeg,
   getDecisions, confirmDecision, dismissDecision, undoDecision,
-  getBrief,
+  getBrief, getCurate,
 } from "../api";
 import { scheduleDisruption, schedulePreDepartureBriefing, schedulePostTripDebrief } from "../notify";
 import * as Speech from "expo-speech";
@@ -414,6 +414,7 @@ export default function HomeScreen({ navigation }) {
   const [homeSignals, setHomeSignals] = useState([]);           // Signals, folded into Home
   // The Brief. "Nothing needs you" as a graph query rather than a greeting.
   const [brief, setBrief] = useState(null);
+  const [ambient, setAmbient] = useState(null);   // cached "what's good in {city}" curation
 
   // Chat state
   const [messages, setMessages]         = useState([{ role: "assistant", content: "" }]);
@@ -435,6 +436,28 @@ export default function HomeScreen({ navigation }) {
   // ── Manual refresh ─────────────────────────────────────────────────────────
   // Pull the Brief. Best-effort: if it fails, Home simply doesn't show the line —
   // it must never be the reason the screen won't load.
+  // Ambient curation for wherever you are — "what's good in {city}", pulled from your
+  // taste. Cached once per day per city in AsyncStorage, so Home never fires a live LLM
+  // curation on every open; it refreshes when the city changes or the day rolls over.
+  const ambientCity = weather?.city || homeState?.weather?.city || homeState?.active_trip?.destination_city || null;
+  useEffect(() => {
+    const city = (ambientCity || "").trim();
+    if (!city) return;
+    const key = `wingman_curate_${city.toLowerCase()}_${new Date().toISOString().slice(0, 10)}`;
+    let cancelled = false;
+    (async () => {
+      try {
+        const cached = await AsyncStorage.getItem(key);
+        if (cached) { if (!cancelled) setAmbient(JSON.parse(cached)); return; }
+        const r = await getCurate(city);
+        if (cancelled) return;
+        if (r?.known && r.picks) { setAmbient(r); AsyncStorage.setItem(key, JSON.stringify(r)).catch(() => {}); }
+        else setAmbient(null);
+      } catch { /* ambient is a nicety — never block or error Home over it */ }
+    })();
+    return () => { cancelled = true; };
+  }, [ambientCity]);
+
   const loadBrief = useCallback(async () => {
     try { setBrief(await getBrief()); } catch { /* silent */ }
     // Signals, folded into Home — only the ones that mattered. Imports/status/hotel_email
@@ -1609,6 +1632,29 @@ export default function HomeScreen({ navigation }) {
           </View>
         ) : null}
 
+        {/* ── WHAT'S GOOD HERE — ambient curation, cached daily ──────────────────
+            The resting-state slate the Curator builds, brought onto Home so "you're in
+            Nashville, here's what's good" lives where you look first. Compact by design:
+            two picks, then a tap into Explore for the full slate + to ask for something
+            specific. Cached, so this costs nothing on a normal Home open. */}
+        {ambient?.picks && (ambient.picks.dine?.length || ambient.picks.do?.length) ? (
+          <View style={s.ambientWrap}>
+            <Pressable style={s.ambientHead} onPress={() => { tap(); navigation.navigate("Curator"); }}>
+              <Text style={s.docLabel}>WHAT'S GOOD{ambientCity ? ` IN ${ambientCity.toUpperCase()}` : ""}</Text>
+              <Text style={s.ambientMore}>Explore →</Text>
+            </Pressable>
+            {[...(ambient.picks.dine || []).slice(0, 2).map(p => ({ ...p, _k: "dine" })),
+              ...(ambient.picks.do || []).slice(0, 2).map(p => ({ ...p, _k: "do" }))]
+              .slice(0, 3)
+              .map((p, i) => (
+                <Pressable key={"amb" + i} style={s.ambientRow} onPress={() => { tap(); navigation.navigate("Curator"); }}>
+                  <Text style={s.ambientName}>{p.name}</Text>
+                  {p.why ? <Text style={s.ambientWhy} numberOfLines={1}>{p.why}</Text> : null}
+                </Pressable>
+              ))}
+          </View>
+        ) : null}
+
         {/* ── SIGNALS, folded in ─────────────────────────────────────────────────
             When the tabs collapsed from five to three I said Signals "folds into Home"
             and then only deleted the tab — the feed itself never landed here. This is
@@ -1927,6 +1973,14 @@ const s = StyleSheet.create({
   docWrap:  { marginTop: 26 },
   docErr:   { fontFamily: T.sans, fontSize: 14, color: C.amber, lineHeight: 21 },
   docLabel: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.6, color: C.gold, marginBottom: 12 },
+
+  ambientWrap: { marginHorizontal: 20, marginTop: 26 },
+  ambientHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
+  ambientMore: { fontFamily: T.sansM, fontSize: 12.5, color: C.gold },
+  ambientRow:  { paddingVertical: 10, borderTopWidth: 1, borderTopColor: C.line },
+  ambientName: { fontFamily: T.serif, fontSize: 16, color: C.ink },
+  ambientWhy:  { fontFamily: T.sans, fontSize: 12.5, color: C.teal, marginTop: 3 },
+
   sigWrap:  { marginHorizontal: 20, marginTop: 26 },
   sigHead:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
   sigLabel: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2.4, color: C.mutD },

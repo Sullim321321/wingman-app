@@ -45,6 +45,7 @@ export default function DossierScreen({ route, navigation }) {
   const [busy, setBusy] = useState(true);
   const [err, setErr]   = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   const load = useCallback(async () => {
     try { setData(await getDossier(tripId)); setErr(null); }
@@ -80,6 +81,23 @@ export default function DossierScreen({ route, navigation }) {
   const chapters = data?.chapters || {};
   const title = data?.trip?.title || "Trip";
   const total = Object.values(chapters).reduce((n, arr) => n + (arr?.length || 0), 0);
+
+  // ── THE SPINE ────────────────────────────────────────────────────────────────
+  // A trip is read at a glance as an arc: fly in, where you're staying, fly out. That
+  // shape leads; the stop-by-stop detail (and the ride counts) collapse underneath,
+  // one tap away. Anything unbooked is promoted above the arc — it's the one thing that
+  // actually needs you.
+  const allLegs = Object.values(chapters).flat();
+  const flights = allLegs
+    .filter((l) => l.type === "flight")
+    .sort((a, b) => new Date(a.departs_at || 0) - new Date(b.departs_at || 0));
+  const stays = allLegs.filter((l) => l.type === "hotel" || l.type === "airbnb");
+  const needsYou = allLegs.filter((l) => l.state === "proposed");
+  const hasSpine = flights.length + stays.length > 0;
+  const fmtDay = (iso) => {
+    const dt = new Date(iso);
+    return Number.isNaN(dt.getTime()) ? "" : dt.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  };
 
   return (
     <SafeAreaView style={s.app}>
@@ -121,7 +139,49 @@ export default function DossierScreen({ route, navigation }) {
           </FadeRise>
         ) : null}
 
-        {CHAPTERS.map((ch, ci) => {
+        {/* Anything unbooked is the one thing that needs you — promoted above the arc. */}
+        {needsYou.length ? (
+          <FadeRise delay={40}>
+            <View style={s.needsCard}>
+              <Text style={s.needsLabel}>NEEDS YOU</Text>
+              {needsYou.slice(0, 3).map((l) => (
+                <Text key={"n" + l.id} style={s.needsItem}>
+                  {(l.display_name || l.destination || l.type)} — not booked yet
+                </Text>
+              ))}
+            </View>
+          </FadeRise>
+        ) : null}
+
+        {/* THE ARC — the shape of the trip, read at a glance. */}
+        {hasSpine ? (
+          <FadeRise delay={60}>
+            <View style={s.arc}>
+              <Text style={s.arcLabel}>THE ARC</Text>
+              {flights.map((f) => (
+                <View key={"f" + f.id} style={s.arcRow}>
+                  <Text style={s.arcName}>{f.display_name || `${f.origin || "?"} → ${f.destination || "?"}`}</Text>
+                  <Text style={s.arcMeta}>{[f.origin && f.destination ? `${f.origin} → ${f.destination}` : null, fmtDay(f.departs_at)].filter(Boolean).join("  ·  ")}</Text>
+                </View>
+              ))}
+              {stays.map((h) => (
+                <View key={"h" + h.id} style={s.arcRow}>
+                  <Text style={s.arcName}>{h.display_name || h.property_name || "Stay"}</Text>
+                  <Text style={s.arcMeta}>{[h.destination_city || h.destination, h.nights ? `${h.nights} nights` : fmtDay(h.departs_at)].filter(Boolean).join("  ·  ")}</Text>
+                </View>
+              ))}
+            </View>
+          </FadeRise>
+        ) : null}
+
+        {/* Every stop, collapsed by default — the granular detail is one tap away. */}
+        {total > 0 ? (
+          <Pressable style={s.toggle} onPress={() => { tap(); setShowAll((v) => !v); }} hitSlop={8}>
+            <Text style={s.toggleT}>{showAll ? "Hide the detail" : `Show every stop (${total})`}</Text>
+          </Pressable>
+        ) : null}
+
+        {showAll && CHAPTERS.map((ch, ci) => {
           const legs = chapters[ch.key] || [];
           const rideCount = data?.rides?.[ch.key] || 0;
           if (!legs.length && !rideCount) return null;
@@ -189,6 +249,19 @@ const s = StyleSheet.create({
   h1:   { fontFamily: T.serif, fontSize: 30, lineHeight: 36, color: C.ink, flex: 1, paddingRight: 12 },
   edit: { fontFamily: T.sansM, fontSize: 13, color: C.gold, paddingBottom: 4 },
   live: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2, color: C.teal, marginTop: 8, marginBottom: 4 },
+
+  needsCard:  { backgroundColor: C.attentionFill, borderWidth: 1, borderColor: C.coral, borderRadius: 14, padding: 15, marginTop: 18 },
+  needsLabel: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.4, color: C.coral, marginBottom: 8 },
+  needsItem:  { fontFamily: T.sans, fontSize: 14, color: C.ink, lineHeight: 20 },
+
+  arc:      { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 16, marginTop: 18 },
+  arcLabel: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.6, color: C.gold, marginBottom: 12 },
+  arcRow:   { marginBottom: 12 },
+  arcName:  { fontFamily: T.serif, fontSize: 17, color: C.ink },
+  arcMeta:  { fontFamily: T.sansM, fontSize: 12.5, color: C.mut, marginTop: 3 },
+
+  toggle:   { alignSelf: "flex-start", marginTop: 18, paddingVertical: 6 },
+  toggleT:  { fontFamily: T.sansM, fontSize: 13, color: C.gold },
 
   chapter:      { marginTop: 26 },
   chapterHead:  { marginBottom: 12 },

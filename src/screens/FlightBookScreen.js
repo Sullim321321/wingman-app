@@ -72,36 +72,66 @@ export default function FlightBookScreen({ navigation, route }) {
       }
     }
     setError(null);
-    Alert.alert(
-      "Confirm Booking",
-      `Book ${firstSeg?.origin} → ${lastSeg?.destination} for ${offer.total_currency} ${offer.total_amount}?\n\nThis will charge your Duffel balance.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Book Now", style: "destructive", onPress: async () => {
-            setLoading(true);
-            try {
-              const result = await api.bookFlight({
-                offer_id: offer.id,
-                passengers: passengers.map(p => ({
-                  given_name: p.given_name.trim(),
-                  family_name: p.family_name.trim(),
-                  born_on: p.born_on.trim(),
-                  gender: p.gender === "m" ? "m" : "f",
-                  email: p.email.trim() || undefined,
-                  phone: p.phone.trim() || undefined,
-                })),
-              });
-              navigation.replace("FlightConfirm", { booking: result });
-            } catch (e) {
-              setError(e.message || "Booking failed. Please try again.");
-            } finally {
-              setLoading(false);
-            }
-          }
-        }
-      ]
-    );
+    const pax = passengers.map(p => ({
+      given_name: p.given_name.trim(),
+      family_name: p.family_name.trim(),
+      born_on: p.born_on.trim(),
+      gender: p.gender === "m" ? "m" : "f",
+      email: p.email.trim() || undefined,
+      phone: p.phone.trim() || undefined,
+    }));
+
+    // Land on FlightConfirm with a booking shaped for that screen (it reads
+    // total_amount/total_currency).
+    const finish = (r) => {
+      if (r?.ok && r.booking) {
+        navigation.replace("FlightConfirm", {
+          booking: { ...r.booking, total_amount: r.booking.amount, total_currency: r.booking.currency },
+        });
+      } else {
+        setError(r?.error || "The booking was refused.");
+      }
+    };
+    const confirmHeld = (held) => async () => {
+      setLoading(true);
+      try {
+        finish(await api.confirmFlight({
+          hold: held.hold,
+          confirm: { confirm: true, offer_id: held.hold.offer_id, amount: held.hold.amount },
+        }));
+      } catch (e) { setError(e.message || "Couldn't complete the booking."); }
+      finally { setLoading(false); }
+    };
+    const confirmInstant = (amount) => async () => {
+      setLoading(true);
+      try {
+        finish(await api.confirmFlight({
+          offer_id: offer.id, passengers: pax,
+          confirm: { confirm: true, offer_id: offer.id, amount },
+        }));
+      } catch (e) { setError(e.message || "Couldn't complete the booking."); }
+      finally { setLoading(false); }
+    };
+
+    // Step 1: reserve the fare (no money) when the fare allows it.
+    setLoading(true);
+    try {
+      const held = await api.holdFlight(offer.id, pax);
+      setLoading(false);
+      if (held.holdable && held.hold) {
+        Alert.alert("Confirm & pay",
+          held.confirm_line || `Pay ${offer.total_currency} ${offer.total_amount} now for ${firstSeg?.origin} → ${lastSeg?.destination}?`,
+          [{ text: "Not yet", style: "cancel" }, { text: "Confirm & pay", onPress: confirmHeld(held) }]);
+      } else {
+        const amount = held.offer?.amount ?? Number(offer.total_amount);
+        Alert.alert("Confirm & pay",
+          held.confirm_line || `This fare can't be held — confirming books and pays ${offer.total_currency} ${offer.total_amount} now.`,
+          [{ text: "Not yet", style: "cancel" }, { text: "Confirm & pay", onPress: confirmInstant(amount) }]);
+      }
+    } catch (e) {
+      setLoading(false);
+      setError(e.message || "Couldn't reserve the fare. Please try again.");
+    }
   }
 
   return (

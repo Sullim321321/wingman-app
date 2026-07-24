@@ -385,6 +385,13 @@ export const searchFlights = (body) =>
 export const getFlightOffer = (offerId) => req("/flights/offer/" + offerId);
 export const bookFlight = (body) =>
   req("/flights/book", { method: "POST", body: JSON.stringify(body) });
+// C6b — flight hold-then-confirm. holdFlight reserves the fare when possible (no money)
+// and returns holdable:false when the fare can only be bought instantly; confirmFlight is
+// the charge, refused server-side without { confirm:true } matching the held offer + price.
+export const holdFlight = (offer_id, passengers) =>
+  req("/flights/hold", { method: "POST", body: JSON.stringify({ offer_id, passengers }) });
+export const confirmFlight = (body) =>
+  req("/flights/confirm", { method: "POST", body: JSON.stringify(body) });
 export const getFlightOrders = () => req("/flights/orders");
 
 // Duffel Stays — hold-then-confirm hotels (C6a).
@@ -398,6 +405,10 @@ export const holdStay = (rate) =>
   req("/stays/hold", { method: "POST", body: JSON.stringify({ rate }) });
 export const confirmStay = (body) =>
   req("/stays/confirm", { method: "POST", body: JSON.stringify(body) });
+// C6c — for hotels Duffel can't book: Wingman drafts a request email; the app opens it in
+// the user's mail client to send. Returns { subject, body, mailto, to }.
+export const draftBookingEmail = (body) =>
+  req("/concierge/booking-email", { method: "POST", body: JSON.stringify(body) });
 
 // ─── AMBIENT INGESTION ────────────────────────────────────────────────────────
 // Natural language trip drafting ("One sentence. A complete trip drafted.")

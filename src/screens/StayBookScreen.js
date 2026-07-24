@@ -9,11 +9,11 @@
 import React, { useState, useCallback } from "react";
 import {
   SafeAreaView, ScrollView, View, Text, TextInput, Pressable,
-  StyleSheet, ActivityIndicator, Alert,
+  StyleSheet, ActivityIndicator, Alert, Linking,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C, T } from "../theme";
-import { searchStays, getStayRates, holdStay, confirmStay } from "../api";
+import { searchStays, getStayRates, holdStay, confirmStay, draftBookingEmail } from "../api";
 
 function isoDay(d) { return d.toISOString().slice(0, 10); }
 function fmt(day) {
@@ -46,6 +46,9 @@ export default function StayBookScreen({ route, navigation }) {
   const [holdBusy, setHoldBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [done, setDone] = useState(null);
+
+  const [emailHotel, setEmailHotel] = useState("");
+  const [emailBusy, setEmailBusy] = useState(false);
 
   const runSearch = useCallback(async () => {
     setBusy(true); setErr(null); setResults(null); setOpenId(null); setHold(null); setDone(null);
@@ -99,6 +102,25 @@ export default function StayBookScreen({ route, navigation }) {
     } catch (e) { setErr(e?.message || "Couldn't complete the booking."); }
     finally { setConfirming(false); }
   }, [hold, guestName]);
+
+  const draftEmail = useCallback(async () => {
+    const name = emailHotel.trim();
+    if (!name) { Alert.alert("Which hotel?", "Enter the hotel's name to draft the request."); return; }
+    setEmailBusy(true); setErr(null);
+    try {
+      const r = await draftBookingEmail({
+        hotel_name: name, area: city || undefined,
+        check_in: checkIn, check_out: checkOut,
+        guest_name: guestName.trim() || undefined,
+      });
+      if (r?.mailto) {
+        const ok = await Linking.canOpenURL(r.mailto);
+        if (ok) await Linking.openURL(r.mailto);
+        else Alert.alert("Draft ready", r.body || "Your mail app couldn't be opened.");
+      } else setErr(r?.error || "Couldn't draft the request.");
+    } catch (e) { setErr(e?.message || "Couldn't draft the request."); }
+    finally { setEmailBusy(false); }
+  }, [emailHotel, city, checkIn, checkOut, guestName]);
 
   // ── Confirmation success ──────────────────────────────────────────────────
   if (done) {
@@ -208,6 +230,18 @@ export default function StayBookScreen({ route, navigation }) {
           </View>
         ) : null}
 
+        {/* Concierge-email fallback — hotels Duffel can't book */}
+        <View style={s.emailCard}>
+          <Text style={s.emailKicker}>SOMEWHERE I CAN'T BOOK DIRECTLY?</Text>
+          <Text style={s.emailBlurb}>Name it and I'll draft the request — dates and guest filled in. You send it from your own mail.</Text>
+          <View style={s.emailRow}>
+            <TextInput style={s.emailInput} value={emailHotel} onChangeText={setEmailHotel} placeholder="Hotel name" placeholderTextColor={C.mutD} />
+            <Pressable style={s.emailGo} onPress={draftEmail} disabled={emailBusy}>
+              <Text style={s.emailGoT}>{emailBusy ? "…" : "Draft"}</Text>
+            </Pressable>
+          </View>
+        </View>
+
         <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
@@ -255,6 +289,14 @@ const s = StyleSheet.create({
   confirmActions: { flexDirection: "row", gap: 12, marginTop: 16 },
   ghost: { borderWidth: 1, borderColor: C.line, borderRadius: 12, paddingVertical: 14, paddingHorizontal: 18, alignItems: "center", justifyContent: "center" },
   ghostT: { fontFamily: T.sansM, fontSize: 15, color: C.mut },
+
+  emailCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 16, marginTop: 26 },
+  emailKicker: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2, color: C.mut },
+  emailBlurb: { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 13.5, color: C.mut, marginTop: 8, lineHeight: 19 },
+  emailRow: { flexDirection: "row", gap: 10, marginTop: 12 },
+  emailInput: { flex: 1, backgroundColor: C.card2, borderWidth: 1, borderColor: C.line, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontFamily: T.sansM, fontSize: 15, color: C.ink },
+  emailGo: { backgroundColor: C.parch, borderRadius: 10, paddingHorizontal: 18, justifyContent: "center" },
+  emailGoT: { fontFamily: T.sansM, fontSize: 14, color: C.inkD },
 
   doneWrap: { flex: 1, alignItems: "center", justifyContent: "center", padding: 30 },
   doneH: { fontFamily: T.serif, fontSize: 30, color: C.ink, marginTop: 12 },

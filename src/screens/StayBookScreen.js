@@ -149,7 +149,7 @@ export default function StayBookScreen({ route, navigation }) {
         </View>
 
         {mode && mode !== "live" ? (
-          <Text style={s.testBanner}>Test mode — no real charge is made. Flip your Duffel key to go live.</Text>
+          <Text style={s.testBanner}>Test mode — these are Duffel's sample hotels, not real availability or prices. Nothing is charged. A live key shows real rooms.</Text>
         ) : null}
 
         {/* Dates */}

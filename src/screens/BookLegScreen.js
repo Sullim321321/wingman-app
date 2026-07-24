@@ -183,11 +183,12 @@ export default function BookLegScreen({ route, navigation }) {
         <WMark />
         {testMode ? (
           <View style={s.testBanner}>
-            <Text style={s.testH}>TEST MODE — I CAN'T BUY THIS</Text>
+            <Text style={s.testH}>TEST MODE — SAMPLE FLIGHTS</Text>
             <Text style={s.testT}>
-              These are real fares, but the booking key is a sandbox one: it makes a
-              confirmation number with no seat behind it. Book directly with the airline,
-              then forward me the email and I'll watch the flight.
+              These are Duffel's sandbox flights, not real availability or prices — that's
+              why the schedules and fares look placeholder. Real search and booking need a
+              live key. For now, book directly with the airline and forward me the email,
+              and I'll watch the flight.
             </Text>
           </View>
         ) : null}

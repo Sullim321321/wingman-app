@@ -71,6 +71,8 @@ export default function CuratorScreen({ navigation }) {
   }, [wish, city]);
 
   const picks = data?.picks;
+  // Once you've asked something, the answer stands alone — the resting slate hides.
+  const answering = !!(dining && (dining.picks?.length || dining.error));
 
   return (
     <SafeAreaView style={s.app}>
@@ -118,10 +120,20 @@ export default function CuratorScreen({ navigation }) {
           </Pressable>
         </View>
 
-        {dining?.picks?.length ? (
+        {/* When you ask something, you get the answer — and only the answer. The
+            standing slate is the resting state; it steps aside so a reply isn't buried
+            under a generic list. Clear the answer to bring the slate back. */}
+        {answering ? (
           <View style={s.group}>
-            <Text style={s.kicker}>{dining.intent === "exact" ? "ON IT" : "TRY THESE"}</Text>
-            {dining.picks.map((p, i) => (
+            <View style={s.answerHead}>
+              <Text style={s.kicker}>{dining.intent === "exact" ? "ON IT" : "TRY THESE"}</Text>
+              <Pressable onPress={() => { setDining(null); setWish(""); }} hitSlop={8}>
+                <Text style={s.clearLink}>Clear</Text>
+              </Pressable>
+            </View>
+            {dining.error ? (
+              <View style={s.item}><Text style={s.why}>{dining.error}</Text></View>
+            ) : dining.picks.map((p, i) => (
               <View key={"dn" + i} style={[s.item, i > 0 && s.itemDiv]}>
                 <Text style={s.name}>{p.name}</Text>
                 {p.vibe ? <Text style={s.vibe}>{p.vibe}</Text> : null}
@@ -134,11 +146,11 @@ export default function CuratorScreen({ navigation }) {
 
         {busy ? <ActivityIndicator color={BRONZE} style={{ marginTop: 30 }} /> : null}
         {err ? <Text style={s.err}>{err}</Text> : null}
-        {data && data.known === false ? (
+        {!answering && data && data.known === false ? (
           <Text style={s.empty}>{data.note}</Text>
         ) : null}
 
-        {picks?.stay?.length ? (
+        {!answering && picks?.stay?.length ? (
           <>
             <View style={s.sectionRow}>
               <Text style={s.section}>WHERE TO STAY</Text>
@@ -167,7 +179,7 @@ export default function CuratorScreen({ navigation }) {
           </>
         ) : null}
 
-        {picks?.dine?.length ? (
+        {!answering && picks?.dine?.length ? (
           <>
             <Text style={s.section}>DINE</Text>
             <View style={s.group}>
@@ -182,7 +194,7 @@ export default function CuratorScreen({ navigation }) {
           </>
         ) : null}
 
-        {picks?.do?.length ? (
+        {!answering && picks?.do?.length ? (
           <>
             <Text style={s.section}>OFF THE BEATEN PATH</Text>
             <View style={s.group}>
@@ -230,6 +242,8 @@ const s = StyleSheet.create({
   sectionRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   bookLink: { fontFamily: T.sansM, fontSize: 12.5, color: BRONZE, marginTop: 22, marginBottom: 11 },
   kicker:  { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.4, color: BRONZE, padding: 15, paddingBottom: 0 },
+  answerHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingRight: 15 },
+  clearLink: { fontFamily: T.sansM, fontSize: 12.5, color: MUT, paddingTop: 15 },
 
   group:   { backgroundColor: CARD, borderWidth: 1, borderColor: LINE, borderRadius: 14, overflow: "hidden" },
   item:    { padding: 15 },

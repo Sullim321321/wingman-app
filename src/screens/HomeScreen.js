@@ -2152,9 +2152,9 @@ const s = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    backgroundColor: "rgba(255,255,255,0.04)",
+    backgroundColor: C.card,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.07)",
+    borderColor: C.line,
     borderRadius: 20,
   },
   signalDot: {
@@ -2165,7 +2165,7 @@ const s = StyleSheet.create({
   signalPillT: {
     fontFamily: T.sansM,
     fontSize: 11,
-    color: "rgba(255,255,255,0.75)",
+    color: C.mut,
     letterSpacing: 0.2,
   },
 

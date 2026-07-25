@@ -242,6 +242,37 @@ export const ramp = (key) => {
   return { fontSize: r.size, lineHeight: r.line, letterSpacing: r.track };
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SPACING — one 8pt-based scale. Rhythm is consistency: every margin and pad should
+// be a step on this scale, never an ad-hoc number. `screen` is the standard page
+// gutter; `gap` the standard space between stacked cards.
+// ─────────────────────────────────────────────────────────────────────────────
+export const SP = {
+  xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 26, xxxl: 40,
+  screen: 20,   // page gutter
+  gap: 12,      // between stacked elements
+  section: 26,  // between labelled sections
+};
+
+// RADIUS — one set. Cards and inputs use `lg`; pills use `pill`; the small chips `sm`.
+export const R = { sm: 8, md: 10, lg: 14, xl: 16, pill: 999 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PLANES — the card system, as spreadable presets. A component should say
+// `style={[CARD.raised, ...]}`, not re-declare bg + border + radius + shadow every
+// time. Three ranks, matching DEPTH above:
+//   raised   — a fact at rest (near-white on ivory)
+//   lifted   — the thing that needs you / inputs (pure white, same soft shadow)
+//   inverted — the ink plane (primary CTA, "Next Up") — paper text on deep ink
+//   flat     — a bordered container with no shadow (groups, list wrappers)
+// ─────────────────────────────────────────────────────────────────────────────
+export const CARD = {
+  raised:   { backgroundColor: C.card,  borderRadius: R.lg, borderWidth: 1, borderColor: C.line, ...SHADOW.soft },
+  lifted:   { backgroundColor: C.card2, borderRadius: R.lg, borderWidth: 1, borderColor: C.line, ...SHADOW.soft },
+  inverted: { backgroundColor: C.parch, borderRadius: R.lg },
+  flat:     { backgroundColor: C.card,  borderRadius: R.lg, borderWidth: 1, borderColor: C.line },
+};
+
 export const TS = {
   greetingH:   34,
   greetingSub: 15,

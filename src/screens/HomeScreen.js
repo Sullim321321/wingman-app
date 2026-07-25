@@ -2054,6 +2054,7 @@ const s = StyleSheet.create({
     paddingTop: 18,
   },
   editionDate: {
+    flex: 1,
     fontFamily: T.sansM,
     fontSize: 10,
     letterSpacing: 2.5,
@@ -2065,6 +2066,8 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
+    flexShrink: 0,      // keep the status on-screen; the date wraps instead of shoving it off
+    paddingLeft: 8,
   },
   editionDot: {
     width: 5,

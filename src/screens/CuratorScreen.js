@@ -14,7 +14,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { T } from "../theme";
-import { getCurate, curateDining } from "../api";
+import { getCurate, curateDining, getPockets } from "../api";
 
 const PAPER = "#F5F2EC", CARD = "#FCFAF5", INK = "#211E1A", MUT = "#9A948A",
       BRONZE = "#96754A", SAGE = "#5E7A63", LINE = "rgba(33,30,26,0.08)";
@@ -36,6 +36,7 @@ export default function CuratorScreen({ navigation }) {
   const [wish, setWish] = useState("");
   const [dining, setDining] = useState(null);
   const [diningBusy, setDiningBusy] = useState(false);
+  const [pockets, setPockets] = useState([]);   // free windows in the near future
 
   const load = useCallback(async (c) => {
     const where = (c ?? city).trim();
@@ -69,6 +70,32 @@ export default function CuratorScreen({ navigation }) {
     catch (e) { setDining({ error: e?.message || "Couldn't answer that." }); }
     finally { setDiningBusy(false); }
   }, [wish, city]);
+
+  // Your free windows, from the calendar — the Curator's "two hours to yourself" moment.
+  useEffect(() => {
+    (async () => {
+      try { const r = await getPockets(3); setPockets(r?.pockets || []); }
+      catch { /* pockets are a nicety; never block the Curator */ }
+    })();
+  }, []);
+
+  const fmtPocket = (p) => {
+    const s = new Date(p.start), e = new Date(p.end);
+    const day = s.toLocaleDateString("en-US", { weekday: "short" });
+    const t = (d) => d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    return `${day} ${t(s)}–${t(e)}`;
+  };
+
+  // Tapping a pocket curates FOR that window — the alive moment: free time → a suggestion.
+  const askForPocket = useCallback(async (p) => {
+    const hrs = Math.round(p.minutes / 60);
+    const request = `Something to do in my free time — ${fmtPocket(p)}, about ${hrs} ${hrs === 1 ? "hour" : "hours"} free. Off-beat, to my taste.`;
+    setWish(request);
+    setDiningBusy(true);
+    try { setDining(await curateDining({ city: city.trim(), request })); }
+    catch (e) { setDining({ error: e?.message || "Couldn't answer that." }); }
+    finally { setDiningBusy(false); }
+  }, [city]);
 
   const picks = data?.picks;
   // Once you've asked something, the answer stands alone — the resting slate hides.
@@ -148,6 +175,23 @@ export default function CuratorScreen({ navigation }) {
         {err ? <Text style={s.err}>{err}</Text> : null}
         {!answering && data && data.known === false ? (
           <Text style={s.empty}>{data.note}</Text>
+        ) : null}
+
+        {!answering && pockets.length ? (
+          <>
+            <Text style={s.section}>POCKETS OF TIME</Text>
+            <View style={s.group}>
+              {pockets.slice(0, 4).map((p, i) => (
+                <Pressable key={"pk" + i} style={[s.item, i > 0 && s.itemDiv]} onPress={() => askForPocket(p)}>
+                  <View style={s.itemHead}>
+                    <Ionicons name="time-outline" size={16} color={BRONZE} style={{ marginRight: 8 }} />
+                    <Text style={s.name}>{fmtPocket(p)}</Text>
+                  </View>
+                  <Text style={s.why}>{Math.round((p.minutes / 60) * 10) / 10} hrs free · tap for something to do</Text>
+                </Pressable>
+              ))}
+            </View>
+          </>
         ) : null}
 
         {!answering && picks?.stay?.length ? (

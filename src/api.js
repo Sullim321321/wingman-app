@@ -196,6 +196,8 @@ export const proposeTripFromInference = (data) =>
   req("/plan/propose-trip", { method: "POST", body: JSON.stringify(data) });
 
 // ── Curator ─────────────────────────────────────────────────────────────────
+// Free windows between your commitments — the Curator's "two hours to yourself" (Phase 3).
+export const getPockets = (days = 3) => req(`/pockets?days=${days}`);
 export const getCurate = (city) => req("/curate?city=" + encodeURIComponent(city));
 export const curateDining = (body) => req("/curate/dining", { method: "POST", body: JSON.stringify(body) });
 export const getCuratorSources = () => req("/curator/sources");

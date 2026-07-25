@@ -181,6 +181,8 @@ export const refreshTrip = (id) =>
 // under every booking that hangs off a flight. The one view no other travel app can
 // draw, because no other app kept the graph.
 export const getDossier = (id) => req("/trips/" + id + "/dossier");
+// "When to leave" — per-commitment door time from real travel time + buffer (Guardian).
+export const getDepartures = (id) => req("/trips/" + id + "/departures");
 
 // Today's page of the same document. Not a different endpoint shape — the same
 // chapters, the same leg cards, the same dependency lines, filtered to what's

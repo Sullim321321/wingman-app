@@ -26,7 +26,7 @@ import {
 import { C, T } from "../theme";
 import { BackBar, SerifText, FadeRise, tap } from "../components";
 import { Leg, RideCount } from "../tripdoc";
-import { getDossier, deleteLeg } from "../api";
+import { getDossier, deleteLeg, getDepartures } from "../api";
 
 const CHAPTERS = [
   { key: "in_motion", label: "IN MOTION", blurb: "Happening now." },
@@ -46,11 +46,15 @@ export default function DossierScreen({ route, navigation }) {
   const [err, setErr]   = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [departures, setDepartures] = useState(null);
 
   const load = useCallback(async () => {
     try { setData(await getDossier(tripId)); setErr(null); }
     catch (e) { setErr(e?.message || "Couldn't open this trip."); }
     finally { setBusy(false); setRefreshing(false); }
+    // "When to leave" — best-effort, never blocks the document. Guardian computes the
+    // door time from real travel time; we only surface entries it could actually work out.
+    try { const d = await getDepartures(tripId); setDepartures(d?.departures || []); } catch { setDepartures([]); }
   }, [tripId]);
 
   useEffect(() => { load(); }, [load]);
@@ -223,6 +227,23 @@ export default function DossierScreen({ route, navigation }) {
           </FadeRise>
         ) : null}
 
+        {/* WHEN TO LEAVE — the Guardian's door time, from real travel time + a stated
+            buffer. Only entries it could actually route are shown; it never guesses. */}
+        {Array.isArray(departures) && departures.some((d) => d.leave_by) ? (
+          <FadeRise delay={70}>
+            <View style={s.leaveCard}>
+              <Text style={s.arcLabel}>WHEN TO LEAVE</Text>
+              {departures.filter((d) => d.leave_by).slice(0, 4).map((d, i) => (
+                <View key={"lv" + i} style={[s.leaveRow, i > 0 && s.leaveDiv]}>
+                  <Text style={s.leaveTime}>Leave by {new Date(d.leave_by).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</Text>
+                  <Text style={s.leaveWhat}>{d.what}</Text>
+                  {d.why ? <Text style={s.leaveWhy}>{d.why}</Text> : null}
+                </View>
+              ))}
+            </View>
+          </FadeRise>
+        ) : null}
+
         {/* Every stop, collapsed by default — the granular detail is one tap away. */}
         {total > 0 ? (
           <Pressable style={s.toggle} onPress={() => { tap(); setShowAll((v) => !v); }} hitSlop={8}>
@@ -308,6 +329,13 @@ const s = StyleSheet.create({
   arcRow:   { marginBottom: 12 },
   arcName:  { fontFamily: T.serif, fontSize: 17, color: C.ink },
   arcMeta:  { fontFamily: T.sansM, fontSize: 12.5, color: C.mut, marginTop: 3 },
+
+  leaveCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 16, marginTop: 18 },
+  leaveRow:  { marginBottom: 12 },
+  leaveDiv:  { borderTopWidth: 1, borderTopColor: C.line, paddingTop: 12 },
+  leaveTime: { fontFamily: T.serif, fontSize: 17, color: C.ink },
+  leaveWhat: { fontFamily: T.sansM, fontSize: 12.5, color: C.mut, marginTop: 2 },
+  leaveWhy:  { fontFamily: T.sans, fontSize: 12, color: C.teal, marginTop: 3, lineHeight: 17 },
 
   toggle:   { alignSelf: "flex-start", marginTop: 18, paddingVertical: 6 },
   toggleT:  { fontFamily: T.sansM, fontSize: 13, color: C.gold },

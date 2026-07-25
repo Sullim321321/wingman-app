@@ -2126,31 +2126,34 @@ const s = StyleSheet.create({
   // ── Headline ──
   headlineWrap: {
     paddingHorizontal: 24,
-    paddingTop: 14,
+    paddingTop: 22,
   },
   hed: {
-    fontFamily: T.garamondSI,
-    fontSize: 34,
+    fontFamily: T.displayI,
+    fontSize: 36,
     color: C.ink,
-    lineHeight: 38,
-    letterSpacing: -0.3,
+    lineHeight: 40,
+    letterSpacing: -0.5,
   },
   hedGold: {
-    color: C.goldL,
-    fontFamily: T.garamondSI,
+    color: C.gold,
+    fontFamily: T.displayI,
   },
+  // The Atelier hero: the day's verdict set in Fraunces at display scale — the italic
+  // greeting drops into the upright headline. The REASON below stays serif-italic
+  // (T.serifI), so the display face is reserved for the verdict, never the explanation.
   hedPara: {
-    fontFamily: T.garamond,
-    fontSize: 22,
+    fontFamily: T.display,
+    fontSize: 31,
     color: C.ink,
-    lineHeight: 33,
-    letterSpacing: -0.2,
+    lineHeight: 38,
+    letterSpacing: -0.4,
   },
   hedGreet: {
-    fontFamily: T.garamondMI,
-    fontSize: 22,
+    fontFamily: T.displayI,
+    fontSize: 31,
     color: C.ink,
-    letterSpacing: -0.2,
+    letterSpacing: -0.4,
   },
 
   // ── Skeleton loading ──

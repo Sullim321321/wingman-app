@@ -229,7 +229,10 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPr
   let prose    = null;   // chief-of-staff body
   let editionSuffix = "";
 
-  const suffix = (d) => (d ? ` · ${String(d).toUpperCase()} BRIEFING` : "");
+  // Ceremony is not content. The big greeting already says this is the briefing and where
+  // you are; the edition line is just the date. (Was " · YOUR DESTINATION BRIEFING", which
+  // put "destination" on screen three times over.)
+  const suffix = () => "";
 
   if (hs?.state === "in_transit" && leg) {
     statusDotColor = C.gold;
@@ -277,7 +280,9 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPr
   } else if (hs?.state === "at_destination" && trip) {
     statusDotColor = C.gold;
     statusLabel    = "At destination";
-    const city = trip.destination_city || leg?.destination || "your destination";
+    // Resolve the real city (weatherCity knows it even when the leg/trip fields are blank),
+    // so the headline reads "You're in Nashville." — not the vague "your destination."
+    const city = trip.destination_city || leg?.destination || weatherCity || "your destination";
     editionSuffix = suffix(city);
     headline = `You're in ${city}.`;
     const parts = [];
@@ -285,7 +290,7 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPr
       const checkinTime = hotel.checkin_at ? new Date(hotel.checkin_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : null;
       parts.push(`${hotel.name} checks in at ${checkinTime || "3:00 PM"}`);
     }
-    if (w) parts.push(`it's ${w.temp}°${w.description ? `, ${w.description.toLowerCase()}` : ""}`);
+    // Weather is shown once — in the compact pill below, not here. (Was repeated in both.)
     const destPace = userPrefs?.travel_pace;
     if (destPace === "tight") parts.push("I'll remind you when it's time to leave for the airport");
     else if (destPace === "generous") parts.push("I'll build extra buffer into your return");

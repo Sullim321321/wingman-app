@@ -37,6 +37,12 @@ import {
   IBMPlexMono_400Regular,
   IBMPlexMono_500Medium,
 } from "@expo-google-fonts/ibm-plex-mono";
+import {
+  Fraunces_300Light,
+  Fraunces_400Regular,
+  Fraunces_400Regular_Italic,
+  Fraunces_600SemiBold,
+} from "@expo-google-fonts/fraunces";
 
 import { C, T } from "./src/theme";
 import { ThemeProvider, useTheme } from "./src/ThemeContext";
@@ -503,6 +509,10 @@ export default function App() {
     Inter_600SemiBold,
     IBMPlexMono_400Regular,
     IBMPlexMono_500Medium,
+    Fraunces_300Light,
+    Fraunces_400Regular,
+    Fraunces_400Regular_Italic,
+    Fraunces_600SemiBold,
   });
 
   // Safety timeout: if fonts haven't loaded after 5 s (e.g. native module stuck on iOS 26),

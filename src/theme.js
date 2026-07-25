@@ -62,12 +62,17 @@ export const C = {
   // ink fill with paper text, so cream-on-dark CTAs become ink-on-paper CTAs for free.
 
   // ─── Grounds ──────────────────────────────────────────────────────────────────
-  bg:    "#F5F2EC",   // THE GROUND — warm ivory paper. Type sits here.
-  card:  "#FCFAF5",   // RAISED — facts, ledger rows, resting cards (near-white)
+  // ─── ATELIER (v6) — alabaster paper · deeper ink · one refined bronze ──────────
+  // Evolved from the v5 ivory/bronze for a premium-editorial bar: a cooler, crisper
+  // alabaster ground (the oatmeal cast gone), a deeper near-black ink, and a darker,
+  // more precise bronze that reads as one spot colour, not decoration. Names unchanged
+  // so every call site re-skins for free.
+  bg:    "#F4F3EE",   // THE GROUND — alabaster paper. Type sits here.
+  card:  "#FBFAF6",   // RAISED — facts, ledger rows, resting cards (near-white)
   card2: "#FFFFFF",   // LIFTED — the thing that needs you; inputs; pressed states
-  card3: "#EFEBE2",   // Tertiary — skeleton shimmer, hover, pressed
-  parch: "#211E1A",   // THE INVERTED PLANE — deep ink (primary CTA, "Next Up" card)
-  parch2:"#2C2A24",   // Deeper ink for inner elements / gradient end
+  card3: "#EDEAE1",   // Tertiary — skeleton shimmer, hover, pressed
+  parch: "#17130E",   // THE INVERTED PLANE — deep ink (primary CTA, "Next Up" card)
+  parch2:"#241F18",   // Deeper ink for inner elements / gradient end
 
   // ─── Structure ──────────────────────────────────────────────────────────────
   line:  "rgba(33,30,26,0.10)",     // The standard hairline on ivory.
@@ -76,8 +81,8 @@ export const C = {
   lineSh:"rgba(0,0,0,0.10)",         // Soft shadow beneath
 
   // ─── Ink ────────────────────────────────────────────────────────────────────
-  ink:   "#211E1A",   // Deep warm ink — the reading colour on paper.
-  inkD:  "#F5F2EC",   // Ink on the inverted (ink) plane → paper
+  ink:   "#17130E",   // Deep warm ink — the reading colour on paper.
+  inkD:  "#F4F3EE",   // Ink on the inverted (ink) plane → paper
   mut:   "#6B655C",   // Secondary — fully readable on ivory
   mutD:  "#7F796F",   // Tertiary — quiet, structural. Deepened from #9A948A (2.69:1,
                       // below even large-text AA) to clear contrast on ivory while staying
@@ -86,37 +91,37 @@ export const C = {
   // ─── The accent — one bronze ────────────────────────────────────────────────
   // On a black page the accent was the brightest thing (cream). On ivory the accent
   // is the one warm, saturated thing: bronze. Same role, repointed value.
-  gold:  "#96754A",   // → bronze. The accent. (Kept as `gold` so all sites work.)
-  accent:"#96754A",
-  goldD: "#7C5F3B",   // pressed
-  goldL: "#A98C57",   // gradient start / lighter bronze
-  goldBtn:"#96754A",
-  goldGlass: "#96754A14",
+  gold:  "#8A6A3E",   // → bronze. The accent. (Kept as `gold` so all sites work.)
+  accent:"#8A6A3E",
+  goldD: "#6F5433",   // pressed
+  goldL: "#A6875A",   // gradient start / lighter bronze
+  goldBtn:"#8A6A3E",
+  goldGlass: "#8A6A3E14",
 
-  brass:  "#96754A",
-  brassD: "#7C5F3B",
-  brassL: "#B08E5A",
+  brass:  "#8A6A3E",
+  brassD: "#6F5433",
+  brassL: "#A6875A",
 
   // ─── Status ─────────────────────────────────────────────────────────────────
-  teal:   "#5E7A63",   // HOLDS / handled. Sage.
-  coral:  "#B0433A",   // WON'T SURVIVE. The signal, deepened for contrast on ivory.
-  amber:  "#96754A",   // TIGHT. Bronze doubles as caution.
+  teal:   "#55705C",   // HOLDS / handled. Sage.
+  coral:  "#A6362C",   // WON'T SURVIVE. The signal, deepened for contrast on ivory.
+  amber:  "#8A6A3E",   // TIGHT. Bronze doubles as caution.
   indigo: "#5E6B85",   // Premium / landed — slate.
 
-  ok:    "#5E7A63",
-  warn:  "#96754A",
-  risk:  "#B0433A",
+  ok:    "#55705C",
+  warn:  "#8A6A3E",
+  risk:  "#A6362C",
 
   // ─── Codified semantics (same contract) ─────────────────────────────────────
-  action:     "#96754A",   // the primary accent affordance → bronze
-  confirmed:  "#5E7A63",
-  attention:  "#B0433A",
-  attentionM: "#96754A",
+  action:     "#8A6A3E",   // the primary accent affordance → bronze
+  confirmed:  "#55705C",
+  attention:  "#A6362C",
+  attentionM: "#8A6A3E",
   premium:    "#5E6B85",
   neutral:    "#6B655C",
-  actionFill:    "#96754A12",
-  confirmedFill: "#5E7A6318",
-  attentionFill: "#B0433A1C",
+  actionFill:    "#8A6A3E12",
+  confirmedFill: "#55705C18",
+  attentionFill: "#A6362C1C",
 
   // ─── Glass (light) ──────────────────────────────────────────────────────────
   glassTab:  "rgba(245,242,236,0.94)",
@@ -128,6 +133,15 @@ export const C = {
 // TYPE
 // ─────────────────────────────────────────────────────────────────────────────
 export const T = {
+  // DISPLAY — Fraunces. The Atelier voice: the biggest moments only — the greeting,
+  // the verdict, the place-name, section headlines. High-contrast, characterful, set
+  // huge with a small roman line dropping into an oversized italic. NOT for body or
+  // rows (that stays `serif`/`sans`). Reserve it and it stays special.
+  display:  "Fraunces_400Regular",
+  displayI: "Fraunces_400Regular_Italic",   // the place-name, the emphasis
+  displayL: "Fraunces_300Light",            // the small roman lead ("You're in")
+  displayB: "Fraunces_600SemiBold",         // rare, for the very top of the ramp
+
   // VOICE — Source Serif 4. What Wingman is saying.
   serif:  "SourceSerif4_300Light",
   serifI: "SourceSerif4_300Light_Italic",
@@ -208,13 +222,13 @@ export const litEdge = { borderTopColor: "rgba(0,0,0,0.03)" };
 // decorative sweep. If a gradient is visible AS a gradient, it is wrong.
 export const GRAD = {
   // On ivory the CTA is INK (dark on light), and the "dark" planes become light.
-  gold:    ["#2C2A24", "#211E1A", "#1A1815"],   // primary CTA → ink
-  goldSub: ["#2C2A24", "#211E1A"],
-  brass:   ["#B08E5A", "#96754A", "#7C5F3B"],   // monogram — bronze
-  teal:    ["#6E8B74", "#5E7A63", "#4C6551"],   // sage
+  gold:    ["#241F18", "#17130E", "#1A1815"],   // primary CTA → ink
+  goldSub: ["#241F18", "#17130E"],
+  brass:   ["#A6875A", "#8A6A3E", "#6F5433"],   // monogram — bronze
+  teal:    ["#6E8B74", "#55705C", "#4C6551"],   // sage
   dark:    ["#FCFAF5", "#EFEBE2"],              // was a dark plane → light card
-  parch:   ["#2C2A24", "#211E1A"],              // the inverted plane → ink
-  goldBtn: ["#211E1A", "#1A1815"],              // the CTA is ink
+  parch:   ["#241F18", "#17130E"],              // the inverted plane → ink
+  goldBtn: ["#17130E", "#1A1815"],              // the CTA is ink
   raised:  ["#FFFFFF", "#FCFAF5"],              // RAISED plane
   lifted:  ["#FFFFFF", "#F7F4EE"],              // LIFTED plane
 };
@@ -294,4 +308,34 @@ export const TS = {
   btnLabel:    15,
   btnSub:      13,
   statusBadge: 10,
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ATELIER — the v6 identity primitives. The eyebrow (tiny, tracked, bronze), the
+// folio (a monospaced No.), the hairline tick, and the watermark opacity. These are
+// the details that make the page read as a finely-set object rather than a screen.
+// ─────────────────────────────────────────────────────────────────────────────
+export const ATELIER = {
+  eyebrow:   { fontFamily: T.sansB, fontSize: 10, letterSpacing: 3.4, color: C.mutD, textTransform: "uppercase" },
+  eyebrowHi: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 3.4, color: C.gold, textTransform: "uppercase" },
+  folio:     { fontFamily: T.mono, fontSize: 10, letterSpacing: 1, color: C.gold },
+  tickW:     22,   // width of the bronze tick that sits on the masthead hairline
+  watermark: "rgba(23,19,14,0.045)",   // the faint Fraunces W behind the page
+};
+
+// NIGHT — the in-transit / day-of mode. Cream Fraunces on near-black ink, one warmer
+// bronze that survives the dark. A mode held in reserve, like colour and motion, so it
+// means "you're moving" when it appears. Wired where the day-of surfaces render.
+export const NIGHT = {
+  bg:    "#1B1712",   // ink ground
+  card:  "#241F18",   // raised on ink
+  card2: "#2B251D",   // lifted
+  ink:   "#F1ECE2",   // paper text
+  mut:   "#A79E8F",
+  mutD:  "#7E7566",
+  gold:  "#C29A5E",   // bronze, warmed to survive the dark
+  line:  "rgba(241,236,226,0.14)",
+  teal:  "#7C9A80",
+  coral: "#D06A5E",
+  watermark: "rgba(241,236,226,0.05)",
 };

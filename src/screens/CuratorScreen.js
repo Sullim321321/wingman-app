@@ -14,6 +14,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { T } from "../theme";
+import { FadeRise } from "../components";
 import { getCurate, curateDining, getPockets } from "../api";
 
 const PAPER = "#F5F2EC", CARD = "#FCFAF5", INK = "#211E1A", MUT = "#9A948A",
@@ -104,6 +105,7 @@ export default function CuratorScreen({ navigation }) {
   return (
     <SafeAreaView style={s.app}>
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+      <FadeRise>
 
         <View style={s.head}>
           <View style={s.brand}>
@@ -254,6 +256,7 @@ export default function CuratorScreen({ navigation }) {
         ) : null}
 
         <View style={{ height: 150 }} />
+      </FadeRise>
       </ScrollView>
     </SafeAreaView>
   );

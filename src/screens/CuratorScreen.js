@@ -209,7 +209,7 @@ export default function CuratorScreen({ navigation }) {
           </>
         ) : null}
 
-        <View style={{ height: 40 }} />
+        <View style={{ height: 150 }} />
       </ScrollView>
     </SafeAreaView>
   );

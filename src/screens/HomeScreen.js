@@ -1672,7 +1672,7 @@ export default function HomeScreen({ navigation }) {
               .map((p, i) => (
                 <Pressable key={"amb" + i} style={s.ambientRow} onPress={() => { tap(); navigation.navigate("Curator"); }}>
                   <Text style={s.ambientName}>{p.name}</Text>
-                  {p.why ? <Text style={s.ambientWhy} numberOfLines={1}>{p.why}</Text> : null}
+                  {p.why ? <Text style={s.ambientWhy} numberOfLines={2}>{p.why}</Text> : null}
                 </Pressable>
               ))}
           </View>
@@ -1788,7 +1788,7 @@ export default function HomeScreen({ navigation }) {
         />
 
         {/* Room for the floating "Ask Wingman" pill, which now shows on Home. */}
-        <View style={{ height: 96 }} />
+        <View style={{ height: 150 }} />
       </ScrollView>
     </SafeAreaView>
   );

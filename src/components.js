@@ -199,7 +199,7 @@ export function Masthead({ markSize = 24, gap = 9, color = C.brass, style }) {
 // ─── Back navigation bar — frosted glass ─────────────────────────────────────
 export function BackBar({ nav, label = "", serif = false }) {
   return (
-    <SafeBlur intensity={60} tint="dark" style={g.backbarBlur}>
+    <SafeBlur intensity={60} tint="light" style={g.backbarBlur}>
       <View style={g.backbar}>
         <Pressable onPress={() => { tap(); nav.goBack(); }} style={g.backBtn} accessibilityRole="button" accessibilityLabel="Go back">
           <Text style={g.backArrow}>‹</Text>

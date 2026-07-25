@@ -357,48 +357,48 @@ const s = StyleSheet.create({
   titleRow: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", marginTop: 8 },
   h1:   { fontFamily: T.serif, fontSize: 30, lineHeight: 36, color: C.ink, flex: 1, paddingRight: 12 },
   edit: { fontFamily: T.sansM, fontSize: 13, color: C.gold, paddingBottom: 4 },
-  live: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2, color: C.teal, marginTop: 8, marginBottom: 4 },
+  live: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2, color: C.teal, marginTop: 8, marginBottom: 4 },
 
   needsCard:  { backgroundColor: C.attentionFill, borderWidth: 1, borderColor: C.coral, borderRadius: 14, padding: 15, marginTop: 18 },
   needsLabel: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.4, color: C.coral, marginBottom: 8 },
-  needsItem:  { fontFamily: T.sans, fontSize: 14, color: C.ink, lineHeight: 20 },
+  needsItem:  { fontFamily: T.sans, fontSize: 15, color: C.ink, lineHeight: 20 },
 
   arc:      { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 16, marginTop: 18 },
   arcLabel: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.6, color: C.gold, marginBottom: 12 },
   arcRow:   { marginBottom: 12 },
-  arcName:  { fontFamily: T.serif, fontSize: 17, color: C.ink },
-  arcMeta:  { fontFamily: T.sansM, fontSize: 12.5, color: C.mut, marginTop: 3 },
+  arcName:  { fontFamily: T.serif, fontSize: 16, color: C.ink },
+  arcMeta:  { fontFamily: T.sansM, fontSize: 13, color: C.mut, marginTop: 3 },
 
   leaveCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 16, marginTop: 18 },
   leaveRow:  { marginBottom: 12 },
   leaveDiv:  { borderTopWidth: 1, borderTopColor: C.line, paddingTop: 12 },
-  leaveTime: { fontFamily: T.serif, fontSize: 17, color: C.ink },
-  leaveWhat: { fontFamily: T.sansM, fontSize: 12.5, color: C.mut, marginTop: 2 },
-  leaveWhy:  { fontFamily: T.sans, fontSize: 12, color: C.teal, marginTop: 3, lineHeight: 17 },
+  leaveTime: { fontFamily: T.serif, fontSize: 16, color: C.ink },
+  leaveWhat: { fontFamily: T.sansM, fontSize: 13, color: C.mut, marginTop: 2 },
+  leaveWhy:  { fontFamily: T.sans, fontSize: 13, color: C.teal, marginTop: 3, lineHeight: 17 },
 
   toggle:   { alignSelf: "flex-start", marginTop: 18, paddingVertical: 6 },
   toggleT:  { fontFamily: T.sansM, fontSize: 13, color: C.gold },
 
   stayRow:  { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 16, marginBottom: 10 },
-  stayName: { fontFamily: T.serif, fontSize: 17, color: C.ink },
-  stayMeta: { fontFamily: T.sansM, fontSize: 12.5, color: C.mut, marginTop: 3 },
+  stayName: { fontFamily: T.serif, fontSize: 16, color: C.ink },
+  stayMeta: { fontFamily: T.sansM, fontSize: 13, color: C.mut, marginTop: 3 },
 
   chapter:      { marginTop: 26 },
   chapterHead:  { marginBottom: 12 },
   chapterLabel: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.6, color: C.gold },
-  chapterBlurb: { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 14, color: C.mut, marginTop: 4 },
+  chapterBlurb: { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 15, color: C.mut, marginTop: 4 },
 
 
 
   spineBtn:  { marginTop: 24, borderWidth: 1, borderColor: C.line, borderRadius: 12,
                paddingVertical: 14, alignItems: "center" },
-  spineBtnT: { fontFamily: T.sansM, fontSize: 13.5, color: C.gold },
+  spineBtnT: { fontFamily: T.sansM, fontSize: 13, color: C.gold },
 
   bookBtn:   { marginTop: 24, backgroundColor: C.gold, borderRadius: 12,
                paddingVertical: 15, alignItems: "center" },
-  bookBtnT:  { fontFamily: T.sansB, fontSize: 14, color: C.bg, letterSpacing: 0.3 },
+  bookBtnT:  { fontFamily: T.sansB, fontSize: 15, color: C.bg, letterSpacing: 0.3 },
 
-  idea: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 1.8, color: C.amber, marginTop: 8, marginBottom: 4 },
-  empty: { fontFamily: T.sans, fontSize: 14.5, color: C.mut, marginTop: 20, lineHeight: 22 },
-  err:   { fontFamily: T.sans, fontSize: 14, color: C.coral, marginTop: 16 },
+  idea: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 1.8, color: C.amber, marginTop: 8, marginBottom: 4 },
+  empty: { fontFamily: T.sans, fontSize: 15, color: C.mut, marginTop: 20, lineHeight: 22 },
+  err:   { fontFamily: T.sans, fontSize: 15, color: C.coral, marginTop: 16 },
 });

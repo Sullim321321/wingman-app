@@ -116,11 +116,11 @@ const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
   masthead: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 8 },
   title: { fontFamily: T.garamondSI, fontSize: 34, color: C.ink, lineHeight: 40 },
-  sub: { fontFamily: T.sans, fontSize: 14, lineHeight: 20, color: C.mut, marginTop: 8 },
+  sub: { fontFamily: T.sans, fontSize: 15, lineHeight: 20, color: C.mut, marginTop: 8 },
   emptyCard: {
     marginHorizontal: 24, marginTop: 16, padding: 22, borderRadius: 16,
     backgroundColor: C.card, borderWidth: 1, borderColor: C.line, ...litEdge, ...SHADOW.soft,
   },
-  emptyHed: { fontFamily: T.garamondSI, fontSize: 24, color: C.ink, marginBottom: 8 },
-  emptyBody: { fontFamily: T.sans, fontSize: 14, lineHeight: 21, color: C.mut },
+  emptyHed: { fontFamily: T.garamondSI, fontSize: 22, color: C.ink, marginBottom: 8 },
+  emptyBody: { fontFamily: T.sans, fontSize: 15, lineHeight: 21, color: C.mut },
 });

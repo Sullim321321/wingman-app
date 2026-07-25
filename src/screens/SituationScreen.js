@@ -249,33 +249,33 @@ const s = StyleSheet.create({
   // things that are DONE, not things that need you.
   handled:    { backgroundColor: C.card, borderRadius: 14, padding: 15, marginBottom: 18,
                 borderWidth: 1, borderColor: C.line, borderLeftWidth: 2, borderLeftColor: C.teal },
-  handledH:   { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2, color: C.teal, marginBottom: 10 },
+  handledH:   { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2, color: C.teal, marginBottom: 10 },
   handledRow: { marginBottom: 9 },
-  handledDid: { fontFamily: T.sansM, fontSize: 14, color: C.ink },
-  handledWhy: { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 14, color: C.mut, lineHeight: 20, marginTop: 3 },
+  handledDid: { fontFamily: T.sansM, fontSize: 15, color: C.ink },
+  handledWhy: { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 15, color: C.mut, lineHeight: 20, marginTop: 3 },
 
   app: { flex: 1, backgroundColor: C.bg },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
-  err: { fontFamily: T.sansM, fontSize: 14, color: C.coral },
-  retry: { fontFamily: T.sansB, fontSize: 14, color: C.gold },
+  err: { fontFamily: T.sansM, fontSize: 15, color: C.coral },
+  retry: { fontFamily: T.sansB, fontSize: 15, color: C.gold },
 
   topRule: { height: 3, backgroundColor: C.coral },
   scroll: { padding: 20, paddingBottom: 10 },
 
   bar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 22 },
-  close: { fontFamily: T.sansM, fontSize: 14, color: C.mut },
-  barT: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2.6, color: C.gold },
+  close: { fontFamily: T.sansM, fontSize: 15, color: C.mut },
+  barT: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.6, color: C.gold },
 
   head: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 18 },
-  kicker: { fontFamily: T.sansB, fontSize: 9.5, letterSpacing: 2.2, color: C.coral, marginBottom: 7 },
-  flight: { fontFamily: T.sansM, fontSize: 13.5, color: C.mut },
-  delay: { fontFamily: T.serifB, fontSize: 26, color: C.ink, letterSpacing: -0.5 },
+  kicker: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.2, color: C.coral, marginBottom: 7 },
+  flight: { fontFamily: T.sansM, fontSize: 13, color: C.mut },
+  delay: { fontFamily: T.serifB, fontSize: 30, color: C.ink, letterSpacing: -0.5 },
 
-  voice: { fontFamily: T.garamondI, fontSize: 19, lineHeight: 27, color: C.goldL,
+  voice: { fontFamily: T.garamondI, fontSize: 22, lineHeight: 27, color: C.goldL,
            fontStyle: "italic", marginBottom: 30 },
 
   sect: { marginBottom: 18 },
-  sectH: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2.6, color: C.gold },
+  sectH: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.6, color: C.gold },
 
   node: { flexDirection: "row", gap: 14 },
   rail: { alignItems: "center", width: 14 },
@@ -284,28 +284,28 @@ const s = StyleSheet.create({
 
   nodeBody: { flex: 1, paddingBottom: 26 },
   nodeTop: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 10 },
-  nodeT: { flex: 1, fontFamily: T.sansM, fontSize: 15.5, color: C.ink },
-  verdict: { fontFamily: T.sansB, fontSize: 8.5, letterSpacing: 1.2, marginTop: 3 },
-  why: { fontFamily: T.sans, fontSize: 13.5, lineHeight: 20, color: C.ink, opacity: 0.8, marginTop: 6 },
+  nodeT: { flex: 1, fontFamily: T.sansM, fontSize: 16, color: C.ink },
+  verdict: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 1.2, marginTop: 3 },
+  why: { fontFamily: T.sans, fontSize: 13, lineHeight: 20, color: C.ink, opacity: 0.8, marginTop: 6 },
 
   reasons: { marginTop: 9, paddingLeft: 2 },
-  reason: { fontFamily: T.garamondI, fontSize: 14, lineHeight: 20, color: C.gold,
+  reason: { fontFamily: T.garamondI, fontSize: 15, lineHeight: 20, color: C.gold,
             fontStyle: "italic", opacity: 0.75 },
 
   check: { alignSelf: "flex-start", marginTop: 11, borderWidth: 1, borderColor: C.line,
            borderRadius: 9, paddingHorizontal: 13, paddingVertical: 7 },
-  checkT: { fontFamily: T.sansM, fontSize: 12.5, color: C.gold },
+  checkT: { fontFamily: T.sansM, fontSize: 13, color: C.gold },
 
   clear: { flexDirection: "row", alignItems: "flex-start", gap: 11, borderWidth: 1,
            borderColor: "rgba(45,184,150,0.3)", borderRadius: 14, padding: 16 },
   clearT: { flex: 1, fontFamily: T.garamondI, fontSize: 16, lineHeight: 23, color: C.ink, fontStyle: "italic" },
 
   limits: { borderTopWidth: 1, borderTopColor: C.line, paddingTop: 18, marginTop: 6 },
-  limitsH: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2.6, color: C.mut, marginBottom: 9 },
-  limitsT: { fontFamily: T.sans, fontSize: 13.5, lineHeight: 20, color: C.mut },
+  limitsH: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.6, color: C.mut, marginBottom: 9 },
+  limitsT: { fontFamily: T.sans, fontSize: 13, lineHeight: 20, color: C.mut },
 
   foot: { padding: 20, borderTopWidth: 1, borderTopColor: C.line, backgroundColor: C.bg },
   cta: { backgroundColor: C.gold, borderRadius: 13, paddingVertical: 16, alignItems: "center" },
   ctaT: { fontFamily: T.sansB, fontSize: 15, color: C.inkD },
-  footNote: { fontFamily: T.sansM, fontSize: 10.5, color: C.mut, textAlign: "center", marginTop: 12 },
+  footNote: { fontFamily: T.sansM, fontSize: 11, color: C.mut, textAlign: "center", marginTop: 12 },
 });

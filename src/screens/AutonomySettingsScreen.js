@@ -226,7 +226,7 @@ export default function AutonomySettingsScreen({ navigation }) {
               <Text style={s.profilePromptT}>Traveler profile required</Text>
               <Text style={s.profilePromptSub}>Wingman needs your name, DOB, and gender to rebook on your behalf. Passport is optional.</Text>
             </View>
-            <Text style={{ color: C.gold, fontSize: 18 }}>›</Text>
+            <Text style={{ color: C.gold, fontSize: 16 }}>›</Text>
           </Pressable>
         )}
 
@@ -351,8 +351,8 @@ const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
 
   hero: { marginBottom: 20 },
-  heroH: { color: C.ink, fontSize: 28, fontFamily: T.serifB, lineHeight: 36, marginBottom: 10 },
-  heroSub: { color: C.mut, fontSize: 14, lineHeight: 21 },
+  heroH: { color: C.ink, fontSize: 30, fontFamily: T.serifB, lineHeight: 36, marginBottom: 10 },
+  heroSub: { color: C.mut, fontSize: 15, lineHeight: 21 },
 
   dialWrap: { marginBottom: 26 },
   dialLabels: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
@@ -368,31 +368,31 @@ const s = StyleSheet.create({
 
   plain:     { backgroundColor: C.card, borderRadius: 14, padding: 16, marginTop: 18,
                borderWidth: 1, borderColor: C.line, borderTopColor: C.lineHi },
-  plainH:    { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2, color: C.mutD, marginBottom: 10 },
+  plainH:    { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2, color: C.mutD, marginBottom: 10 },
   plainRow:  { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 9 },
   plainDot:  { width: 6, height: 6, borderRadius: 3, marginTop: 6 },
-  plainT:    { fontFamily: T.sans, fontSize: 14, color: C.ink, flex: 1, lineHeight: 20 },
+  plainT:    { fontFamily: T.sans, fontSize: 15, color: C.ink, flex: 1, lineHeight: 20 },
 
   modeRow: { flexDirection: "row", alignItems: "flex-start", gap: 14, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.line },
   modeRadio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: C.line, alignItems: "center", justifyContent: "center", marginTop: 2 },
   modeRadioOn: { borderColor: C.gold },
   modeRadioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: C.gold },
-  modeIcon: { fontSize: 14, color: C.gold },
+  modeIcon: { fontSize: 15, color: C.gold },
   modeTitle: { color: C.ink, fontSize: 15, fontFamily: T.sansB },
-  modeDesc: { color: C.mut, fontSize: 12, lineHeight: 18, marginTop: 3 },
+  modeDesc: { color: C.mut, fontSize: 13, lineHeight: 18, marginTop: 3 },
 
   thresholdLabel: { color: C.mut, fontSize: 13 },
-  thresholdValue: { color: C.gold, fontSize: 26, fontFamily: T.serifB },
+  thresholdValue: { color: C.gold, fontSize: 30, fontFamily: T.serifB },
   sliderEdge: { color: C.mut, fontSize: 11 },
   thresholdBtn: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 20, borderWidth: 1, borderColor: C.line, backgroundColor: C.card },
   thresholdBtnActive: { borderColor: C.gold, backgroundColor: "rgba(201,169,110,0.1)" },
   thresholdBtnT: { color: C.mut, fontSize: 13, fontFamily: T.sansM },
   thresholdBtnTActive: { color: C.gold },
-  thresholdNote: { color: C.mut, fontSize: 12, lineHeight: 18, marginTop: 8 },
+  thresholdNote: { color: C.mut, fontSize: 13, lineHeight: 18, marginTop: 8 },
 
   prefRow: { flexDirection: "row", alignItems: "flex-start", gap: 14, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.line },
-  prefTitle: { color: C.ink, fontSize: 14, fontFamily: T.sansB },
-  prefDesc: { color: C.mut, fontSize: 12, lineHeight: 18, marginTop: 2 },
+  prefTitle: { color: C.ink, fontSize: 15, fontFamily: T.sansB },
+  prefDesc: { color: C.mut, fontSize: 13, lineHeight: 18, marginTop: 2 },
 
   cabinChip: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 20, borderWidth: 1, borderColor: C.line, backgroundColor: C.card },
   cabinChipOn: { borderColor: C.gold, backgroundColor: "rgba(201,169,110,0.1)" },
@@ -401,9 +401,9 @@ const s = StyleSheet.create({
 
   switchRow: { flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 14 },
   switchTitle: { color: C.ink, fontSize: 15, fontFamily: T.sansB },
-  switchSub: { color: C.mut, fontSize: 12, lineHeight: 18, marginTop: 3 },
+  switchSub: { color: C.mut, fontSize: 13, lineHeight: 18, marginTop: 3 },
 
   profilePrompt: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: C.card, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: C.gold + "40", marginBottom: 16 },
-  profilePromptT: { color: C.ink, fontSize: 14, fontFamily: T.sansB, marginBottom: 2 },
-  profilePromptSub: { color: C.mut, fontSize: 12, fontFamily: T.sans, lineHeight: 17 },
+  profilePromptT: { color: C.ink, fontSize: 15, fontFamily: T.sansB, marginBottom: 2 },
+  profilePromptSub: { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 17 },
 });

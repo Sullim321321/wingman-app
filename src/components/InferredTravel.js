@@ -77,20 +77,20 @@ export function InferredTravel({ trips = [], asks = [], from, onPlan, onAnswer }
 const s = StyleSheet.create({
   wrap:   { marginTop: 24, marginBottom: 8 },
   kicker: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.4, color: C.gold },
-  sub:    { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 13.5, color: C.mut, marginTop: 4, marginBottom: 12 },
+  sub:    { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 13, color: C.mut, marginTop: 4, marginBottom: 12 },
 
   // Trips: one tight tappable row each, grouped in a single bordered container.
   // The full itinerary lives on the plan screen — Home is a glance, not a form.
   group:  { borderWidth: 1, borderColor: C.line, borderRadius: 14, overflow: "hidden" },
   row:    { flexDirection: "row", alignItems: "center", paddingVertical: 15, paddingHorizontal: 16 },
   rowDiv: { borderTopWidth: 1, borderTopColor: C.line },
-  dest:   { fontFamily: T.serif, fontSize: 19, lineHeight: 23, color: C.ink },
-  meta:   { fontFamily: T.sansM, fontSize: 12.5, color: C.mut, marginTop: 3 },
-  plan:   { fontFamily: T.sansM, fontSize: 12.5, color: C.gold, marginLeft: 8 },
+  dest:   { fontFamily: T.serif, fontSize: 22, lineHeight: 23, color: C.ink },
+  meta:   { fontFamily: T.sansM, fontSize: 13, color: C.mut, marginTop: 3 },
+  plan:   { fontFamily: T.sansM, fontSize: 13, color: C.gold, marginLeft: 8 },
 
   // A question is one quiet line with an amber tick, not a full card.
   askRow: { flexDirection: "row", alignItems: "center", marginTop: 12, paddingVertical: 13, paddingHorizontal: 15,
             borderWidth: 1, borderColor: C.amber, borderRadius: 12 },
   askDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.amber, marginRight: 10 },
-  askQ:   { flex: 1, fontFamily: T.sans, fontSize: 13.5, lineHeight: 18, color: C.ink, paddingRight: 8 },
+  askQ:   { flex: 1, fontFamily: T.sans, fontSize: 13, lineHeight: 18, color: C.ink, paddingRight: 8 },
 });

@@ -99,7 +99,7 @@ export default function UpgradeBidScreen({ navigation, route }) {
 
         {!loading && submitted && (
           <View style={s.successCard}>
-            <Text style={{ fontSize: 36, marginBottom: 12 }}>✦</Text>
+            <Text style={{ fontSize: 34, marginBottom: 12 }}>✦</Text>
             <Text style={s.successTitle}>Bid placed</Text>
             <Text style={s.successRef}>Reference: {bidRef}</Text>
             <Text style={s.successSub}>
@@ -126,7 +126,7 @@ export default function UpgradeBidScreen({ navigation, route }) {
               </View>
               <View style={s.cabinPill}>
                 <Text style={s.cabinFrom}>{bidData.current_cabin}</Text>
-                <Text style={{ color: C.mut, fontSize: 12, marginHorizontal: 6 }}>→</Text>
+                <Text style={{ color: C.mut, fontSize: 13, marginHorizontal: 6 }}>→</Text>
                 <Text style={s.cabinTo}>{bidData.target_cabin}</Text>
               </View>
             </View>
@@ -206,29 +206,29 @@ export default function UpgradeBidScreen({ navigation, route }) {
 const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
   flightHeader: { flexDirection: "row", alignItems: "center", backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 16, marginBottom: 12 },
-  flightRoute: { color: C.ink, fontSize: 18, fontFamily: T.sansB },
+  flightRoute: { color: C.ink, fontSize: 16, fontFamily: T.sansB },
   flightNum: { color: C.mut, fontSize: 13, marginTop: 2 },
   cabinPill: { flexDirection: "row", alignItems: "center", backgroundColor: C.card2, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6 },
-  cabinFrom: { color: C.mut, fontSize: 12, fontFamily: T.sansM },
-  cabinTo: { color: C.gold, fontSize: 12, fontFamily: T.sansB },
+  cabinFrom: { color: C.mut, fontSize: 13, fontFamily: T.sansM },
+  cabinTo: { color: C.gold, fontSize: 13, fontFamily: T.sansB },
   probCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 16, marginBottom: 12 },
   probRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
   probLabel: { color: C.mut, fontSize: 13 },
-  probPct: { fontSize: 18, fontFamily: T.sansB },
+  probPct: { fontSize: 16, fontFamily: T.sansB },
   probTrack: { height: 6, backgroundColor: C.card2, borderRadius: 99, overflow: "hidden", marginBottom: 8 },
   probFill: { height: "100%", borderRadius: 99 },
-  probDeadline: { color: C.mut, fontSize: 12 },
+  probDeadline: { color: C.mut, fontSize: 13 },
   balanceCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 16, marginBottom: 12 },
   balanceLabel: { color: C.mut, fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 4 },
-  balancePoints: { color: C.ink, fontSize: 24, fontFamily: T.sansB },
-  balanceCash: { color: C.mut, fontSize: 12, marginTop: 2 },
+  balancePoints: { color: C.ink, fontSize: 22, fontFamily: T.sansB },
+  balanceCash: { color: C.mut, fontSize: 13, marginTop: 2 },
   bidGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 10 },
   bidOption: { flex: 1, minWidth: "28%", backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 12, alignItems: "center" },
   bidOptionSelected: { borderColor: C.gold, backgroundColor: "rgba(201,169,110,0.08)" },
-  bidRecommended: { color: C.gold, fontSize: 8, fontFamily: T.sansB, letterSpacing: 0.5, marginBottom: 4 },
+  bidRecommended: { color: C.gold, fontSize: 10, fontFamily: T.sansB, letterSpacing: 0.5, marginBottom: 4 },
   bidPoints: { color: C.ink, fontSize: 16, fontFamily: T.sansB },
   bidPtsLabel: { color: C.mut, fontSize: 10, marginTop: 1 },
-  bidNote: { color: C.mut, fontSize: 12, textAlign: "center", marginBottom: 12 },
+  bidNote: { color: C.mut, fontSize: 13, textAlign: "center", marginBottom: 12 },
   actionCard: { backgroundColor: "rgba(201,169,110,0.06)", borderWidth: 1, borderColor: "rgba(201,169,110,0.25)", borderRadius: 18, padding: 18, marginBottom: 24 },
   actionTitle: { color: C.ink, fontSize: 15, fontFamily: T.sansB, marginBottom: 6 },
   actionSub: { color: C.mut, fontSize: 13, lineHeight: 19 },

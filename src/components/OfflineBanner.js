@@ -38,6 +38,6 @@ const s = StyleSheet.create({
     borderColor: C.coral + "60",
     backgroundColor: C.coral + "12",
   },
-  icon: { fontSize: 12 },
-  text: { color: C.mut, fontSize: 12, fontFamily: T.sansM, flex: 1 },
+  icon: { fontSize: 13 },
+  text: { color: C.mut, fontSize: 13, fontFamily: T.sansM, flex: 1 },
 });

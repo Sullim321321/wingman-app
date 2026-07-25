@@ -51,12 +51,12 @@ export default function FlightConfirmScreen({ navigation, route }) {
 const s = StyleSheet.create({
   hero: { alignItems: "center", paddingVertical: 32 },
   heroIcon: { fontSize: 52, marginBottom: 12 },
-  heroTitle: { color: C.ink, fontSize: 24, fontFamily: T.sansB, marginBottom: 6 },
-  heroSub: { color: C.mut, fontSize: 14, textAlign: "center" },
+  heroTitle: { color: C.ink, fontSize: 22, fontFamily: T.sansB, marginBottom: 6 },
+  heroSub: { color: C.mut, fontSize: 15, textAlign: "center" },
   card: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 16, marginBottom: 12 },
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.line },
   label: { color: C.mut, fontSize: 13 },
-  value: { color: C.ink, fontSize: 14, fontFamily: T.sansB },
+  value: { color: C.ink, fontSize: 15, fontFamily: T.sansB },
   notice: { backgroundColor: "rgba(34,211,166,0.07)", borderWidth: 1, borderColor: "rgba(34,211,166,0.2)", borderRadius: 12, padding: 13 },
   noticeT: { color: C.teal, fontSize: 13, lineHeight: 18 },
 });

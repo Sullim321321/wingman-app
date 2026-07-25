@@ -398,7 +398,7 @@ const s = StyleSheet.create({
 
   banner: { flexDirection: "row", alignItems: "flex-start", gap: 10, backgroundColor: C.card, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: C.gold + "30", marginBottom: 24 },
   bannerIcon: { fontSize: 16, marginTop: 1 },
-  bannerText: { flex: 1, color: C.mut, fontSize: 12, fontFamily: T.sans, lineHeight: 18 },
+  bannerText: { flex: 1, color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 18 },
 
   sectionLabel: { color: C.mutD, fontSize: 10, fontFamily: T.sansB, letterSpacing: 3.5, textTransform: "uppercase", marginTop: 24, marginBottom: 10, marginLeft: 2 },
   optionalTag:  { color: C.mut, fontSize: 10, fontFamily: T.sans, letterSpacing: 0.5 },
@@ -414,12 +414,12 @@ const s = StyleSheet.create({
   genderRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 2 },
   genderBtn: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8, borderWidth: 1, borderColor: C.line, backgroundColor: C.card2 },
   genderBtnActive: { borderColor: C.gold, backgroundColor: C.gold + "18" },
-  genderBtnT: { color: C.mut, fontSize: 12, fontFamily: T.sansM },
+  genderBtnT: { color: C.mut, fontSize: 13, fontFamily: T.sansM },
   genderBtnTActive: { color: C.gold },
 
   passportToggleRow: { flexDirection: "row", alignItems: "center", padding: 14, gap: 12 },
-  passportToggleT:   { color: C.ink, fontSize: 14, fontFamily: T.sansM, marginBottom: 2 },
-  passportToggleSub: { color: C.mut, fontSize: 12, fontFamily: T.sans, lineHeight: 17 },
+  passportToggleT:   { color: C.ink, fontSize: 15, fontFamily: T.sansM, marginBottom: 2 },
+  passportToggleSub: { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 17 },
   toggle:       { width: 44, height: 26, borderRadius: 13, backgroundColor: C.card2, borderWidth: 1, borderColor: C.line, justifyContent: "center", paddingHorizontal: 3 },
   toggleOn:     { backgroundColor: C.gold + "30", borderColor: C.gold },
   toggleThumb:  { width: 18, height: 18, borderRadius: 9, backgroundColor: C.mut },
@@ -438,10 +438,10 @@ const s = StyleSheet.create({
   // Scan ID button
   scanBtn:      { flexDirection: "row", alignItems: "center", padding: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: C.line, backgroundColor: C.gold + "0A" },
   scanBtnIcon:  { fontSize: 22, width: 32, textAlign: "center" },
-  scanBtnT:     { color: C.gold, fontSize: 14, fontFamily: T.sansM, marginBottom: 2 },
-  scanBtnSub:   { color: C.mut, fontSize: 12, fontFamily: T.sans },
-  scanBtnArrow: { color: C.gold, fontSize: 20, fontFamily: T.sansM },
+  scanBtnT:     { color: C.gold, fontSize: 15, fontFamily: T.sansM, marginBottom: 2 },
+  scanBtnSub:   { color: C.mut, fontSize: 13, fontFamily: T.sans },
+  scanBtnArrow: { color: C.gold, fontSize: 22, fontFamily: T.sansM },
   scanDivider:  { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14, paddingVertical: 10 },
   scanDividerLine: { flex: 1, height: 0.5, backgroundColor: C.line },
-  scanDividerT: { color: C.mut, fontSize: 9, fontFamily: T.sansB, letterSpacing: 1.2 },
+  scanDividerT: { color: C.mut, fontSize: 10, fontFamily: T.sansB, letterSpacing: 1.2 },
 });

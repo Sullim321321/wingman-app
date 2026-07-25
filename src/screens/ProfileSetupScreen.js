@@ -294,8 +294,8 @@ const s = StyleSheet.create({
     borderColor: "rgba(201,169,110,0.35)",
     marginBottom: 24,
   },
-  connectKicker: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2, color: C.mutD, marginBottom: 4 },
-  connectTitle: { fontFamily: T.garamondSI, fontSize: 20, color: C.ink, marginBottom: 4 },
+  connectKicker: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2, color: C.mutD, marginBottom: 4 },
+  connectTitle: { fontFamily: T.garamondSI, fontSize: 22, color: C.ink, marginBottom: 4 },
   connectSub: { fontFamily: T.sans, fontSize: 13, lineHeight: 19, color: C.mut },
   connectArrow: { fontFamily: T.sans, fontSize: 22, color: C.gold },
 
@@ -310,7 +310,7 @@ const s = StyleSheet.create({
   // ── Field label ──
   fieldLabel: {
     fontFamily: T.sansM,
-    fontSize: 9,
+    fontSize: 10,
     letterSpacing: 2.5,
     color: C.mut,
     textTransform: "uppercase",
@@ -319,7 +319,7 @@ const s = StyleSheet.create({
   },
   hint: {
     fontFamily: T.sans,
-    fontSize: 12,
+    fontSize: 13,
     color: C.mut,
     lineHeight: 18,
     marginBottom: 10,
@@ -329,7 +329,7 @@ const s = StyleSheet.create({
   // ── Text input ──
   input: {
     fontFamily: T.garamondI,
-    fontSize: 18,
+    fontSize: 16,
     color: C.ink,
     borderWidth: 1,
     borderColor: C.line,
@@ -368,7 +368,7 @@ const s = StyleSheet.create({
   },
   airportOptionCode: {
     fontFamily: T.sansB,
-    fontSize: 14,
+    fontSize: 15,
     color: C.gold,
     width: 36,
   },
@@ -406,7 +406,7 @@ const s = StyleSheet.create({
   },
   cabinLabel: {
     fontFamily: T.sansM,
-    fontSize: 14,
+    fontSize: 15,
     color: C.ink,
     marginBottom: 3,
   },

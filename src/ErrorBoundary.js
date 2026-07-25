@@ -47,7 +47,7 @@ const s = StyleSheet.create({
   },
   icon: { fontSize: 48, marginBottom: 16 },
   title: { color: "#FFFFFF", fontSize: 22, fontWeight: "700", marginBottom: 8, textAlign: "center" },
-  sub: { color: "#8A8FA8", fontSize: 14, textAlign: "center", lineHeight: 20, marginBottom: 28 },
+  sub: { color: "#8A8FA8", fontSize: 15, textAlign: "center", lineHeight: 20, marginBottom: 28 },
   btn: {
     backgroundColor: "#4F8EF7",
     paddingHorizontal: 32,

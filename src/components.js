@@ -329,22 +329,22 @@ const dcS = StyleSheet.create({
   },
   head: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.gold },
-  kicker: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2.6, color: C.mutD },
+  kicker: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.6, color: C.mutD },
   headline: { fontFamily: T.garamondSI, fontSize: 22, color: C.ink, lineHeight: 28, marginBottom: 6 },
-  rationale: { fontFamily: T.garamondI, fontSize: 14, color: C.mut, lineHeight: 21, marginBottom: 14 },
+  rationale: { fontFamily: T.garamondI, fontSize: 15, color: C.mut, lineHeight: 21, marginBottom: 14 },
   primary: {
     backgroundColor: C.gold, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 16, marginBottom: 4,
   },
-  primaryT: { fontFamily: T.sansB, fontSize: 14, color: C.inkD || C.bg },
-  primarySub: { fontFamily: T.sans, fontSize: 12, color: "rgba(0,0,0,0.6)", marginTop: 2 },
-  otherToggle: { fontFamily: T.sansM, fontSize: 12, color: C.gold, paddingVertical: 10 },
+  primaryT: { fontFamily: T.sansB, fontSize: 15, color: C.inkD || C.bg },
+  primarySub: { fontFamily: T.sans, fontSize: 13, color: "rgba(0,0,0,0.6)", marginTop: 2 },
+  otherToggle: { fontFamily: T.sansM, fontSize: 13, color: C.gold, paddingVertical: 10 },
   other: {
     borderWidth: 1, borderColor: C.line, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, marginBottom: 8,
   },
   otherT: { fontFamily: T.sansM, fontSize: 13, color: C.ink },
-  otherSub: { fontFamily: T.sans, fontSize: 12, color: C.mut, marginTop: 2 },
+  otherSub: { fontFamily: T.sans, fontSize: 13, color: C.mut, marginTop: 2 },
   dismissWrap: { alignItems: "center", paddingTop: 4 },
-  dismiss: { fontFamily: T.sansM, fontSize: 12, color: C.mut },
+  dismiss: { fontFamily: T.sansM, fontSize: 13, color: C.mut },
 });
 
 // ─── Itinerary leg row ────────────────────────────────────────────────────────
@@ -582,7 +582,7 @@ export const g = StyleSheet.create({
   backArrow:  { color: C.gold, fontSize: 22, lineHeight: 24, fontFamily: T.sansM },
   back:       { color: C.gold, fontSize: 15, fontFamily: T.sansM, letterSpacing: 0.2 },
   backLabel:  { color: C.ink, fontSize: 15, fontFamily: T.sansM, letterSpacing: 0.1 },
-  backLabelSerif: { color: C.ink, fontSize: 17, fontFamily: T.serifB, letterSpacing: T.trackTight },
+  backLabelSerif: { color: C.ink, fontSize: 16, fontFamily: T.serifB, letterSpacing: T.trackTight },
 
   // Buttons
   btn:        { paddingVertical: 16, alignItems: "center", borderRadius: 14 },
@@ -605,7 +605,7 @@ export const g = StyleSheet.create({
   seg:    { flexDirection: "row", backgroundColor: C.bg, borderWidth: 1, borderColor: C.line, borderRadius: 12, padding: 4, gap: 4 },
   segBtn: { flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: "center" },
   segOn:  { backgroundColor: C.card2, borderWidth: 1, borderColor: C.gold + "50" },
-  segT:   { color: C.mut, fontSize: 12, fontFamily: T.sansM, letterSpacing: 0.3 },
+  segT:   { color: C.mut, fontSize: 13, fontFamily: T.sansM, letterSpacing: 0.3 },
   segTOn: { color: C.gold, fontFamily: T.sansB },
 
   // Settings row — Obsidian v3
@@ -617,7 +617,7 @@ export const g = StyleSheet.create({
     alignItems: "center", justifyContent: "center",
   },
   setT:   { color: C.ink, fontSize: 15, fontFamily: T.sansM, letterSpacing: 0 },
-  setS:   { color: C.mut, fontSize: 12, fontFamily: T.sans, marginTop: 3, lineHeight: 18 },
+  setS:   { color: C.mut, fontSize: 13, fontFamily: T.sans, marginTop: 3, lineHeight: 18 },
 
   // Group container — Obsidian v3
   group: {
@@ -646,8 +646,8 @@ export const g = StyleSheet.create({
     borderWidth: 1, borderColor: C.line,
     alignItems: "center", justifyContent: "center",
   },
-  legT:  { color: C.ink, fontSize: 14, fontFamily: T.sansM },
-  legS:  { color: C.mut, fontSize: 12, fontFamily: T.sans, marginTop: 1 },
+  legT:  { color: C.ink, fontSize: 15, fontFamily: T.sansM },
+  legS:  { color: C.mut, fontSize: 13, fontFamily: T.sans, marginTop: 1 },
   tag:   { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
   tagT:  { fontSize: 10, fontFamily: T.sansB, letterSpacing: T.trackMed },
 
@@ -685,26 +685,26 @@ export const g = StyleSheet.create({
   },
   rcardH: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 8 },
   rcardIc:{ width: 34, height: 34, borderRadius: 10, backgroundColor: C.card2, borderWidth: 1, borderColor: C.line, alignItems: "center", justifyContent: "center" },
-  rcardT: { color: C.ink, fontFamily: T.sansB, fontSize: 14, flex: 1, letterSpacing: -0.1 },
+  rcardT: { color: C.ink, fontFamily: T.sansB, fontSize: 15, flex: 1, letterSpacing: -0.1 },
   rcardW: { fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.8 },
   rcardP: { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 20 },
 
   // Notification row
   ntRow: { flexDirection: "row", gap: 10, alignItems: "center", paddingVertical: 7 },
   ntIc:  { width: 24, height: 24, borderRadius: 7, backgroundColor: C.gold + "18", alignItems: "center", justifyContent: "center" },
-  ntTxt: { color: C.ink, fontSize: 13.5, fontFamily: T.sans },
+  ntTxt: { color: C.ink, fontSize: 13, fontFamily: T.sans },
 
   // Contribution bar
   crow:   { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 11 },
-  clabel: { width: 92, fontSize: 12, fontFamily: T.sans, color: C.ink },
+  clabel: { width: 92, fontSize: 13, fontFamily: T.sans, color: C.ink },
   cbar:   { flex: 1, height: 8, borderRadius: 99, backgroundColor: C.card2, overflow: "hidden" },
   cfill:  { height: "100%", borderRadius: 99, backgroundColor: C.coral },
-  cval:   { width: 32, textAlign: "right", fontSize: 12, fontFamily: T.sansB, color: C.ink },
+  cval:   { width: 32, textAlign: "right", fontSize: 13, fontFamily: T.sansB, color: C.ink },
 
   // Execution stepper
   execWrap: { flex: 1, padding: 24, paddingTop: 40 },
   execH:    { color: C.ink, fontSize: 22, letterSpacing: T.trackTight, marginBottom: 6, fontFamily: T.serifB },
-  execSub:  { color: C.mut, fontSize: 14, fontFamily: T.sans, marginBottom: 20, lineHeight: 20 },
+  execSub:  { color: C.mut, fontSize: 15, fontFamily: T.sans, marginBottom: 20, lineHeight: 20 },
   step:     { flexDirection: "row", gap: 14, alignItems: "center", paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.line },
   stepC:    { width: 32, height: 32, borderRadius: 16, borderWidth: 2, borderColor: C.line, alignItems: "center", justifyContent: "center" },
   stepRun:  { borderColor: C.gold },
@@ -727,9 +727,9 @@ export const g = StyleSheet.create({
 
   // Empty state
   empty: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 40, paddingVertical: 60 },
-  emptyIc: { fontSize: 36, color: C.mutD, marginBottom: 16, fontFamily: T.sans },
+  emptyIc: { fontSize: 34, color: C.mutD, marginBottom: 16, fontFamily: T.sans },
   emptyH: { color: C.ink, fontSize: 22, textAlign: "center", marginBottom: 10 },
-  emptyS: { color: C.mut, fontSize: 14, fontFamily: T.sans, textAlign: "center", lineHeight: 22 },
+  emptyS: { color: C.mut, fontSize: 15, fontFamily: T.sans, textAlign: "center", lineHeight: 22 },
 });
 
 // ─── Radar styles ─────────────────────────────────────────────────────────────

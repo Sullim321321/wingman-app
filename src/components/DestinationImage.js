@@ -43,7 +43,7 @@ const st = StyleSheet.create({
     right: 10,
     bottom: 8,
     fontFamily: T.sans,
-    fontSize: 9,
+    fontSize: 10,
     color: "rgba(255,255,255,0.55)",
     letterSpacing: 0.3,
   },

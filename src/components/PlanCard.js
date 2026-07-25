@@ -113,7 +113,7 @@ const ps = StyleSheet.create({
   },
   meta: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     color: C.mutD,
     letterSpacing: 0.3,
   },
@@ -159,7 +159,7 @@ const ps = StyleSheet.create({
   },
   hotelWhy: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     color: C.mutD,
     lineHeight: 17,
   },
@@ -171,7 +171,7 @@ const ps = StyleSheet.create({
   },
   trainingNotes: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     color: C.mutD,
     lineHeight: 18,
   },

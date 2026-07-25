@@ -123,7 +123,7 @@ export default function HomeAddressScreen({ navigation }) {
             ].map((step, i) => (
               <View key={i} style={[s.stepRow, i < 2 && s.stepRowBorder]}>
                 <View style={s.stepIcWrap}>
-                  <Text style={{ fontSize: 20 }}>{step.ic}</Text>
+                  <Text style={{ fontSize: 22 }}>{step.ic}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={s.stepT}>{step.t}</Text>
@@ -175,7 +175,7 @@ const s = StyleSheet.create({
     marginBottom: 20,
   },
   heroIc: { fontSize: 40, marginBottom: 10 },
-  heroT: { color: C.ink, fontSize: 18, fontFamily: T.sansB, textAlign: "center", marginBottom: 8 },
+  heroT: { color: C.ink, fontSize: 16, fontFamily: T.sansB, textAlign: "center", marginBottom: 8 },
   heroSub: { color: C.mut, fontSize: 13, textAlign: "center", lineHeight: 19 },
   inputCard: {
     backgroundColor: C.card,
@@ -197,7 +197,7 @@ const s = StyleSheet.create({
     borderColor: C.line,
   },
   inputMono: { fontVariant: ["tabular-nums"], letterSpacing: 2 },
-  inputHint: { color: C.mut, fontSize: 12, marginTop: 8, lineHeight: 16 },
+  inputHint: { color: C.mut, fontSize: 13, marginTop: 8, lineHeight: 16 },
   stepsCard: {
     backgroundColor: C.card,
     borderRadius: 16,
@@ -216,8 +216,8 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  stepT: { color: C.ink, fontSize: 14, fontFamily: T.sansM, marginBottom: 2 },
-  stepSub: { color: C.mut, fontSize: 12, lineHeight: 16 },
+  stepT: { color: C.ink, fontSize: 15, fontFamily: T.sansM, marginBottom: 2 },
+  stepSub: { color: C.mut, fontSize: 13, lineHeight: 16 },
   saveBtn: {
     backgroundColor: C.teal,
     borderRadius: 14,
@@ -227,5 +227,5 @@ const s = StyleSheet.create({
   },
   saveBtnT: { color: "#000", fontSize: 15, fontFamily: T.sansB },
   clearBtn: { alignItems: "center", paddingVertical: 12, marginBottom: 16 },
-  clearBtnT: { color: C.mut, fontSize: 14 },
+  clearBtnT: { color: C.mut, fontSize: 15 },
 });

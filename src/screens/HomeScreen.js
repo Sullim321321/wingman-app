@@ -1892,7 +1892,7 @@ const s = StyleSheet.create({
   },
   mastW: {
     fontFamily: T.serifI,
-    fontSize: 26,
+    fontSize: 30,
     color: C.gold,
     marginRight: 10,
     lineHeight: 30,
@@ -1968,11 +1968,11 @@ const s = StyleSheet.create({
   },
   dayOfHead: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
   dayOfDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.teal },
-  dayOfKicker: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2, color: C.teal, flex: 1 },
+  dayOfKicker: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2, color: C.teal, flex: 1 },
   dayOfCountdown: { fontFamily: T.sansM, fontSize: 11, color: C.mut },
   dayOfRoute: { fontFamily: T.garamondSI, fontSize: 30, color: C.ink, lineHeight: 34, marginBottom: 4 },
-  dayOfMeta: { fontFamily: T.sans, fontSize: 12, color: C.mut, marginBottom: 10 },
-  dayOfCta: { fontFamily: T.sansB, fontSize: 12, color: C.teal },
+  dayOfMeta: { fontFamily: T.sans, fontSize: 13, color: C.mut, marginBottom: 10 },
+  dayOfCta: { fontFamily: T.sansB, fontSize: 13, color: C.teal },
 
   // ── Adaptive phases: in-transit + post-trip ──
   transitCard: {
@@ -1985,7 +1985,7 @@ const s = StyleSheet.create({
     backgroundColor: C.card, borderWidth: 1, borderColor: "rgba(45,184,150,0.30)",
     ...litEdge, ...SHADOW.soft,
   },
-  postTripHed: { fontFamily: T.garamondSI, fontSize: 26, color: C.ink, lineHeight: 31, marginBottom: 6 },
+  postTripHed: { fontFamily: T.garamondSI, fontSize: 30, color: C.ink, lineHeight: 31, marginBottom: 6 },
 
   // ── Anticipatory prep card (UX #1) ──
   prepCard: {
@@ -2005,12 +2005,12 @@ const s = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 6,
   },
-  prepKicker: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2, color: C.mutD },
+  prepKicker: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2, color: C.mutD },
   prepDays: { fontFamily: T.sansM, fontSize: 11, color: C.mut },
-  prepRoute: { fontFamily: T.garamondSI, fontSize: 26, color: C.ink, lineHeight: 30, marginBottom: 12 },
+  prepRoute: { fontFamily: T.garamondSI, fontSize: 30, color: C.ink, lineHeight: 30, marginBottom: 12 },
   prepList: { gap: 10 },
   prepRow: { flexDirection: "row", alignItems: "flex-start", gap: 9 },
-  prepText: { flex: 1, fontFamily: T.sans, fontSize: 13.5, lineHeight: 19, color: C.ink },
+  prepText: { flex: 1, fontFamily: T.sans, fontSize: 13, lineHeight: 19, color: C.ink },
   prepArrow: { fontFamily: T.sans, fontSize: 16, color: C.mut, opacity: 0.6, marginLeft: 4 },
   decisionsMore: { marginHorizontal: 20, marginTop: 2, marginBottom: 4, paddingVertical: 10, alignItems: "center" },
   decisionsMoreT: { fontFamily: T.sansM, fontSize: 13, color: C.gold, letterSpacing: 0.2 },
@@ -2021,38 +2021,38 @@ const s = StyleSheet.create({
   // The Brief line. Teal dot = nothing needs you, and that is a checked fact.
   // Amber + arrow = something does, and tapping takes you straight to it.
   docWrap:  { marginTop: 26 },
-  docErr:   { fontFamily: T.sans, fontSize: 14, color: C.amber, lineHeight: 21 },
+  docErr:   { fontFamily: T.sans, fontSize: 15, color: C.amber, lineHeight: 21 },
   docLabel: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.6, color: C.gold, marginBottom: 12 },
 
   handledWrap: { marginHorizontal: 20, marginTop: 26 },
   handledHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
   handledRow:  { flexDirection: "row", gap: 10, alignItems: "flex-start", paddingVertical: 8, borderTopWidth: 1, borderTopColor: C.line },
-  handledText: { flex: 1, fontFamily: T.sans, fontSize: 13.5, color: C.ink, lineHeight: 19 },
+  handledText: { flex: 1, fontFamily: T.sans, fontSize: 13, color: C.ink, lineHeight: 19 },
 
   ambientWrap: { marginHorizontal: 20, marginTop: 26 },
   ambientHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
-  ambientMore: { fontFamily: T.sansM, fontSize: 12.5, color: C.gold },
+  ambientMore: { fontFamily: T.sansM, fontSize: 13, color: C.gold },
   ambientRow:  { paddingVertical: 10, borderTopWidth: 1, borderTopColor: C.line },
   ambientName: { fontFamily: T.serif, fontSize: 16, color: C.ink },
-  ambientWhy:  { fontFamily: T.sans, fontSize: 12.5, color: C.teal, marginTop: 3 },
+  ambientWhy:  { fontFamily: T.sans, fontSize: 13, color: C.teal, marginTop: 3 },
 
   sigWrap:  { marginHorizontal: 20, marginTop: 26 },
   sigHead:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-  sigLabel: { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2.4, color: C.mutD },
-  sigAll:   { fontFamily: T.sansM, fontSize: 12, color: C.gold },
+  sigLabel: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.4, color: C.mutD },
+  sigAll:   { fontFamily: T.sansM, fontSize: 13, color: C.gold },
   sigRow:   { flexDirection: "row", alignItems: "flex-start", gap: 10, paddingVertical: 11,
               borderTopWidth: 1, borderTopColor: C.line },
   sigDot:   { width: 6, height: 6, borderRadius: 3, marginTop: 6 },
-  sigTitle: { fontFamily: T.sansM, fontSize: 14, color: C.ink },
-  sigBody:  { fontFamily: T.sans, fontSize: 12.5, color: C.mut, marginTop: 2 },
+  sigTitle: { fontFamily: T.sansM, fontSize: 15, color: C.ink },
+  sigBody:  { fontFamily: T.sans, fontSize: 13, color: C.mut, marginTop: 2 },
 
   briefLine: {
     flexDirection: "row", alignItems: "center", gap: 10,
     marginTop: 14, marginBottom: 4,
   },
   briefDot: { width: 7, height: 7, borderRadius: 4 },
-  briefText: { flex: 1, fontFamily: T.garamondI, fontSize: 17, lineHeight: 24, color: C.mut },
-  briefArrow: { fontFamily: T.sansM, fontSize: 18, color: C.amber },
+  briefText: { flex: 1, fontFamily: T.garamondI, fontSize: 16, lineHeight: 24, color: C.mut },
+  briefArrow: { fontFamily: T.sansM, fontSize: 16, color: C.amber },
 
   heroWrap: {
     paddingBottom: 16,
@@ -2130,7 +2130,7 @@ const s = StyleSheet.create({
   },
   hed: {
     fontFamily: T.garamondSI,
-    fontSize: 32,
+    fontSize: 34,
     color: C.ink,
     lineHeight: 38,
     letterSpacing: -0.3,
@@ -2141,14 +2141,14 @@ const s = StyleSheet.create({
   },
   hedPara: {
     fontFamily: T.garamond,
-    fontSize: 25,
+    fontSize: 22,
     color: C.ink,
     lineHeight: 33,
     letterSpacing: -0.2,
   },
   hedGreet: {
     fontFamily: T.garamondMI,
-    fontSize: 25,
+    fontSize: 22,
     color: C.ink,
     letterSpacing: -0.2,
   },
@@ -2221,7 +2221,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 10,
     fontFamily: T.garamondI,
-    fontSize: 17,
+    fontSize: 16,
     color: C.ink,
     lineHeight: 27,
     opacity: 0.82,
@@ -2278,7 +2278,7 @@ const s = StyleSheet.create({
   },
   ctaArrow: {
     fontFamily: T.sans,
-    fontSize: 18,
+    fontSize: 16,
     color: C.mut,
   },
 
@@ -2299,7 +2299,7 @@ const s = StyleSheet.create({
   },
   sectionRuleLabel: {
     fontFamily: T.sansM,
-    fontSize: 9,
+    fontSize: 10,
     letterSpacing: 2.5,
     color: C.mut,
     opacity: 0.6,
@@ -2333,7 +2333,7 @@ const s = StyleSheet.create({
   },
   wingMarkT: {
     fontFamily: T.serifI,
-    fontSize: 12,
+    fontSize: 13,
     color: C.gold,
   },
   bubble: {
@@ -2360,7 +2360,7 @@ const s = StyleSheet.create({
   },
   bubbleT: {
     fontFamily: T.sans,
-    fontSize: 14,
+    fontSize: 15,
     color: C.ink,
     lineHeight: 22,
     fontWeight: "300",
@@ -2410,7 +2410,7 @@ const s = StyleSheet.create({
   },
   sendBtnT: {
     fontFamily: T.sansB,
-    fontSize: 18,
+    fontSize: 16,
     color: C.bg,
     lineHeight: 22,
     marginLeft: 2,
@@ -2437,7 +2437,7 @@ const s = StyleSheet.create({
   },
   chipT: {
     fontFamily: T.sansM,
-    fontSize: 12,
+    fontSize: 13,
     color: C.gold,
     letterSpacing: 0.1,
   },
@@ -2463,7 +2463,7 @@ const s = StyleSheet.create({
   },
   devLabel: {
     fontFamily: T.sansM,
-    fontSize: 9,
+    fontSize: 10,
     letterSpacing: 2.5,
     color: C.mut,
     textTransform: "uppercase",
@@ -2498,17 +2498,17 @@ const s = StyleSheet.create({
     gap: 12,
   },
   disruptionBannerIcon: {
-    fontSize: 20,
+    fontSize: 22,
     flexShrink: 0,
   },
   disruptionBannerTitle: {
     fontFamily: T.sansM,
-    fontSize: 14,
+    fontSize: 15,
     letterSpacing: 0.2,
   },
   disruptionBannerSub: {
     fontFamily: T.sans,
-    fontSize: 12,
+    fontSize: 13,
     color: C.mut,
     marginTop: 2,
   },

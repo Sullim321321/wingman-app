@@ -108,7 +108,7 @@ export default function GroundTransportScreen() {
   if (error) {
     return (
       <View style={[s.container, { justifyContent: "center", alignItems: "center", padding: 32 }]}>
-        <Text style={{ fontSize: 32, marginBottom: 16, color: C.gold }}>✦</Text>
+        <Text style={{ fontSize: 34, marginBottom: 16, color: C.gold }}>✦</Text>
         <Text style={s.mut}>Couldn't load transport options.</Text>
         <Pressable style={s.retryBtn} onPress={loadTransport}>
           <Text style={s.retryBtnT}>Try again</Text>
@@ -283,19 +283,19 @@ const s = StyleSheet.create({
   // Header
   header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 0, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: C.line },
   backBtn: { width: 36, height: 36, justifyContent: "center" },
-  backBtnT: { color: C.gold, fontSize: 28, lineHeight: 32 },
+  backBtnT: { color: C.gold, fontSize: 30, lineHeight: 32 },
   headerCenter: { flex: 1, alignItems: "center" },
   headerTitle: { color: C.ink, fontSize: 11, fontFamily: T.sansB, letterSpacing: 2, textTransform: "uppercase" },
   headerSub: { color: C.mut, fontSize: 13, marginTop: 2 },
 
   // Destination banner
   destinationBanner: { margin: 16, marginBottom: 0, backgroundColor: C.card2, borderRadius: 10, padding: 12, borderWidth: 1, borderColor: C.line },
-  destinationBannerT: { color: C.ink, fontSize: 14 },
+  destinationBannerT: { color: C.ink, fontSize: 15 },
 
   // Recommendation card
   recommendCard: { margin: 16, marginBottom: 8, backgroundColor: "rgba(201,169,110,0.08)", borderRadius: 12, padding: 16, borderWidth: 1, borderColor: "rgba(201,169,110,0.3)" },
   recommendLabel: { color: C.mutD, fontSize: 11, fontFamily: T.sansB, letterSpacing: 1, marginBottom: 8 },
-  recommendText: { color: C.ink, fontSize: 14, lineHeight: 21 },
+  recommendText: { color: C.ink, fontSize: 15, lineHeight: 21 },
 
   // Generic note
   genericNote: { marginHorizontal: 16, marginBottom: 8, backgroundColor: C.card2, borderRadius: 10, padding: 12 },
@@ -308,7 +308,7 @@ const s = StyleSheet.create({
   optionCard: { marginHorizontal: 16, marginBottom: 12, backgroundColor: C.card, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: C.line },
   optionHeader: { flexDirection: "row", alignItems: "center", marginBottom: 10, gap: 8 },
   typeTag: { flexDirection: "row", alignItems: "center", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, gap: 4 },
-  typeIcon: { fontSize: 14 },
+  typeIcon: { fontSize: 15 },
   typeLabel: { fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.5 },
   bestBadge: { backgroundColor: "rgba(201,169,110,0.2)", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 },
   bestBadgeT: { color: C.gold, fontSize: 10, fontFamily: T.sansB, letterSpacing: 1 },
@@ -322,12 +322,12 @@ const s = StyleSheet.create({
   statsRow: { flexDirection: "row", alignItems: "center", backgroundColor: C.card2, borderRadius: 10, padding: 12, marginBottom: 12 },
   stat: { flex: 1, alignItems: "center" },
   statLabel: { color: C.mut, fontSize: 10, fontFamily: T.sansB, letterSpacing: 0.8, marginBottom: 3 },
-  statValue: { color: C.ink, fontSize: 14, fontFamily: T.sansB },
+  statValue: { color: C.ink, fontSize: 15, fontFamily: T.sansB },
   statDivider: { width: 1, height: 28, backgroundColor: C.line },
 
   // Tip
   tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 12, backgroundColor: "rgba(255,193,7,0.06)", borderRadius: 8, padding: 10 },
-  tipIcon: { fontSize: 14, marginTop: 1 },
+  tipIcon: { fontSize: 15, marginTop: 1 },
   tipText: { flex: 1, color: "#FFC107", fontSize: 13, lineHeight: 19 },
 
   // Action buttons
@@ -344,15 +344,15 @@ const s = StyleSheet.create({
   stepsDivider: { height: 1, backgroundColor: C.line, marginBottom: 12 },
   stepRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 10 },
   stepNum: { width: 24, height: 24, borderRadius: 12, backgroundColor: C.gold, justifyContent: "center", alignItems: "center", flexShrink: 0 },
-  stepNumT: { color: C.inkD, fontSize: 12, fontFamily: T.sansB },
-  stepText: { flex: 1, color: C.ink, fontSize: 14, lineHeight: 20 },
+  stepNumT: { color: C.inkD, fontSize: 13, fontFamily: T.sansB },
+  stepText: { flex: 1, color: C.ink, fontSize: 15, lineHeight: 20 },
 
   // Concierge CTA
   conciergeCta: { margin: 16, backgroundColor: "rgba(201,169,110,0.1)", borderRadius: 14, padding: 18, alignItems: "center", borderWidth: 1, borderColor: "rgba(201,169,110,0.3)" },
   conciergeCtaT: { color: C.gold, fontSize: 15, fontFamily: T.sansB },
 
   // Misc
-  mut: { color: C.mut, fontSize: 14 },
+  mut: { color: C.mut, fontSize: 15 },
   retryBtn: { marginTop: 16, backgroundColor: C.card, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 },
   retryBtnT: { color: C.gold, fontSize: 15, fontFamily: T.sansM },
 });

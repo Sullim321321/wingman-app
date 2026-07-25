@@ -153,35 +153,35 @@ const s = StyleSheet.create({
   scroll: { padding: 20, paddingTop: 4 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
 
-  by:  { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2, marginTop: 8, marginBottom: 8 },
+  by:  { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2, marginTop: 8, marginBottom: 8 },
   byW: { color: C.gold },
   byU: { color: C.mutD },
-  q:   { fontFamily: T.serif, fontSize: 26, lineHeight: 32, color: C.ink },
+  q:   { fontFamily: T.serif, fontSize: 30, lineHeight: 32, color: C.ink },
   at:  { fontFamily: T.mono, fontSize: 11, color: C.mutD, marginTop: 10, letterSpacing: 0.3 },
 
   chose:      { backgroundColor: C.card, borderRadius: 14, padding: 16, marginTop: 22,
                 borderWidth: 1, borderColor: C.line, borderTopColor: C.lineHi },
-  choseLabel: { fontFamily: T.sansB, fontSize: 8.5, letterSpacing: 2, color: C.mutD, marginBottom: 6 },
-  choseT:     { fontFamily: T.sansM, fontSize: 15.5, color: C.ink },
+  choseLabel: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2, color: C.mutD, marginBottom: 6 },
+  choseT:     { fontFamily: T.sansM, fontSize: 16, color: C.ink },
   because:    { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 15, color: C.mut, lineHeight: 22, marginTop: 8 },
 
-  sectH:   { fontFamily: T.sansB, fontSize: 9, letterSpacing: 2.4, color: C.gold, marginTop: 26, marginBottom: 12 },
+  sectH:   { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.4, color: C.gold, marginTop: 26, marginBottom: 12 },
   opt:     { paddingVertical: 11, paddingHorizontal: 13, borderRadius: 10, marginBottom: 8,
              borderWidth: 1, borderColor: C.line },
   optPicked:{ borderColor: C.gold + "66", backgroundColor: C.card },
-  optT:    { fontFamily: T.sans, fontSize: 14, color: C.mut },
-  optWhy:  { fontFamily: T.sans, fontSize: 12, color: C.mutD, marginTop: 4, lineHeight: 17 },
+  optT:    { fontFamily: T.sans, fontSize: 15, color: C.mut },
+  optWhy:  { fontFamily: T.sans, fontSize: 13, color: C.mutD, marginTop: 4, lineHeight: 17 },
 
   protRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 12 },
   dot:     { width: 6, height: 6, borderRadius: 3, backgroundColor: C.mut, marginTop: 6 },
-  protT:   { fontFamily: T.sans, fontSize: 14.5, color: C.ink, lineHeight: 20 },
+  protT:   { fontFamily: T.sans, fontSize: 15, color: C.ink, lineHeight: 20 },
   protMeta:{ fontFamily: T.mono, fontSize: 10, color: C.mutD, marginTop: 3, letterSpacing: 0.4 },
 
   actedOn: { fontFamily: T.mono, fontSize: 11, color: C.mutD, marginTop: 22, letterSpacing: 0.3 },
 
   undo:   { marginTop: 24, borderWidth: 1, borderColor: C.coral, borderRadius: 12, paddingVertical: 14, alignItems: "center" },
   undoT:  { fontFamily: T.sansM, fontSize: 13, color: C.coral },
-  noUndo: { fontFamily: T.sans, fontSize: 12.5, color: C.mutD, marginTop: 24, lineHeight: 19, fontStyle: "italic" },
+  noUndo: { fontFamily: T.sans, fontSize: 13, color: C.mutD, marginTop: 24, lineHeight: 19, fontStyle: "italic" },
 
-  err:    { fontFamily: T.sans, fontSize: 14, color: C.coral, marginTop: 16 },
+  err:    { fontFamily: T.sans, fontSize: 15, color: C.coral, marginTop: 16 },
 });

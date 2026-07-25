@@ -1145,13 +1145,13 @@ export default function TripDetailScreen({ route, navigation }) {
                       )}
                     </View>
                     <Text style={s.intelText}>{sn.carrier || sn.title || "Show"}</Text>
-                    {sn.venue && <Text style={[s.intelText, { color: C.mut, fontSize: 12, marginTop: 2 }]}>{sn.venue}</Text>}
+                    {sn.venue && <Text style={[s.intelText, { color: C.mut, fontSize: 13, marginTop: 2 }]}>{sn.venue}</Text>}
                     {sn.travel_time_mins && (
-                      <Text style={[s.intelText, { color: C.gold, fontSize: 12, marginTop: 4 }]}>
+                      <Text style={[s.intelText, { color: C.gold, fontSize: 13, marginTop: 4 }]}>
                         Allow {sn.travel_time_mins} min from hotel · depart by {sn.recommended_depart_time || "TBC"}
                       </Text>
                     )}
-                    {sn.tip && <Text style={[s.intelText, { color: C.mut, fontSize: 12, marginTop: 4, fontStyle: "italic" }]}>{sn.tip}</Text>}
+                    {sn.tip && <Text style={[s.intelText, { color: C.mut, fontSize: 13, marginTop: 4, fontStyle: "italic" }]}>{sn.tip}</Text>}
                   </View>
                 );
               })}
@@ -1449,7 +1449,7 @@ export default function TripDetailScreen({ route, navigation }) {
                 <>
                   <Text style={s.qEditField}>MAX PRICE WITHOUT ASKING</Text>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                    <Text style={{ fontFamily: T.serifB, fontSize: 18, color: C.gold }}>$</Text>
+                    <Text style={{ fontFamily: T.serifB, fontSize: 16, color: C.gold }}>$</Text>
                     <TextInput
                       style={[s.qEditInput, { flex: 1 }]}
                       value={standing.max_price}
@@ -1689,7 +1689,7 @@ const s = StyleSheet.create({
   // ── Section label ──
   sectionLabel: {
     fontFamily: T.sansM,
-    fontSize: 9,
+    fontSize: 10,
     letterSpacing: 2.5,
     color: C.mut,
     textTransform: "uppercase",
@@ -1718,7 +1718,7 @@ const s = StyleSheet.create({
   // Deliberately quiet: a footnote, not a row. Rides are context, not content.
   ridesLine: {
     fontFamily: T.sans,
-    fontSize: 12,
+    fontSize: 13,
     color: C.mut,
     paddingHorizontal: 14,
     paddingBottom: 12,
@@ -1726,7 +1726,7 @@ const s = StyleSheet.create({
   },
   dayLabel: {
     fontFamily: T.sansM,
-    fontSize: 9,
+    fontSize: 10,
     letterSpacing: 2,
     color: C.mutD,
     textTransform: 'uppercase',
@@ -1779,7 +1779,7 @@ const s = StyleSheet.create({
   },
   pillT: {
     fontFamily: T.sansB,
-    fontSize: 9,
+    fontSize: 10,
     letterSpacing: 1.2,
   },
   pillMut:  { backgroundColor: "rgba(138,127,112,0.07)", borderColor: "rgba(138,127,112,0.18)" },
@@ -1796,7 +1796,7 @@ const s = StyleSheet.create({
   },
   riskLoadingT: {
     fontFamily: T.sans,
-    fontSize: 12,
+    fontSize: 13,
     color: C.mut,
   },
 
@@ -1817,7 +1817,7 @@ const s = StyleSheet.create({
   },
   connRiskRec: {
     fontFamily: T.sans,
-    fontSize: 12,
+    fontSize: 13,
     color: C.mut,
     lineHeight: 18,
   },
@@ -1842,14 +1842,14 @@ const s = StyleSheet.create({
   },
   legCode: {
     fontFamily: T.garamondSI,
-    fontSize: 28,
+    fontSize: 30,
     color: C.ink,
     letterSpacing: -0.3,
     lineHeight: 30,
   },
   legTime: {
     fontFamily: T.sans,
-    fontSize: 12,
+    fontSize: 13,
     color: C.mut,
     marginTop: 2,
   },
@@ -1930,7 +1930,7 @@ const s = StyleSheet.create({
   },
   otherTypeT: {
     fontFamily: T.sansB,
-    fontSize: 8,
+    fontSize: 10,
     letterSpacing: 1.2,
     color: C.gold,
   },
@@ -1940,7 +1940,7 @@ const s = StyleSheet.create({
   },
   otherName: {
     fontFamily: T.sansM,
-    fontSize: 14,
+    fontSize: 15,
     color: C.ink,
   },
   otherMeta: {
@@ -1968,12 +1968,12 @@ const s = StyleSheet.create({
   },
   actionRowLabel: {
     fontFamily: T.sansM,
-    fontSize: 14,
+    fontSize: 15,
     color: C.ink,
   },
   actionRowArrow: {
     fontFamily: T.sans,
-    fontSize: 18,
+    fontSize: 16,
     color: C.mut,
     opacity: 0.5,
   },
@@ -2069,7 +2069,7 @@ const s = StyleSheet.create({
   },
   sheetRowSub: {
     fontFamily: T.sans,
-    fontSize: 12,
+    fontSize: 13,
     color: C.mut,
     marginTop: 2,
   },
@@ -2083,7 +2083,7 @@ const s = StyleSheet.create({
   },
   sheetCancelT: {
     fontFamily: T.sansM,
-    fontSize: 14,
+    fontSize: 15,
     color: C.ink,
   },
   // ── Inline quick-edit fields ──
@@ -2145,14 +2145,14 @@ const s = StyleSheet.create({
   },
   proSub: {
     fontFamily: T.sans,
-    fontSize: 12,
+    fontSize: 13,
     color: C.mut,
     lineHeight: 18,
     marginBottom: 10,
   },
   proCta: {
     fontFamily: T.sansM,
-    fontSize: 12,
+    fontSize: 13,
     color: C.gold,
   },
 
@@ -2175,7 +2175,7 @@ const s = StyleSheet.create({
   },
   intelLabel: {
     fontFamily: T.sansM,
-    fontSize: 9,
+    fontSize: 10,
     letterSpacing: 2,
     color: C.mutD,
     marginBottom: 4,
@@ -2268,7 +2268,7 @@ const s = StyleSheet.create({
   },
   inviteBtnT: {
     fontFamily: T.sansB,
-    fontSize: 12,
+    fontSize: 13,
     color: C.bg,
   },
 
@@ -2307,13 +2307,13 @@ const s = StyleSheet.create({
   },
   outcomeTitle: {
     fontFamily: T.garamondI,
-    fontSize: 18,
+    fontSize: 16,
     color: C.ink,
     marginBottom: 6,
   },
   outcomeSub: {
     fontFamily: T.sans,
-    fontSize: 12,
+    fontSize: 13,
     color: C.mut,
     lineHeight: 18,
     marginBottom: 14,
@@ -2327,12 +2327,12 @@ const s = StyleSheet.create({
     padding: 4,
   },
   star: {
-    fontSize: 26,
+    fontSize: 30,
     color: C.card2,
   },
   ratingLabel: {
     fontFamily: T.sansM,
-    fontSize: 12,
+    fontSize: 13,
     color: C.gold,
     marginBottom: 12,
   },

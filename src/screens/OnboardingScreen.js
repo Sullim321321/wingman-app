@@ -316,7 +316,7 @@ function SlideSignUp({ onDone }) {
           {/* Code input */}
           {step === "code" && (
             <TextInput
-              style={[s.codeInput, { letterSpacing: 8, fontSize: 24, textAlign: "center" }]}
+              style={[s.codeInput, { letterSpacing: 8, fontSize: 22, textAlign: "center" }]}
               value={code}
               onChangeText={t => { setCode(t.replace(/\D/g, "").slice(0, 6)); setError(""); }}
               placeholder="000000"
@@ -600,14 +600,14 @@ const s = StyleSheet.create({
   },
   markT: {
     fontFamily: T.sansB,
-    fontSize: 26,
+    fontSize: 30,
     color: C.inkD,
   },
 
   // ── Headlines ──
   hed: {
     fontFamily: T.garamondSI,
-    fontSize: 38,
+    fontSize: 34,
     color: C.ink,
     textAlign: "center",
     letterSpacing: -0.5,
@@ -652,7 +652,7 @@ const s = StyleSheet.create({
   },
   statL: {
     fontFamily: T.sansM,
-    fontSize: 9,
+    fontSize: 10,
     color: C.mut,
     letterSpacing: 1.5,
     textTransform: "uppercase",
@@ -700,7 +700,7 @@ const s = StyleSheet.create({
   },
   mockLabel: {
     fontFamily: T.sansB,
-    fontSize: 9,
+    fontSize: 10,
     letterSpacing: 1.5,
   },
   mockT: {
@@ -776,12 +776,12 @@ const s = StyleSheet.create({
   },
   signUpMarkT: {
     fontFamily: T.sansB,
-    fontSize: 20,
+    fontSize: 22,
     color: C.inkD,
   },
   signUpHed: {
     fontFamily: T.garamondSI,
-    fontSize: 26,
+    fontSize: 30,
     color: C.ink,
     textAlign: "center",
     letterSpacing: -0.3,
@@ -790,7 +790,7 @@ const s = StyleSheet.create({
   },
   signUpSub: {
     fontFamily: T.garamond,
-    fontSize: 14,
+    fontSize: 15,
     color: C.mut,
     textAlign: "center",
     lineHeight: 22,
@@ -813,7 +813,7 @@ const s = StyleSheet.create({
     gap: 8,
   },
   appleBtnIcon: {
-    fontSize: 18,
+    fontSize: 16,
     color: "#000",
   },
   appleBtnT: {
@@ -834,7 +834,7 @@ const s = StyleSheet.create({
   },
   dividerT: {
     fontFamily: T.sans,
-    fontSize: 12,
+    fontSize: 13,
     color: C.mut,
   },
   emailBtn: {
@@ -846,7 +846,7 @@ const s = StyleSheet.create({
   },
   emailBtnT: {
     fontFamily: T.sansM,
-    fontSize: 14,
+    fontSize: 15,
     color: C.gold,
   },
 
@@ -854,7 +854,7 @@ const s = StyleSheet.create({
   codeInput: {
     width: "100%",
     fontFamily: T.garamondI,
-    fontSize: 18,
+    fontSize: 16,
     color: C.ink,
     borderWidth: 1,
     borderColor: C.line,
@@ -865,7 +865,7 @@ const s = StyleSheet.create({
   },
   errorT: {
     fontFamily: T.sans,
-    fontSize: 12,
+    fontSize: 13,
     color: C.coral,
     marginTop: 8,
     textAlign: "center",
@@ -953,7 +953,7 @@ const s = StyleSheet.create({
   },
   nextBtnT: {
     fontFamily: T.sansB,
-    fontSize: 14,
+    fontSize: 15,
     color: C.inkD,
     letterSpacing: 0.3,
   },

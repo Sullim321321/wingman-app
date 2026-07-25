@@ -209,7 +209,7 @@ const s = StyleSheet.create({
   },
   markT: {
     fontFamily: T.sansB,
-    fontSize: 14,
+    fontSize: 15,
     color: C.inkD,
   },
   mastLabel: {
@@ -234,7 +234,7 @@ const s = StyleSheet.create({
   },
   editionT: {
     fontFamily: T.sansM,
-    fontSize: 9,
+    fontSize: 10,
     letterSpacing: 2.5,
     color: C.mut,
     opacity: 0.6,
@@ -243,7 +243,7 @@ const s = StyleSheet.create({
   // ── Headline ──
   hed: {
     fontFamily: T.garamondSI,
-    fontSize: 36,
+    fontSize: 34,
     color: C.ink,
     letterSpacing: -0.3,
     lineHeight: 42,
@@ -253,7 +253,7 @@ const s = StyleSheet.create({
   // ── Briefing ──
   briefing: {
     fontFamily: T.garamondI,
-    fontSize: 17,
+    fontSize: 16,
     color: C.mut,
     lineHeight: 28,
     marginBottom: 10,
@@ -275,7 +275,7 @@ const s = StyleSheet.create({
   },
   demoNoticeT: {
     fontFamily: T.sans,
-    fontSize: 12,
+    fontSize: 13,
     color: C.gold,
     opacity: 0.8,
     flex: 1,
@@ -331,19 +331,19 @@ const s = StyleSheet.create({
   },
   rowTitle: {
     fontFamily: T.sansM,
-    fontSize: 14,
+    fontSize: 15,
     color: C.ink,
     lineHeight: 20,
   },
   rowSub: {
     fontFamily: T.sans,
-    fontSize: 12,
+    fontSize: 13,
     color: C.mut,
     lineHeight: 17,
   },
   rowArrow: {
     fontFamily: T.sansM,
-    fontSize: 18,
+    fontSize: 16,
     color: C.mut,
     opacity: 0.5,
   },

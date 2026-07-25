@@ -537,7 +537,7 @@ export default function SettingsScreen({ navigation }) {
 
 const s = StyleSheet.create({
   app:  { flex: 1, backgroundColor: C.bg },
-  acct: { color: C.mut, fontSize: 14, fontFamily: T.sans, marginBottom: 14, letterSpacing: 0.1 },
+  acct: { color: C.mut, fontSize: 15, fontFamily: T.sans, marginBottom: 14, letterSpacing: 0.1 },
   versionT: { color: C.mut, fontSize: 11, fontFamily: T.sans, textAlign: "center", marginTop: 8, marginBottom: 24, opacity: 0.5 },
   localeRow: {
     paddingVertical: 12,
@@ -596,7 +596,7 @@ const s = StyleSheet.create({
   },
   affinitySub: {
     color: C.mut,
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: T.sans,
   },
   affinityTags: {
@@ -612,7 +612,7 @@ const s = StyleSheet.create({
   },
   affinityRemoveT: {
     color: C.mut,
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: T.sans,
   },
   // Concierge memory
@@ -650,7 +650,7 @@ const s = StyleSheet.create({
   memoryText: {
     flex: 1,
     color: C.ink,
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: T.sans,
     lineHeight: 20,
   },
@@ -660,7 +660,7 @@ const s = StyleSheet.create({
   },
   memoryRemoveT: {
     color: C.mut,
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: T.sans,
   },
   themeBtn: {
@@ -699,11 +699,11 @@ const s = StyleSheet.create({
   },
   briefingHeroTop: { flexDirection: "row", alignItems: "center" },
   histT:   { fontFamily: T.sansM, fontSize: 15, color: C.ink },
-  histSub: { fontFamily: T.sans, fontSize: 12.5, color: C.mut, marginTop: 4, lineHeight: 18 },
+  histSub: { fontFamily: T.sans, fontSize: 13, color: C.mut, marginTop: 4, lineHeight: 18 },
   briefingTimeRow: { flexDirection: "row", gap: 8, marginTop: 14 },
   briefingHeroLabel: {
     fontFamily: T.sansM,
-    fontSize: 9,
+    fontSize: 10,
     letterSpacing: 2,
     color: C.mutD,
     textTransform: "uppercase",
@@ -718,7 +718,7 @@ const s = StyleSheet.create({
   },
   briefingHeroSub: {
     fontFamily: T.sans,
-    fontSize: 12,
+    fontSize: 13,
     color: C.mut,
     marginTop: 4,
     lineHeight: 16,
@@ -737,7 +737,7 @@ const s = StyleSheet.create({
   },
   briefingTimeBtnT: {
     fontFamily: T.sansM,
-    fontSize: 12,
+    fontSize: 13,
     color: C.mut,
   },
   briefingTimeBtnTActive: { color: C.gold },
@@ -748,7 +748,7 @@ const s = StyleSheet.create({
     flex: 1, backgroundColor: C.card, borderRadius: 14, borderWidth: 1,
     borderColor: C.gold + "30", padding: 14, alignItems: "flex-start",
   },
-  profileShortcutIc:    { color: C.gold, fontSize: 18, marginBottom: 8 },
-  profileShortcutLabel: { color: C.ink, fontSize: 12, fontFamily: T.sansB, marginBottom: 3 },
+  profileShortcutIc:    { color: C.gold, fontSize: 16, marginBottom: 8 },
+  profileShortcutLabel: { color: C.ink, fontSize: 13, fontFamily: T.sansB, marginBottom: 3 },
   profileShortcutSub:   { color: C.mut, fontSize: 10, fontFamily: T.sans, lineHeight: 14 },
 });

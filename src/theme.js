@@ -79,7 +79,9 @@ export const C = {
   ink:   "#211E1A",   // Deep warm ink — the reading colour on paper.
   inkD:  "#F5F2EC",   // Ink on the inverted (ink) plane → paper
   mut:   "#6B655C",   // Secondary — fully readable on ivory
-  mutD:  "#9A948A",   // Tertiary — quiet, structural
+  mutD:  "#7F796F",   // Tertiary — quiet, structural. Deepened from #9A948A (2.69:1,
+                      // below even large-text AA) to clear contrast on ivory while staying
+                      // a clear tier lighter than `mut`. DA-4 accessibility pass.
 
   // ─── The accent — one bronze ────────────────────────────────────────────────
   // On a black page the accent was the brightest thing (cream). On ivory the accent

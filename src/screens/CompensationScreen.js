@@ -173,7 +173,7 @@ export default function CompensationScreen({ navigation, route }) {
         <View style={s.successWrap}>
           <View style={s.successIcon}>
             <LinearGradient colors={GRAD.gold} style={s.successIconGrad}>
-              <Text style={{ fontSize: 28, color: C.inkD }}>✓</Text>
+              <Text style={{ fontSize: 30, color: C.inkD }}>✓</Text>
             </LinearGradient>
           </View>
           <SerifText bold style={s.successTitle}>Claim filed</SerifText>
@@ -384,14 +384,14 @@ const s = StyleSheet.create({
   amountGrad: { paddingHorizontal: 24, paddingVertical: 28, alignItems: "center" },
   amountLabel:{ color: "rgba(15,13,10,0.6)", fontSize: 10, fontFamily: T.sansB, letterSpacing: 1.5, marginBottom: 8 },
   amountValue:{ color: C.inkD, fontSize: 56, fontFamily: T.sansB, lineHeight: 60 },
-  amountSub:  { color: "rgba(15,13,10,0.65)", fontSize: 12, fontFamily: T.sans, marginTop: 8, textAlign: "center" },
+  amountSub:  { color: "rgba(15,13,10,0.65)", fontSize: 13, fontFamily: T.sans, marginTop: 8, textAlign: "center" },
 
   // Flight card
   flightCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, overflow: "hidden", marginBottom: 12 },
   flightRow:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 16, paddingVertical: 13 },
   flightRowBorder: { borderTopWidth: 0.5, borderTopColor: C.line },
   flightLabel:{ color: C.mut, fontSize: 10, fontFamily: T.sansB, letterSpacing: 1 },
-  flightValue:{ color: C.ink, fontSize: 14, fontFamily: T.sansM },
+  flightValue:{ color: C.ink, fontSize: 15, fontFamily: T.sansM },
 
   // Regulation card
   regCard:    { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 16, marginBottom: 12 },
@@ -399,17 +399,17 @@ const s = StyleSheet.create({
   regBadge:   { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   regBadgeT:  { fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.5 },
   regLabel:   { fontSize: 13, fontFamily: T.sansB, marginBottom: 3 },
-  regDesc:    { color: C.mut, fontSize: 12, fontFamily: T.sans, lineHeight: 17 },
+  regDesc:    { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 17 },
   regTiers:   { borderRadius: 10, borderWidth: 0.5, borderColor: C.line, overflow: "hidden", marginBottom: 10 },
   regTierRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 12, paddingVertical: 10 },
-  regTierRange: { color: C.mut, fontSize: 12, fontFamily: T.sans, flex: 1 },
-  regTierAmount:{ fontSize: 12, fontFamily: T.sansB },
+  regTierRange: { color: C.mut, fontSize: 13, fontFamily: T.sans, flex: 1 },
+  regTierAmount:{ fontSize: 13, fontFamily: T.sansB },
   regThreshold: { color: C.mut, fontSize: 11, fontFamily: T.sans, lineHeight: 16 },
 
   // Letter
   letterToggle: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 14, borderTopWidth: 0.5, borderTopColor: C.line, marginBottom: 0 },
-  letterToggleT:{ color: C.gold, fontSize: 14, fontFamily: T.sansM },
-  letterToggleArrow: { color: C.gold, fontSize: 20, fontFamily: T.sansM, transform: [{ rotate: "90deg" }] },
+  letterToggleT:{ color: C.gold, fontSize: 15, fontFamily: T.sansM },
+  letterToggleArrow: { color: C.gold, fontSize: 22, fontFamily: T.sansM, transform: [{ rotate: "90deg" }] },
   letterCard:   { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 16, marginBottom: 12 },
   letterSubject:{ color: C.mut, fontSize: 11, fontFamily: T.sansM, letterSpacing: 0.3, marginBottom: 8 },
   letterDivider:{ height: 0.5, backgroundColor: C.line, marginBottom: 12 },
@@ -420,12 +420,12 @@ const s = StyleSheet.create({
   // Airline contact
   contactCard:  { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 16, marginBottom: 12 },
   contactLabel: { color: C.mut, fontSize: 10, fontFamily: T.sansB, letterSpacing: 1, marginBottom: 6 },
-  contactValue: { color: C.ink, fontSize: 14, fontFamily: T.sansM, marginBottom: 4 },
+  contactValue: { color: C.ink, fontSize: 15, fontFamily: T.sansM, marginBottom: 4 },
   contactUrl:   { color: C.mut, fontSize: 11, fontFamily: T.sans },
 
   // CTA card
   ctaCard:  { backgroundColor: "rgba(201,169,110,0.06)", borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", borderRadius: 22, padding: 20, marginBottom: 12 },
-  ctaTitle: { color: C.ink, fontSize: 20, marginBottom: 8 },
+  ctaTitle: { color: C.ink, fontSize: 22, marginBottom: 8 },
   ctaSub:   { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 20, marginBottom: 18 },
   ctaBtn:   { borderRadius: 16, overflow: "hidden", marginBottom: 12, shadowColor: C.gold, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12 },
   ctaBtnGrad: { paddingVertical: 16, alignItems: "center" },
@@ -435,8 +435,8 @@ const s = StyleSheet.create({
 
   // Not eligible
   ineligCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 22, padding: 24, alignItems: "center", marginBottom: 16 },
-  ineligIcon: { fontSize: 28, color: C.mut, marginBottom: 12 },
-  ineligTitle:{ color: C.ink, fontSize: 20, textAlign: "center", marginBottom: 8 },
+  ineligIcon: { fontSize: 30, color: C.mut, marginBottom: 12 },
+  ineligTitle:{ color: C.ink, fontSize: 22, textAlign: "center", marginBottom: 8 },
   ineligBody: { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 20, textAlign: "center" },
 
   // Goodwill
@@ -444,18 +444,18 @@ const s = StyleSheet.create({
   goodwillTitle:{ color: C.ink, fontSize: 15, fontFamily: T.sansB, marginBottom: 6 },
   goodwillBody: { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 19, marginBottom: 14 },
   goodwillBtn:  { borderWidth: 1, borderColor: C.gold + "50", borderRadius: 12, paddingVertical: 12, alignItems: "center" },
-  goodwillBtnT: { color: C.gold, fontSize: 14, fontFamily: T.sansM },
+  goodwillBtnT: { color: C.gold, fontSize: 15, fontFamily: T.sansM },
 
   // Success
   successWrap:  { flex: 1, alignItems: "center", paddingHorizontal: 24, paddingTop: 40 },
   successIcon:  { width: 80, height: 80, borderRadius: 24, overflow: "hidden", marginBottom: 20, shadowColor: C.gold, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.4, shadowRadius: 20 },
   successIconGrad: { flex: 1, alignItems: "center", justifyContent: "center" },
-  successTitle: { color: C.ink, fontSize: 28, marginBottom: 8 },
+  successTitle: { color: C.ink, fontSize: 30, marginBottom: 8 },
   successRef:   { color: C.mut, fontSize: 13, fontFamily: T.sansM, marginBottom: 16 },
-  successBody:  { color: C.ink, fontSize: 14, fontFamily: T.sans, lineHeight: 22, textAlign: "center", marginBottom: 20 },
+  successBody:  { color: C.ink, fontSize: 15, fontFamily: T.sans, lineHeight: 22, textAlign: "center", marginBottom: 20 },
   successContact: { width: "100%", backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 14, marginBottom: 16 },
   successContactLabel: { color: C.mut, fontSize: 10, fontFamily: T.sansB, letterSpacing: 1, marginBottom: 4 },
-  successContactValue: { color: C.ink, fontSize: 14, fontFamily: T.sansM },
+  successContactValue: { color: C.ink, fontSize: 15, fontFamily: T.sansM },
   copyBtnFull:  { width: "100%", borderWidth: 1, borderColor: C.gold + "50", borderRadius: 14, paddingVertical: 14, alignItems: "center", marginBottom: 10 },
   copyBtnFullT: { color: C.gold, fontSize: 15, fontFamily: T.sansM },
   backTripBtn:  { paddingVertical: 12 },

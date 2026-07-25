@@ -1007,8 +1007,8 @@ const s = StyleSheet.create({
 
   // AI card
   aiCard:     { borderRadius: 20, padding: 24, borderWidth: 1, borderColor: C.line, marginBottom: 4 },
-  aiHeadline: { color: C.ink, fontSize: 26, fontFamily: T.serifB, lineHeight: 34, marginBottom: 10 },
-  aiSub:      { color: C.mut, fontSize: 14, lineHeight: 20, marginBottom: 18 },
+  aiHeadline: { color: C.ink, fontSize: 30, fontFamily: T.serifB, lineHeight: 34, marginBottom: 10 },
+  aiSub:      { color: C.mut, fontSize: 15, lineHeight: 20, marginBottom: 18 },
   aiInput: {
     color: C.ink, fontSize: 16, lineHeight: 24, minHeight: 80,
     backgroundColor: C.bg, borderRadius: 14, padding: 14,
@@ -1020,7 +1020,7 @@ const s = StyleSheet.create({
   // Examples
   exRow:  { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: C.line },
   exT:    { color: C.mut, fontSize: 13, flex: 1, lineHeight: 19 },
-  exArrow:{ color: C.gold, fontSize: 18, marginLeft: 8 },
+  exArrow:{ color: C.gold, fontSize: 16, marginLeft: 8 },
 
   // Drafted banner
   draftedBanner: { backgroundColor: "rgba(201,169,110,0.12)", borderRadius: 12, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: "rgba(201,169,110,0.25)" },
@@ -1030,7 +1030,7 @@ const s = StyleSheet.create({
   modeRow:    { flexDirection: "row", gap: 10, marginBottom: 10 },
   modeBtn:    { flex: 1, alignItems: "center", backgroundColor: C.card, borderRadius: 16, paddingVertical: 14, paddingHorizontal: 8, borderWidth: 1.5, borderColor: "transparent" },
   modeBtnOn:  { borderColor: C.gold, backgroundColor: "rgba(201,169,110,0.06)" },
-  modeIcon:   { fontSize: 18, marginBottom: 4, color: C.mut },
+  modeIcon:   { fontSize: 16, marginBottom: 4, color: C.mut },
   modeLabel:  { color: C.mut, fontSize: 13, fontFamily: T.sansB },
   modeLabelOn:{ color: C.gold },
   modeDesc:   { color: C.mut, fontSize: 10, marginTop: 2, textAlign: "center" },
@@ -1038,7 +1038,7 @@ const s = StyleSheet.create({
   // Booking type chips
   typeChip:     { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 9, paddingHorizontal: 14, borderRadius: 20, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
   typeChipOn:   { borderColor: C.gold, backgroundColor: "rgba(201,169,110,0.08)" },
-  typeChipIcon: { fontSize: 14, color: C.mut },
+  typeChipIcon: { fontSize: 15, color: C.mut },
   typeChipT:    { color: C.mut, fontSize: 13, fontFamily: T.sansM },
   typeChipTOn:  { color: C.gold, fontFamily: T.sansB },
 
@@ -1058,33 +1058,33 @@ const s = StyleSheet.create({
   emptyLegs:   { backgroundColor: C.card, borderRadius: 14, padding: 18, marginBottom: 12, borderWidth: 1, borderColor: C.line, alignItems: "center" },
   emptyLegsT:  { color: C.mut, fontSize: 13, textAlign: "center" },
   legRow:      { flexDirection: "row", alignItems: "center", backgroundColor: C.card, borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: C.line },
-  legRowT:     { color: C.ink, fontSize: 14, fontFamily: T.sansM, lineHeight: 20 },
+  legRowT:     { color: C.ink, fontSize: 15, fontFamily: T.sansM, lineHeight: 20 },
   legRemoveBtn:{ width: 28, height: 28, borderRadius: 14, backgroundColor: "rgba(255,80,80,0.1)", alignItems: "center", justifyContent: "center", marginLeft: 10 },
-  legRemoveT:  { color: "#ff5050", fontSize: 12, fontFamily: T.sansB },
+  legRemoveT:  { color: "#ff5050", fontSize: 13, fontFamily: T.sansB },
   addLegBtn:   { borderRadius: 14, borderWidth: 1.5, borderColor: C.gold, borderStyle: "dashed", padding: 16, alignItems: "center", marginBottom: 4 },
-  addLegBtnT:  { color: C.gold, fontSize: 14, fontFamily: T.sansM },
+  addLegBtnT:  { color: C.gold, fontSize: 15, fontFamily: T.sansM },
 
   // Leg form panel
   legFormPanel:    { backgroundColor: C.card, borderRadius: 18, padding: 18, marginBottom: 12, borderWidth: 1, borderColor: C.line },
   legFormActions:  { flexDirection: "row", gap: 10, marginTop: 16 },
   legFormCancel:   { flex: 1, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: C.line, alignItems: "center" },
-  legFormCancelT:  { color: C.mut, fontSize: 14, fontFamily: T.sansM },
+  legFormCancelT:  { color: C.mut, fontSize: 15, fontFamily: T.sansM },
   legFormAdd:      { flex: 2, padding: 14, borderRadius: 12, backgroundColor: C.gold, alignItems: "center" },
-  legFormAddT:     { color: C.bg, fontSize: 14, fontFamily: T.sansB },
+  legFormAddT:     { color: C.bg, fontSize: 15, fontFamily: T.sansB },
 
   // Paste panel
   pastePanel:      { backgroundColor: C.card, borderRadius: 18, padding: 18, marginBottom: 12, borderWidth: 1, borderColor: C.line },
-  pastePanelTitle: { color: C.ink, fontSize: 18, fontFamily: T.serifB, marginBottom: 8 },
+  pastePanelTitle: { color: C.ink, fontSize: 16, fontFamily: T.serifB, marginBottom: 8 },
   pastePanelSub:   { color: C.mut, fontSize: 13, lineHeight: 19, marginBottom: 16 },
-  pasteInput:      { color: C.ink, fontSize: 14, lineHeight: 22, minHeight: 160, backgroundColor: C.bg, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: C.line, marginBottom: 4 },
+  pasteInput:      { color: C.ink, fontSize: 15, lineHeight: 22, minHeight: 160, backgroundColor: C.bg, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: C.line, marginBottom: 4 },
 
   // Email forward card
   importCard:      { marginTop: 28, borderRadius: 20, borderWidth: 1, borderColor: C.line, overflow: "hidden" },
   importInner:     { flexDirection: "row", alignItems: "center", gap: 14, padding: 18 },
   importIconWrap:  { width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(201,169,110,0.12)", alignItems: "center", justifyContent: "center" },
-  importIc:        { fontSize: 20, color: C.gold },
-  importT:         { color: C.ink, fontSize: 14, fontFamily: T.sansB, marginBottom: 3 },
-  importS:         { color: C.mut, fontSize: 12, lineHeight: 18 },
+  importIc:        { fontSize: 22, color: C.gold },
+  importT:         { color: C.ink, fontSize: 15, fontFamily: T.sansB, marginBottom: 3 },
+  importS:         { color: C.mut, fontSize: 13, lineHeight: 18 },
   importActions:   { flexDirection: "row", borderTopWidth: 1, borderTopColor: C.line },
   importActionBtn: { flex: 1, paddingVertical: 13, alignItems: "center" },
   importActionT:   { color: C.gold, fontSize: 13, fontFamily: T.sansM },

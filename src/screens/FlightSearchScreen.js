@@ -406,7 +406,7 @@ export default function FlightSearchScreen({ navigation }) {
                   onSelect={setOriginAirport}
                 />
                 <Pressable style={[s.swap, { marginTop: 28 }]} onPress={swapAirports}>
-                  <Text style={{ color: C.gold, fontSize: 18 }}>⇄</Text>
+                  <Text style={{ color: C.gold, fontSize: 16 }}>⇄</Text>
                 </Pressable>
                 <AirportInput
                   label="To"
@@ -579,7 +579,7 @@ const s = StyleSheet.create({
   tabRow: { flexDirection: "row", gap: 8, marginHorizontal: 16, marginBottom: 16, marginTop: 4 },
   tabBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, alignItems: "center" },
   tabBtnSel: { backgroundColor: "rgba(201,169,110,0.12)", borderColor: C.gold },
-  tabT: { color: C.mut, fontSize: 12, fontFamily: T.sansB, letterSpacing: 0.5 },
+  tabT: { color: C.mut, fontSize: 13, fontFamily: T.sansB, letterSpacing: 0.5 },
   tabTSel: { color: C.gold },
 
   row: { flexDirection: "row", gap: 10, alignItems: "center", marginBottom: 4 },
@@ -587,7 +587,7 @@ const s = StyleSheet.create({
   inputLabel: { color: C.mut, fontSize: 11, fontFamily: T.sansB, letterSpacing: 1, marginBottom: 4 },
   input: { color: C.ink, fontSize: 16, fontFamily: T.sansM },
   dateTapBtn: { backgroundColor: C.card2, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, marginTop: 4 },
-  dateTapBtnT: { color: C.ink, fontSize: 14, fontFamily: T.sansM },
+  dateTapBtnT: { color: C.ink, fontSize: 15, fontFamily: T.sansM },
   swap: { width: 36, height: 36, borderRadius: 10, backgroundColor: C.card, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", alignItems: "center", justifyContent: "center" },
 
   // Airport autocomplete dropdown
@@ -595,7 +595,7 @@ const s = StyleSheet.create({
   dropdownItem: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 12, paddingVertical: 10 },
   dropdownDivider: { borderBottomWidth: 1, borderBottomColor: C.line },
   dropdownIata: { color: C.gold, fontSize: 15, fontFamily: T.sansB, minWidth: 36 },
-  dropdownName: { color: C.ink, fontSize: 14, fontFamily: T.sansM },
+  dropdownName: { color: C.ink, fontSize: 15, fontFamily: T.sansM },
   dropdownCountry: { color: C.mut, fontSize: 11, fontFamily: T.sans, marginTop: 1 },
 
   cabinBtn: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 10, backgroundColor: C.card, borderWidth: 1, borderColor: C.line },
@@ -608,7 +608,7 @@ const s = StyleSheet.create({
   paxT: { color: C.mut, fontSize: 15, fontFamily: T.sansB },
   paxTSel: { color: C.gold },
 
-  hint: { color: C.mut, fontSize: 12, fontFamily: T.sans, marginHorizontal: 0, marginTop: 6, marginBottom: 4, lineHeight: 18 },
+  hint: { color: C.mut, fontSize: 13, fontFamily: T.sans, marginHorizontal: 0, marginTop: 6, marginBottom: 4, lineHeight: 18 },
   error: { color: C.coral, fontSize: 13, marginTop: 8, marginBottom: 4 },
 
   // Status card
@@ -616,28 +616,28 @@ const s = StyleSheet.create({
   statusHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
   statusIdent: { color: C.ink, fontSize: 22, fontFamily: T.serifB },
   statusBadge: { borderWidth: 1, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
-  statusBadgeT: { fontSize: 12, fontFamily: T.sansB },
+  statusBadgeT: { fontSize: 13, fontFamily: T.sansB },
   statusDetail: { color: C.mut, fontSize: 13, fontFamily: T.sans, marginTop: 4 },
 
   // Leg rows in confirmation card
   legRow: { borderTopWidth: 1, borderTopColor: C.line, paddingTop: 10, marginTop: 10 },
   legType: { color: C.gold, fontSize: 10, fontFamily: T.sansB, letterSpacing: 1.5, marginBottom: 3 },
-  legDetail: { color: C.ink, fontSize: 14, fontFamily: T.sansM },
-  legDate: { color: C.mut, fontSize: 12, marginTop: 2 },
+  legDetail: { color: C.ink, fontSize: 15, fontFamily: T.sansM },
+  legDate: { color: C.mut, fontSize: 13, marginTop: 2 },
 
   // Offer card
   card: { backgroundColor: C.card, borderWidth: 1, borderColor: "rgba(201,169,110,0.18)", borderRadius: 16, padding: 14, marginBottom: 10 },
   cardTop: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
-  carrier: { color: C.mut, fontSize: 12, marginBottom: 8 },
+  carrier: { color: C.mut, fontSize: 13, marginBottom: 8 },
   route: { flexDirection: "row", alignItems: "center", gap: 8 },
   routeEnd: { alignItems: "center" },
   routeMid: { flex: 1, alignItems: "center", gap: 3 },
   routeLine: { width: "100%", height: 1, backgroundColor: C.line },
-  time: { color: C.ink, fontSize: 17, fontFamily: T.sansB },
-  airport: { color: C.mut, fontSize: 12, marginTop: 2 },
+  time: { color: C.ink, fontSize: 16, fontFamily: T.sansB },
+  airport: { color: C.mut, fontSize: 13, marginTop: 2 },
   dur: { color: C.mut, fontSize: 11 },
   stops: { color: C.mut, fontSize: 11 },
-  date: { color: C.mut, fontSize: 12, marginTop: 6 },
+  date: { color: C.mut, fontSize: 13, marginTop: 6 },
   priceBox: { alignItems: "flex-end", minWidth: 60 },
   price: { color: C.gold, fontSize: 22, fontFamily: T.sansB },
   priceSub: { color: C.mut, fontSize: 11 },

@@ -528,9 +528,9 @@ export default function TripsScreen({ navigation }) {
 const s = StyleSheet.create({
   errWrap: { alignItems: "center", paddingHorizontal: 34, paddingTop: 60 },
   errHed:  { fontFamily: T.serif, fontSize: 22, color: C.ink, marginBottom: 10, textAlign: "center" },
-  errSub:  { fontFamily: T.sans, fontSize: 14, color: C.mut, textAlign: "center", lineHeight: 21, marginBottom: 20 },
+  errSub:  { fontFamily: T.sans, fontSize: 15, color: C.mut, textAlign: "center", lineHeight: 21, marginBottom: 20 },
   errBtn:  { borderWidth: 1, borderColor: C.line, borderRadius: 10, paddingHorizontal: 20, paddingVertical: 11 },
-  errBtnT: { fontFamily: T.sansM, fontSize: 14, color: C.ink },
+  errBtnT: { fontFamily: T.sansM, fontSize: 15, color: C.ink },
 
   root: {
     flex: 1,
@@ -558,7 +558,7 @@ const s = StyleSheet.create({
     alignItems: "center",
   },
   segBtnOn: { borderColor: C.gold, backgroundColor: "rgba(201,169,110,0.08)" },
-  segT: { fontFamily: T.sansM, fontSize: 12, color: C.mut, letterSpacing: 0.3 },
+  segT: { fontFamily: T.sansM, fontSize: 13, color: C.mut, letterSpacing: 0.3 },
   segTOn: { color: C.gold },
 
   // ── Backfill recap card ──
@@ -588,13 +588,13 @@ const s = StyleSheet.create({
   },
   recapBody: {
     fontFamily: T.garamondI,
-    fontSize: 17,
+    fontSize: 16,
     lineHeight: 25,
     color: C.ink,
   },
   recapFoot: {
     fontFamily: T.sans,
-    fontSize: 12.5,
+    fontSize: 13,
     lineHeight: 18,
     color: C.mut,
     marginTop: 10,
@@ -627,7 +627,7 @@ const s = StyleSheet.create({
   },
   addBtnT: {
     fontFamily: T.sansM,
-    fontSize: 12,
+    fontSize: 13,
     color: C.gold,
     letterSpacing: 1,
   },
@@ -644,7 +644,7 @@ const s = StyleSheet.create({
   // ── Section label ──
   sectionLabel: {
     fontFamily: T.sansM,
-    fontSize: 9,
+    fontSize: 10,
     letterSpacing: 2.5,
     color: C.mut,
     textTransform: "uppercase",
@@ -681,7 +681,7 @@ const s = StyleSheet.create({
   },
   dayNum: {
     fontFamily: T.garamondSI,
-    fontSize: 28,
+    fontSize: 30,
     color: C.gold,
     lineHeight: 30,
     letterSpacing: -0.5,
@@ -692,7 +692,7 @@ const s = StyleSheet.create({
   },
   monthAb: {
     fontFamily: T.sansM,
-    fontSize: 9,
+    fontSize: 10,
     letterSpacing: 1.5,
     color: C.gold,
     textTransform: "uppercase",
@@ -704,7 +704,7 @@ const s = StyleSheet.create({
   },
   yearStr: {
     fontFamily: T.sans,
-    fontSize: 9,
+    fontSize: 10,
     color: C.mut,
     opacity: 0.5,
     marginTop: 1,
@@ -727,7 +727,7 @@ const s = StyleSheet.create({
   },
   tripRoute: {
     fontFamily: T.sans,
-    fontSize: 12,
+    fontSize: 13,
     color: C.mut,
     letterSpacing: 0.3,
   },
@@ -755,7 +755,7 @@ const s = StyleSheet.create({
   // Chevron
   chevron: {
     fontFamily: T.sans,
-    fontSize: 18,
+    fontSize: 16,
     color: C.mut,
     opacity: 0.4,
   },
@@ -788,7 +788,7 @@ const s = StyleSheet.create({
   },
   pillT: {
     fontFamily: T.sansB,
-    fontSize: 9,
+    fontSize: 10,
     letterSpacing: 1.2,
   },
   pillMut: {
@@ -835,7 +835,7 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   importIconT: {
-    fontSize: 14,
+    fontSize: 15,
   },
   importLabel: {
     flex: 1,
@@ -845,7 +845,7 @@ const s = StyleSheet.create({
   },
   importArrow: {
     fontFamily: T.sans,
-    fontSize: 18,
+    fontSize: 16,
     color: C.mut,
     opacity: 0.4,
   },
@@ -867,7 +867,7 @@ const s = StyleSheet.create({
   },
   pastRuleLabel: {
     fontFamily: T.sansM,
-    fontSize: 9,
+    fontSize: 10,
     letterSpacing: 2.5,
     color: C.mut,
     opacity: 0.5,
@@ -888,7 +888,7 @@ const s = StyleSheet.create({
   },
   pastToggleT: {
     fontFamily: T.sansM,
-    fontSize: 12,
+    fontSize: 13,
     letterSpacing: 0.8,
     color: C.mut,
   },
@@ -913,7 +913,7 @@ const s = StyleSheet.create({
   },
   emptyHed: {
     fontFamily: T.garamondSI,
-    fontSize: 28,
+    fontSize: 30,
     color: C.ink,
     marginBottom: 12,
     letterSpacing: -0.3,
@@ -934,7 +934,7 @@ const s = StyleSheet.create({
   },
   emptyPrimaryT: {
     fontFamily: T.sansB,
-    fontSize: 14,
+    fontSize: 15,
     color: C.bg,
     letterSpacing: 0.5,
   },
@@ -947,7 +947,7 @@ const s = StyleSheet.create({
   },
   emptyGhostT: {
     fontFamily: T.sansM,
-    fontSize: 14,
+    fontSize: 15,
     color: C.mut,
   },
 });

@@ -163,12 +163,12 @@ const s = StyleSheet.create({
     ...SHADOW.soft,
   },
   codeLabel: {
-    fontFamily: T.sans, fontSize: 9, letterSpacing: T.trackWide,
+    fontFamily: T.sans, fontSize: 10, letterSpacing: T.trackWide,
     color: C.mut, marginBottom: 16,
   },
   code: {
     fontFamily: T.serifB,
-    fontSize: 38,
+    fontSize: 34,
     color: C.gold,
     letterSpacing: 8,
     marginLeft: 8,   // trailing letter-spacing pushes the last glyph off-centre

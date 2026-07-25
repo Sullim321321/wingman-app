@@ -387,7 +387,7 @@ const s = StyleSheet.create({
   // ── Section label ──
   sectionLabel: {
     fontFamily: T.sansM,
-    fontSize: 9,
+    fontSize: 10,
     letterSpacing: 2.5,
     color: C.mut,
     textTransform: "uppercase",
@@ -414,7 +414,7 @@ const s = StyleSheet.create({
     justifyContent: "space-between",
   },
   importSummaryT: { fontFamily: T.sans, fontSize: 13, color: C.mut, flex: 1 },
-  importSummaryChev: { fontFamily: T.sans, fontSize: 18, color: C.mut, marginLeft: 8 },
+  importSummaryChev: { fontFamily: T.sans, fontSize: 16, color: C.mut, marginLeft: 8 },
 
   feedBlock: {
     marginHorizontal: 24,
@@ -486,7 +486,7 @@ const s = StyleSheet.create({
   },
   signalType: {
     fontFamily: T.sansB,
-    fontSize: 9,
+    fontSize: 10,
     letterSpacing: 1.5,
   },
   signalTrip: {
@@ -504,14 +504,14 @@ const s = StyleSheet.create({
   },
   signalTitle: {
     fontFamily: T.sansM,
-    fontSize: 14,
+    fontSize: 15,
     color: C.ink,
     lineHeight: 20,
     letterSpacing: -0.1,
   },
   signalBodyText: {
     fontFamily: T.sans,
-    fontSize: 12,
+    fontSize: 13,
     color: C.mut,
     lineHeight: 18,
   },
@@ -546,7 +546,7 @@ const s = StyleSheet.create({
   },
   earlierLabel: {
     fontFamily: T.sansM,
-    fontSize: 9,
+    fontSize: 10,
     letterSpacing: 2.5,
     color: C.mut,
     opacity: 0.5,
@@ -559,7 +559,7 @@ const s = StyleSheet.create({
   },
   allClearT: {
     fontFamily: T.garamondI,
-    fontSize: 14,
+    fontSize: 15,
     color: C.mut,
     opacity: 0.6,
   },
@@ -571,7 +571,7 @@ const s = StyleSheet.create({
   },
   emptyHed: {
     fontFamily: T.garamondSI,
-    fontSize: 28,
+    fontSize: 30,
     color: C.ink,
     marginBottom: 12,
     letterSpacing: -0.3,
@@ -592,7 +592,7 @@ const s = StyleSheet.create({
   },
   emptyPrimaryT: {
     fontFamily: T.sansB,
-    fontSize: 14,
+    fontSize: 15,
     color: C.bg,
     letterSpacing: 0.5,
   },
@@ -605,7 +605,7 @@ const s = StyleSheet.create({
   },
   emptyGhostT: {
     fontFamily: T.sansM,
-    fontSize: 14,
+    fontSize: 15,
     color: C.mut,
   },
 });

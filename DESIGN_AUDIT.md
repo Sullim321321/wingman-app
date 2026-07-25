@@ -145,3 +145,32 @@ render, not guessed. Home, Trips, Dossier, Curator I've seen and can start on no
 
 *The test for every design change: does it make the hierarchy clearer, the rhythm more
 even, or the content less repetitive? If not, it's not a design fix — it's a preference.*
+
+---
+
+## Closeout status (2026-07-25)
+
+- **DA-1 — Home on the system.** ✅ Done.
+- **DA-3 — Shared component library.** ✅ Done (`src/components/ui.js`).
+- **DA-2 — Token sweep across all screens.** ✅ Done. Every hardcoded `fontSize` in
+  `src/` was snapped to the nearest ramp step (10 · 11 · 13 · 15 · 16 · 22 · 30 · 34;
+  ties round up; hero numerals ≥ 40 left intentional). 535 sites across 52 files. Result:
+  **zero off-scale type sizes remain** — the whole app reads on one editorial scale.
+  Spacing/`SP` adoption continues opportunistically per screen; the *type* scale, which
+  was the biggest lever, is unified.
+- **DA-4 — Motion / icon / state / contrast.** ✅ Substantially done.
+  - *Icons:* already one family (Ionicons only) — no change needed.
+  - *Confirm:* one path (`ConfirmSheet`) — no change needed.
+  - *Contrast:* accessibility pass on ivory. `mutD` deepened `#9A948A → #7F796F`
+    (was 2.69:1, below large-text AA). `ink`, `mut`, `coral`, `indigo` pass AA; `gold`
+    and `teal` are brand accents used for labels and pass large-text AA (3.80 / 4.23) —
+    deliberately left as the accent, flagged for the identity discussion in the next
+    roadmap.
+  - *Motion:* one entrance primitive (`FadeRise`) is the standard and is applied on the
+    primary reading surfaces. Extending it to remaining secondary/form screens is the one
+    open thread — low-value, low-risk, deferred to opportunistic polish.
+
+**Verification:** all 66 `src/` files parse under `babel-preset-expo` after the sweep;
+type histogram confirms no off-scale sizes < 40. Ship as one OTA and screenshot-verify
+the screens not re-seen (Plan, Insights, Situation, Ledger, Decisions, Onboarding, SignIn)
+to catch any layout shift from the snap — then this roadmap is fully closed.

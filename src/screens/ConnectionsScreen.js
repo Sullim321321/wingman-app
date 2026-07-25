@@ -38,7 +38,7 @@ function Feat({ ic, t, color }) {
   return (
     <View style={g.feat}>
       <View style={s.featIcon}>
-        <Text style={{ color: color || C.gold, fontSize: 12, fontFamily: T.sansB }}>{ic}</Text>
+        <Text style={{ color: color || C.gold, fontSize: 13, fontFamily: T.sansB }}>{ic}</Text>
       </View>
       <Text style={{ color: C.ink, fontSize: 13, fontFamily: T.sans, flex: 1, lineHeight: 19 }}>{t}</Text>
     </View>
@@ -54,7 +54,7 @@ function ConnRow({ iconKey, title, sub, right, onPress, disabled, last }) {
       style={[s.row, last && { borderBottomWidth: 0 }]}
     >
       <View style={[s.iconBox, { backgroundColor: icon.bg }]}>
-        <Text style={{ fontSize: 14, color: C.gold, fontFamily: T.sansB }}>{icon.char}</Text>
+        <Text style={{ fontSize: 15, color: C.gold, fontFamily: T.sansB }}>{icon.char}</Text>
       </View>
       <View style={{ flex: 1 }}>
         <Text style={s.rowT}>{title}</Text>
@@ -72,7 +72,7 @@ function AccountRow({ account, onDisconnect, onRescan, scanning, last, rescanRes
   return (
     <View style={[s.accountRow, last && { borderBottomWidth: 0 }]}>
       <View style={[s.iconBox, { backgroundColor: C.gold + "12" }]}>
-        <Text style={{ fontSize: 14, color: C.gold, fontFamily: T.sansB }}>@</Text>
+        <Text style={{ fontSize: 15, color: C.gold, fontFamily: T.sansB }}>@</Text>
       </View>
       <View style={{ flex: 1 }}>
         <Text style={s.rowT} numberOfLines={1}>{label}</Text>
@@ -566,7 +566,7 @@ export default function ConnectionsScreen({ navigation, route }) {
                 </View>
                 {connecting
                   ? <ActivityIndicator color={C.gold} size="small" />
-                  : <Text style={{ color: C.gold, fontSize: 18, fontFamily: T.sansM }}>›</Text>}
+                  : <Text style={{ color: C.gold, fontSize: 16, fontFamily: T.sansM }}>›</Text>}
               </Pressable>
             </>
           ) : (
@@ -907,13 +907,13 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: C.line,
     alignItems: "center", justifyContent: "center",
   },
-  rowT: { color: C.ink, fontSize: 14, fontFamily: T.sansM, marginBottom: 2 },
-  rowS: { color: C.mut, fontSize: 12, fontFamily: T.sans, lineHeight: 17 },
+  rowT: { color: C.ink, fontSize: 15, fontFamily: T.sansM, marginBottom: 2 },
+  rowS: { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 17 },
   connectBtn: {
     backgroundColor: C.gold, borderRadius: 8,
     paddingHorizontal: 12, paddingVertical: 6,
   },
-  connectBtnT: { color: C.inkD, fontSize: 12, fontFamily: T.sansB },
+  connectBtnT: { color: C.inkD, fontSize: 13, fontFamily: T.sansB },
   rescanBtn: {
     borderWidth: 1, borderColor: C.gold + "60", borderRadius: 8,
     paddingHorizontal: 10, paddingVertical: 5,
@@ -949,9 +949,9 @@ const s = StyleSheet.create({
   forwardCard:         { borderRadius: 20, borderWidth: 1, borderColor: C.gold + "40", backgroundColor: C.card, overflow: "hidden", marginBottom: 4 },
   forwardTop:          { flexDirection: "row", alignItems: "flex-start", gap: 14, padding: 18, paddingBottom: 12 },
   forwardIconWrap:     { width: 44, height: 44, borderRadius: 22, backgroundColor: C.gold + "18", alignItems: "center", justifyContent: "center" },
-  forwardIcon:         { fontSize: 20, color: C.gold },
+  forwardIcon:         { fontSize: 22, color: C.gold },
   forwardTitle:        { color: C.ink, fontSize: 15, fontFamily: T.sansB, marginBottom: 4 },
-  forwardSub:          { color: C.mut, fontSize: 12, lineHeight: 18 },
+  forwardSub:          { color: C.mut, fontSize: 13, lineHeight: 18 },
   forwardAddressRow:   { marginHorizontal: 18, marginBottom: 12, backgroundColor: C.bg, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14, borderWidth: 1, borderColor: C.line },
   forwardAddress:      { color: C.gold, fontSize: 15, fontFamily: T.sansB, letterSpacing: 0.3, textAlign: "center" },
   forwardActions:      { flexDirection: "row", borderTopWidth: 1, borderTopColor: C.line },
@@ -962,7 +962,7 @@ const s = StyleSheet.create({
 
   // TripIt iCal input
   tripitInputWrap: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 14, borderTopWidth: 0.5, borderTopColor: C.line },
-  tripitHint:      { color: C.mut, fontSize: 12, fontFamily: T.sans, lineHeight: 18, marginBottom: 10 },
+  tripitHint:      { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 18, marginBottom: 10 },
   tripitInput:     { backgroundColor: C.bg, borderRadius: 10, borderWidth: 0.5, borderColor: C.line, color: C.ink, fontFamily: T.sans, fontSize: 13, paddingHorizontal: 12, paddingVertical: 10 },
 
   // PDF import row

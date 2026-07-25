@@ -301,7 +301,7 @@ export default function TasteSetupScreen({ navigation, route }) {
     return (
       <SafeAreaView style={s.safe}>
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <Text style={{ color: C.mut, fontFamily: T.sans, fontSize: 14 }}>Loading your preferences…</Text>
+          <Text style={{ color: C.mut, fontFamily: T.sans, fontSize: 15 }}>Loading your preferences…</Text>
         </View>
       </SafeAreaView>
     );
@@ -386,9 +386,9 @@ const s = StyleSheet.create({
   stepWrap: { flex: 1 },
   stepContent: { paddingHorizontal: 20, paddingBottom: 24 },
   stepHeader: { marginBottom: 24, paddingTop: 8 },
-  stepCount: { color: C.teal, fontSize: 12, fontFamily: T.sansB, letterSpacing: 1, marginBottom: 6 },
+  stepCount: { color: C.teal, fontSize: 13, fontFamily: T.sansB, letterSpacing: 1, marginBottom: 6 },
   stepTitle: { color: C.ink, fontSize: 22, fontFamily: T.sansB, marginBottom: 8 },
-  stepSub: { color: C.mut, fontSize: 14, lineHeight: 20 },
+  stepSub: { color: C.mut, fontSize: 15, lineHeight: 20 },
 
   // Row toggle (for sources)
   row: {
@@ -402,17 +402,17 @@ const s = StyleSheet.create({
     borderColor: "transparent",
   },
   rowOn: { borderColor: C.teal, backgroundColor: C.confirmedFill },
-  rowIcon: { fontSize: 20, marginRight: 12 },
+  rowIcon: { fontSize: 22, marginRight: 12 },
   rowLabel: { color: C.ink, fontSize: 15, fontFamily: T.sansM },
   rowLabelOn: { color: C.teal },
-  rowDesc: { color: C.mut, fontSize: 12, marginTop: 2 },
+  rowDesc: { color: C.mut, fontSize: 13, marginTop: 2 },
   check: {
     width: 22, height: 22, borderRadius: 11,
     borderWidth: 1.5, borderColor: C.mut,
     alignItems: "center", justifyContent: "center",
   },
   checkOn: { backgroundColor: C.teal, borderColor: C.teal },
-  checkMark: { color: "#000", fontSize: 12, fontFamily: T.sansB },
+  checkMark: { color: "#000", fontSize: 13, fontFamily: T.sansB },
 
   // Chip grid (for hotel/seat/food prefs)
   chipGrid: {
@@ -433,7 +433,7 @@ const s = StyleSheet.create({
     gap: 6,
   },
   chipOn: { borderColor: C.teal, backgroundColor: C.confirmedFill },
-  chipIcon: { fontSize: 14 },
+  chipIcon: { fontSize: 15 },
   chipLabel: { color: C.mut, fontSize: 13, fontFamily: T.sansM },
   chipLabelOn: { color: C.teal },
 

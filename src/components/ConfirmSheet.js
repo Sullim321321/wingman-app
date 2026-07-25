@@ -72,14 +72,14 @@ const s = StyleSheet.create({
   sheet: { ...CARD.lifted, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: SP.xl, paddingBottom: SP.xxxl },
   kicker: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.4, color: C.gold, marginBottom: SP.sm },
   title: { fontFamily: T.serif, fontSize: 22, color: C.ink, lineHeight: 27 },
-  line: { fontFamily: T.sans, fontSize: 14.5, color: C.ink, lineHeight: 21, marginTop: SP.sm },
+  line: { fontFamily: T.sans, fontSize: 15, color: C.ink, lineHeight: 21, marginTop: SP.sm },
 
   facts: { marginTop: SP.lg, borderTopWidth: 1, borderTopColor: C.line, paddingTop: SP.md, gap: SP.sm },
   factRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" },
-  factLabel: { fontFamily: T.sansM, fontSize: 12, letterSpacing: 0.3, color: C.mut },
-  factValue: { fontFamily: T.sansM, fontSize: 13.5, color: C.ink },
+  factLabel: { fontFamily: T.sansM, fontSize: 13, letterSpacing: 0.3, color: C.mut },
+  factValue: { fontFamily: T.sansM, fontSize: 13, color: C.ink },
 
-  note: { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 13.5, color: C.mut, marginTop: SP.md, lineHeight: 19 },
+  note: { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 13, color: C.mut, marginTop: SP.md, lineHeight: 19 },
 
   actions: { flexDirection: "row", gap: SP.md, marginTop: SP.xl },
   ghost: { flex: 1, borderWidth: 1, borderColor: C.line, borderRadius: R.lg, paddingVertical: 15, alignItems: "center", justifyContent: "center" },

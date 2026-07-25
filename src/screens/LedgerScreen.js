@@ -181,35 +181,35 @@ const s = StyleSheet.create({
                borderTopColor: C.lineHi, paddingVertical: 18, marginBottom: 26 },
   tallyCol:  { flex: 1, alignItems: "center" },
   tallyRule: { width: 1, height: 34, backgroundColor: C.line },
-  tallyN:    { fontFamily: T.monoM, fontSize: 26, color: C.ink, letterSpacing: 1 },
-  tallyL:    { fontFamily: T.sansB, fontSize: 8.5, letterSpacing: 2.2, color: C.mutD, marginTop: 7 },
+  tallyN:    { fontFamily: T.monoM, fontSize: 30, color: C.ink, letterSpacing: 1 },
+  tallyL:    { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.2, color: C.mutD, marginTop: 7 },
 
   row:    { backgroundColor: C.card, borderRadius: 14, padding: 16, marginBottom: 12,
             borderWidth: 1, borderColor: C.line, borderTopColor: C.lineHi },
   rowTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
-  by:     { fontFamily: T.sansB, fontSize: 8.5, letterSpacing: 2 },
+  by:     { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2 },
   byW:    { color: C.gold },     // Wingman acted. Cream — the accent.
   byU:    { color: C.mutD },     // You acted. Quiet.
   when:   { fontFamily: T.mono, fontSize: 10, color: C.mutD, letterSpacing: 0.6 },
 
   q:      { fontFamily: T.sans, fontSize: 15, color: C.ink, lineHeight: 21 },
-  chose:  { fontFamily: T.sansM, fontSize: 14, color: C.ink, marginTop: 6 },
+  chose:  { fontFamily: T.sansM, fontSize: 15, color: C.ink, marginTop: 6 },
   because:{ fontFamily: T.garamondI, fontStyle: "italic", fontSize: 15, lineHeight: 22,
             color: C.mut, marginTop: 8 },
 
   prot:    { marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.line },
-  protH:   { fontFamily: T.sansB, fontSize: 8, letterSpacing: 2.2, color: C.mutD, marginBottom: 8 },
+  protH:   { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.2, color: C.mutD, marginBottom: 8 },
   protRow: { flexDirection: "row", alignItems: "flex-start", gap: 9, marginBottom: 6 },
   dot:     { width: 5, height: 5, borderRadius: 3, backgroundColor: C.mut, marginTop: 7 },
-  protT:   { fontFamily: T.sans, fontSize: 13.5, color: C.ink, flex: 1, lineHeight: 19 },
+  protT:   { fontFamily: T.sans, fontSize: 13, color: C.ink, flex: 1, lineHeight: 19 },
 
   meta:   { fontFamily: T.mono, fontSize: 10, color: C.mutD, marginTop: 12, letterSpacing: 0.5 },
 
   empty:  { paddingVertical: 10 },
   emptyH: { fontFamily: T.serif, fontSize: 22, color: C.ink, marginBottom: 10 },
-  emptyT: { fontFamily: T.sans, fontSize: 14.5, color: C.mut, lineHeight: 23 },
-  emptyN: { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 14.5, color: C.mutD,
+  emptyT: { fontFamily: T.sans, fontSize: 15, color: C.mut, lineHeight: 23 },
+  emptyN: { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 15, color: C.mutD,
             lineHeight: 22, marginTop: 16 },
 
-  err:    { fontFamily: T.sans, fontSize: 14, color: C.coral, marginTop: 10 },
+  err:    { fontFamily: T.sans, fontSize: 15, color: C.coral, marginTop: 10 },
 });

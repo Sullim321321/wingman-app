@@ -28,7 +28,7 @@ import {
   getLocalNews, getLocalTraffic, getTodayEvents, getTravelStats,
   createTrip, addLeg,
   getDecisions, confirmDecision, dismissDecision, undoDecision,
-  getBrief, getCurate,
+  getBrief, getCurate, getLedger,
 } from "../api";
 import { scheduleDisruption, schedulePreDepartureBriefing, schedulePostTripDebrief } from "../notify";
 import * as Speech from "expo-speech";
@@ -424,6 +424,7 @@ export default function HomeScreen({ navigation }) {
   // The Brief. "Nothing needs you" as a graph query rather than a greeting.
   const [brief, setBrief] = useState(null);
   const [ambient, setAmbient] = useState(null);   // cached "what's good in {city}" curation
+  const [handled, setHandled] = useState([]);     // recent autonomous actions (Guardian evidence)
 
   // Chat state
   const [messages, setMessages]         = useState([{ role: "assistant", content: "" }]);
@@ -492,6 +493,13 @@ export default function HomeScreen({ navigation }) {
         return true;
       }));
     } catch { /* leave empty rather than invent one */ }
+    // Guardian evidence — the recent things Wingman handled ON ITS OWN. Shown only when
+    // there ARE such actions, so an idle Guardian adds nothing to Home. This is what lets
+    // the delegation dial graduate on proof, not faith.
+    try {
+      const led = await getLedger();
+      setHandled((led?.entries || []).filter((e) => e && e.by === "wingman").slice(0, 2));
+    } catch { /* evidence is a nicety; never block Home */ }
   }, []);
   useEffect(() => { loadBrief(); }, [loadBrief]);
 
@@ -1489,7 +1497,7 @@ export default function HomeScreen({ navigation }) {
             return (
               <Pressable
                 style={[s.disruptionBanner, { borderColor: isCancelled ? C.coral + '60' : C.amber + '60', backgroundColor: isCancelled ? C.coral + '12' : C.amber + '10' }]}
-                onPress={() => { tap(); navigation.navigate('Disruption', { tripId: String(leg.tripId), legId: String(leg.id), ident }); }}
+                onPress={() => { tap(); navigation.navigate('Situation', { legId: String(leg.id), delay: 0 }); }}
               >
                 <Ionicons name={isCancelled ? "alert-circle-outline" : "time-outline"} size={20} color={isCancelled ? C.coral : C.amber} style={s.disruptionBannerIcon} />
 
@@ -1675,6 +1683,25 @@ export default function HomeScreen({ navigation }) {
                   {p.why ? <Text style={s.ambientWhy} numberOfLines={2}>{p.why}</Text> : null}
                 </Pressable>
               ))}
+          </View>
+        ) : null}
+
+        {/* ── HANDLED — the Guardian's autonomous decisions, made visible ────────
+            Only the things Wingman decided ON ITS OWN, only when there are any. This is
+            the evidence the delegation dial graduates on — proof, not faith — one tap from
+            the full Ledger. Idle Guardian → nothing here. */}
+        {handled.length > 0 ? (
+          <View style={s.handledWrap}>
+            <Pressable style={s.handledHead} onPress={() => { tap(); navigation.navigate("Ledger"); }}>
+              <Text style={s.docLabel}>HANDLED FOR YOU</Text>
+              <Text style={s.ambientMore}>The Ledger →</Text>
+            </Pressable>
+            {handled.map((e, i) => (
+              <Pressable key={"hd" + i} style={s.handledRow} onPress={() => { tap(); navigation.navigate("LedgerEntry", { id: e.id }); }}>
+                <Ionicons name="checkmark-circle" size={16} color={C.teal} style={{ marginTop: 1 }} />
+                <Text style={s.handledText} numberOfLines={2}>{e.question || e.chose || "Handled a change on your trip."}</Text>
+              </Pressable>
+            ))}
           </View>
         ) : null}
 
@@ -1996,6 +2023,11 @@ const s = StyleSheet.create({
   docWrap:  { marginTop: 26 },
   docErr:   { fontFamily: T.sans, fontSize: 14, color: C.amber, lineHeight: 21 },
   docLabel: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.6, color: C.gold, marginBottom: 12 },
+
+  handledWrap: { marginHorizontal: 20, marginTop: 26 },
+  handledHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
+  handledRow:  { flexDirection: "row", gap: 10, alignItems: "flex-start", paddingVertical: 8, borderTopWidth: 1, borderTopColor: C.line },
+  handledText: { flex: 1, fontFamily: T.sans, fontSize: 13.5, color: C.ink, lineHeight: 19 },
 
   ambientWrap: { marginHorizontal: 20, marginTop: 26 },
   ambientHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },

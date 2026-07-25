@@ -98,6 +98,55 @@ export default function DossierScreen({ route, navigation }) {
     const dt = new Date(iso);
     return Number.isNaN(dt.getTime()) ? "" : dt.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
   };
+  const shortDay = (ms) => {
+    const dt = new Date(ms);
+    return Number.isNaN(dt.getTime()) ? "" : dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  };
+  const fmtRange = (a, b) => {
+    const s1 = shortDay(a), s2 = shortDay(b);
+    return s1 && s2 && s1 !== s2 ? `${s1} – ${s2}` : (s1 || s2);
+  };
+
+  // Consolidate stays into spans. Multiple reservations at one hotel are one stay to a
+  // reader — "Kimpton · Jul 17–24 · 7 nights", not four cards. A stay whose name is just
+  // the city lost its hotel name on import; if it sits inside a named stay in the same
+  // city, absorb it into that span rather than showing a nameless "Nashville" line.
+  const normHotel = (name) => String(name || "").toLowerCase()
+    .replace(/\bby ihg\b|\bhotel\b|\bthe\b/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+  const cityOf = (l) => String(l.destination_city || l.destination || "").trim().toLowerCase();
+  const isCityOnly = (l) => {
+    const n = String(l.property_name || l.display_name || "").trim().toLowerCase();
+    return !!cityOf(l) && n === cityOf(l);
+  };
+  const nightsOf = (s) => {
+    if (Number(s.nights) > 0) return Number(s.nights);
+    const n = Math.round((s._end - s._start) / 86400000);
+    return n > 0 ? n : 1;
+  };
+  const staySpans = (() => {
+    const withT = stays
+      .map((s) => ({ ...s, _start: new Date(s.departs_at || 0).getTime(), _end: new Date(s.arrives_at || s.departs_at || 0).getTime() }))
+      .sort((a, b) => a._start - b._start);
+    const groups = [];
+    for (const s of withT) {
+      const key = normHotel(s.property_name || s.display_name);
+      const cityOnly = isCityOnly(s);
+      const prev = groups[groups.length - 1];
+      const sameCity = prev && prev.city === cityOf(s);
+      const contiguous = prev && s._start <= prev.end + 2 * 86400000;
+      const samePlace = prev && key && prev.key === key;
+      if (prev && sameCity && contiguous && (samePlace || cityOnly || prev.cityOnly)) {
+        prev.end = Math.max(prev.end, s._end);
+        prev.nights += nightsOf(s);
+        if (!prev.key && key) { prev.key = key; prev.name = s.display_name || s.property_name; prev.cityOnly = false; }
+        prev.legs.push(s);
+      } else {
+        groups.push({ key, name: s.display_name || s.property_name || "Stay", city: cityOf(s),
+          cityLabel: s.destination_city || s.destination, cityOnly, start: s._start, end: s._end, nights: nightsOf(s), legs: [s] });
+      }
+    }
+    return groups;
+  })();
 
   return (
     <SafeAreaView style={s.app}>
@@ -164,10 +213,10 @@ export default function DossierScreen({ route, navigation }) {
                   <Text style={s.arcMeta}>{[f.origin && f.destination ? `${f.origin} → ${f.destination}` : null, fmtDay(f.departs_at)].filter(Boolean).join("  ·  ")}</Text>
                 </View>
               ))}
-              {stays.map((h) => (
-                <View key={"h" + h.id} style={s.arcRow}>
-                  <Text style={s.arcName}>{h.display_name || h.property_name || "Stay"}</Text>
-                  <Text style={s.arcMeta}>{[h.destination_city || h.destination, h.nights ? `${h.nights} nights` : fmtDay(h.departs_at)].filter(Boolean).join("  ·  ")}</Text>
+              {staySpans.map((g, i) => (
+                <View key={"h" + i} style={s.arcRow}>
+                  <Text style={s.arcName}>{g.cityOnly ? `Stay in ${g.cityLabel || "town"}` : g.name}</Text>
+                  <Text style={s.arcMeta}>{[g.cityLabel, fmtRange(g.start, g.end), `${g.nights} ${g.nights === 1 ? "night" : "nights"}`].filter(Boolean).join("  ·  ")}</Text>
                 </View>
               ))}
             </View>

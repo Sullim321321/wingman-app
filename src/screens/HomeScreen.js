@@ -583,10 +583,23 @@ export default function HomeScreen({ navigation }) {
         if (optIn === "true") {
           const { status } = await Location.getForegroundPermissionsAsync();
           if (status === "granted") {
-            const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-            lat = pos.coords.latitude;
-            lng = pos.coords.longitude;
-            if (!cancelled) setUserLocation({ lat, lng });
+            // Home must NEVER hang on a GPS fix. Take the last known position instantly if
+            // we have one; otherwise race a fresh fix against a 6s cap. A slow or absent
+            // fix (indoors, basement, cold GPS) then costs at most 6 seconds, not forever —
+            // and the rest of the brief renders regardless.
+            let pos = null;
+            try { pos = await Location.getLastKnownPositionAsync(); } catch {}
+            if (!pos) {
+              pos = await Promise.race([
+                Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }).catch(() => null),
+                new Promise((res) => setTimeout(() => res(null), 6000)),
+              ]);
+            }
+            if (pos?.coords) {
+              lat = pos.coords.latitude;
+              lng = pos.coords.longitude;
+              if (!cancelled) setUserLocation({ lat, lng });
+            }
           }
         }
         const [hs, w, td, tv] = await Promise.allSettled([

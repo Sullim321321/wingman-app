@@ -223,6 +223,7 @@ export default function SettingsScreen({ navigation }) {
   // Morning briefing time
   const [briefingHour, setBriefingHour]       = useState(7);
   const [briefingEnabled, setBriefingEnabled] = useState(true);
+  const [pastDays, setPastDays] = useState(30); // how long finished trips stay visible
 
   // UI state
   const [loading, setLoading]   = useState(true);
@@ -250,6 +251,7 @@ export default function SettingsScreen({ navigation }) {
       if (p.currency) setCurrency(p.currency);
       if (p.briefing_hour != null) setBriefingHour(p.briefing_hour);
       if (p.briefing_enabled != null) setBriefingEnabled(p.briefing_enabled);
+      if (p.past_visibility_days != null) setPastDays(p.past_visibility_days);
     } catch (e) {
       console.warn("SettingsScreen loadPolicy:", e.message);
     } finally {
@@ -409,6 +411,30 @@ export default function SettingsScreen({ navigation }) {
                 </Text>
               </TouchableOpacity>
             ))}
+          </View>
+        </View>
+
+        <Text style={g.sectionT}>TRIP HISTORY</Text>
+        <View style={g.group}>
+          <View style={{ paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 0 }}>
+            <Text style={s.histT}>Keep finished trips visible for</Text>
+            <Text style={s.histSub}>Older trips still shape your recommendations — they just leave the view.</Text>
+            <View style={s.briefingTimeRow}>
+              {[7, 30, 90, 3650].map((d) => (
+                <TouchableOpacity
+                  key={d}
+                  style={[s.briefingTimeBtn, pastDays === d && s.briefingTimeBtnActive]}
+                  onPress={() => { setPastDays(d); updatePolicy({ past_visibility_days: d }).catch(() => {}); }}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: pastDays === d }}
+                  accessibilityLabel={d >= 3650 ? "Keep all past trips visible" : `Keep past trips visible for ${d} days`}
+                >
+                  <Text style={[s.briefingTimeBtnT, pastDays === d && s.briefingTimeBtnTActive]}>
+                    {d >= 3650 ? "All" : `${d}d`}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
         </View>
 
@@ -672,6 +698,8 @@ const s = StyleSheet.create({
     paddingVertical: 18,
   },
   briefingHeroTop: { flexDirection: "row", alignItems: "center" },
+  histT:   { fontFamily: T.sansM, fontSize: 15, color: C.ink },
+  histSub: { fontFamily: T.sans, fontSize: 12.5, color: C.mut, marginTop: 4, lineHeight: 18 },
   briefingTimeRow: { flexDirection: "row", gap: 8, marginTop: 14 },
   briefingHeroLabel: {
     fontFamily: T.sansM,

@@ -216,7 +216,11 @@ function buildBriefing({ homeState, trips, weather, firstName, riskScore, userPr
   const w     = hs?.weather || weather;
   const next  = findNextFlight(trips);
 
-  const weatherCity = w?.city || trip?.destination_city || null;
+  // City for display MUST match the masthead (which uses the top-level `weather.city`).
+  // The homeState weather geocodes to the county ("Davidson") while the client weather
+  // returns the recognizable city ("Nashville") — two sources, one screen, so they
+  // disagreed. Prefer the masthead's source everywhere the city is shown.
+  const weatherCity = weather?.city || w?.city || trip?.destination_city || null;
 
   const hour = new Date().getHours();
   const timeGreet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";

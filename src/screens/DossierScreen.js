@@ -58,6 +58,11 @@ export default function DossierScreen({ route, navigation }) {
   }, [tripId]);
 
   useEffect(() => { load(); }, [load]);
+  // Refetch whenever the screen regains focus. Loading only on mount meant that
+  // navigating back to an already-open trip showed whatever it fetched the first time —
+  // so a server-side fix (a collapsed ride, a corrected name) never appeared until a
+  // full app restart. Focus is the moment the user is looking again; pull fresh then.
+  useEffect(() => navigation.addListener("focus", load), [navigation, load]);
 
   // A sketch is a suggestion Wingman made; dismissing it removes a proposal, never a
   // booking. The Leg card only offers this on sketches, and we confirm anyway — then
@@ -151,6 +156,33 @@ export default function DossierScreen({ route, navigation }) {
     }
     return groups;
   })();
+
+  // Fold a chapter's legs for the detail list: same-hotel nights become ONE row with the
+  // full span, the way THE ARC reads it — four "Kimpton Aertson Hotel" cards on four
+  // dates was the same stay shown four times. Non-hotel legs pass through untouched and
+  // in order; hotels of one stay collapse to their first appearance.
+  const foldChapter = (legs) => {
+    const out = [];
+    const groups = new Map();
+    for (const l of legs) {
+      const t = String(l.type || "").toLowerCase();
+      if (t !== "hotel" && t !== "airbnb") { out.push({ kind: "leg", leg: l }); continue; }
+      const start = new Date(l.departs_at || 0).getTime();
+      const end = new Date(l.arrives_at || l.departs_at || 0).getTime();
+      const key = normHotel(l.property_name || l.display_name) || cityOf(l) || String(l.id);
+      let g = groups.get(key);
+      if (!g) {
+        g = { kind: "stay", key, id: l.id, name: l.display_name || l.property_name || "Stay",
+              cityOnly: isCityOnly(l), cityLabel: l.destination_city || l.destination, start, end, nights: 0 };
+        groups.set(key, g);
+        out.push(g);
+      }
+      g.start = Math.min(g.start, start);
+      g.end = Math.max(g.end, end);
+      g.nights += nightsOf({ ...l, _start: start, _end: end });
+    }
+    return out;
+  };
 
   return (
     <SafeAreaView style={s.app}>
@@ -262,7 +294,14 @@ export default function DossierScreen({ route, navigation }) {
                   <Text style={s.chapterLabel}>{ch.label}</Text>
                   <Text style={s.chapterBlurb}>{ch.blurb}</Text>
                 </View>
-                {legs.map((l) => <Leg key={l.id} leg={l} onDismiss={dismissSketch} />)}
+                {foldChapter(legs).map((it) => it.kind === "leg" ? (
+                  <Leg key={it.leg.id} leg={it.leg} onDismiss={dismissSketch} />
+                ) : (
+                  <View key={"stay" + it.id} style={s.stayRow}>
+                    <Text style={s.stayName}>{it.cityOnly ? `Stay in ${it.cityLabel || "town"}` : it.name}</Text>
+                    <Text style={s.stayMeta}>{[fmtRange(it.start, it.end), `${it.nights} ${it.nights === 1 ? "night" : "nights"}`].filter(Boolean).join("  ·  ")}</Text>
+                  </View>
+                ))}
                 {/* Rides, counted rather than listed. An eight-minute taxi isn't something
                     a chief of staff briefs you on — but pretending it didn't happen would
                     be its own lie, so it gets one quiet line. */}
@@ -339,6 +378,10 @@ const s = StyleSheet.create({
 
   toggle:   { alignSelf: "flex-start", marginTop: 18, paddingVertical: 6 },
   toggleT:  { fontFamily: T.sansM, fontSize: 13, color: C.gold },
+
+  stayRow:  { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 16, marginBottom: 10 },
+  stayName: { fontFamily: T.serif, fontSize: 17, color: C.ink },
+  stayMeta: { fontFamily: T.sansM, fontSize: 12.5, color: C.mut, marginTop: 3 },
 
   chapter:      { marginTop: 26 },
   chapterHead:  { marginBottom: 12 },

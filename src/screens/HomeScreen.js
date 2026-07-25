@@ -1447,22 +1447,23 @@ export default function HomeScreen({ navigation }) {
               pending decision. Every travel app writes this sentence. /brief checks
               it first — and when there's no upcoming travel it says "Nothing on the
               horizon" instead, because 0 of 0 is 100% and means nothing. */}
-          {brief ? (
+          {/* The computed status line earns its place only when something ACTS on it.
+              When nothing needs you, the warm greeting below already says the day is calm —
+              a second "all clear" line is just clutter, so it's suppressed. */}
+          {brief && brief.needs_you ? (
             <Pressable
               style={s.briefLine}
               onPress={() => {
-                if (!brief.needs_you) return;
                 tap();
                 const n = brief.needs[0];
                 if (n?.kind === "cascade" && n.leg_id) navigation.navigate("Situation", { legId: n.leg_id, delay: 0 });
                 else if (n?.kind === "confirm") navigation.navigate("Plan", { tripId: n.trip_id });
                 else navigation.navigate("Decisions");
               }}
-              disabled={!brief.needs_you}
             >
-              <View style={[s.briefDot, { backgroundColor: brief.needs_you ? C.amber : C.teal }]} />
-              <Text style={[s.briefText, brief.needs_you && { color: C.ink }]}>{brief.headline}</Text>
-              {brief.needs_you ? <Text style={s.briefArrow}>›</Text> : null}
+              <View style={[s.briefDot, { backgroundColor: C.amber }]} />
+              <Text style={[s.briefText, { color: C.ink }]}>{brief.headline}</Text>
+              <Text style={s.briefArrow}>›</Text>
             </Pressable>
           ) : null}
 

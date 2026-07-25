@@ -5,6 +5,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BackBar, Btn, g, tap } from "../components";
+import ConfirmSheet from "../components/ConfirmSheet";
 import { C, T } from "../theme";
 import * as api from "../api";
 
@@ -53,6 +54,8 @@ export default function FlightBookScreen({ navigation, route }) {
   const [passengers, setPassengers] = useState(Array.from({ length: numPassengers }, emptyPax));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [pending, setPending] = useState(null);   // { hold, amount, pax, line } → ConfirmSheet
+  const [confirming, setConfirming] = useState(false);
 
   function updatePax(i, field, value) {
     setPassengers(prev => prev.map((p, idx) => idx === i ? { ...p, [field]: value } : p));
@@ -81,57 +84,44 @@ export default function FlightBookScreen({ navigation, route }) {
       phone: p.phone.trim() || undefined,
     }));
 
-    // Land on FlightConfirm with a booking shaped for that screen (it reads
-    // total_amount/total_currency).
-    const finish = (r) => {
-      if (r?.ok && r.booking) {
-        navigation.replace("FlightConfirm", {
-          booking: { ...r.booking, total_amount: r.booking.amount, total_currency: r.booking.currency },
-        });
-      } else {
-        setError(r?.error || "The booking was refused.");
-      }
-    };
-    const confirmHeld = (held) => async () => {
-      setLoading(true);
-      try {
-        finish(await api.confirmFlight({
-          hold: held.hold,
-          confirm: { confirm: true, offer_id: held.hold.offer_id, amount: held.hold.amount },
-        }));
-      } catch (e) { setError(e.message || "Couldn't complete the booking."); }
-      finally { setLoading(false); }
-    };
-    const confirmInstant = (amount) => async () => {
-      setLoading(true);
-      try {
-        finish(await api.confirmFlight({
-          offer_id: offer.id, passengers: pax,
-          confirm: { confirm: true, offer_id: offer.id, amount },
-        }));
-      } catch (e) { setError(e.message || "Couldn't complete the booking."); }
-      finally { setLoading(false); }
-    };
-
-    // Step 1: reserve the fare (no money) when the fare allows it.
+    // Step 1: reserve the fare (no money) when the fare allows it, then surface one
+    // calm confirm. The actual charge waits for the ConfirmSheet's explicit yes.
     setLoading(true);
     try {
       const held = await api.holdFlight(offer.id, pax);
       setLoading(false);
-      if (held.holdable && held.hold) {
-        Alert.alert("Confirm & pay",
-          held.confirm_line || `Pay ${offer.total_currency} ${offer.total_amount} now for ${firstSeg?.origin} → ${lastSeg?.destination}?`,
-          [{ text: "Not yet", style: "cancel" }, { text: "Confirm & pay", onPress: confirmHeld(held) }]);
-      } else {
-        const amount = held.offer?.amount ?? Number(offer.total_amount);
-        Alert.alert("Confirm & pay",
-          held.confirm_line || `This fare can't be held — confirming books and pays ${offer.total_currency} ${offer.total_amount} now.`,
-          [{ text: "Not yet", style: "cancel" }, { text: "Confirm & pay", onPress: confirmInstant(amount) }]);
-      }
+      const amount = held.holdable && held.hold ? held.hold.amount : (held.offer?.amount ?? Number(offer.total_amount));
+      setPending({
+        hold: held.holdable ? held.hold : null,
+        amount,
+        pax,
+        line: held.confirm_line
+          || (held.holdable
+            ? `Held now — you're charged ${offer.total_currency} ${amount} only when you confirm.`
+            : `This fare can't be held. Confirming books and pays ${offer.total_currency} ${amount} now.`),
+      });
     } catch (e) {
       setLoading(false);
       setError(e.message || "Couldn't reserve the fare. Please try again.");
     }
+  }
+
+  async function doConfirm() {
+    if (!pending) return;
+    setConfirming(true);
+    try {
+      const body = pending.hold
+        ? { hold: pending.hold, confirm: { confirm: true, offer_id: pending.hold.offer_id, amount: pending.hold.amount } }
+        : { offer_id: offer.id, passengers: pending.pax, confirm: { confirm: true, offer_id: offer.id, amount: pending.amount } };
+      const r = await api.confirmFlight(body);
+      setPending(null);
+      if (r?.ok && r.booking) {
+        navigation.replace("FlightConfirm", { booking: { ...r.booking, total_amount: r.booking.amount, total_currency: r.booking.currency } });
+      } else {
+        setError(r?.error || "The booking was refused.");
+      }
+    } catch (e) { setPending(null); setError(e.message || "Couldn't complete the booking."); }
+    finally { setConfirming(false); }
   }
 
   return (
@@ -202,6 +192,19 @@ export default function FlightBookScreen({ navigation, route }) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <ConfirmSheet
+        visible={!!pending}
+        kicker="CONFIRM & PAY"
+        title={`${firstSeg?.origin || "?"} → ${lastSeg?.destination || "?"}`}
+        line={pending?.line}
+        facts={[{ label: "Fare", value: `${offer.total_currency} ${pending?.amount ?? offer.total_amount}` }]}
+        note={pending?.hold ? "Reserved now — you're only charged when you confirm." : "This fare can't be held; confirming books and pays now."}
+        confirmLabel="Confirm & pay"
+        busy={confirming}
+        onConfirm={doConfirm}
+        onCancel={() => setPending(null)}
+      />
     </SafeAreaView>
   );
 }

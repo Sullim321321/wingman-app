@@ -355,7 +355,7 @@ const s = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
 
   titleRow: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", marginTop: 8 },
-  h1:   { fontFamily: T.serif, fontSize: 30, lineHeight: 36, color: C.ink, flex: 1, paddingRight: 12 },
+  h1:   { fontFamily: T.display, fontSize: 34, lineHeight: 40, letterSpacing: -0.5, color: C.ink, flex: 1, paddingRight: 12 },
   edit: { fontFamily: T.sansM, fontSize: 13, color: C.gold, paddingBottom: 4 },
   live: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2, color: C.teal, marginTop: 8, marginBottom: 4 },
 
@@ -364,15 +364,15 @@ const s = StyleSheet.create({
   needsItem:  { fontFamily: T.sans, fontSize: 15, color: C.ink, lineHeight: 20 },
 
   arc:      { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 16, marginTop: 18 },
-  arcLabel: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.6, color: C.gold, marginBottom: 12 },
+  arcLabel: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 3.4, color: C.gold, marginBottom: 12, textTransform: "uppercase" },
   arcRow:   { marginBottom: 12 },
-  arcName:  { fontFamily: T.serif, fontSize: 16, color: C.ink },
+  arcName:  { fontFamily: T.display, fontSize: 18, color: C.ink, letterSpacing: -0.3 },
   arcMeta:  { fontFamily: T.sansM, fontSize: 13, color: C.mut, marginTop: 3 },
 
   leaveCard: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 16, marginTop: 18 },
   leaveRow:  { marginBottom: 12 },
   leaveDiv:  { borderTopWidth: 1, borderTopColor: C.line, paddingTop: 12 },
-  leaveTime: { fontFamily: T.serif, fontSize: 16, color: C.ink },
+  leaveTime: { fontFamily: T.display, fontSize: 18, color: C.ink, letterSpacing: -0.3 },
   leaveWhat: { fontFamily: T.sansM, fontSize: 13, color: C.mut, marginTop: 2 },
   leaveWhy:  { fontFamily: T.sans, fontSize: 13, color: C.teal, marginTop: 3, lineHeight: 17 },
 
@@ -380,7 +380,7 @@ const s = StyleSheet.create({
   toggleT:  { fontFamily: T.sansM, fontSize: 13, color: C.gold },
 
   stayRow:  { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 16, marginBottom: 10 },
-  stayName: { fontFamily: T.serif, fontSize: 16, color: C.ink },
+  stayName: { fontFamily: T.display, fontSize: 18, color: C.ink, letterSpacing: -0.3 },
   stayMeta: { fontFamily: T.sansM, fontSize: 13, color: C.mut, marginTop: 3 },
 
   chapter:      { marginTop: 26 },

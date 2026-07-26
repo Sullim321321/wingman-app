@@ -1449,6 +1449,8 @@ export default function HomeScreen({ navigation }) {
 
         {/* ── HERO BRIEFING — fills the viewport above the fold ─────────── */}
         <View style={s.heroWrap}>
+          {/* The Atelier watermark — a faint Fraunces monogram behind the brief. */}
+          <Text pointerEvents="none" allowFontScaling={false} style={s.heroWatermark}>W</Text>
           {/* Edition line */}
           <View style={s.edition}>
             <Text style={s.editionDate}>{formatEditionDate()}{editionSuffix || ""}</Text>
@@ -1526,10 +1528,10 @@ export default function HomeScreen({ navigation }) {
               {/* Greeting (italic) + upright opening — editorial chief-of-staff briefing */}
               {(greeting || headline) ? (
                 <View style={s.headlineWrap}>
-                  <Text style={s.hedPara}>
-                    {greeting ? <Text style={s.hedGreet}>{greeting} </Text> : null}
-                    {headline || ""}
-                  </Text>
+                  {/* The verdict: a small italic lead dropping into the display headline.
+                      Two tiers, not one paragraph — the Atelier signature. */}
+                  {greeting ? <Text style={s.hedLead}>{greeting}</Text> : null}
+                  {headline ? <Text style={s.hedVerdict}>{headline}</Text> : null}
                 </View>
               ) : null}
 
@@ -2059,6 +2061,17 @@ const s = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: C.line,
     borderBottomOpacity: 0.4,
+    position: "relative",
+    overflow: "hidden",
+  },
+  heroWatermark: {
+    position: "absolute",
+    right: -24,
+    top: 40,
+    fontFamily: T.displayI,
+    fontSize: 240,
+    lineHeight: 240,
+    color: "rgba(23,19,14,0.04)",
   },
 
   // Briefing controls row (speak + refresh)
@@ -2142,19 +2155,25 @@ const s = StyleSheet.create({
   // The Atelier hero: the day's verdict set in Fraunces at display scale — the italic
   // greeting drops into the upright headline. The REASON below stays serif-italic
   // (T.serifI), so the display face is reserved for the verdict, never the explanation.
-  hedPara: {
-    fontFamily: T.display,
-    fontSize: 31,
-    color: C.ink,
-    lineHeight: 38,
-    letterSpacing: -0.4,
-  },
-  hedGreet: {
+  // The small italic lead ("Good evening, Madeline.") — quiet, sets up the verdict.
+  hedLead: {
     fontFamily: T.displayI,
-    fontSize: 31,
-    color: C.ink,
-    letterSpacing: -0.4,
+    fontSize: 20,
+    color: C.mut,
+    letterSpacing: -0.2,
+    marginBottom: 6,
   },
+  // The verdict itself ("You're in Nashville.") — Fraunces at display scale, leads.
+  hedVerdict: {
+    fontFamily: T.display,
+    fontSize: 36,
+    color: C.ink,
+    lineHeight: 42,
+    letterSpacing: -0.6,
+  },
+  // kept for back-compat with any remaining references
+  hedPara: { fontFamily: T.display, fontSize: 31, color: C.ink, lineHeight: 38, letterSpacing: -0.4 },
+  hedGreet: { fontFamily: T.displayI, fontSize: 31, color: C.ink, letterSpacing: -0.4 },
 
   // ── Skeleton loading ──
   skeletonWrap: {

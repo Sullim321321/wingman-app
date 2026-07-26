@@ -102,7 +102,7 @@ const s = StyleSheet.create({
   statCaption: { ...ramp("label"), fontFamily: T.sansB, color: C.mut, marginTop: 4 },
 
   titleRow: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" },
-  title:    { ...ramp("title"), fontFamily: T.serif, color: C.ink, flex: 1, paddingRight: SP.md },
+  title:    { ...ramp("title"), fontFamily: T.display, letterSpacing: -0.5, color: C.ink, flex: 1, paddingRight: SP.md },
 
   hairline: { height: 1, backgroundColor: C.line },
 });

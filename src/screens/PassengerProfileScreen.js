@@ -392,7 +392,7 @@ const s = StyleSheet.create({
   header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: C.line },
   backBtn:{ marginBottom: 10 },
   backT:  { color: C.gold, fontSize: 15, fontFamily: T.sansM },
-  title:  { color: C.ink, fontSize: 22, fontFamily: T.serifB, marginBottom: 4 },
+  title:  { color: C.ink, fontSize: 22, fontFamily: T.display, marginBottom: 4 },
   subtitle:{ color: C.mut, fontSize: 13, fontFamily: T.sans },
   scroll: { paddingHorizontal: 20, paddingTop: 20 },
 

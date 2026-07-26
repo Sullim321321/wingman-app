@@ -527,7 +527,7 @@ export default function TripsScreen({ navigation }) {
 
 const s = StyleSheet.create({
   errWrap: { alignItems: "center", paddingHorizontal: 34, paddingTop: 60 },
-  errHed:  { fontFamily: T.serif, fontSize: 22, color: C.ink, marginBottom: 10, textAlign: "center" },
+  errHed:  { fontFamily: T.display, fontSize: 22, color: C.ink, marginBottom: 10, textAlign: "center" },
   errSub:  { fontFamily: T.sans, fontSize: 15, color: C.mut, textAlign: "center", lineHeight: 21, marginBottom: 20 },
   errBtn:  { borderWidth: 1, borderColor: C.line, borderRadius: 10, paddingHorizontal: 20, paddingVertical: 11 },
   errBtnT: { fontFamily: T.sansM, fontSize: 15, color: C.ink },

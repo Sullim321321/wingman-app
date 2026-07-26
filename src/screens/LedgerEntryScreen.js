@@ -156,7 +156,7 @@ const s = StyleSheet.create({
   by:  { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2, marginTop: 8, marginBottom: 8 },
   byW: { color: C.gold },
   byU: { color: C.mutD },
-  q:   { fontFamily: T.serif, fontSize: 30, lineHeight: 32, color: C.ink },
+  q:   { fontFamily: T.display, fontSize: 30, lineHeight: 32, color: C.ink },
   at:  { fontFamily: T.mono, fontSize: 11, color: C.mutD, marginTop: 10, letterSpacing: 0.3 },
 
   chose:      { backgroundColor: C.card, borderRadius: 14, padding: 16, marginTop: 22,

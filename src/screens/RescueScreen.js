@@ -274,7 +274,7 @@ const s = StyleSheet.create({
   bar: { marginBottom: 20 },
   back: { fontFamily: T.sansM, fontSize: 15, color: C.mut },
 
-  h: { fontFamily: T.serifB, fontSize: 30, color: C.ink, letterSpacing: -0.5, marginBottom: 8 },
+  h: { fontFamily: T.display, fontSize: 30, color: C.ink, letterSpacing: -0.5, marginBottom: 8 },
   sub: { fontFamily: T.garamondI, fontSize: 16, lineHeight: 24, color: C.mut,
          fontStyle: "italic", marginBottom: 26 },
 

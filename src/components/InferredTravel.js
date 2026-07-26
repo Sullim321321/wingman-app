@@ -84,7 +84,7 @@ const s = StyleSheet.create({
   group:  { borderWidth: 1, borderColor: C.line, borderRadius: 14, overflow: "hidden" },
   row:    { flexDirection: "row", alignItems: "center", paddingVertical: 15, paddingHorizontal: 16 },
   rowDiv: { borderTopWidth: 1, borderTopColor: C.line },
-  dest:   { fontFamily: T.serif, fontSize: 22, lineHeight: 23, color: C.ink },
+  dest:   { fontFamily: T.display, fontSize: 22, lineHeight: 23, color: C.ink },
   meta:   { fontFamily: T.sansM, fontSize: 13, color: C.mut, marginTop: 3 },
   plan:   { fontFamily: T.sansM, fontSize: 13, color: C.gold, marginLeft: 8 },
 

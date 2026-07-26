@@ -1007,7 +1007,7 @@ const s = StyleSheet.create({
 
   // AI card
   aiCard:     { borderRadius: 20, padding: 24, borderWidth: 1, borderColor: C.line, marginBottom: 4 },
-  aiHeadline: { color: C.ink, fontSize: 30, fontFamily: T.serifB, lineHeight: 34, marginBottom: 10 },
+  aiHeadline: { color: C.ink, fontSize: 30, fontFamily: T.display, lineHeight: 34, marginBottom: 10 },
   aiSub:      { color: C.mut, fontSize: 15, lineHeight: 20, marginBottom: 18 },
   aiInput: {
     color: C.ink, fontSize: 16, lineHeight: 24, minHeight: 80,

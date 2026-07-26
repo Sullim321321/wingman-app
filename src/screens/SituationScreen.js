@@ -269,7 +269,7 @@ const s = StyleSheet.create({
   head: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 18 },
   kicker: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.2, color: C.coral, marginBottom: 7 },
   flight: { fontFamily: T.sansM, fontSize: 13, color: C.mut },
-  delay: { fontFamily: T.serifB, fontSize: 30, color: C.ink, letterSpacing: -0.5 },
+  delay: { fontFamily: T.display, fontSize: 30, color: C.ink, letterSpacing: -0.5 },
 
   voice: { fontFamily: T.garamondI, fontSize: 22, lineHeight: 27, color: C.goldL,
            fontStyle: "italic", marginBottom: 30 },

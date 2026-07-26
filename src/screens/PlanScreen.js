@@ -483,7 +483,7 @@ const s = StyleSheet.create({
   scroll: { padding: 20, paddingBottom: 8 },
 
   open: { paddingVertical: 30 },
-  openH: { fontFamily: T.serifB, fontSize: 30, color: C.ink, letterSpacing: -0.5, marginBottom: 12 },
+  openH: { fontFamily: T.display, fontSize: 30, color: C.ink, letterSpacing: -0.5, marginBottom: 12 },
   openSub: { fontFamily: T.garamondI, fontSize: 16, lineHeight: 25, color: C.mut, fontStyle: "italic" },
   pasteCard: { marginTop: 24, borderWidth: 1, borderColor: C.gold + "55", backgroundColor: C.card,
                borderRadius: 14, padding: 16, borderTopColor: C.lineHi },

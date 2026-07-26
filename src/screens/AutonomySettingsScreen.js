@@ -351,7 +351,7 @@ const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
 
   hero: { marginBottom: 20 },
-  heroH: { color: C.ink, fontSize: 30, fontFamily: T.serifB, lineHeight: 36, marginBottom: 10 },
+  heroH: { color: C.ink, fontSize: 30, fontFamily: T.display, lineHeight: 36, marginBottom: 10 },
   heroSub: { color: C.mut, fontSize: 15, lineHeight: 21 },
 
   dialWrap: { marginBottom: 26 },
@@ -382,7 +382,7 @@ const s = StyleSheet.create({
   modeDesc: { color: C.mut, fontSize: 13, lineHeight: 18, marginTop: 3 },
 
   thresholdLabel: { color: C.mut, fontSize: 13 },
-  thresholdValue: { color: C.gold, fontSize: 30, fontFamily: T.serifB },
+  thresholdValue: { color: C.gold, fontSize: 30, fontFamily: T.display },
   sliderEdge: { color: C.mut, fontSize: 11 },
   thresholdBtn: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 20, borderWidth: 1, borderColor: C.line, backgroundColor: C.card },
   thresholdBtnActive: { borderColor: C.gold, backgroundColor: "rgba(201,169,110,0.1)" },

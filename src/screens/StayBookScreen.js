@@ -284,7 +284,7 @@ const s = StyleSheet.create({
 
   confirmCard: { backgroundColor: C.card2, borderWidth: 1, borderColor: C.gold, borderRadius: 16, padding: 18, marginTop: 20 },
   confirmKicker: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.4, color: C.gold },
-  confirmName: { fontFamily: T.serif, fontSize: 22, color: C.ink, marginTop: 6 },
+  confirmName: { fontFamily: T.display, fontSize: 22, color: C.ink, marginTop: 6 },
   confirmLine: { fontFamily: T.sans, fontSize: 13, color: C.ink, lineHeight: 20, marginTop: 6 },
   confirmActions: { flexDirection: "row", gap: 12, marginTop: 16 },
   ghost: { borderWidth: 1, borderColor: C.line, borderRadius: 12, paddingVertical: 14, paddingHorizontal: 18, alignItems: "center", justifyContent: "center" },
@@ -299,7 +299,7 @@ const s = StyleSheet.create({
   emailGoT: { fontFamily: T.sansM, fontSize: 15, color: C.inkD },
 
   doneWrap: { flex: 1, alignItems: "center", justifyContent: "center", padding: 30 },
-  doneH: { fontFamily: T.serif, fontSize: 30, color: C.ink, marginTop: 12 },
+  doneH: { fontFamily: T.display, fontSize: 30, color: C.ink, marginTop: 12 },
   doneName: { fontFamily: T.serif, fontSize: 16, color: C.ink, marginTop: 10 },
   doneMeta: { fontFamily: T.sansM, fontSize: 13, color: C.mut, marginTop: 6, marginBottom: 24 },
 });

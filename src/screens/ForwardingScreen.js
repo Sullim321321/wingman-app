@@ -163,7 +163,7 @@ const s = StyleSheet.create({
   app: { flex: 1, backgroundColor: C.bg },
   scroll: { padding: 20, paddingBottom: 40 },
 
-  h: { fontFamily: T.serifB, fontSize: 30, color: C.ink, letterSpacing: -0.5, marginTop: 8, marginBottom: 10 },
+  h: { fontFamily: T.display, fontSize: 30, color: C.ink, letterSpacing: -0.5, marginTop: 8, marginBottom: 10 },
   sub: { fontFamily: T.garamondI, fontSize: 16, lineHeight: 25, color: C.mut, marginBottom: 24 },
 
   card: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 18, marginBottom: 34 },

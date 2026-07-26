@@ -10,6 +10,55 @@ verified on device).
 
 ---
 
+## Where this stands (2026-07-25)
+
+**Identity — LOCKED (Batch 1 decisions):**
+
+- **Signature:** the **Atelier Page** — a quiet dateline + folio number on a hairline
+  with one bronze tick; the *headline leads* (small roman "You're in" dropping into an
+  oversized italic place-name); facts on open space, not in boxes; a faint monogram
+  watermark. (The literal newspaper masthead was tried and rejected as cosplay.)
+- **Paper:** Alabaster `#F4F3EE` daytime · **Night (ink)** `#1B1712` reserved for
+  in-transit / day-of.
+- **Ink** `#17130E` · **Bronze** `#8A6A3E` (accent + folio tick, used rarely).
+- **Display type:** Fraunces (italic for place-names / emphasis). Inter stays the
+  interface; IBM Plex Mono stays measured values.
+
+**Batch tracker:**
+
+- **B1 · Decide the identity** — ✅ done (locked above).
+- **B2 · Foundation** — ✅ shipped. Palette evolved app-wide (all `C.*` tokens), Fraunces
+  loaded, `atelier.js` primitives (`Masthead`/`Verdict`/`EditorialStat`/`Watermark`/`Rule`)
+  + `ATELIER`/`NIGHT` tokens. *Visible now: the new palette everywhere. Not yet: Fraunces
+  or the Atelier layout — wired, not placed.*
+- **B3 · Rebuild the flagships** — ✅ done in code. Home hero = verdict (small italic lead
+  → oversized Fraunces headline) + watermark; Dossier title, ARC names, stay/leave lines on
+  Fraunces; shared `ScreenTitle` on the display face. *Awaiting device verification.*
+- **B4 · Sweep the surfaces** — ✅ done in code. 28 display headings across 21 screens swept
+  to Fraunces (only serif styles ≥22px; body/reason prose untouched); Curator's hardcoded
+  palette migrated to the evolved values (the one screen B2's tokens missed). All 67 files
+  parse.
+- **B5 · Night mode** — ⛔ architectural, deferred. The retheme collapsed `ThemeContext`;
+  RN styles bind `C.*` at load, so a runtime day↔night switch needs dynamic theming
+  reintroduced. `NIGHT` tokens are ready; the mechanism is its own focused effort — NOT a
+  blind restyle.
+- **B6 · Motion + imagery** — ◑ partial. Motion system already consistent (`FadeRise`
+  entrance on flagships + Curator, `ConfirmSheet` the one confirm); broad entrance-motion
+  on secondary forms deferred as low-value. **Imagery decision recorded:** minimal / no
+  destination photography on core surfaces — type + the dossier metaphor carry it; reserve
+  imagery for Explore/Curator only.
+- **B7 · Accessibility & last-5%** — ✅ done. Contrast re-audited on the evolved palette and
+  it *improved* everywhere (ink 16.6; mut/teal/coral/indigo clear AA; gold 4.49 and mutD
+  3.88 up markedly for their label/accent roles). Reduce-motion respected; VoiceOver labels
+  broad.
+
+**Next action:** ONE verification build (B2 foundation + B3 flagships + B4 sweep, all now
+in the working tree) → look at Home, Dossier, Curator, Trips, Settings on device. If the
+Fraunces + evolved palette read premium, this is the single push. B5 (dynamic theming for
+Night) is the remaining substantive build; the rest is tuning from screenshots.
+
+---
+
 ## The core finding
 
 DA-1→DA-4 fixed the *grammar*: one type ramp, one spacing scale, one component library,

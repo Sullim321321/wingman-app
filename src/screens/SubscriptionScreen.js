@@ -253,7 +253,7 @@ const s = StyleSheet.create({
   planHeader: { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 16 },
   planIconWrap: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   planName: { color: C.ink, fontSize: 16, fontFamily: T.sansB },
-  planPrice: { color: C.ink, fontSize: 22, fontFamily: T.serifB, marginTop: 2 },
+  planPrice: { color: C.ink, fontSize: 22, fontFamily: T.display, marginTop: 2 },
   planInterval: { color: C.mut, fontSize: 15, fontFamily: T.sans },
   activeBadge: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1 },
   activeBadgeT: { fontSize: 13, fontFamily: T.sansB },

@@ -17,8 +17,8 @@ import { T } from "../theme";
 import { FadeRise } from "../components";
 import { getCurate, curateDining, getPockets } from "../api";
 
-const PAPER = "#F5F2EC", CARD = "#FCFAF5", INK = "#211E1A", MUT = "#9A948A",
-      BRONZE = "#96754A", SAGE = "#5E7A63", LINE = "rgba(33,30,26,0.08)";
+const PAPER = "#F4F3EE", CARD = "#FBFAF6", INK = "#17130E", MUT = "#7F796F",
+      BRONZE = "#8A6A3E", SAGE = "#55705C", LINE = "rgba(33,30,26,0.08)";
 
 const RATIONALE = {
   usual:     { icon: "repeat",           label: "Your usual" },
@@ -268,11 +268,11 @@ const s = StyleSheet.create({
 
   head:   { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 18 },
   brand:  { flexDirection: "row", alignItems: "center", gap: 8 },
-  w:      { fontFamily: T.serif, fontSize: 22, color: INK },
+  w:      { fontFamily: T.display, fontSize: 22, color: INK },
   wordmark:{ fontFamily: T.sansB, fontSize: 11, letterSpacing: 3, color: MUT },
   loc:    { fontFamily: T.sansM, fontSize: 13, color: MUT },
 
-  hero:   { fontFamily: T.serif, fontSize: 30, lineHeight: 34, color: INK },
+  hero:   { fontFamily: T.display, fontSize: 30, lineHeight: 34, color: INK },
   sub:    { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 15, color: MUT, marginTop: 6, marginBottom: 20 },
 
   cityRow:   { flexDirection: "row", gap: 10, marginBottom: 12 },

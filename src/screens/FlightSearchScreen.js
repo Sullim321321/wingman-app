@@ -614,7 +614,7 @@ const s = StyleSheet.create({
   // Status card
   statusCard: { backgroundColor: C.card, borderWidth: 1, borderColor: "rgba(201,169,110,0.2)", borderRadius: 16, padding: 16, marginBottom: 10 },
   statusHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
-  statusIdent: { color: C.ink, fontSize: 22, fontFamily: T.serifB },
+  statusIdent: { color: C.ink, fontSize: 22, fontFamily: T.display },
   statusBadge: { borderWidth: 1, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
   statusBadgeT: { fontSize: 13, fontFamily: T.sansB },
   statusDetail: { color: C.mut, fontSize: 13, fontFamily: T.sans, marginTop: 4 },

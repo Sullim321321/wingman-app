@@ -173,7 +173,7 @@ const s = StyleSheet.create({
   scroll: { padding: 20, paddingTop: 4 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
 
-  h1: { fontFamily: T.serif, fontSize: 30, lineHeight: 37, color: C.ink, marginTop: 10, marginBottom: 24 },
+  h1: { fontFamily: T.display, fontSize: 30, lineHeight: 37, color: C.ink, marginTop: 10, marginBottom: 24 },
 
   // The only two numbers. Mono, because they were counted, not estimated.
   tally:     { flexDirection: "row", alignItems: "center", backgroundColor: C.card,
@@ -206,7 +206,7 @@ const s = StyleSheet.create({
   meta:   { fontFamily: T.mono, fontSize: 10, color: C.mutD, marginTop: 12, letterSpacing: 0.5 },
 
   empty:  { paddingVertical: 10 },
-  emptyH: { fontFamily: T.serif, fontSize: 22, color: C.ink, marginBottom: 10 },
+  emptyH: { fontFamily: T.display, fontSize: 22, color: C.ink, marginBottom: 10 },
   emptyT: { fontFamily: T.sans, fontSize: 15, color: C.mut, lineHeight: 23 },
   emptyN: { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 15, color: C.mutD,
             lineHeight: 22, marginTop: 16 },

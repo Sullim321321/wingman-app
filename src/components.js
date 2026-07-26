@@ -330,7 +330,7 @@ const dcS = StyleSheet.create({
   head: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.gold },
   kicker: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.6, color: C.mutD },
-  headline: { fontFamily: T.garamondSI, fontSize: 22, color: C.ink, lineHeight: 28, marginBottom: 6 },
+  headline: { fontFamily: T.displayI, fontSize: 22, color: C.ink, lineHeight: 28, marginBottom: 6 },
   rationale: { fontFamily: T.garamondI, fontSize: 15, color: C.mut, lineHeight: 21, marginBottom: 14 },
   primary: {
     backgroundColor: C.gold, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 16, marginBottom: 4,
@@ -703,7 +703,7 @@ export const g = StyleSheet.create({
 
   // Execution stepper
   execWrap: { flex: 1, padding: 24, paddingTop: 40 },
-  execH:    { color: C.ink, fontSize: 22, letterSpacing: T.trackTight, marginBottom: 6, fontFamily: T.serifB },
+  execH:    { color: C.ink, fontSize: 22, letterSpacing: T.trackTight, marginBottom: 6, fontFamily: T.display },
   execSub:  { color: C.mut, fontSize: 15, fontFamily: T.sans, marginBottom: 20, lineHeight: 20 },
   step:     { flexDirection: "row", gap: 14, alignItems: "center", paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.line },
   stepC:    { width: 32, height: 32, borderRadius: 16, borderWidth: 2, borderColor: C.line, alignItems: "center", justifyContent: "center" },

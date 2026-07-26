@@ -148,7 +148,7 @@ const s = StyleSheet.create({
   app:  { flex: 1, backgroundColor: C.bg },
   body: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 140 },
 
-  hed: { fontFamily: T.garamondSI, fontSize: 30, lineHeight: 38, color: C.ink, marginBottom: 12 },
+  hed: { fontFamily: T.displayI, fontSize: 30, lineHeight: 38, color: C.ink, marginBottom: 12 },
   dek: { fontFamily: T.sans, fontSize: 15, lineHeight: 23, color: C.mut, marginBottom: 30 },
 
   codeCard: {

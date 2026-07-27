@@ -79,38 +79,28 @@ function findNextFlight(trips) {
 function buildInitialChips(trips) {
   const next = findNextFlight(trips);
   const chips = [];
+  // Guardian & logistics only. Taste — dining, packing, "what's on" — lives in Explore;
+  // Ask Wingman doesn't duplicate it. These chips are the things it can ACT on.
   if (next?.origin && next?.destination) {
     const diff = new Date(next.departs_at).getTime() - Date.now();
     const daysAway = Math.ceil(diff / 86400000);
+    if (next.carrier && next.flight_number) chips.push(`Is ${fid.displayName(next)} on time?`);
     if (daysAway <= 0) {
-      // In transit or today
-      if (next.carrier && next.flight_number) chips.push(`Is ${fid.displayName(next)} on time?`);
-      chips.push(`What's the weather in ${next.destination}?`);
       chips.push("Which lounge can I access?");
-    } else if (daysAway <= 1) {
-      // Tomorrow
-      if (next.carrier && next.flight_number) chips.push(`Is ${fid.displayName(next)} on time?`);
-      chips.push(`What should I pack for ${next.destination}?`);
+      chips.push("When should I leave for my next stop?");
+    } else if (daysAway <= 2) {
       chips.push("Any disruption risks?");
-    } else if (daysAway <= 7) {
-      // This week
-      chips.push(`Weather risk for ${next.origin} → ${next.destination}?`);
-      chips.push(`Best restaurants in ${next.destination}?`);
-      if (next.carrier && next.flight_number) chips.push(`Upgrade options on ${fid.displayName(next)}?`);
+      chips.push("Which lounge can I access?");
     } else {
       chips.push(`Weather risk for ${next.origin} → ${next.destination}?`);
-      if (next.carrier && next.flight_number) chips.push(`Is ${fid.displayName(next)} on time?`);
+      if (next.carrier && next.flight_number) chips.push(`Upgrade options on ${fid.displayName(next)}?`);
     }
   }
-  if (trips.length > 0 && chips.length < 4) chips.push("What's my next trip?");
   const fallbacks = [
+    "What needs my attention?",
     "Any disruption risks?",
-    "Dinner recommendations?",
-    "Best airport lounge here?",
-    "What should I know before I fly?",
+    "Which airport lounge can I use?",
     "Upgrade options on my next flight?",
-    "How do I earn more points?",
-    "What's on in my destination?",
   ];
   for (const f of fallbacks) {
     if (chips.length >= 4) break;
@@ -169,6 +159,7 @@ export default function ConciergeScreen({ route, navigation }) {
   const [trips, setTrips]               = useState([]);
   const [tripsLoaded, setTripsLoaded]   = useState(false);
   const [activeTripId, setActiveTripId] = useState(routeTripId);
+  const [showPicker, setShowPicker] = useState(false);   // the trip picker is hidden until asked for
   const [messages, setMessages]         = useState([{ role: "assistant", content: WELCOME_DEFAULT }]);
   const [input, setInput]               = useState("");
   const [loading, setLoading]           = useState(false);
@@ -188,6 +179,23 @@ export default function ConciergeScreen({ route, navigation }) {
         tripsRef.current = loaded;
         setTrips(loaded);
         setTripsLoaded(true);
+        // Auto-select the trip Wingman should be watching — the one in motion, else the
+        // one with the soonest upcoming flight — so it never makes you pick context it
+        // can infer. Respects an explicit tripId from navigation.
+        if (!routeTripId) {
+          const now = Date.now();
+          const scored = loaded.map((t) => {
+            const legs = t.legs || [];
+            const inMotion = legs.some((l) => {
+              const d = new Date(l.departs_at || 0).getTime();
+              const a = new Date(l.arrives_at || l.departs_at || 0).getTime();
+              return d && now >= d && now <= (a || d);
+            });
+            const future = legs.map((l) => new Date(l.departs_at || 0).getTime()).filter((x) => x > now);
+            return { id: t.id, inMotion, nextDep: future.length ? Math.min(...future) : Infinity };
+          }).sort((a, b) => (b.inMotion ? 1 : 0) - (a.inMotion ? 1 : 0) || a.nextDep - b.nextDep);
+          if (scored[0]) setActiveTripId((prev) => prev || scored[0].id);
+        }
         // Update the welcome message with trip context (only if thread hasn't been loaded yet)
         setMessages(prev => {
           if (prev.length === 1 && prev[0].role === "assistant") {
@@ -611,32 +619,37 @@ export default function ConciergeScreen({ route, navigation }) {
         </View>
       </View>
 
-      {upcomingTrips.length > 1 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.threadRow}>
-          {upcomingTrips.map(t => {
-            const firstFlight = (t.legs || []).find(l => l.type === "flight");
-            const route = firstFlight?.origin && firstFlight?.destination
-              ? `${firstFlight.origin} → ${firstFlight.destination}`
-              : null;
-            const depDate = firstFlight?.departs_at
-              ? new Date(firstFlight.departs_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })
-              : null;
-            return (
-              <Pressable
-                key={t.id}
-                style={[s.threadChip, activeTripId === t.id && s.threadChipActive]}
-                onPress={() => setActiveTripId(t.id)}
-              >
-                <Text style={[s.threadChipT, activeTripId === t.id && s.threadChipTActive]} numberOfLines={1}>{t.title}</Text>
-                {(route || depDate) && (
-                  <Text style={[s.threadChipSub, activeTripId === t.id && s.threadChipSubActive]} numberOfLines={1}>
-                    {route || depDate}
-                  </Text>
-                )}
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+      {/* WATCHING — Wingman already picked the relevant trip (in-motion → next). One
+          quiet line states it; the picker only appears if you have more than one live
+          trip AND tap to change. No wall of rectangles asking you to do its job. */}
+      {upcomingTrips.length > 0 && (
+        <View style={s.watchWrap}>
+          <Pressable
+            style={s.watchLine}
+            hitSlop={8}
+            disabled={upcomingTrips.length <= 1}
+            onPress={() => { tap(); setShowPicker((v) => !v); }}
+          >
+            <Text style={s.watchLabel}>WATCHING</Text>
+            <Text style={s.watchTitle} numberOfLines={1}>
+              {upcomingTrips.find((t) => t.id === activeTripId)?.title || upcomingTrips[0]?.title || "your trips"}
+            </Text>
+            {upcomingTrips.length > 1 ? <Text style={s.watchChev}>{showPicker ? "⌃" : "⌄"}</Text> : null}
+          </Pressable>
+          {showPicker && upcomingTrips.length > 1 ? (
+            <View style={s.watchMenu}>
+              {upcomingTrips.map((t) => (
+                <Pressable
+                  key={t.id}
+                  style={s.watchItem}
+                  onPress={() => { tap(); setActiveTripId(t.id); setShowPicker(false); }}
+                >
+                  <Text style={[s.watchItemT, activeTripId === t.id && { color: C.gold }]} numberOfLines={1}>{t.title}</Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
+        </View>
       )}
 
       <KeyboardAvoidingView
@@ -746,6 +759,14 @@ const s = StyleSheet.create({
   clearBtnT:  { color: C.mut, fontSize: 11, fontFamily: T.sansM, letterSpacing: 0.5 },
   tripLinkBtn:  { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: C.gold + "60", backgroundColor: C.gold + "15" },
   tripLinkBtnT: { color: C.gold, fontSize: 11, fontFamily: T.sansB, letterSpacing: 0.5 },
+  watchWrap: { paddingHorizontal: 20, paddingBottom: 10 },
+  watchLine: { flexDirection: "row", alignItems: "baseline", gap: 8 },
+  watchLabel: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 3, color: C.mutD },
+  watchTitle: { fontFamily: T.display, fontSize: 16, color: C.ink, letterSpacing: -0.3, flexShrink: 1 },
+  watchChev: { fontFamily: T.sans, fontSize: 13, color: C.mut },
+  watchMenu: { marginTop: 8, borderTopWidth: 1, borderTopColor: C.line },
+  watchItem: { paddingVertical: 10 },
+  watchItemT: { fontFamily: T.sansM, fontSize: 14, color: C.mut },
   threadRow: { paddingHorizontal: 16, paddingBottom: 10, gap: 8, flexDirection: "row" },
   threadChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 16, borderWidth: 1, borderColor: C.line, backgroundColor: C.card },
   threadChipActive: { borderColor: C.gold, backgroundColor: C.gold + "18" },

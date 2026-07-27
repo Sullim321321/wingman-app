@@ -16,7 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useFocusEffect } from "@react-navigation/native";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { C, T, SHADOW, litEdge } from "../theme";
+import { C, T, SHADOW, litEdge, NIGHT } from "../theme";
 import { Leg, RideCount } from "../tripdoc";
 import { tap, DecisionCard, FadeRise } from "../components";
 import { PlanCard } from "../components/PlanCard";
@@ -1307,43 +1307,51 @@ export default function HomeScreen({ navigation }) {
         {/* ── ARRIVAL CONCIERGE — the day-of chain, when a flight is in motion ──
             Land → next meeting → leave-by → one-tap car. Every line is a fact or is
             honestly absent; the ride is a link, never an autonomous order. */}
-        {arrival ? (
+        {arrival ? (() => {
+          // NIGHT MODE (B5): when you're literally in the air, the arrival surface goes
+          // to ink — cream Fraunces on near-black, a warmed bronze. The mode means
+          // "you're moving," held in reserve exactly like colour and motion.
+          const night = !!arrival.flight?.in_air;
+          const ink = night ? NIGHT.ink : C.ink;
+          const mut = night ? NIGHT.mut : C.mut;
+          const bronze = night ? NIGHT.gold : C.gold;
+          const verdictColor = arrival.plan?.verdict === "wont_make_it"
+            ? (night ? NIGHT.coral : C.coral)
+            : arrival.plan?.verdict === "tight" ? bronze
+            : (night ? NIGHT.teal : C.teal);
+          return (
           <FadeRise style={{ marginTop: 10 }}>
-            <View style={s.arrCard}>
+            <View style={[s.arrCard, night && { backgroundColor: NIGHT.card, borderColor: NIGHT.line }]}>
               <View style={s.arrHeadRow}>
-                <Text style={s.arrEyebrow}>{arrival.flight?.in_air ? "IN THE AIR" : "ARRIVAL"}</Text>
+                <Text style={[s.arrEyebrow, { color: bronze }]}>{night ? "IN THE AIR" : "ARRIVAL"}</Text>
                 {arrival.flight?.from && arrival.flight?.to
-                  ? <Text style={s.arrFlight}>{arrival.flight.from} → {arrival.flight.to}</Text> : null}
+                  ? <Text style={[s.arrFlight, { color: mut }]}>{arrival.flight.from} → {arrival.flight.to}</Text> : null}
               </View>
-              <Text style={s.arrLand}>Land {fmtClock(arrival.plan?.land_at)}</Text>
+              <Text style={[s.arrLand, { color: ink }]}>Land {fmtClock(arrival.plan?.land_at)}</Text>
               {(arrival.flight?.terminal || arrival.flight?.gate) ? (
-                <Text style={s.arrMeta}>
+                <Text style={[s.arrMeta, { color: mut }]}>
                   {[arrival.flight.terminal && `Terminal ${arrival.flight.terminal}`, arrival.flight.gate && `Gate ${arrival.flight.gate}`].filter(Boolean).join("  ·  ")}
                 </Text>
               ) : null}
 
               {arrival.plan?.meeting ? (
                 <View style={{ marginTop: 14 }}>
-                  <Text style={s.arrMeetTitle}>{arrival.plan.meeting.title}</Text>
-                  <Text style={s.arrMeta}>
+                  <Text style={[s.arrMeetTitle, { color: ink }]}>{arrival.plan.meeting.title}</Text>
+                  <Text style={[s.arrMeta, { color: mut }]}>
                     {fmtClock(arrival.plan.meeting.start)}{arrival.plan.meeting.venue ? `  ·  ${arrival.plan.meeting.venue}` : ""}
                   </Text>
                   {arrival.plan.leave_airport_by ? (
-                    <Text style={[
-                      s.arrLeave,
-                      arrival.plan.verdict === "wont_make_it" && { color: C.coral },
-                      arrival.plan.verdict === "tight" && { color: C.gold },
-                    ]}>
+                    <Text style={[s.arrLeave, { color: verdictColor }]}>
                       Leave {arrival.flight?.to || "the airport"} by {fmtClock(arrival.plan.leave_airport_by)}
                       {arrival.plan.verdict === "wont_make_it" ? " — it'll be tight" : ""}
                     </Text>
                   ) : null}
                   {arrival.travel?.text
-                    ? <Text style={s.arrReason}>{arrival.travel.text} by {arrival.travel.mode} from the airport.</Text>
-                    : <Text style={s.arrReason}>I can't route the drive yet, so I won't guess a leave-by.</Text>}
+                    ? <Text style={[s.arrReason, { color: mut }]}>{arrival.travel.text} by {arrival.travel.mode} from the airport.</Text>
+                    : <Text style={[s.arrReason, { color: mut }]}>I can't route the drive yet, so I won't guess a leave-by.</Text>}
                 </View>
               ) : (
-                <Text style={s.arrReason}>
+                <Text style={[s.arrReason, { color: mut }]}>
                   {arrival.calendar_connected
                     ? "Nothing on your calendar after you land."
                     : "Connect your calendar and I'll plan the far end too."}
@@ -1352,7 +1360,7 @@ export default function HomeScreen({ navigation }) {
 
               {arrival.ride ? (
                 <Pressable
-                  style={s.arrCar}
+                  style={[s.arrCar, night && { backgroundColor: NIGHT.gold }]}
                   accessibilityLabel="Order a car — opens Uber with pickup and destination pre-filled"
                   onPress={() => {
                     tap();
@@ -1360,7 +1368,7 @@ export default function HomeScreen({ navigation }) {
                       Linking.openURL(arrival.ride.webFallback).catch(() => {}));
                   }}
                 >
-                  <Text style={s.arrCarT}>
+                  <Text style={[s.arrCarT, night && { color: NIGHT.bg }]}>
                     Order a car{arrival.plan?.meeting?.title ? ` to ${arrival.plan.meeting.title}` : ""}
                   </Text>
                 </Pressable>
@@ -1369,17 +1377,18 @@ export default function HomeScreen({ navigation }) {
               {arrival.airport ? (
                 <View style={s.arrLinksRow}>
                   <Pressable onPress={() => { tap(); Linking.openURL(arrival.airport.map).catch(() => {}); }} hitSlop={8}>
-                    <Text style={s.arrLink}>Airport map</Text>
+                    <Text style={[s.arrLink, { color: bronze }]}>Airport map</Text>
                   </Pressable>
-                  <Text style={s.arrLinkDot}>·</Text>
+                  <Text style={[s.arrLinkDot, night && { color: NIGHT.mutD }]}>·</Text>
                   <Pressable onPress={() => { tap(); Linking.openURL(arrival.airport.security).catch(() => {}); }} hitSlop={8}>
-                    <Text style={s.arrLink}>Security waits (MyTSA)</Text>
+                    <Text style={[s.arrLink, { color: bronze }]}>Security waits (MyTSA)</Text>
                   </Pressable>
                 </View>
               ) : null}
             </View>
           </FadeRise>
-        ) : null}
+          );
+        })() : null}
 
         {/* ── Decisions — the one thing that needs you, above the briefing ── */}
         {decisions.length > 0 ? (

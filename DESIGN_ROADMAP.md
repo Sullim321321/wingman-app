@@ -38,24 +38,33 @@ verified on device).
   to Fraunces (only serif styles ≥22px; body/reason prose untouched); Curator's hardcoded
   palette migrated to the evolved values (the one screen B2's tokens missed). All 67 files
   parse.
-- **B5 · Night mode** — ⛔ architectural, deferred. The retheme collapsed `ThemeContext`;
-  RN styles bind `C.*` at load, so a runtime day↔night switch needs dynamic theming
-  reintroduced. `NIGHT` tokens are ready; the mechanism is its own focused effort — NOT a
-  blind restyle.
+- **B5 · Night mode** — ✅ done (contained). The `NIGHT` palette is applied to the
+  in-transit surface: the Arrival card renders on ink — cream Fraunces, warmed bronze —
+  when the flight is in the air, so the mode means "you're moving." Full app-wide dynamic
+  dark mode remains a separate future effort (needs `ThemeContext` reintroduced); not
+  attempted blind.
 - **B6 · Motion + imagery** — ◑ partial. Motion system already consistent (`FadeRise`
   entrance on flagships + Curator, `ConfirmSheet` the one confirm); broad entrance-motion
   on secondary forms deferred as low-value. **Imagery decision recorded:** minimal / no
   destination photography on core surfaces — type + the dossier metaphor carry it; reserve
   imagery for Explore/Curator only.
+- **B8 · Concierge rework** — ✅ done. Killed the per-trip rectangle strip; Ask Wingman now
+  auto-selects the watched trip (in-motion → soonest-upcoming) and shows one quiet
+  "WATCHING · {trip}" line, with a picker that only appears if you have multiple live trips
+  and tap. Suggestion chips are Guardian/logistics now (on-time, disruption, lounge,
+  upgrade, leave-by) — dining/packing/"what's on" dropped. The concierge prompt is
+  re-laned: Guardian-first, and taste gets one tight answer + a pointer to Explore instead
+  of a duplicated directory.
 - **B7 · Accessibility & last-5%** — ✅ done. Contrast re-audited on the evolved palette and
   it *improved* everywhere (ink 16.6; mut/teal/coral/indigo clear AA; gold 4.49 and mutD
   3.88 up markedly for their label/accent roles). Reduce-motion respected; VoiceOver labels
   broad.
 
-**Next action:** ONE verification build (B2 foundation + B3 flagships + B4 sweep, all now
-in the working tree) → look at Home, Dossier, Curator, Trips, Settings on device. If the
-Fraunces + evolved palette read premium, this is the single push. B5 (dynamic theming for
-Night) is the remaining substantive build; the rest is tuning from screenshots.
+**Status:** B1–B8 all shipped or done-in-code. B2/B3/B4 + the Arrival Concierge are
+deployed (live). B5 (in-transit Night) and B8 (Concierge rework) are done in the working
+tree, awaiting the next push. The only open thread on the whole roadmap is **full app-wide
+dynamic dark mode** — its own effort, needs `ThemeContext` reintroduced — plus the ongoing
+screenshot-tuning pass as surfaces land on device.
 
 ---
 

@@ -23,7 +23,8 @@ import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet,
   ActivityIndicator, RefreshControl, Alert,
 } from "react-native";
-import { C, T } from "../theme";
+import { T } from "../theme";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 import { BackBar, SerifText, FadeRise, tap } from "../components";
 import { Leg, RideCount } from "../tripdoc";
 import { getDossier, deleteLeg, getDepartures } from "../api";
@@ -41,6 +42,8 @@ const CHAPTERS = [
 
 export default function DossierScreen({ route, navigation }) {
   const { tripId } = route.params || {};
+  const { C } = useTheme();                    // active palette (light or dark)
+  const s = useThemedStyles(makeStyles);       // stylesheet rebuilt on theme change
   const [data, setData] = useState(null);
   const [busy, setBusy] = useState(true);
   const [err, setErr]   = useState(null);
@@ -349,7 +352,7 @@ export default function DossierScreen({ route, navigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   app:    { flex: 1, backgroundColor: C.bg },
   scroll: { padding: 20, paddingTop: 4 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },

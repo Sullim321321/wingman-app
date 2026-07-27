@@ -2,8 +2,8 @@
 // Reads iOS system preference + AsyncStorage manual override
 // Provides C tokens that update at runtime without app restart
 
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { useColorScheme } from "react-native";
+import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
+import { useColorScheme, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const THEME_KEY = "wingman_appearance"; // "system" | "dark" | "light"
@@ -22,7 +22,7 @@ export const THEME_KEY = "wingman_appearance"; // "system" | "dark" | "light"
 // display name that doubled as an API key: two things that must agree, with no mechanism
 // forcing them to. So this now IMPORTS the palette rather than restating it, and the
 // duplicate is gone for good.
-import { C as PALETTE } from "./theme";
+import { C as LIGHT_PALETTE, C_DARK } from "./theme";
 
 // ─── One identity, one palette ───────────────────────────────────────────────
 //
@@ -37,9 +37,12 @@ import { C as PALETTE } from "./theme";
 // palette and this file didn't. So both variants now collapse to the single
 // theme.js palette. The Settings appearance toggle is a no-op until a proper
 // dark variant of the quiet-luxury identity is designed and approved.
-const IVORY = { ...PALETTE, isDark: false };
-const DARK = IVORY;
-const LIGHT = IVORY;
+// Two real palettes now (Roadmap v3, Epic 1). Both are the Atelier identity — the light
+// one is alabaster/ink/bronze; the dark one is C_DARK (deep ink, warmed bronze). Screens
+// converted to `useThemedStyles` flip between them; unconverted screens still read the
+// frozen light `C` from theme.js, which is why the sweep is phased.
+const LIGHT = { ...LIGHT_PALETTE, isDark: false };
+const DARK = { ...C_DARK, isDark: true };
 
 const ThemeContext = createContext({ C: DARK, appearance: "system", setAppearance: () => {} });
 
@@ -60,11 +63,11 @@ export function ThemeProvider({ children }) {
     await AsyncStorage.setItem(THEME_KEY, value).catch(() => {});
   }
 
-  const resolvedScheme = appearance === "system"
-    ? "dark"  // Default to dark mode — Wingman's primary aesthetic
-    : appearance;
-
-  const C = resolvedScheme === "light" ? LIGHT : DARK;
+  // During the phased conversion, "system" resolves to LIGHT — so unconverted screens and
+  // the nav chrome never disagree with each other. Explicit "dark" opts in (for testing
+  // and for users who want it on converted screens). Epic 1g makes "system" follow the
+  // device / time of day once the sweep is complete.
+  const C = appearance === "dark" ? DARK : LIGHT;
 
   return (
     <ThemeContext.Provider value={{ C, appearance, setAppearance, isDark: C.isDark }}>
@@ -80,4 +83,16 @@ export function useTheme() {
 // Convenience hook — returns just C tokens
 export function useC() {
   return useContext(ThemeContext).C;
+}
+
+// ─── useThemedStyles — the mechanism (Epic 1b) ───────────────────────────────
+// A screen converts from a frozen module-level `const s = StyleSheet.create({…C…})` to a
+// module-level `const makeStyles = (C) => ({ … })` factory, then inside the component:
+//   const { C } = useTheme();               // for inline colours
+//   const s = useThemedStyles(makeStyles);  // for the stylesheet
+// The stylesheet is rebuilt (and memoised) whenever the active palette changes, so the
+// screen flips light↔dark at runtime. `makeStyles` must be a stable module-level function.
+export function useThemedStyles(makeStyles) {
+  const { C } = useContext(ThemeContext);
+  return useMemo(() => StyleSheet.create(makeStyles(C)), [C, makeStyles]);
 }

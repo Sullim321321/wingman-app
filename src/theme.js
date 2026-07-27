@@ -130,6 +130,42 @@ export const C = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// C_DARK — the full dark palette, key-for-key with C. This is the Atelier identity
+// AFTER dark: the same deep ink and warmed bronze the in-transit Night card already
+// uses, extended to every token so a screen converted to render-time theming can flip
+// wholesale. The INVERSIONS matter: `parch`/`inkD` were the dark CTA plane + its paper
+// text on the light theme; in dark they flip to a PAPER plane with ink text, so the
+// primary CTA reads paper-on-ink here just as it read ink-on-paper there.
+//
+// NOTE: defining this does not by itself darken any screen — screens read the frozen
+// module-level `C`. It is the target palette the phased conversion (Roadmap v3, Epic 1)
+// migrates screens onto, one verified wave at a time.
+// ─────────────────────────────────────────────────────────────────────────────
+export const C_DARK = {
+  bg:    "#14110D", card:  "#1E1913", card2: "#241F18", card3: "#2B251D",
+  parch: "#EDE7DB", parch2:"#DED7C9",                 // inverted plane → paper on dark
+
+  line:  "rgba(241,236,226,0.12)", lineP: "rgba(23,19,14,0.16)",
+  lineHi:"rgba(255,255,255,0.04)", lineSh:"rgba(0,0,0,0.40)",
+
+  ink:   "#F1ECE2", inkD:  "#17130E", mut:   "#A79E8F", mutD:  "#7E7566",
+
+  gold:  "#C29A5E", accent:"#C29A5E", goldD: "#A6875A", goldL: "#D8B87E",
+  goldBtn:"#C29A5E", goldGlass: "#C29A5E22",
+  brass:  "#C29A5E", brassD: "#A6875A", brassL: "#D8B87E",
+
+  teal:   "#7C9A80", coral:  "#D06A5E", amber:  "#C29A5E", indigo: "#8A96B5",
+  ok:    "#7C9A80", warn:  "#C29A5E", risk:  "#D06A5E",
+
+  action:"#C29A5E", confirmed:"#7C9A80", attention:"#D06A5E", attentionM:"#C29A5E",
+  premium:"#8A96B5", neutral:"#A79E8F",
+  actionFill:"#C29A5E1E", confirmedFill:"#7C9A8022", attentionFill:"#D06A5E22",
+
+  glassTab:  "rgba(20,17,13,0.94)", glassBg: "rgba(20,17,13,0.96)", glassCard: "rgba(30,25,19,0.90)",
+  isDark: true,
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // TYPE
 // ─────────────────────────────────────────────────────────────────────────────
 export const T = {

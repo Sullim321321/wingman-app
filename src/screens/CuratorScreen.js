@@ -14,6 +14,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { T } from "../theme";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 import { FadeRise } from "../components";
 import { getCurate, curateDining, getPockets } from "../api";
 
@@ -28,6 +29,10 @@ const RATIONALE = {
 };
 
 export default function CuratorScreen({ navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
+  // Inline colour usages themed from the active palette (shadow the light module consts).
+  const PAPER = C.bg, CARD = C.card, INK = C.ink, MUT = C.mutD, BRONZE = C.gold, SAGE = C.teal, LINE = C.line;
   const [city, setCity] = useState("");
   const [coords, setCoords] = useState(null); // { latitude, longitude } — for real booking
   const [data, setData] = useState(null);
@@ -262,7 +267,9 @@ export default function CuratorScreen({ navigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => {
+  const PAPER = C.bg, CARD = C.card, INK = C.ink, MUT = C.mutD, BRONZE = C.gold, SAGE = C.teal, LINE = C.line;
+  return ({
   app:    { flex: 1, backgroundColor: PAPER },
   scroll: { padding: 22, paddingTop: 20 },
 
@@ -304,4 +311,5 @@ const s = StyleSheet.create({
 
   err:    { fontFamily: T.sans, fontSize: 15, color: "#A32D2D", marginTop: 20 },
   empty:  { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 15, color: MUT, marginTop: 24, lineHeight: 22 },
-});
+  });
+};

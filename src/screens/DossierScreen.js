@@ -100,11 +100,27 @@ export default function DossierScreen({ route, navigation }) {
   // one tap away. Anything unbooked is promoted above the arc — it's the one thing that
   // actually needs you.
   const allLegs = Object.values(chapters).flat();
+  // A leg named only after its city ("New York") is a sketch that lost its real name —
+  // not a stay, not a route. And a flight with no origin, no destination, and no number
+  // is the "? → ?" ghost: a shape with nothing in it. Neither belongs in the spine or in
+  // "needs you"; they read as junk the moment the background goes dark.
+  const isCityName = (l) => {
+    const n = String(l.property_name || l.display_name || "").trim().toLowerCase();
+    const city = String(l.destination_city || l.destination || "").trim().toLowerCase();
+    return !!n && !!city && n === city;
+  };
+  const flightHasSubstance = (l) => !!(l.origin || l.destination || l.flight_number);
+  const legHasSubstance = (l) => {
+    if (l.type === "flight") return flightHasSubstance(l);
+    const named = !!l.property_name && !isCityName(l);
+    return named || !!l.confirmation || (!!l.origin && !!l.destination);
+  };
   const flights = allLegs
-    .filter((l) => l.type === "flight")
+    .filter((l) => l.type === "flight" && flightHasSubstance(l))
     .sort((a, b) => new Date(a.departs_at || 0) - new Date(b.departs_at || 0));
-  const stays = allLegs.filter((l) => l.type === "hotel" || l.type === "airbnb");
-  const needsYou = allLegs.filter((l) => l.state === "proposed");
+  const stays = allLegs.filter((l) =>
+    (l.type === "hotel" || l.type === "airbnb") && !(l.state === "proposed" && isCityName(l)));
+  const needsYou = allLegs.filter((l) => l.state === "proposed" && legHasSubstance(l));
   const hasSpine = flights.length + stays.length > 0;
   const fmtDay = (iso) => {
     const dt = new Date(iso);

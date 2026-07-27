@@ -354,6 +354,11 @@ export default function TripsScreen({ navigation }) {
     // stray past items (an old hotel or dinner whose email had no parseable date).
     // Keep them out of the prominent Upcoming list instead of floating them to the top.
     if (tripStartTime(t) === 0 && tripEndTime(t) === 0) return false;
+    // The dates decide, not the stored status. A trip whose last leg ended more than a
+    // day ago is not upcoming, whatever its `status` says — that's what floated a
+    // Jan-2023 trip to the top of Upcoming.
+    const end = tripEndTime(t);
+    if (end > 0 && end < Date.now() - 86400000) return false;
     return true;
   }).sort((a, b) => tripStartTime(a) - tripStartTime(b));
 

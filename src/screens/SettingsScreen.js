@@ -7,6 +7,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import { C, T } from "../theme";
+import { useThemedStyles } from "../ThemeContext";
 import { useTheme } from "../ThemeContext";
 import { BackBar, Segmented, SetRow, Chip, Btn, g } from "../components";
 import { useAuth } from "../auth";
@@ -38,6 +39,8 @@ const TIER_LABELS = {
 
 // ── Hotel Affinity Section ────────────────────────────────────────────────────
 function HotelAffinitySection() {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -131,6 +134,8 @@ function HotelAffinitySection() {
 
 // ── Concierge Memory Section ─────────────────────────────────────────────────
 function ConciergeMemorySection() {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [instructions, setInstructions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -201,6 +206,8 @@ function ConciergeMemorySection() {
 }
 
 export default function SettingsScreen({ navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const { email, signOut } = useAuth();
   const { appearance, setAppearance } = useTheme();
 
@@ -535,7 +542,7 @@ export default function SettingsScreen({ navigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   app:  { flex: 1, backgroundColor: C.bg },
   acct: { color: C.mut, fontSize: 15, fontFamily: T.sans, marginBottom: 14, letterSpacing: 0.1 },
   versionT: { color: C.mut, fontSize: 11, fontFamily: T.sans, textAlign: "center", marginTop: 8, marginBottom: 24, opacity: 0.5 },

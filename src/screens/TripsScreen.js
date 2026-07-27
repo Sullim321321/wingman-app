@@ -12,6 +12,7 @@ import { Swipeable } from "react-native-gesture-handler";
 import * as SecureStore from "expo-secure-store";
 import { Ionicons } from "@expo/vector-icons";
 import { C, T, SHADOW, litEdge } from "../theme";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 import { tap, FadeRise } from "../components";
 import { getTrips, deleteTrip, getPrediction, getOnboardingSummary } from "../api";
 import { getCachedTrips } from "../offlineCache";
@@ -44,6 +45,8 @@ const tripEndTime   = (trip) => tripSpan(trip).end;
 // ─── Status Pill ──────────────────────────────────────────────────────────────
 
 function StatusPill({ status, riskScore }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   if (status === "past") {
     return (
       <View style={[s.pill, s.pillMut]}>
@@ -80,6 +83,8 @@ function StatusPill({ status, riskScore }) {
 // ─── Trip Row ─────────────────────────────────────────────────────────────────
 
 function TripRow({ trip, navigation, onDelete }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [riskScore, setRiskScore] = useState(null);
   const swipeRef = useRef(null);
 
@@ -257,6 +262,8 @@ function EmptyState({ navigation }) {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function TripsScreen({ navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [trips,      setTrips]      = useState([]);
   const [loading,    setLoading]    = useState(true);
   const [loadError,  setLoadError]  = useState(null);   // a failed load ≠ an empty life
@@ -530,7 +537,7 @@ export default function TripsScreen({ navigation }) {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   errWrap: { alignItems: "center", paddingHorizontal: 34, paddingTop: 60 },
   errHed:  { fontFamily: T.display, fontSize: 22, color: C.ink, marginBottom: 10, textAlign: "center" },
   errSub:  { fontFamily: T.sans, fontSize: 15, color: C.mut, textAlign: "center", lineHeight: 21, marginBottom: 20 },

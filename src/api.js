@@ -184,6 +184,9 @@ export const getDossier = (id) => req("/trips/" + id + "/dossier");
 // "When to leave" — per-commitment door time from real travel time + buffer (Guardian).
 export const getDepartures = (id) => req("/trips/" + id + "/departures");
 
+// The Arrival Concierge spine — land time, next meeting, leave-by, ride deep link.
+export const getArrival = () => req("/arrival");
+
 // Today's page of the same document. Not a different endpoint shape — the same
 // chapters, the same leg cards, the same dependency lines, filtered to what's
 // happening now and what's close enough to need you. Reads across ALL trips,

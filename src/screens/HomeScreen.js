@@ -28,7 +28,7 @@ import {
   getLocalNews, getLocalTraffic, getTodayEvents, getTravelStats,
   createTrip, addLeg,
   getDecisions, confirmDecision, dismissDecision, undoDecision,
-  getBrief, getCurate, getLedger,
+  getBrief, getCurate, getLedger, getArrival,
 } from "../api";
 import { scheduleDisruption, schedulePreDepartureBriefing, schedulePostTripDebrief } from "../notify";
 import * as Speech from "expo-speech";
@@ -423,6 +423,7 @@ export default function HomeScreen({ navigation }) {
   const [homeSignals, setHomeSignals] = useState([]);           // Signals, folded into Home
   // The Brief. "Nothing needs you" as a graph query rather than a greeting.
   const [brief, setBrief] = useState(null);
+  const [arrival, setArrival] = useState(null);   // the Arrival Concierge plan, when a flight is in motion
   const [ambient, setAmbient] = useState(null);   // cached "what's good in {city}" curation
   const [handled, setHandled] = useState([]);     // recent autonomous actions (Guardian evidence)
 
@@ -500,6 +501,9 @@ export default function HomeScreen({ navigation }) {
       const led = await getLedger();
       setHandled((led?.entries || []).filter((e) => e && e.by === "wingman").slice(0, 2));
     } catch { /* evidence is a nicety; never block Home */ }
+    // The Arrival Concierge — surfaces only when a flight is in motion (or imminent).
+    // Silent otherwise; never blocks the brief.
+    try { const a = await getArrival(); setArrival(a && a.active ? a : null); } catch { setArrival(null); }
   }, []);
   useEffect(() => { loadBrief(); }, [loadBrief]);
 
@@ -1263,6 +1267,8 @@ export default function HomeScreen({ navigation }) {
   // Masthead + hero briefing + section divider live INSIDE the FlatList as its
   // scrollable header. This keeps the message list the only flex element, so the
   // input bar reliably sits above the keyboard (the tall hero no longer pins it down).
+  const fmtClock = (iso) => iso ? new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : "";
+
   const listHeader = (
     <>
         {/* ── Masthead ──────────────────────────────────────────────────── */}
@@ -1297,6 +1303,83 @@ export default function HomeScreen({ navigation }) {
         </View>
 
         <View style={s.rule} />
+
+        {/* ── ARRIVAL CONCIERGE — the day-of chain, when a flight is in motion ──
+            Land → next meeting → leave-by → one-tap car. Every line is a fact or is
+            honestly absent; the ride is a link, never an autonomous order. */}
+        {arrival ? (
+          <FadeRise style={{ marginTop: 10 }}>
+            <View style={s.arrCard}>
+              <View style={s.arrHeadRow}>
+                <Text style={s.arrEyebrow}>{arrival.flight?.in_air ? "IN THE AIR" : "ARRIVAL"}</Text>
+                {arrival.flight?.from && arrival.flight?.to
+                  ? <Text style={s.arrFlight}>{arrival.flight.from} → {arrival.flight.to}</Text> : null}
+              </View>
+              <Text style={s.arrLand}>Land {fmtClock(arrival.plan?.land_at)}</Text>
+              {(arrival.flight?.terminal || arrival.flight?.gate) ? (
+                <Text style={s.arrMeta}>
+                  {[arrival.flight.terminal && `Terminal ${arrival.flight.terminal}`, arrival.flight.gate && `Gate ${arrival.flight.gate}`].filter(Boolean).join("  ·  ")}
+                </Text>
+              ) : null}
+
+              {arrival.plan?.meeting ? (
+                <View style={{ marginTop: 14 }}>
+                  <Text style={s.arrMeetTitle}>{arrival.plan.meeting.title}</Text>
+                  <Text style={s.arrMeta}>
+                    {fmtClock(arrival.plan.meeting.start)}{arrival.plan.meeting.venue ? `  ·  ${arrival.plan.meeting.venue}` : ""}
+                  </Text>
+                  {arrival.plan.leave_airport_by ? (
+                    <Text style={[
+                      s.arrLeave,
+                      arrival.plan.verdict === "wont_make_it" && { color: C.coral },
+                      arrival.plan.verdict === "tight" && { color: C.gold },
+                    ]}>
+                      Leave {arrival.flight?.to || "the airport"} by {fmtClock(arrival.plan.leave_airport_by)}
+                      {arrival.plan.verdict === "wont_make_it" ? " — it'll be tight" : ""}
+                    </Text>
+                  ) : null}
+                  {arrival.travel?.text
+                    ? <Text style={s.arrReason}>{arrival.travel.text} by {arrival.travel.mode} from the airport.</Text>
+                    : <Text style={s.arrReason}>I can't route the drive yet, so I won't guess a leave-by.</Text>}
+                </View>
+              ) : (
+                <Text style={s.arrReason}>
+                  {arrival.calendar_connected
+                    ? "Nothing on your calendar after you land."
+                    : "Connect your calendar and I'll plan the far end too."}
+                </Text>
+              )}
+
+              {arrival.ride ? (
+                <Pressable
+                  style={s.arrCar}
+                  accessibilityLabel="Order a car — opens Uber with pickup and destination pre-filled"
+                  onPress={() => {
+                    tap();
+                    Linking.openURL(arrival.ride.deepLink).catch(() =>
+                      Linking.openURL(arrival.ride.webFallback).catch(() => {}));
+                  }}
+                >
+                  <Text style={s.arrCarT}>
+                    Order a car{arrival.plan?.meeting?.title ? ` to ${arrival.plan.meeting.title}` : ""}
+                  </Text>
+                </Pressable>
+              ) : null}
+
+              {arrival.airport ? (
+                <View style={s.arrLinksRow}>
+                  <Pressable onPress={() => { tap(); Linking.openURL(arrival.airport.map).catch(() => {}); }} hitSlop={8}>
+                    <Text style={s.arrLink}>Airport map</Text>
+                  </Pressable>
+                  <Text style={s.arrLinkDot}>·</Text>
+                  <Pressable onPress={() => { tap(); Linking.openURL(arrival.airport.security).catch(() => {}); }} hitSlop={8}>
+                    <Text style={s.arrLink}>Security waits (MyTSA)</Text>
+                  </Pressable>
+                </View>
+              ) : null}
+            </View>
+          </FadeRise>
+        ) : null}
 
         {/* ── Decisions — the one thing that needs you, above the briefing ── */}
         {decisions.length > 0 ? (
@@ -2064,6 +2147,22 @@ const s = StyleSheet.create({
     position: "relative",
     overflow: "hidden",
   },
+  // ── Arrival Concierge card ──
+  arrCard: { backgroundColor: C.card2, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 18, marginHorizontal: 24, marginTop: 10 },
+  arrHeadRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 },
+  arrEyebrow: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 3.4, color: C.gold },
+  arrFlight: { fontFamily: T.mono, fontSize: 11, letterSpacing: 1, color: C.mut },
+  arrLand: { fontFamily: T.display, fontSize: 30, color: C.ink, letterSpacing: -0.5, lineHeight: 34 },
+  arrMeta: { fontFamily: T.sansM, fontSize: 12.5, color: C.mut, marginTop: 3 },
+  arrMeetTitle: { fontFamily: T.display, fontSize: 18, color: C.ink, letterSpacing: -0.3 },
+  arrLeave: { fontFamily: T.sansB, fontSize: 14, color: C.teal, marginTop: 10 },
+  arrReason: { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 13.5, color: C.mut, marginTop: 6, lineHeight: 20 },
+  arrCar: { marginTop: 16, backgroundColor: C.parch, borderRadius: 12, paddingVertical: 13, alignItems: "center" },
+  arrCarT: { fontFamily: T.sansB, fontSize: 14, color: C.inkD, letterSpacing: 0.3 },
+  arrLinksRow: { flexDirection: "row", alignItems: "center", marginTop: 14, gap: 8 },
+  arrLink: { fontFamily: T.sansM, fontSize: 12.5, color: C.gold },
+  arrLinkDot: { fontFamily: T.sansM, fontSize: 12.5, color: C.mutD },
+
   heroWatermark: {
     position: "absolute",
     right: -24,

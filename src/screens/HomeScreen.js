@@ -17,6 +17,7 @@ import * as Location from "expo-location";
 import { useFocusEffect } from "@react-navigation/native";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { C, T, SHADOW, litEdge, NIGHT } from "../theme";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 import { Leg, RideCount } from "../tripdoc";
 import { tap, DecisionCard, FadeRise } from "../components";
 import { PlanCard } from "../components/PlanCard";
@@ -395,6 +396,8 @@ function buildWelcomeMessage(trips, firstName, city) {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function HomeScreen({ navigation }) {
+  const { C } = useTheme();                    // active palette (light or dark)
+  const s = useThemedStyles(makeStyles);       // stylesheet rebuilt on theme change
   const [trips, setTrips]               = useState([]);
   const [decisions, setDecisions]       = useState([]);
   const [decisionBusy, setDecisionBusy] = useState(false);
@@ -1970,7 +1973,7 @@ function TypingDots() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   root: {
     flex: 1,
     backgroundColor: C.bg,

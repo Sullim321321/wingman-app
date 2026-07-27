@@ -36,6 +36,7 @@ const HARD = {
  * the model actually reaches for.
  */
 function Rich({ text, style }) {
+  const { C } = useTheme();
   if (!text) return null;
   const parts = String(text).split(/(\*\*[^*]+\*\*|(?<!\*)\*[^*]+\*(?!\*))/g).filter(Boolean);
   return (
@@ -393,6 +394,8 @@ export default function PlanScreen({ navigation, route }) {
 // A system that records what you tell it, and cannot be told it is wrong, is not
 // listening. It is filing.
 function CRow({ c, dim, onWrong }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const h = HARD[c.hardness] || HARD.nice;
   return (
     <View style={s.cRow}>
@@ -421,6 +424,8 @@ function CRow({ c, dim, onWrong }) {
 
 /* ── the empty state, which is really the pitch ─────────────────────────────── */
 function Opening({ onPick, onPasteMode }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const seeds = [
     "Six shows across Asia in September — help me plan it",
     "A week somewhere warm in March, just the two of us",

@@ -34,6 +34,7 @@ import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet, ActivityIndicator, RefreshControl,
 } from "react-native";
 import { C, T } from "../theme";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 import { BackBar, SerifText, FadeRise, tap } from "../components";
 import { getLedger } from "../api";
 
@@ -48,6 +49,8 @@ const when = (iso) => {
 };
 
 export default function LedgerScreen({ navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [data, setData] = useState(null);
   const [busy, setBusy] = useState(true);
   const [err, setErr]   = useState(null);
@@ -168,7 +171,7 @@ export default function LedgerScreen({ navigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   app:    { flex: 1, backgroundColor: C.bg },
   scroll: { padding: 20, paddingTop: 4 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },

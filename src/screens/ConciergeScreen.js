@@ -12,6 +12,7 @@ import * as Location from "expo-location";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect } from "@react-navigation/native";
 import { C, T } from "../theme";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 import { SerifText, tap } from "../components";
 
 // Shown if the server is slow to wake (Render cold start). Kept as a constant so the
@@ -154,6 +155,8 @@ function buildFollowUpChips(lastReply, trips) {
 }
 
 export default function ConciergeScreen({ route, navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const prefill     = route?.params?.prefill || null;
   const routeTripId = route?.params?.tripId ? Number(route.params.tripId) : null;
   const [trips, setTrips]               = useState([]);
@@ -749,7 +752,7 @@ export default function ConciergeScreen({ route, navigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   app:    { flex: 1, backgroundColor: C.bg },
   header: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 },
   headerMark: { width: 34, height: 34, borderRadius: 9, borderWidth: 1, borderColor: C.gold + "55", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(201,169,110,0.06)" },

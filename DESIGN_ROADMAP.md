@@ -60,7 +60,14 @@ verified on device).
   3.88 up markedly for their label/accent roles). Reduce-motion respected; VoiceOver labels
   broad.
 
-**Status:** B1–B8 all shipped or done-in-code. B2/B3/B4 + the Arrival Concierge are
+- **B9 · Concierge = present-moment chief of staff** — ✅ done in code (API). Ask Wingman
+  now anchors on where she is *right now* (in air / just landed) + the rest of today's
+  timeline (legs + calendar meetings), and the prompt is reframed from next-trip planner to
+  "make the journey she's IN frictionless and act on it" — book the car, re-time, re-route,
+  name the day's likely derailers — within the honesty rails (no real-money charge without
+  confirm). Server-only; awaiting the API push.
+
+**Status:** B1–B9 all shipped or done-in-code. B2/B3/B4 + the Arrival Concierge are
 deployed (live). B5 (in-transit Night) and B8 (Concierge rework) are done in the working
 tree, awaiting the next push. The only open thread on the whole roadmap is **full app-wide
 dynamic dark mode** — its own effort, needs `ThemeContext` reintroduced — plus the ongoing

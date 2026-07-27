@@ -17,6 +17,7 @@ import {
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, Linking,
 } from "react-native";
 import { C, T } from "../theme";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 import { WMark, tap, success, FadeRise, SerifText } from "../components";
 import { planMessage, confirmConstraint } from "../api";
 
@@ -53,6 +54,8 @@ function Rich({ text, style }) {
 }
 
 export default function PlanScreen({ navigation, route }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [turns, setTurns]    = useState([]);          // {role, content}
   const [draft, setDraft]    = useState("");
   const [busy, setBusy]      = useState(false);
@@ -459,7 +462,7 @@ function Opening({ onPick, onPasteMode }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   cWrong: { fontFamily: T.sans, fontSize: 11, color: C.coral, marginLeft: 2 },
   // flexGrow:0 stops the row eating leftover vertical space; alignItems:center stops
   // each pill stretching to fill it. Without both, a horizontal ScrollView renders its

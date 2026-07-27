@@ -26,6 +26,7 @@ import {
   SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet, ActivityIndicator,
 } from "react-native";
 import { C, T } from "../theme";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 import { WMark, tap, FadeRise, SerifText } from "../components";
 import { getSituation } from "../api";
 
@@ -40,6 +41,8 @@ const VERDICT = {
 };
 
 export default function SituationScreen({ navigation, route }) {
+  const { C } = useTheme();                    // active palette (light or dark)
+  const s = useThemedStyles(makeStyles);       // stylesheet rebuilt on theme change
   const { legId, delay = 0 } = route.params || {};
   const [data, setData] = useState(null);
   const [busy, setBusy] = useState(true);
@@ -244,7 +247,7 @@ export default function SituationScreen({ navigation, route }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   // "I've already handled" — the work done before you arrived. Sage, because these are
   // things that are DONE, not things that need you.
   handled:    { backgroundColor: C.card, borderRadius: 14, padding: 15, marginBottom: 18,

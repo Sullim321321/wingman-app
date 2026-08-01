@@ -18,6 +18,7 @@ import { C, T, GRAD } from "../theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { tap } from "../components";
 import { requestCode, verifyCode, setToken, signInWithAppleToken, registerPushToken } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 const { width } = Dimensions.get("window");
 const KEY_ONBOARDED = "wingman_onboarded";
@@ -44,6 +45,8 @@ function FadeIn({ delay = 0, children }) {
 // ─── Slide 1: Hero ────────────────────────────────────────────────────────────
 
 function SlideHero() {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.slide}>
       {/* Mark */}
@@ -86,6 +89,8 @@ function SlideHero() {
 // ─── Slide 2: Watch ───────────────────────────────────────────────────────────
 
 function SlideWatch() {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.slide}>
       {/* Mock intelligence feed */}
@@ -127,6 +132,8 @@ function SlideWatch() {
 // ─── Slide 3: Concierge ───────────────────────────────────────────────────────
 
 function SlideConcierge() {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.slide}>
       {/* Chat preview */}
@@ -168,6 +175,8 @@ function SlideConcierge() {
 // ─── Slide 4: Sign Up ─────────────────────────────────────────────────────────
 
 function SlideSignUp({ onDone }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [email,      setEmail]      = useState("");
   const [code,       setCode]       = useState("");
   const [step,       setStep]       = useState("choose"); // choose | email | code
@@ -378,6 +387,8 @@ function SlideSignUp({ onDone }) {
 // ─── Push Permission Slide ────────────────────────────────────────────────────
 
 function PushPermissionSlide({ onDone }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [loading, setLoading] = useState(false);
 
   const requestPush = async () => {
@@ -459,6 +470,8 @@ function PushPermissionSlide({ onDone }) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function OnboardingScreen({ navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [page,     setPage]     = useState(0);
   const [showPush, setShowPush] = useState(false);
   const ref    = useRef(null);
@@ -545,7 +558,7 @@ export default function OnboardingScreen({ navigation }) {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   root: { flex: 1, backgroundColor: C.bg },
 
   // ── Top bar ──

@@ -13,6 +13,7 @@ import { C, T, GRAD } from "../theme";
 import { tap } from "../components";
 import { updateProfile, updateLocale, createTrip, searchAirports } from "../api";
 import * as SecureStore from "expo-secure-store";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 const KEY_DEMO_INJECTED = "wingman_demo_injected";
 const KEY_PROFILE_DONE  = "wingman_profile_done";
@@ -61,6 +62,8 @@ const CABIN_OPTIONS = [
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function ProfileSetupScreen({ navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [firstName,       setFirstName]       = useState("");
   const [homeAirport,     setHomeAirport]     = useState(""); // display string
   const [homeAirportCode, setHomeAirportCode] = useState(""); // IATA code
@@ -226,7 +229,7 @@ export default function ProfileSetupScreen({ navigation }) {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   root:   { flex: 1, backgroundColor: C.bg },
   scroll: { flexGrow: 1, paddingHorizontal: 26, paddingTop: 32, paddingBottom: 32 },
 

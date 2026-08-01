@@ -6,6 +6,7 @@ import {
 import { C, T } from "../theme";
 import { Btn, tap } from "../components";
 import { updateProfile, getMe } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 const { width } = Dimensions.get("window");
 
@@ -92,6 +93,8 @@ const FOOD_PREFS = [
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function StepHeader({ step, total, title, sub }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.stepHeader}>
       <Text style={s.stepCount}>{step} of {total}</Text>
@@ -102,6 +105,8 @@ function StepHeader({ step, total, title, sub }) {
 }
 
 function ToggleChip({ icon, label, selected, onPress }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <TouchableOpacity
       style={[s.chip, selected && s.chipOn]}
@@ -115,6 +120,8 @@ function ToggleChip({ icon, label, selected, onPress }) {
 }
 
 function ToggleRow({ icon, label, desc, selected, onPress }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <TouchableOpacity
       style={[s.row, selected && s.rowOn]}
@@ -136,6 +143,8 @@ function ToggleRow({ icon, label, desc, selected, onPress }) {
 // ─── Steps ────────────────────────────────────────────────────────────────────
 
 function Step1Sources({ selected, toggle }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <ScrollView contentContainerStyle={s.stepContent} showsVerticalScrollIndicator={false}>
       <StepHeader
@@ -158,6 +167,8 @@ function Step1Sources({ selected, toggle }) {
 }
 
 function Step2Hotels({ selected, toggle }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <ScrollView contentContainerStyle={s.stepContent} showsVerticalScrollIndicator={false}>
       <StepHeader
@@ -181,6 +192,8 @@ function Step2Hotels({ selected, toggle }) {
 }
 
 function Step3Seats({ selected, toggle }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <ScrollView contentContainerStyle={s.stepContent} showsVerticalScrollIndicator={false}>
       <StepHeader
@@ -209,6 +222,8 @@ function Step3Seats({ selected, toggle }) {
 }
 
 function Step4Food({ selected, toggle }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <ScrollView contentContainerStyle={s.stepContent} showsVerticalScrollIndicator={false}>
       <StepHeader
@@ -237,6 +252,8 @@ function Step4Food({ selected, toggle }) {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function TasteSetupScreen({ navigation, route }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const fromSettings = route?.params?.fromSettings;
   const [step, setStep] = useState(1);
   const [sources, setSources] = useState([]);
@@ -368,7 +385,7 @@ export default function TasteSetupScreen({ navigation, route }) {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   safe: { flex: 1, backgroundColor: C.bg },
   progressBar: {
     flexDirection: "row",

@@ -13,6 +13,7 @@ import { BackBar, Btn, Segmented, g, tap } from "../components";
 import { C, T } from "../theme";
 import * as api from "../api";
 import * as fid from "../flightid";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -43,6 +44,8 @@ function displayDate(d) {
 // ─── Airport Autocomplete Input ──────────────────────────────────────────────
 
 function AirportInput({ label, value, iata, onSelect, placeholder }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [query, setQuery] = useState(value || "");
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -120,6 +123,8 @@ function AirportInput({ label, value, iata, onSelect, placeholder }) {
 // ─── Offer Card ─────────────────────────────────────────────────────────────
 
 function OfferCard({ offer, onSelect }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const slice = offer.slices?.[0];
   const segs = slice?.segments || [];
   const stops = segs.length - 1;
@@ -178,6 +183,8 @@ function OfferCard({ offer, onSelect }) {
 // ─── Status Card ─────────────────────────────────────────────────────────────
 
 function StatusCard({ ident, data }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const delayColor = data.delay > 30 ? C.coral : data.delay > 0 ? C.amber : C.teal;
   const statusColor = data.status?.toLowerCase().includes("cancel") ? C.coral
     : data.status?.toLowerCase().includes("delay") ? C.amber : C.teal;
@@ -211,6 +218,8 @@ function StatusCard({ ident, data }) {
 // ─── Confirmation Result Card ─────────────────────────────────────────────────
 
 function ConfirmationCard({ trip }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.statusCard}>
       <Text style={s.statusIdent}>{trip.title}</Text>
@@ -234,6 +243,8 @@ function ConfirmationCard({ trip }) {
 // ─── Date Picker Row ─────────────────────────────────────────────────────────
 
 function DateRow({ label, date, onChange }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [show, setShow] = React.useState(false);
   return (
     <View style={[s.inputWrap, { flex: 1 }]}>
@@ -268,6 +279,8 @@ const CABIN_LABELS = { economy: "Economy", premium_economy: "Prem. Eco", busines
 const TABS = ["Route", "Flight No.", "Confirmation"];
 
 export default function FlightSearchScreen({ navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [tab, setTab] = useState("Route");
 
   // Route tab — now stores full airport objects
@@ -575,7 +588,7 @@ export default function FlightSearchScreen({ navigation }) {
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   tabRow: { flexDirection: "row", gap: 8, marginHorizontal: 16, marginBottom: 16, marginTop: 4 },
   tabBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, alignItems: "center" },
   tabBtnSel: { backgroundColor: "rgba(201,169,110,0.12)", borderColor: C.gold },

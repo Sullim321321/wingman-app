@@ -3,8 +3,11 @@ import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Btn, g, success } from "../components";
 import { C, T } from "../theme";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 export default function FlightConfirmScreen({ navigation, route }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const { booking } = route.params;
 
   React.useEffect(() => { success(); }, []);
@@ -48,7 +51,7 @@ export default function FlightConfirmScreen({ navigation, route }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   hero: { alignItems: "center", paddingVertical: 32 },
   heroIcon: { fontSize: 52, marginBottom: 12 },
   heroTitle: { color: C.ink, fontSize: 22, fontFamily: T.sansB, marginBottom: 6 },

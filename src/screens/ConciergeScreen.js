@@ -164,7 +164,9 @@ export default function ConciergeScreen({ route, navigation }) {
   const [activeTripId, setActiveTripId] = useState(routeTripId);
   const [showPicker, setShowPicker] = useState(false);   // the trip picker is hidden until asked for
   const [messages, setMessages]         = useState([{ role: "assistant", content: WELCOME_DEFAULT }]);
-  const [input, setInput]               = useState("");
+  // Composer text now lives INSIDE <Composer/> (local state), so a keystroke re-renders
+  // only the input bar — not this whole screen and its message list. `send` receives the
+  // text explicitly from the composer (and from quick-chips), so no top-level input state.
   const [loading, setLoading]           = useState(false);
   const [threadLoading, setThreadLoading] = useState(false);
   // A stale conversation held back, offered rather than imposed. See loadThread().
@@ -342,9 +344,8 @@ export default function ConciergeScreen({ route, navigation }) {
   }
 
   const send = async (text) => {
-    const msg = (text || input).trim();
+    const msg = (text || "").trim();
     if (!msg || loading) return;
-    setInput("");
     const userMsg = { role: "user", content: msg };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
@@ -718,39 +719,61 @@ export default function ConciergeScreen({ route, navigation }) {
           </View>
         ) : null}
 
-        <View style={s.inputRow}>
-          <TextInput
-            style={s.textInput}
-            value={input}
-            onChangeText={setInput}
-            placeholder="Message Wingman…"
-            placeholderTextColor={C.mut}
-            multiline
-            maxLength={500}
-            returnKeyType="send"
-            onSubmitEditing={() => send()}
-            autoCorrect={true}
-            spellCheck={true}
-            autoCapitalize="sentences"
-            textContentType="none"
-            keyboardType="default"
-            enablesReturnKeyAutomatically={false}
-            blurOnSubmit={false}
-          />
-          <Pressable
-            style={[s.sendBtn, (!input.trim() || loading) && { opacity: 0.35 }]}
-            onPress={() => send()}
-            disabled={!input.trim() || loading}
-          >
-            <LinearGradient colors={[C.gold, C.goldD || "#b8924a"]} style={s.sendGrad}>
-              <Text style={{ color: C.inkD, fontSize: 16, fontFamily: T.sansB }}>↑</Text>
-            </LinearGradient>
-          </Pressable>
-        </View>
+        <ComposerBar onSend={send} loading={loading} />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
+
+// The composer owns its OWN text state, so a keystroke re-renders just this ~40-line
+// component — not the whole Concierge screen and its message list. It's memoized, so
+// the parent re-rendering (new AI message, loading flip) doesn't churn it either. Send
+// is passed up explicitly, matching the quick-chip and prefill callers.
+function Composer({ onSend, loading }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
+  const [text, setText] = useState("");
+  const submit = () => {
+    const msg = text.trim();
+    if (!msg || loading) return;
+    setText("");
+    onSend(msg);
+  };
+  const empty = !text.trim() || loading;
+  return (
+    <View style={s.inputRow}>
+      <TextInput
+        style={s.textInput}
+        value={text}
+        onChangeText={setText}
+        placeholder="Message Wingman…"
+        placeholderTextColor={C.mut}
+        multiline
+        maxLength={500}
+        returnKeyType="send"
+        onSubmitEditing={submit}
+        autoCorrect={true}
+        spellCheck={true}
+        autoCapitalize="sentences"
+        textContentType="none"
+        keyboardType="default"
+        enablesReturnKeyAutomatically={false}
+        blurOnSubmit={false}
+      />
+      <Pressable
+        style={[s.sendBtn, empty && { opacity: 0.35 }]}
+        onPress={submit}
+        disabled={empty}
+      >
+        <LinearGradient colors={[C.gold, C.goldD || "#b8924a"]} style={s.sendGrad}>
+          <Text style={{ color: C.inkD, fontSize: 16, fontFamily: T.sansB }}>↑</Text>
+        </LinearGradient>
+      </Pressable>
+    </View>
+  );
+}
+// Memoized so a parent re-render (new AI reply, loading flip) doesn't churn the composer.
+const ComposerBar = React.memo(Composer);
 
 const makeStyles = (C) => ({
   app:    { flex: 1, backgroundColor: C.bg },

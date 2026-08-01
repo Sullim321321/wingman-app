@@ -9,6 +9,7 @@
 import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { C, T } from "../theme";
+import { useThemedStyles } from "../ThemeContext";
 
 const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 function when(iso) {
@@ -26,6 +27,7 @@ function span(a, b) {
 }
 
 export function InferredTravel({ trips = [], asks = [], from, onPlan, onAnswer }) {
+  const s = useThemedStyles(makeStyles);
   if (!trips.length && !asks.length) return null;
 
   return (
@@ -74,7 +76,7 @@ export function InferredTravel({ trips = [], asks = [], from, onPlan, onAnswer }
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   wrap:   { marginTop: 24, marginBottom: 8 },
   kicker: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.4, color: C.gold },
   sub:    { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 13, color: C.mut, marginTop: 4, marginBottom: 12 },

@@ -6,8 +6,11 @@ import {
 import { C, T } from "../theme";
 import { BackBar, g } from "../components";
 import { getProfile, updateProfile } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 export default function HomeAddressScreen({ navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [address, setAddress] = useState("");
   const [homeAirport, setHomeAirport] = useState("");
   const [loading, setLoading] = useState(true);
@@ -163,7 +166,7 @@ export default function HomeAddressScreen({ navigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   app: { flex: 1, backgroundColor: C.bg },
   heroCard: {
     backgroundColor: C.card,

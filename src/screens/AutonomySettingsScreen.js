@@ -8,6 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { C, T } from "../theme";
 import { BackBar, Btn, g, tap } from "../components";
 import { getPolicy, updatePolicy } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 const MODES = [
   {
@@ -44,6 +45,8 @@ const CABIN_PREFS = [
 ];
 
 export default function AutonomySettingsScreen({ navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [autonomyMode, setAutonomyMode] = useState("always_ask");
   const [threshold, setThreshold] = useState(500);
   const [paymentPref, setPaymentPref] = useState("best_value");
@@ -347,7 +350,7 @@ export default function AutonomySettingsScreen({ navigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   app: { flex: 1, backgroundColor: C.bg },
 
   hero: { marginBottom: 20 },

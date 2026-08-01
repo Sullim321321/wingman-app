@@ -14,6 +14,7 @@ import { C, T, GRAD } from "../theme";
 import { SerifText, Btn, tap } from "../components";
 import { requestCode, verifyCode, signInWithAppleToken, requestSmsCode, verifySmsCode } from "../api";
 import { useAuth } from "../auth";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 const KEY_T = "wingman_token";
 const KEY_E = "wingman_email";
@@ -24,6 +25,8 @@ function SafeBlur({ style, children }) {
 }
 
 function ResendTimer({ seconds, onResend, busy }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   if (seconds > 0) {
     return (
       <Text style={s.resendTimer}>
@@ -39,6 +42,8 @@ function ResendTimer({ seconds, onResend, busy }) {
 }
 
 export default function SignInScreen() {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const { signIn } = useAuth();
   const [method, setMethod]   = useState("choose"); // choose | email | sms
   const [stage, setStage]     = useState("input");  // input | code
@@ -495,7 +500,7 @@ export default function SignInScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   app:        { flex: 1, backgroundColor: C.bg },
   glowTop:    { position: "absolute", top: -80, alignSelf: "center", width: 300, height: 300, borderRadius: 150, backgroundColor: C.gold + "08" },
   wrap:       { flex: 1, justifyContent: "center", paddingHorizontal: 26 },

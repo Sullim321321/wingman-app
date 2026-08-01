@@ -17,6 +17,11 @@ export default class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
+      // A caller can pass a compact inline fallback (e.g. for a single card) so one
+      // bad section doesn't blank the whole screen. It receives the error + a reset fn.
+      if (this.props.fallback) {
+        return this.props.fallback(this.state.error, () => this.setState({ hasError: false, error: null }));
+      }
       return (
         <View style={s.container}>
           <Text style={s.icon}>✈</Text>

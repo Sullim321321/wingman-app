@@ -30,6 +30,8 @@ import {
 import { UpgradeSheet } from "../components/UpgradeSheet";
 import { API_BASE } from "../config";
 import * as fid from "../flightid";
+import * as transport from "../transport";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -116,6 +118,8 @@ function stayDatesLabel(leg) {
 // ─── Status Pill ──────────────────────────────────────────────────────────────
 
 function StatusPill({ status }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   if (!status) return null;
   const map = {
     "On Time":   { bg: "rgba(45,184,150,0.08)",  border: "rgba(45,184,150,0.2)",  text: C.teal },
@@ -137,6 +141,8 @@ function StatusPill({ status }) {
 // ─── Live Flight Card ─────────────────────────────────────────────────────────
 
 function FlightLegRow({ leg, isCompleted, tripId, navigation, onEdit, onDelete }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [liveStatus, setLiveStatus] = useState(null);
   const [risk, setRisk]             = useState(null);
 
@@ -157,14 +163,19 @@ function FlightLegRow({ leg, isCompleted, tripId, navigation, onEdit, onDelete }
     const depMs = leg.departs_at ? new Date(leg.departs_at).getTime() : null;
     const daysOut = depMs ? (depMs - Date.now()) / 86400000 : null;
     const withinHorizon = daysOut != null && daysOut >= -0.5 && daysOut <= 4;
-    if (withinHorizon && leg.origin && leg.destination) {
+    if (withinHorizon && leg.type === "flight" && leg.origin && leg.destination) {
       getPrediction({ dep: leg.origin, arr: leg.destination })
         .then(p => { if (p?.risk != null) setRisk(p.risk); })
         .catch(() => {});
     }
   }, [leg.carrier, leg.flight_number, leg.departs_at]);
 
-  const ident      = fid.displayName(leg) || "";   // a NAME. The key is fid.apiKey(leg).
+  // Mode-aware: a train reads as a train. endpointsOf resolves stations for rail,
+  // origin/destination for air; displayName gives the operator+service (or route) for
+  // rail, the airline+number for air.
+  const mode       = transport.modeOf(leg) || "air";
+  const ends       = transport.endpointsOf(leg);
+  const ident      = transport.displayName(leg) || "";   // a NAME. The key is fid.apiKey(leg).
   const depTime    = fmtTime(leg.departs_at);
   const arrTime    = fmtTime(leg.arrives_at);
   const depDate    = fmt(leg.departs_at);
@@ -178,7 +189,7 @@ function FlightLegRow({ leg, isCompleted, tripId, navigation, onEdit, onDelete }
       {/* Route row */}
       <View style={s.legRouteRow}>
         <View style={s.legAirport}>
-          <Text style={s.legCode}>{leg.origin || "—"}</Text>
+          <Text style={s.legCode}>{ends.from || "—"}</Text>
           {depTime && <Text style={s.legTime}>{depTime}</Text>}
         </View>
         <View style={s.legArrowWrap}>
@@ -186,7 +197,7 @@ function FlightLegRow({ leg, isCompleted, tripId, navigation, onEdit, onDelete }
           {ident ? <Text style={s.legIdent}>{ident}</Text> : null}
         </View>
         <View style={[s.legAirport, { alignItems: "flex-end" }]}>
-          <Text style={s.legCode}>{leg.destination || "—"}</Text>
+          <Text style={s.legCode}>{ends.to || "—"}</Text>
           {arrTime && <Text style={s.legTime}>{arrTime}</Text>}
         </View>
       </View>
@@ -194,7 +205,7 @@ function FlightLegRow({ leg, isCompleted, tripId, navigation, onEdit, onDelete }
       {/* Meta row */}
       <View style={s.legMetaRow}>
         {depDate && <Text style={s.legMeta}>{depDate}</Text>}
-        {gate && <Text style={s.legMeta}>Gate {gate}{terminal ? ` · T${terminal}` : ""}</Text>}
+        {mode === "air" && gate && <Text style={s.legMeta}>Gate {gate}{terminal ? ` · T${terminal}` : ""}</Text>}
         {delayMins && <Text style={[s.legMeta, { color: C.amber }]}>{minutesToHM(delayMins)}</Text>}
         {status && <StatusPill status={status} />}
         {risk != null && risk >= 30 && (
@@ -287,6 +298,8 @@ function FlightLegRow({ leg, isCompleted, tripId, navigation, onEdit, onDelete }
 // ─── Non-flight Leg Row ───────────────────────────────────────────────────────
 
 function OtherLegRow({ leg, onEdit, onDelete }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const typeLabel = {
     hotel:    "Stay",
     airbnb:   "Stay",
@@ -348,6 +361,8 @@ function OtherLegRow({ leg, onEdit, onDelete }) {
 // ─── Outcome Card ─────────────────────────────────────────────────────────────
 
 function OutcomeCard({ tripId, onSubmitted }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [rating,     setRating]     = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted,  setSubmitted]  = useState(false);
@@ -403,6 +418,8 @@ function OutcomeCard({ tripId, onSubmitted }) {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function TripDetailScreen({ route, navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const initialTrip = route.params?.trip || null;
   const paramTripId = route.params?.tripId || null;
 
@@ -464,7 +481,7 @@ export default function TripDetailScreen({ route, navigation }) {
         .catch(() => {})
         .finally(() => setRiskLoading(false));
     }
-    getDestinationIntel(trip.id)
+    getDestinationIntel({ trip_id: trip.id })
       .then(d => { if (d?.intel) setDestIntel(d); })
       .catch(e => { if (e.code === "pro_required") setDestIntel({ pro_required: true }); });
     getCompanions(trip.id)
@@ -1611,7 +1628,7 @@ export default function TripDetailScreen({ route, navigation }) {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   root: { flex: 1, backgroundColor: C.bg },
   scroll: { paddingBottom: 16 },
 

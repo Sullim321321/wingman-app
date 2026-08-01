@@ -11,6 +11,7 @@ import { C, T } from "../theme";
 import { BackBar, Btn, g, tap } from "../components";
 import { createTrip, getFlightStatus, draftTripFromText, importPasteItinerary } from "../api";
 import * as fid from "../flightid";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 // ── Trip mode ────────────────────────────────────────────────────────────────
 const MODES = [
@@ -216,6 +217,8 @@ function payloadToLegState(p) {
 
 // ── Field components ──────────────────────────────────────────────────────────
 function Field({ label, value, onChangeText, placeholder, keyboardType, autoCapitalize, editable = true, right, multiline }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.field}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
@@ -241,6 +244,8 @@ function Field({ label, value, onChangeText, placeholder, keyboardType, autoCapi
 }
 
 function DateField({ label, value, onChange, mode = "datetime" }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [show, setShow] = useState(false);
   const parsed = value ? new Date(value) : new Date();
   const display = value
@@ -289,6 +294,8 @@ function DateField({ label, value, onChange, mode = "datetime" }) {
 
 // ── Type-specific field groups ────────────────────────────────────────────────
 function FlightFields({ state, set, lookingUp, looked, onFlightQueryChange }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={g.group}>
       <View style={s.field}>
@@ -325,6 +332,8 @@ function FlightFields({ state, set, lookingUp, looked, onFlightQueryChange }) {
 }
 
 function HotelFields({ state, set }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={g.group}>
       <Field label="Property Name" value={state.propertyName} onChangeText={v => set("propertyName", v)} placeholder="The Hoxton, Edinburgh" />
@@ -343,6 +352,8 @@ function HotelFields({ state, set }) {
 }
 
 function AirbnbFields({ state, set }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={g.group}>
       <Field label="Property Name" value={state.propertyName} onChangeText={v => set("propertyName", v)} placeholder="Cosy flat in Leith" />
@@ -361,6 +372,8 @@ function AirbnbFields({ state, set }) {
 }
 
 function TrainFields({ state, set }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={g.group}>
       <Field label="Operator" value={state.carrier} onChangeText={v => set("carrier", v)} placeholder="LNER / ScotRail / Eurostar" />
@@ -379,6 +392,8 @@ function TrainFields({ state, set }) {
 }
 
 function CarFields({ state, set }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={g.group}>
       <Field label="Rental Company" value={state.carrier} onChangeText={v => set("carrier", v)} placeholder="Hertz / Avis / Enterprise" />
@@ -397,6 +412,8 @@ function CarFields({ state, set }) {
 }
 
 function FerryFields({ state, set }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={g.group}>
       <Field label="Operator" value={state.carrier} onChangeText={v => set("carrier", v)} placeholder="CalMac / Stena / P&O" />
@@ -414,6 +431,8 @@ function FerryFields({ state, set }) {
 }
 
 function ActivityFields({ state, set }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={g.group}>
       <Field label="Activity / Experience" value={state.propertyName} onChangeText={v => set("propertyName", v)} placeholder="Whisky distillery tour" />
@@ -431,6 +450,8 @@ function ActivityFields({ state, set }) {
 }
 
 function EventFields({ state, set }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={g.group}>
       <Field label="Event / Show Name" value={state.propertyName} onChangeText={v => set("propertyName", v)} placeholder="Coldplay — Music of the Spheres" />
@@ -448,6 +469,8 @@ function EventFields({ state, set }) {
 
 // ── LegFormPanel — inline form for adding/editing a single leg ────────────────
 function LegFormPanel({ onAdd, onCancel, editPayload }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [legType, setLegType] = useState(editPayload?.type || "flight");
   const [leg, setLegState] = useState(editPayload ? payloadToLegState(editPayload) : blankLeg());
   const [lookingUp, setLookingUp] = useState(false);
@@ -537,6 +560,8 @@ function LegFormPanel({ onAdd, onCancel, editPayload }) {
 
 // ── Paste Import Screen (shown as inline panel) ───────────────────────────────
 function PasteImportPanel({ onImported, onCancel }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -593,6 +618,8 @@ function PasteImportPanel({ onImported, onCancel }) {
 
 // ── Main screen ────────────────────────────────────────────────────────────────
 export default function AddTripScreen({ navigation, route }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const addLegMode = route?.params?.addLegMode === true;
   const editLegParam = route?.params?.editLeg || null;
   // Callers may pass the leg directly OR wrapped as { leg, legId }. Normalize both.
@@ -995,7 +1022,7 @@ export default function AddTripScreen({ navigation, route }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   app: { flex: 1, backgroundColor: C.bg },
 
   // Tab switcher
@@ -1060,7 +1087,7 @@ const s = StyleSheet.create({
   legRow:      { flexDirection: "row", alignItems: "center", backgroundColor: C.card, borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: C.line },
   legRowT:     { color: C.ink, fontSize: 15, fontFamily: T.sansM, lineHeight: 20 },
   legRemoveBtn:{ width: 28, height: 28, borderRadius: 14, backgroundColor: "rgba(255,80,80,0.1)", alignItems: "center", justifyContent: "center", marginLeft: 10 },
-  legRemoveT:  { color: "#ff5050", fontSize: 13, fontFamily: T.sansB },
+  legRemoveT:  { color: C.coral, fontSize: 13, fontFamily: T.sansB },
   addLegBtn:   { borderRadius: 14, borderWidth: 1.5, borderColor: C.gold, borderStyle: "dashed", padding: 16, alignItems: "center", marginBottom: 4 },
   addLegBtnT:  { color: C.gold, fontSize: 15, fontFamily: T.sansM },
 

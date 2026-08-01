@@ -20,8 +20,11 @@ import * as Clipboard from "expo-clipboard";
 import { C, T } from "../theme";
 import { WMark, tap, success, BackBar, FadeRise, SerifText } from "../components";
 import { getInboundAddress } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 export default function ForwardingScreen({ navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [addr, setAddr]   = useState(null);
   const [busy, setBusy]   = useState(true);
   const [err, setErr]     = useState(null);
@@ -132,6 +135,8 @@ async function copyText(t) {
 }
 
 function Step({ n, t, d, code, onCopy }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [copied, setCopied] = useState(false);
   return (
     <View style={s.step}>
@@ -159,7 +164,7 @@ function Step({ n, t, d, code, onCopy }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   app: { flex: 1, backgroundColor: C.bg },
   scroll: { padding: 20, paddingBottom: 40 },
 

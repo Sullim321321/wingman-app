@@ -7,6 +7,7 @@ import { StripeProvider, useStripe } from "@stripe/stripe-react-native";
 import { C, T } from "../theme";
 import { g } from "../components";
 import { API_BASE, getToken } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || "pk_test_spS4gry030G8chAWaFBaCn7u00qYefZpqB";
 const APPLE_MERCHANT_ID = "merchant.club.welcometothefight.wingman";
@@ -22,6 +23,8 @@ const PLAN_ICONS = {
 };
 
 function PlanCard({ plan, planKey, current, onSelect, loading }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const isActive = current === planKey;
   const color = PLAN_COLORS[planKey];
   return (
@@ -72,6 +75,8 @@ function PlanCard({ plan, planKey, current, onSelect, loading }) {
 }
 
 function SubscriptionContent({ navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const { initPaymentSheet, presentPaymentSheet, isPlatformPaySupported } = useStripe();
   const [plans, setPlans] = useState(null);
   const [currentTier, setCurrentTier] = useState("free");
@@ -236,7 +241,7 @@ export default function SubscriptionScreen({ navigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   app: { flex: 1, backgroundColor: C.bg },
   head: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 18, paddingTop: 8, paddingBottom: 8 },
   headT: { color: C.ink, fontSize: 16, fontFamily: T.sansB, flex: 1 },

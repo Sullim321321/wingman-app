@@ -9,7 +9,12 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
-import { C, T, GRAD } from "./theme";
+// STOPGAP (dark coloration): shared styles build once at load from a static palette, so
+// they can't follow the live theme. The app is dark-primary and was frozen to the LIGHT
+// palette (why shared cards render cream on a dark screen). Point the static styles at the
+// dark palette so shared surfaces match. TRADE-OFF: explicit light mode shows dark shared
+// cards until the proper live-theming fix lands.
+import { C_DARK as C, T, GRAD } from "./theme";
 // SafeBlur — expo-blur removed; renders a semi-opaque View instead of native UIVisualEffectView
 function SafeBlur({ style, children }) {
   return <View style={[style, { backgroundColor: "rgba(15,13,10,0.92)" }]}>{children}</View>;

@@ -14,6 +14,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { C, T } from "../theme";
 import { searchStays, getStayRates, holdStay, confirmStay, draftBookingEmail } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 function isoDay(d) { return d.toISOString().slice(0, 10); }
 function fmt(day) {
@@ -23,6 +24,8 @@ function fmt(day) {
 }
 
 export default function StayBookScreen({ route, navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const p = route?.params || {};
   const [city] = useState(p.city || "");
   const [lat] = useState(p.latitude ?? null);
@@ -248,7 +251,7 @@ export default function StayBookScreen({ route, navigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   app: { flex: 1, backgroundColor: C.bg },
   scroll: { padding: 20 },
   head: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },

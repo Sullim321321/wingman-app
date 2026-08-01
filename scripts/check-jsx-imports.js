@@ -59,7 +59,11 @@ for (const file of walk(path.join(ROOT, "src"))) {
     // `import {\n  A, B,\n} from "..."` blocks — the RN convention here. Excluding
     // newlines is what produced 262 false positives on the first cut.
     const found = new RegExp(
-      "(import[^;]*\\b" + name + "\\b" +             // import { Name } / import Name (multiline)
+      // Real import statement: Name must sit between `import` and `from` in the SAME
+      // statement (no `;` between). Requiring `from` is what stops a stray "import" in a
+      // comment/string from greedily spanning newlines down to a `</Name>` closing tag and
+      // falsely "finding" the import — the exact gap that let a missing `Pressable` ship.
+      "(import\\s[^;]*\\b" + name + "\\b[^;]*\\bfrom\\b" +
       "|\\b(?:function|const|let|class)\\s+" + name + "\\b" +  // local definition
       "|\\b" + name + "\\s*=)",                       // const Name = / Name =
     ).test(s);

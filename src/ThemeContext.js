@@ -63,11 +63,14 @@ export function ThemeProvider({ children }) {
     await AsyncStorage.setItem(THEME_KEY, value).catch(() => {});
   }
 
-  // During the phased conversion, "system" resolves to LIGHT — so unconverted screens and
-  // the nav chrome never disagree with each other. Explicit "dark" opts in (for testing
-  // and for users who want it on converted screens). Epic 1g makes "system" follow the
-  // device / time of day once the sweep is complete.
-  const C = appearance === "dark" ? DARK : LIGHT;
+  // Epic 1g — the sweep is complete, so "system" now follows the device. Every screen
+  // is themed (43/43) and the nav chrome flips with them, so there's no longer a reason to
+  // pin "system" to LIGHT. Explicit "dark"/"light" still win; "system" tracks the OS
+  // appearance (which itself honours the device's night schedule). `null` → LIGHT.
+  const C =
+    appearance === "dark"  ? DARK  :
+    appearance === "light" ? LIGHT :
+    systemScheme === "dark" ? DARK : LIGHT;
 
   return (
     <ThemeContext.Provider value={{ C, appearance, setAppearance, isDark: C.isDark }}>

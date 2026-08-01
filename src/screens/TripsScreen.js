@@ -243,6 +243,8 @@ function TripRow({ trip, navigation, onDelete }) {
 // ─── Empty State ──────────────────────────────────────────────────────────────
 
 function EmptyState({ navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.emptyWrap}>
       <Text style={s.emptyHed}>No trips yet.</Text>

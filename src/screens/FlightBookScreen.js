@@ -8,6 +8,7 @@ import { BackBar, Btn, g, tap } from "../components";
 import ConfirmSheet from "../components/ConfirmSheet";
 import { C, T } from "../theme";
 import * as api from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 function formatTime(dt) {
   if (!dt) return "--";
@@ -25,6 +26,8 @@ function formatDuration(iso) {
 }
 
 function Field({ label, value, onChange, placeholder, keyboardType, maxLength, autoCapitalize }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.fieldWrap}>
       <Text style={s.fieldLabel}>{label}</Text>
@@ -43,6 +46,8 @@ function Field({ label, value, onChange, placeholder, keyboardType, maxLength, a
 }
 
 export default function FlightBookScreen({ navigation, route }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const { offer } = route.params;
   const slice = offer.slices?.[0];
   const segs = slice?.segments || [];
@@ -209,7 +214,7 @@ export default function FlightBookScreen({ navigation, route }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   summary: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 16, marginBottom: 4 },
   summaryRoute: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
   summaryIata: { color: C.ink, fontSize: 22, fontFamily: T.sansB },

@@ -18,8 +18,8 @@ import { useTheme, useThemedStyles } from "../ThemeContext";
 import { FadeRise } from "../components";
 import { getCurate, curateDining, getPockets } from "../api";
 
-const PAPER = "#F4F3EE", CARD = "#FBFAF6", INK = "#17130E", MUT = "#7F796F",
-      BRONZE = "#8A6A3E", SAGE = "#55705C", LINE = "rgba(33,30,26,0.08)";
+// (Dead light-locked consts removed — PAPER/CARD/INK/… are re-bound to the live theme
+//  inside the component and makeStyles, so Curator flips light↔dark correctly. Epic 5.)
 
 const RATIONALE = {
   usual:     { icon: "repeat",           label: "Your usual" },
@@ -309,7 +309,7 @@ const makeStyles = (C) => {
   why:     { fontFamily: T.sans, fontSize: 13, color: SAGE, marginTop: 4, lineHeight: 17 },
   src:     { fontFamily: T.sansM, fontSize: 11, letterSpacing: 0.4, color: BRONZE, marginTop: 8 },
 
-  err:    { fontFamily: T.sans, fontSize: 15, color: "#A32D2D", marginTop: 20 },
+  err:    { fontFamily: T.sans, fontSize: 15, color: C.coral, marginTop: 20 },
   empty:  { fontFamily: T.garamondI, fontStyle: "italic", fontSize: 15, color: MUT, marginTop: 24, lineHeight: 22 },
   });
 };

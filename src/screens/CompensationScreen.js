@@ -10,6 +10,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { C, T, GRAD } from "../theme";
 import { SerifText, BackBar, tap } from "../components";
 import { API_BASE, getToken } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 // ── Regulation reference data ─────────────────────────────────────────────────
 const REG_INFO = {
@@ -40,6 +41,8 @@ const REG_INFO = {
 
 // ── Animated amount display ───────────────────────────────────────────────────
 function AmountDisplay({ amount, currency }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const scale = useRef(new Animated.Value(0.7)).current;
   const fade  = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -62,6 +65,8 @@ function AmountDisplay({ amount, currency }) {
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function CompensationScreen({ navigation, route }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const { tripId, legId, flightIdent, disruption_type, delay_minutes } = route?.params || {};
 
   const [loading,    setLoading]    = useState(true);
@@ -371,7 +376,7 @@ export default function CompensationScreen({ navigation, route }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   root:  { flex: 1, backgroundColor: C.bg },
   scroll:{ paddingHorizontal: 20, paddingTop: 8 },
 

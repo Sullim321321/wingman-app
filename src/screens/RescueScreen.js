@@ -21,6 +21,7 @@ import {
 import { C, T } from "../theme";
 import { WMark, tap, FadeRise, SerifText } from "../components";
 import { getSituationOptions, getDisruptionAlternatives } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 // ─── What you are OWED ───────────────────────────────────────────────────────
 // Salvaged from DisruptionScreen before it was deleted. It was the only load-bearing
@@ -34,6 +35,8 @@ import { getSituationOptions, getDisruptionAlternatives } from "../api";
 // A "you might be owed €600" that turns out to be nothing is worse than silence,
 // because you'd have spent an hour on the phone to find out.
 function Entitlement({ ec261, cancelled }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   if (!ec261?.eligible) return null;
   return (
     <View style={s.owed}>
@@ -57,6 +60,8 @@ function Entitlement({ ec261, cancelled }) {
 }
 
 export default function RescueScreen({ navigation, route }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const { legId, delay = 0, tripId = null } = route.params || {};
   const [data, setData] = useState(null);
   const [owed, setOwed] = useState(null);
@@ -252,7 +257,7 @@ function fmt(iso) {
   } catch { return null; }
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   // What you're owed — salvaged from the deleted DisruptionScreen.
   owed:    { backgroundColor: C.card, borderRadius: 14, padding: 15, marginBottom: 16,
              borderWidth: 1, borderColor: C.line, borderLeftWidth: 2, borderLeftColor: C.gold },

@@ -9,6 +9,7 @@ import {
 import { C, T } from "../theme";
 import { SerifText, tap } from "../components";
 import { getTravelProfile, updateTravelProfile } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 const SEAT_OPTIONS    = ["aisle", "window", "middle"];
 const CABIN_OPTIONS   = ["economy", "premium_economy", "business", "first"];
@@ -36,6 +37,8 @@ const CABIN_LABELS = {
 };
 
 function SectionHeader({ title, sub }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.sectionHeader}>
       <Text style={s.sectionTitle}>{title}</Text>
@@ -45,6 +48,8 @@ function SectionHeader({ title, sub }) {
 }
 
 function OptionChip({ label, selected, onPress }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <Pressable
       style={[s.chip, selected && s.chipSelected]}
@@ -56,6 +61,8 @@ function OptionChip({ label, selected, onPress }) {
 }
 
 function ToggleRow({ label, sub, value, onValueChange }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.toggleRow}>
       <View style={{ flex: 1 }}>
@@ -73,6 +80,8 @@ function ToggleRow({ label, sub, value, onValueChange }) {
 }
 
 export default function TravelProfileScreen({ navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [loading, setLoading]   = useState(true);
   const [saving, setSaving]     = useState(false);
   const [dirty, setDirty]       = useState(false);
@@ -350,7 +359,7 @@ export default function TravelProfileScreen({ navigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   root:           { flex: 1, backgroundColor: C.bg },
   scroll:         { paddingHorizontal: 20, paddingTop: 16 },
   header:         { marginBottom: 24 },

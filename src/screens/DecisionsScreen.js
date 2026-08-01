@@ -8,6 +8,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { C, T, SHADOW, litEdge } from "../theme";
 import { BackBar, DecisionCard, FadeRise, tap, g } from "../components";
 import { getDecisions, confirmDecision, dismissDecision, undoDecision } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 // Highest value_saved across a decision's options — used to prioritize the queue.
 function decisionValue(d) {
@@ -15,6 +16,8 @@ function decisionValue(d) {
 }
 
 export default function DecisionsScreen({ navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [decisions, setDecisions] = useState([]);
   const [loading, setLoading]     = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -112,7 +115,7 @@ export default function DecisionsScreen({ navigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   app: { flex: 1, backgroundColor: C.bg },
   masthead: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 8 },
   title: { fontFamily: T.displayI, fontSize: 34, color: C.ink, lineHeight: 40 },

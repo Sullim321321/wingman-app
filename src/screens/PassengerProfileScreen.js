@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { C, T } from "../theme";
 import { getPassengerProfile, savePassengerProfile } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 // expo-image-picker is added in the next build — graceful fallback if not yet available
 let ImagePicker = null;
@@ -42,6 +43,8 @@ function isValidDOB(dob) {
 
 // ── Sub-components ────────────────────────────────────────────
 function FieldLabel({ label, required }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.labelRow}>
       <Text style={s.label}>{label}</Text>
@@ -51,6 +54,8 @@ function FieldLabel({ label, required }) {
 }
 
 function Field({ label, required, value, onChangeText, placeholder, keyboardType, autoCapitalize, maxLength, secureTextEntry }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.fieldWrap}>
       <FieldLabel label={label} required={required} />
@@ -71,6 +76,8 @@ function Field({ label, required, value, onChangeText, placeholder, keyboardType
 }
 
 function GenderPicker({ value, onChange }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.fieldWrap}>
       <FieldLabel label="GENDER" required />
@@ -90,6 +97,8 @@ function GenderPicker({ value, onChange }) {
 }
 
 function InfoBanner() {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.banner}>
       <Text style={s.bannerIcon}>🔒</Text>
@@ -102,6 +111,8 @@ function InfoBanner() {
 
 // ── Main screen ───────────────────────────────────────────────
 export default function PassengerProfileScreen({ navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [loading, setLoading]       = useState(true);
   const [saving, setSaving]         = useState(false);
   const [saved, setSaved]           = useState(false);
@@ -387,7 +398,7 @@ export default function PassengerProfileScreen({ navigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   root:   { flex: 1, backgroundColor: C.bg },
   header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: C.line },
   backBtn:{ marginBottom: 10 },

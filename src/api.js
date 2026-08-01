@@ -315,10 +315,12 @@ export const getInboundAddress = () => req("/me/inbound-address");
 //
 // 90s, not 65s: a planning turn may run a web search before it answers, because
 // entry rules and alliance cutoffs must be looked up rather than recalled.
-export const planMessage = (message, tripId = null, history = []) => {
+export const planMessage = (message, tripId = null, history = [], city = null) => {
   // The phone's clock, not Render's. Wingman asked her whether the 16th was a Thursday
   // — a question it can answer itself, and only asked because it had no idea what day
   // it was. Same fix the concierge needed when it offered her dinner at 6:30am.
+  // `city` is where she is right now (from Home state) — so the planner never asks
+  // "where's here?" for a trip it should already understand the starting point of.
   let now = null, timezone = null;
   try {
     now = new Date().toISOString();
@@ -326,7 +328,7 @@ export const planMessage = (message, tripId = null, history = []) => {
   } catch {}
   return req("/plan/message", {
     method: "POST",
-    body: JSON.stringify({ message, tripId, history, now, timezone }),
+    body: JSON.stringify({ message, tripId, history, now, timezone, city }),
     signal: timeoutSignal(90000),
   });
 };
@@ -667,6 +669,18 @@ export const updateCompanionsMeta = (tripId, companionsCount, companionNames) =>
 // ── Show nights ───────────────────────────────────────────────────────────────
 export const getShowNights = (tripId) =>
   req(`/trips/${tripId}/show-nights`);
+
+// Rail watch readiness — plain-English readout for the multi-modal (train) spine.
+export const getRailReadiness = () => req("/metrics/rail");
+
+// Flight-time timezone repair. Preview is dry-run (no writes); apply commits.
+export const previewFlightTz = () => req("/admin/backfill-flight-tz", { method: "POST" });
+export const applyFlightTz = () => req("/admin/backfill-flight-tz?apply=true", { method: "POST" });
+
+// Per-trip expense metadata (purpose + project/cost code) for reimbursement exports (E4)
+export const getTripExpenseMeta = (tripId) => req(`/trips/${tripId}/expense-meta`);
+export const setTripExpenseMeta = (tripId, meta) =>
+  req(`/trips/${tripId}/expense-meta`, { method: "PATCH", body: JSON.stringify(meta) });
 
 // Leg edit / delete / add
 export const editLeg = (tripId, legId, updates) =>

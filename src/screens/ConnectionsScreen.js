@@ -20,6 +20,7 @@ import {
   getTravelPerkConnectUrl, syncTravelPerk, getTravelPerkStatus, disconnectTravelPerk,
   importPdfOcr,
 } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 const CHANNEL_ICONS = {
   gmail:     { char: "@",  bg: C.gold + "12" },
@@ -35,6 +36,8 @@ const CHANNEL_ICONS = {
 const FORWARD_EMAIL = "import@wingmantravel.app";
 
 function Feat({ ic, t, color }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={g.feat}>
       <View style={s.featIcon}>
@@ -46,6 +49,8 @@ function Feat({ ic, t, color }) {
 }
 
 function ConnRow({ iconKey, title, sub, right, onPress, disabled, last }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const icon = CHANNEL_ICONS[iconKey] || { char: "·", bg: C.card2 };
   return (
     <Pressable
@@ -67,6 +72,8 @@ function ConnRow({ iconKey, title, sub, right, onPress, disabled, last }) {
 
 // ── Connected account row (for each Google account) ──────────────────────────
 function AccountRow({ account, onDisconnect, onRescan, scanning, last, rescanResult }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const label = account.label || account.account_email || "Google Account";
   const hasResult = rescanResult && (rescanResult.legs_added > 0 || rescanResult.trips_created > 0);
   return (
@@ -107,6 +114,8 @@ function AccountRow({ account, onDisconnect, onRescan, scanning, last, rescanRes
 }
 
 export default function ConnectionsScreen({ navigation, route }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [connectedAccounts, setConnectedAccounts] = useState([]);
   const [appleCalGranted,   setAppleCalGranted]   = useState(false);
   const [loading,           setLoading]           = useState(true);
@@ -512,9 +521,15 @@ export default function ConnectionsScreen({ navigation, route }) {
     }
   };
 
-  const ConnBadge = ({ on }) => on ? (
+  const ConnBadge = ({ on }) => {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
+  return (
+on ? (
     <View style={s.connectedBadge}><Text style={s.connectedT}>ON</Text></View>
-  ) : null;
+  ) : null
+  );
+};
 
   return (
     <SafeAreaView style={s.app}>
@@ -884,7 +899,7 @@ export default function ConnectionsScreen({ navigation, route }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   app:         { flex: 1, backgroundColor: C.bg },
   ambientNote: { color: C.mut, fontSize: 13, fontFamily: T.sans, lineHeight: 20, marginBottom: 14 },
   row: {

@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { C } from "../theme";
+import { useThemedStyles } from "../ThemeContext";
 
 // PlanCard — rendered below a concierge message when Claude returns a PLAN tag
 // Shows trip highlights, recommended hotels, and a "Save this trip" CTA
 export function PlanCard({ plan, onSave }) {
+  const ps = useThemedStyles(makeStyles);
   const [saving, setSaving] = React.useState(false);
   const [saved, setSaved] = React.useState(false);
   if (!plan) return null;
@@ -89,7 +91,7 @@ export function PlanCard({ plan, onSave }) {
   );
 }
 
-const ps = StyleSheet.create({
+const makeStyles = (C) => ({
   card: {
     marginTop: 8,
     backgroundColor: C.parch,

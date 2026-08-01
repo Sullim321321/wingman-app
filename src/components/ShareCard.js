@@ -8,9 +8,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { captureRef } from "react-native-view-shot";
 import * as Sharing from "expo-sharing";
 import { C, T } from "../theme";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 import { tap, WMark, Wordmark } from "../components";
 
 export function ShareCardModal({ visible, onClose, data = {} }) {
+  const { C } = useTheme();
+  const st = useThemedStyles(makeStyles);
   const cardRef = useRef(null);
   const [busy, setBusy] = useState(false);
 
@@ -75,7 +78,7 @@ export function ShareCardModal({ visible, onClose, data = {} }) {
   );
 }
 
-const st = StyleSheet.create({
+const makeStyles = (C) => ({
   scrim: { flex: 1, backgroundColor: "rgba(0,0,0,0.78)", alignItems: "center", justifyContent: "center", padding: 24 },
   previewWrap: { width: "100%", maxWidth: 360, alignItems: "center" },
   card: { width: 300, height: 380, borderRadius: 22, overflow: "hidden" },

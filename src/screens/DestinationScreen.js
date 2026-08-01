@@ -12,6 +12,7 @@ import { C, T } from "../theme";
 import { DestinationImage } from "../components/DestinationImage";
 import { SerifText, tap } from "../components";
 import { getDestinationIntel } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 // ─── Category type → accent color ────────────────────────────────────────────
 const TYPE_COLOR = {
@@ -27,6 +28,8 @@ const TIER_COLOR = { luxury: C.gold, boutique: "#9B8FFF", value: C.teal };
 
 // ─── Section header ───────────────────────────────────────────────────────────
 function SectionHead({ title }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <Text style={s.sectionHead}>{title}</Text>
   );
@@ -34,6 +37,8 @@ function SectionHead({ title }) {
 
 // ─── Pill badge ───────────────────────────────────────────────────────────────
 function Pill({ label, color }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={[s.pill, { borderColor: color + "50", backgroundColor: color + "15" }]}>
       <Text style={[s.pillT, { color }]}>{label}</Text>
@@ -43,6 +48,8 @@ function Pill({ label, color }) {
 
 // ─── Hotel card ───────────────────────────────────────────────────────────────
 function HotelCard({ hotel }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const accent = TIER_COLOR[hotel.tier] || C.gold;
   return (
     <View style={s.card}>
@@ -57,6 +64,8 @@ function HotelCard({ hotel }) {
 
 // ─── Restaurant card ──────────────────────────────────────────────────────────
 function RestaurantCard({ r }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.card}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
@@ -73,6 +82,8 @@ function RestaurantCard({ r }) {
 
 // ─── Activity card ────────────────────────────────────────────────────────────
 function ActivityCard({ a }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const accent = TYPE_COLOR[a.type] || C.gold;
   return (
     <View style={s.card}>
@@ -88,6 +99,8 @@ function ActivityCard({ a }) {
 // ─── Main screen ─────────────────────────────────────────────────────────────
 
 export default function DestinationScreen({ route, navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const { iata, city, trip_id, tripTitle } = route.params || {};
   const label = city || iata || "Destination";
 
@@ -240,7 +253,7 @@ export default function DestinationScreen({ route, navigation }) {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   safe:           { flex: 1, backgroundColor: C.bg },
   header:         { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16, borderBottomWidth: 0.5, borderBottomColor: C.line },
   back:           { marginRight: 14, paddingVertical: 4 },

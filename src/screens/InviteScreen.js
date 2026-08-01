@@ -21,8 +21,11 @@ import { useFocusEffect } from "@react-navigation/native";
 import { C, T, SHADOW, litEdge } from "../theme";
 import { BackBar, FadeRise, tap } from "../components";
 import { getReferral } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 export default function InviteScreen({ navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [data, setData]             = useState(null);
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -144,7 +147,7 @@ export default function InviteScreen({ navigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   app:  { flex: 1, backgroundColor: C.bg },
   body: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 140 },
 

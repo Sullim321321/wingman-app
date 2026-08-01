@@ -4,8 +4,11 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { C, T } from "../theme";
 import { staleLabel } from "../offlineCache";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 export default function OfflineBanner({ cached, stale, cachedAt, style }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   if (!cached) return null;
   const label = staleLabel(cachedAt);
   return (
@@ -20,7 +23,7 @@ export default function OfflineBanner({ cached, stale, cachedAt, style }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   banner: {
     flexDirection: "row",
     alignItems: "center",

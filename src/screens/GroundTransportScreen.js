@@ -8,6 +8,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { req } from "../api";
 import { C as _C, T } from "../theme";
 import { tap } from "../components";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 // Extend shared theme with screen-specific aliases
 const C = {
@@ -32,6 +33,8 @@ const COMPLEXITY_LABEL = { easy: "Easy", moderate: "Moderate", complex: "Complex
 const COMPLEXITY_COLOR = { easy: C.green, moderate: C.amber, complex: C.red };
 
 export default function GroundTransportScreen() {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const navigation = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
@@ -276,7 +279,7 @@ export default function GroundTransportScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   container: { flex: 1, backgroundColor: C.bg },
   scroll: { flex: 1 },
 
@@ -328,7 +331,7 @@ const s = StyleSheet.create({
   // Tip
   tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 12, backgroundColor: "rgba(255,193,7,0.06)", borderRadius: 8, padding: 10 },
   tipIcon: { fontSize: 15, marginTop: 1 },
-  tipText: { flex: 1, color: "#FFC107", fontSize: 13, lineHeight: 19 },
+  tipText: { flex: 1, color: C.amber, fontSize: 13, lineHeight: 19 },
 
   // Action buttons
   optionActions: { flexDirection: "row", gap: 8, flexWrap: "wrap" },

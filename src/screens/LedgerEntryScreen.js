@@ -16,6 +16,7 @@ import {
 import { C, T } from "../theme";
 import { BackBar, SerifText, FadeRise, tap } from "../components";
 import { getLedgerEntry } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 const when = (iso) => {
   if (!iso) return "";
@@ -25,6 +26,8 @@ const when = (iso) => {
 };
 
 export default function LedgerEntryScreen({ route, navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const { id } = route.params || {};
   const [d, setD] = useState(null);
   const [busy, setBusy] = useState(true);
@@ -148,7 +151,7 @@ export default function LedgerEntryScreen({ route, navigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   app:    { flex: 1, backgroundColor: C.bg },
   scroll: { padding: 20, paddingTop: 4 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },

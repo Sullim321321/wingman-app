@@ -12,6 +12,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { C, T, SHADOW, litEdge } from "../theme";
 import { tap, FadeRise } from "../components";
 import { getActivity, dismissSignal } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -52,6 +53,8 @@ const SIGNAL_META = {
 // ─── Signal Row ───────────────────────────────────────────────────────────────
 
 function SignalRow({ event, onAction, onDismiss, showBorder }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const meta = SIGNAL_META[event.type] || SIGNAL_META.status;
   const active = isActive(event);
 
@@ -125,6 +128,8 @@ function SignalRow({ event, onAction, onDismiss, showBorder }) {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function ActivityScreen({ navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [events,    setEvents]    = useState([]);
   const [loading,   setLoading]   = useState(true);
   const [refreshing,setRefreshing]= useState(false);
@@ -340,7 +345,7 @@ export default function ActivityScreen({ navigation }) {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   root:   { flex: 1, backgroundColor: C.bg },
   scroll: { paddingBottom: 140 },   // clears the floating "Ask Wingman" pill AND the tab bar
 

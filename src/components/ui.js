@@ -16,8 +16,11 @@
 import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { C, T, SP, R, CARD, ramp } from "../theme";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 export function SectionLabel({ children, action, onAction, style }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={[s.sectionRow, style]}>
       <Text style={s.sectionLabel}>{String(children).toUpperCase()}</Text>
@@ -29,12 +32,16 @@ export function SectionLabel({ children, action, onAction, style }) {
 }
 
 export function Card({ plane = "raised", onPress, style, children }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const base = [CARD[plane] || CARD.raised, s.cardPad, style];
   if (onPress) return <Pressable style={({ pressed }) => [base, pressed && { opacity: 0.9 }]} onPress={onPress}>{children}</Pressable>;
   return <View style={base}>{children}</View>;
 }
 
 export function Row({ title, subtitle, trailing, onPress, inverted = false, style }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const Body = (
     <View style={[s.row, style]}>
       <View style={{ flex: 1, paddingRight: SP.md }}>
@@ -50,6 +57,8 @@ export function Row({ title, subtitle, trailing, onPress, inverted = false, styl
 }
 
 export function Pill({ children, tone = "neutral" }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const dot = tone === "ok" ? C.teal : tone === "risk" ? C.coral : tone === "accent" ? C.gold : C.mut;
   return (
     <View style={s.pill}>
@@ -60,6 +69,8 @@ export function Pill({ children, tone = "neutral" }) {
 }
 
 export function Stat({ value, caption }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.stat}>
       <Text style={s.statValue}>{value}</Text>
@@ -69,6 +80,8 @@ export function Stat({ value, caption }) {
 }
 
 export function ScreenTitle({ children, trailing, style }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={[s.titleRow, style]}>
       <Text style={s.title}>{children}</Text>
@@ -78,10 +91,12 @@ export function ScreenTitle({ children, trailing, style }) {
 }
 
 export function Hairline({ style }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return <View style={[s.hairline, style]} />;
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   sectionRow:    { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: SP.section, marginBottom: SP.gap },
   sectionLabel:  { ...ramp("label"), fontFamily: T.sansB, color: C.gold },
   sectionAction: { ...ramp("sub"), fontFamily: T.sansM, color: C.gold },

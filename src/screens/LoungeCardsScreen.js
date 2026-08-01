@@ -12,6 +12,7 @@ import { useNavigation } from "@react-navigation/native";
 import { C, T, GRAD } from "../theme";
 import { SerifText, tap } from "../components";
 import { getProfile, updateProfile } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 // ── Card catalog ────────────────────────────────────────────────────────────
 const CARD_CATALOG = [
@@ -141,6 +142,8 @@ const CARD_CATALOG = [
 ];
 
 function CardRow({ card, selected, onToggle }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <Pressable
       style={[s.cardRow, selected && s.cardRowSelected]}
@@ -162,6 +165,8 @@ function CardRow({ card, selected, onToggle }) {
 }
 
 export default function LoungeCardsScreen() {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const navigation = useNavigation();
   const [selected, setSelected] = useState(new Set());
   const [loading, setLoading]   = useState(true);
@@ -268,7 +273,7 @@ export default function LoungeCardsScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   app:     { flex: 1, backgroundColor: C.bg },
   center:  { flex: 1, alignItems: "center", justifyContent: "center" },
   header:  { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 8, paddingBottom: 14, borderBottomWidth: 0.5, borderBottomColor: C.line },

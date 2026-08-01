@@ -2,16 +2,17 @@
 // Warm espresso palette + champagne gold + DM Sans
 
 import React, { useState, useEffect, useCallback } from "react";
-import { SafeAreaView, ScrollView, View, Text, Switch, StyleSheet, ActivityIndicator, TouchableOpacity, Alert } from "react-native";
+import { SafeAreaView, ScrollView, View, Text, Switch, StyleSheet, ActivityIndicator, TouchableOpacity, Pressable, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import { C, T } from "../theme";
 import { useThemedStyles } from "../ThemeContext";
 import { useTheme } from "../ThemeContext";
+import ErrorBoundary from "../ErrorBoundary";
 import { BackBar, Segmented, SetRow, Chip, Btn, g } from "../components";
 import { useAuth } from "../auth";
-import { getPolicy, updatePolicy, updateLocale, getHotelAffinity, removeHotelAffinity, updateBriefingTime, getInstructions, deleteInstruction } from "../api";
+import { getPolicy, updatePolicy, updateLocale, getHotelAffinity, removeHotelAffinity, updateBriefingTime, getInstructions, deleteInstruction, getRailReadiness, previewFlightTz, applyFlightTz } from "../api";
 import { registerForPush } from "../notify";
 
 export const LOCATION_OPT_IN_KEY = "wingman_location_opt_in";
@@ -236,7 +237,31 @@ export default function SettingsScreen({ navigation }) {
   const [loading, setLoading]   = useState(true);
   const [saving,  setSaving]    = useState(false);
 
+  // Rail watch readiness (multi-modal spine). Track load/error so the section is
+  // always visible with an honest state, never silently absent.
+  const [rail, setRail] = useState(null);
+  const [railErr, setRailErr] = useState(false);
+
+  // Flight-time timezone repair (preview → apply). null preview = not checked yet.
+  const [tzPreview, setTzPreview] = useState(null);
+  const [tzBusy, setTzBusy] = useState(false);
+  const [tzDone, setTzDone] = useState(null);
+  const tzClock = (iso) => iso ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "—";
+  async function previewTz() {
+    setTzBusy(true);
+    try { setTzPreview(await previewFlightTz()); }
+    catch { setTzPreview({ error: true, would_change: 0, changes: [] }); }
+    setTzBusy(false);
+  }
+  async function applyTz() {
+    setTzBusy(true);
+    try { const r = await applyFlightTz(); setTzDone(r.would_change ?? 0); }
+    catch { setTzDone(-1); }
+    setTzBusy(false);
+  }
+
   useEffect(() => {
+    getRailReadiness().then((r) => { setRail(r); setRailErr(false); }).catch(() => { setRail(null); setRailErr(true); });
     loadPolicy();
     AsyncStorage.getItem(LOCATION_OPT_IN_KEY).then(v => {
       if (v === "true") setLocationEnabled(true);
@@ -533,6 +558,68 @@ export default function SettingsScreen({ navigation }) {
           </View>
         </View>
 
+        <Text style={g.sectionT}>RAIL WATCHING</Text>
+        <View style={s.railCard}>
+          {rail ? (
+            <>
+              <Text style={s.railSummary}>{rail.summary}</Text>
+              <View style={s.railStatusRow}>
+                <View style={[s.railDot, { backgroundColor: rail.rail_spine_enabled ? C.teal : C.mut }]} />
+                <Text style={s.railStatusT}>
+                  {rail.rail_spine_enabled
+                    ? "Train watching is on."
+                    : "Train watching is off — flip RAIL_SPINE on once this looks right."}
+                </Text>
+              </View>
+            </>
+          ) : railErr ? (
+            <Text style={s.railSummary}>Couldn't load rail status right now. Pull down to refresh, or try again shortly.</Text>
+          ) : (
+            <Text style={s.railSummary}>Checking rail watch status…</Text>
+          )}
+        </View>
+
+        <ErrorBoundary fallback={(e) => (
+          <>
+            <Text style={g.sectionT}>FLIGHT TIMES</Text>
+            <View style={s.railCard}>
+              <Text style={s.railSummary}>Flight-time tools hit a snag{e?.message ? `: ${e.message}` : ""}. It's contained — the rest of Settings is fine.</Text>
+            </View>
+          </>
+        )}>
+          <Text style={g.sectionT}>FLIGHT TIMES</Text>
+          <View style={s.railCard}>
+            {tzDone != null ? (
+              <Text style={s.railSummary}>
+                {tzDone < 0 ? "Couldn't apply the fix — try again shortly."
+                  : tzDone === 0 ? "All set — nothing needed fixing."
+                  : `Fixed ${tzDone} flight${tzDone === 1 ? "" : "s"}. Times now reflect each airport's local zone.`}
+              </Text>
+            ) : tzPreview ? (
+              tzPreview.error ? (
+                <Text style={s.railSummary}>Couldn't check flight times right now. Try again shortly.</Text>
+              ) : (tzPreview.would_change || 0) === 0 ? (
+                <Text style={s.railSummary}>Your flight times look correct — nothing to fix.</Text>
+              ) : (
+                <>
+                  <Text style={s.railSummary}>{tzPreview.would_change} flight{tzPreview.would_change === 1 ? "" : "s"} have times stored in the wrong timezone. Here's the correction:</Text>
+                  {(tzPreview.changes || []).slice(0, 6).map((c) => (
+                    <Text key={c.id} style={s.tzRow}>{c.route || "—"} · {tzClock(c.departs && c.departs.from)} → {tzClock(c.departs && c.departs.to)}</Text>
+                  ))}
+                  {(tzPreview.would_change || 0) > 6 ? <Text style={s.tzRow}>…and {tzPreview.would_change - 6} more</Text> : null}
+                  <Pressable style={s.tzApplyBtn} onPress={applyTz} disabled={tzBusy}>
+                    <Text style={s.tzApplyT}>{tzBusy ? "Fixing…" : "Apply fix"}</Text>
+                  </Pressable>
+                </>
+              )
+            ) : (
+              <Pressable onPress={previewTz} disabled={tzBusy}>
+                <Text style={s.tzLink}>{tzBusy ? "Checking…" : "Preview flight-time fix  ›"}</Text>
+              </Pressable>
+            )}
+          </View>
+        </ErrorBoundary>
+
         <Text style={g.sectionT}>ACCOUNT</Text>
         <Text style={s.acct}>Signed in as {email || "—"}</Text>
         <Btn title="Sign out" kind="ghost" onPress={signOut} />
@@ -545,6 +632,15 @@ export default function SettingsScreen({ navigation }) {
 const makeStyles = (C) => ({
   app:  { flex: 1, backgroundColor: C.bg },
   acct: { color: C.mut, fontSize: 15, fontFamily: T.sans, marginBottom: 14, letterSpacing: 0.1 },
+  railCard: { backgroundColor: C.card, borderRadius: 12, marginHorizontal: 16, marginBottom: 8, padding: 16 },
+  railSummary: { color: C.ink, fontSize: 14, fontFamily: T.sans, lineHeight: 21 },
+  railStatusRow: { flexDirection: "row", alignItems: "center", marginTop: 12 },
+  railDot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
+  railStatusT: { color: C.mut, fontSize: 12, fontFamily: T.sans, flex: 1, lineHeight: 17 },
+  tzRow: { color: C.mut, fontSize: 13, fontFamily: T.sansM, marginTop: 8, lineHeight: 18 },
+  tzLink: { color: C.gold, fontSize: 15, fontFamily: T.sansM },
+  tzApplyBtn: { marginTop: 14, backgroundColor: C.gold, borderRadius: 10, paddingVertical: 11, alignItems: "center" },
+  tzApplyT: { color: C.inkD, fontSize: 15, fontFamily: T.sansB },
   versionT: { color: C.mut, fontSize: 11, fontFamily: T.sans, textAlign: "center", marginTop: 8, marginBottom: 24, opacity: 0.5 },
   localeRow: {
     paddingVertical: 12,

@@ -6,10 +6,13 @@ import {
 import { C, T } from "../theme";
 import { Btn, BackBar, g } from "../components";
 import { API_BASE, getToken } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 const BID_PRESETS = [500, 1000, 2500, 5000, 10000];
 
 export default function UpgradeBidScreen({ navigation, route }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const { tripId, legId, flightIdent, origin, destination, carrier } = route?.params || {};
 
   const [loading, setLoading] = useState(true);
@@ -203,7 +206,7 @@ export default function UpgradeBidScreen({ navigation, route }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   app: { flex: 1, backgroundColor: C.bg },
   flightHeader: { flexDirection: "row", alignItems: "center", backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 16, marginBottom: 12 },
   flightRoute: { color: C.ink, fontSize: 16, fontFamily: T.sansB },

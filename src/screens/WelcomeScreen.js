@@ -13,6 +13,7 @@ import * as SecureStore from "expo-secure-store";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, T, GRAD } from "../theme";
 import { tap } from "../components";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 const KEY_SEEN_WELCOME = "wingman_seen_welcome";
 
@@ -37,6 +38,8 @@ function FadeIn({ delay = 0, children }) {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function WelcomeScreen({ navigation, route }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const firstName = route?.params?.firstName || "";
   const insets    = useSafeAreaInsets();
 
@@ -180,7 +183,7 @@ export default function WelcomeScreen({ navigation, route }) {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   root:  { flex: 1, backgroundColor: C.bg },
   inner: {
     flex: 1,

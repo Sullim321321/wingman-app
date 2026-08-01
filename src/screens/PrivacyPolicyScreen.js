@@ -4,8 +4,11 @@ import React, { useState, useEffect } from "react";
 import { SafeAreaView, ScrollView, View, Text, StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { C, T } from "../theme";
 import { tap } from "../components";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 export default function PrivacyPolicyScreen({ navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [manifest, setManifest] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -69,7 +72,7 @@ export default function PrivacyPolicyScreen({ navigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   safe: { flex: 1, backgroundColor: C.bg },
   header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20 },
   backBtn: { paddingVertical: 10, paddingRight: 20 },
@@ -77,14 +80,14 @@ const s = StyleSheet.create({
   headerTitle: { color: C.ink, fontSize: 16, fontFamily: T.sansB, marginLeft: "auto", marginRight: "auto", paddingRight: 40 },
   scroll: { padding: 24, paddingBottom: 80 },
   title: { color: C.ink, fontSize: 30, fontFamily: T.display, marginBottom: 16 },
-  body: { color: "#A39B8F", fontSize: 16, fontFamily: T.sansM, lineHeight: 24, marginBottom: 24 },
+  body: { color: C.mut, fontSize: 16, fontFamily: T.sansM, lineHeight: 24, marginBottom: 24 },
   card: { backgroundColor: C.card, borderRadius: 16, padding: 20, marginBottom: 32, borderWidth: 1, borderColor: C.line },
   cardTitle: { color: C.gold, fontSize: 15, fontFamily: T.sansB, textTransform: "uppercase", letterSpacing: 1, marginBottom: 16 },
-  bullet: { color: "#E0D8C8", fontSize: 15, fontFamily: T.sansM, lineHeight: 22, marginBottom: 12 },
+  bullet: { color: C.ink, fontSize: 15, fontFamily: T.sansM, lineHeight: 22, marginBottom: 12 },
   sectionTitle: { color: C.ink, fontSize: 22, fontFamily: T.display, marginBottom: 16 },
   processorList: { gap: 12 },
   processorRow: { backgroundColor: C.card2, borderRadius: 12, padding: 16 },
   pName: { color: C.ink, fontSize: 16, fontFamily: T.sansB, marginBottom: 4 },
-  pPurpose: { color: "#A39B8F", fontSize: 15, fontFamily: T.sansM, marginBottom: 8 },
-  pData: { color: "#80786C", fontSize: 13, fontFamily: T.sansM },
+  pPurpose: { color: C.mut, fontSize: 15, fontFamily: T.sansM, marginBottom: 8 },
+  pData: { color: C.mutD, fontSize: 13, fontFamily: T.sansM },
 });

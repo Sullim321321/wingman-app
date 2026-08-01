@@ -19,6 +19,7 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { C, T, SHADOW, litEdge, NIGHT } from "../theme";
 import { useTheme, useThemedStyles } from "../ThemeContext";
 import { Leg, RideCount } from "../tripdoc";
+import { WINDOWS } from "../timewindows";
 import { tap, DecisionCard, FadeRise } from "../components";
 import { PlanCard } from "../components/PlanCard";
 import { InferredTravel } from "../components/InferredTravel";
@@ -444,6 +445,12 @@ export default function HomeScreen({ navigation }) {
   const listRef    = useRef(null);
   const tripsRef   = useRef([]);
   const saveTimer  = useRef(null);
+  // Throttle the full focus reload. Returning to the Home tab used to refetch trips,
+  // GPS, home-state, weather, today, travel and decisions EVERY time — so tab-hopping
+  // felt like a cold start. This lets the heavy reload run at most once per window;
+  // pull-to-refresh still forces a fresh load.
+  const lastHomeLoadRef = useRef(0);
+  const HOME_FOCUS_THROTTLE_MS = 45 * 1000;
 
   // ── Data loading ────────────────────────────────────────────────────────────
 
@@ -536,12 +543,15 @@ export default function HomeScreen({ navigation }) {
       const lat = userLocation?.lat;
       const lng = userLocation?.lng;
       if (lat && lng) {
-        const hs = await getHomeState({ lat, lng });
+        // getHomeState/getWeather take POSITIONAL (lat, lng) — passing {lat,lng} here
+        // sent "[object Object]" as lat and dropped the fix, so pull-to-refresh was
+        // silently un-located (no weather, generic home-state). Match the real signature.
+        const hs = await getHomeState(lat, lng);
         if (hs?.ok) {
           setHomeState(hs);
           setLoadedAt(new Date());
         }
-        const ws = await getWeather({ lat, lng });
+        const ws = await getWeather(lat, lng);
         if (ws?.ok) setWeather(ws);
       }
     } catch {}
@@ -550,6 +560,12 @@ export default function HomeScreen({ navigation }) {
 
   useFocusEffect(useCallback(() => {
     let cancelled = false;
+    // Tab-hopping back to Home shouldn't trigger a full cold reload. If we loaded
+    // recently, keep what's already in state (pull-to-refresh still forces fresh).
+    if (Date.now() - lastHomeLoadRef.current < HOME_FOCUS_THROTTLE_MS) {
+      return () => { cancelled = true; };
+    }
+    lastHomeLoadRef.current = Date.now();
     setBriefingLoading(true);
 
     // Load trips
@@ -678,29 +694,14 @@ export default function HomeScreen({ navigation }) {
     // Travel stats for home screen strip
     getTravelStats().then(s => { if (!cancelled && s?.ok) setTravelStats(s); }).catch(() => {});
 
-    // Briefing data: news, traffic, today events — fetched in parallel, silently
-    // Only fetch when we have location
-    const fetchBriefingData = async (lat, lng, city) => {
-      try {
-        const [news, traffic, events] = await Promise.allSettled([
-          getLocalNews({ city, lat, lng }),
-          lat && lng ? getLocalTraffic({ lat, lng, city }) : Promise.resolve(null),
-          getTodayEvents(),
-        ]);
-        if (!cancelled) {
-          if (news.status === "fulfilled" && news.value?.ok) setNewsData(news.value);
-          if (traffic.status === "fulfilled" && traffic.value?.ok) setTrafficData(traffic.value);
-          if (events.status === "fulfilled" && events.value?.ok) setTodayEvents(events.value.events || []);
-        }
-      } catch {}
-    };
-    // Delay slightly to let weather/location resolve first
-    setTimeout(() => {
-      if (!cancelled) {
-        const city = null; // will be populated from weather state after it resolves
-        fetchBriefingData(null, null, null);
-      }
-    }, 2000);
+    // Today's calendar events don't need a location, so load them directly — no delay.
+    // News + traffic DO need a city, so they're fetched by the weather-city effect
+    // below once weather resolves. (This used to be a 2s-delayed burst that also
+    // re-fetched today-events AND fired a city-less news call — pure duplicate work on
+    // every focus. One call here, the located pair there, no overlap.)
+    getTodayEvents()
+      .then((r) => { if (!cancelled && r?.ok) setTodayEvents(r.events || []); })
+      .catch(() => {});
 
     return () => { cancelled = true; };
   }, []));
@@ -744,14 +745,14 @@ export default function HomeScreen({ navigation }) {
     const lng = userLocation?.lng;
     const city = weather.city || null;
     const country = weather.country_code || null;
+    // News + traffic only — they need the city. Today-events is loaded once, location-
+    // independently, in the focus effect (no longer double-fetched here).
     Promise.allSettled([
       getLocalNews({ city, country, lat, lng }),
       lat && lng ? getLocalTraffic({ lat, lng, city }) : Promise.resolve(null),
-      getTodayEvents(),
-    ]).then(([news, traffic, events]) => {
+    ]).then(([news, traffic]) => {
       if (news.status === "fulfilled" && news.value?.ok) setNewsData(news.value);
       if (traffic.status === "fulfilled" && traffic.value?.ok) setTrafficData(traffic.value);
-      if (events.status === "fulfilled" && events.value?.ok) setTodayEvents(events.value.events || []);
     }).catch(() => {});
   }, [weather?.city]);
 
@@ -1175,8 +1176,8 @@ export default function HomeScreen({ navigation }) {
       for (const leg of (trip.legs || [])) {
         if (leg.type !== "flight" || !leg.departs_at) continue;
         const dep = new Date(leg.departs_at).getTime();
-        const arr = leg.arrives_at ? new Date(leg.arrives_at).getTime() : dep + 3 * 3600000;
-        if (now >= dep && now <= arr + 30 * 60000) {
+        const arr = leg.arrives_at ? new Date(leg.arrives_at).getTime() : dep + WINDOWS.noArrivalFallbackMs;
+        if (now >= dep && now <= arr + WINDOWS.inAirGraceMs) {
           const left = Math.max(0, arr - now);
           const h = Math.floor(left / 3600000);
           const m = Math.floor((left % 3600000) / 60000);
@@ -1193,7 +1194,7 @@ export default function HomeScreen({ navigation }) {
     const flt = findNextFlight(trips);
     if (!flt?.departs_at) return null;
     const ms = new Date(flt.departs_at).getTime() - Date.now();
-    if (ms < 0 || ms > 18 * 3600000) return null;
+    if (ms < 0 || ms > WINDOWS.dayOfMs) return null;
     const h = Math.floor(ms / 3600000);
     const m = Math.floor((ms % 3600000) / 60000);
     const countdown = h > 0 ? `Departs in ${h}h ${m}m` : m > 5 ? `Departs in ${m}m` : "Boarding soon";
@@ -1215,7 +1216,7 @@ export default function HomeScreen({ navigation }) {
       for (const leg of (trip.legs || [])) {
         if (!leg.arrives_at) continue;
         const arr = new Date(leg.arrives_at).getTime();
-        if (arr < now && now - arr < 48 * 3600000 && arr > bestT) { bestT = arr; best = trip; }
+        if (arr < now && now - arr < WINDOWS.justLandedMs && arr > bestT) { bestT = arr; best = trip; }
       }
     }
     return best ? { trip: best } : null;
@@ -1226,6 +1227,10 @@ export default function HomeScreen({ navigation }) {
   // Every line reflects a real capability — nothing fabricated.
   const prep = (() => {
     if (dayOf || inTransit || postTrip) return null; // a nearer-term phase takes over
+    // Don't pop "AHEAD OF YOUR TRIP" above the greeting when you're already AT a
+    // destination mid-trip — the briefing + timeline own that view. Prep is for the
+    // resting, pre-trip state, not for when you've arrived somewhere.
+    if (homeState?.state === "at_destination") return null;
     const flt = findNextFlight(trips);
     if (!flt?.departs_at) return null;
     // Don't claim to monitor a flight we can't identify. If the next flight has no
@@ -1233,7 +1238,7 @@ export default function HomeScreen({ navigation }) {
     // rather than "Monitoring your flight ?→?". Unknown blocks the panel, not the user.
     if (!flt.origin || !flt.destination) return null;
     const days = Math.ceil((new Date(flt.departs_at).getTime() - Date.now()) / 86400000);
-    if (days < 0 || days > 14) return null;
+    if (days < 0 || days > WINDOWS.preTripMaxDays) return null;
     const items = [
       {
         icon: "eye-outline",
@@ -1271,6 +1276,44 @@ export default function HomeScreen({ navigation }) {
   // scrollable header. This keeps the message list the only flex element, so the
   // input bar reliably sits above the keyboard (the tall hero no longer pins it down).
   const fmtClock = (iso) => iso ? new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : "";
+  // Relative countdown for the TODAY flight row — "in 15h" / "in 45m" / "in 3d".
+  const relDepart = (iso) => {
+    if (!iso) return "";
+    const ms = new Date(iso).getTime() - Date.now();
+    if (ms < 0) return "departed";
+    if (ms < 3600000) { const m = Math.floor(ms / 60000); return m > 1 ? `in ${m}m` : "boarding soon"; }
+    const h = Math.floor(ms / 3600000);
+    return h < 24 ? `in ${h}h` : `in ${Math.round(h / 24)}d`;
+  };
+
+  // TODAY timeline rows. A flight is the one leg that earns a richer line — route, an
+  // "in Xh" countdown, ident + local time, and a live-status link — so the single flight
+  // surface carries the timings the old duplicate day-of card used to. Everything else
+  // (hotels, etc.) stays the compact shared Leg.
+  const renderDayLeg = (l) => l.type === "flight" ? (
+    <View key={l.id} style={{ marginBottom: 12 }}>
+      <View style={s.dayOfHead}>
+        <Text style={[s.dayOfRoute, { marginBottom: 0, flex: 1 }]}>{l.origin || "?"} → {l.destination || "?"}</Text>
+        {l.departs_at ? <Text style={s.dayOfCountdown}>{relDepart(l.departs_at)}</Text> : null}
+      </View>
+      {(() => {
+        const meta = [
+          (fid.displayName(l) || "").trim(),
+          l.departs_at ? new Date(l.departs_at).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" }) : null,
+          l.gate ? `Gate ${l.gate}` : null,
+          l.terminal ? `Terminal ${l.terminal}` : null,
+        ].filter(Boolean).join("  ·  ");
+        return meta ? <Text style={s.dayOfMeta}>{meta}</Text> : null;
+      })()}
+      <Pressable onPress={() => { tap(); navigation.navigate("Situation", { legId: l.id, delay: 0 }); }} hitSlop={6}>
+        <Text style={s.dayOfCta}>Live status &amp; gate  ›</Text>
+      </Pressable>
+    </View>
+  ) : (
+    <Pressable key={l.id} onPress={() => { tap(); navigation.navigate("Dossier", { tripId: l.trip_id }); }}>
+      <Leg leg={l} compact />
+    </Pressable>
+  );
 
   const listHeader = (
     <>
@@ -1314,19 +1357,27 @@ export default function HomeScreen({ navigation }) {
           // NIGHT MODE (B5): when you're literally in the air, the arrival surface goes
           // to ink — cream Fraunces on near-black, a warmed bronze. The mode means
           // "you're moving," held in reserve exactly like colour and motion.
-          const night = !!arrival.flight?.in_air;
-          const ink = night ? NIGHT.ink : C.ink;
-          const mut = night ? NIGHT.mut : C.mut;
-          const bronze = night ? NIGHT.gold : C.gold;
+          //
+          // 1g reconcile: that dramatic near-black skin only earns its drama against the
+          // LIGHT app — a dark card popping off cream. In dark mode the whole app is already
+          // ink, so NIGHT.card (#241F18) on C_DARK.bg (#14110D) is just mud, and the "in the
+          // air" moment vanishes. So the SKIN is light-mode-only; the SEMANTIC (the "IN THE
+          // AIR" eyebrow, the bronze) always holds. In dark mode the card uses the themed
+          // palette — already dark — and the eyebrow carries the state.
+          const inAir = !!arrival.flight?.in_air;
+          const nightSkin = inAir && !C.isDark;
+          const ink = nightSkin ? NIGHT.ink : C.ink;
+          const mut = nightSkin ? NIGHT.mut : C.mut;
+          const bronze = nightSkin ? NIGHT.gold : C.gold;
           const verdictColor = arrival.plan?.verdict === "wont_make_it"
-            ? (night ? NIGHT.coral : C.coral)
+            ? (nightSkin ? NIGHT.coral : C.coral)
             : arrival.plan?.verdict === "tight" ? bronze
-            : (night ? NIGHT.teal : C.teal);
+            : (nightSkin ? NIGHT.teal : C.teal);
           return (
           <FadeRise style={{ marginTop: 10 }}>
-            <View style={[s.arrCard, night && { backgroundColor: NIGHT.card, borderColor: NIGHT.line }]}>
+            <View style={[s.arrCard, nightSkin && { backgroundColor: NIGHT.card, borderColor: NIGHT.line }]}>
               <View style={s.arrHeadRow}>
-                <Text style={[s.arrEyebrow, { color: bronze }]}>{night ? "IN THE AIR" : "ARRIVAL"}</Text>
+                <Text style={[s.arrEyebrow, { color: bronze }]}>{inAir ? "IN THE AIR" : "ARRIVAL"}</Text>
                 {arrival.flight?.from && arrival.flight?.to
                   ? <Text style={[s.arrFlight, { color: mut }]}>{arrival.flight.from} → {arrival.flight.to}</Text> : null}
               </View>
@@ -1363,7 +1414,7 @@ export default function HomeScreen({ navigation }) {
 
               {arrival.ride ? (
                 <Pressable
-                  style={[s.arrCar, night && { backgroundColor: NIGHT.gold }]}
+                  style={[s.arrCar, nightSkin && { backgroundColor: NIGHT.gold }]}
                   accessibilityLabel="Order a car — opens Uber with pickup and destination pre-filled"
                   onPress={() => {
                     tap();
@@ -1371,7 +1422,7 @@ export default function HomeScreen({ navigation }) {
                       Linking.openURL(arrival.ride.webFallback).catch(() => {}));
                   }}
                 >
-                  <Text style={[s.arrCarT, night && { color: NIGHT.bg }]}>
+                  <Text style={[s.arrCarT, nightSkin && { color: NIGHT.bg }]}>
                     Order a car{arrival.plan?.meeting?.title ? ` to ${arrival.plan.meeting.title}` : ""}
                   </Text>
                 </Pressable>
@@ -1382,7 +1433,7 @@ export default function HomeScreen({ navigation }) {
                   <Pressable onPress={() => { tap(); Linking.openURL(arrival.airport.map).catch(() => {}); }} hitSlop={8}>
                     <Text style={[s.arrLink, { color: bronze }]}>Airport map</Text>
                   </Pressable>
-                  <Text style={[s.arrLinkDot, night && { color: NIGHT.mutD }]}>·</Text>
+                  <Text style={[s.arrLinkDot, nightSkin && { color: NIGHT.mutD }]}>·</Text>
                   <Pressable onPress={() => { tap(); Linking.openURL(arrival.airport.security).catch(() => {}); }} hitSlop={8}>
                     <Text style={[s.arrLink, { color: bronze }]}>Security waits (MyTSA)</Text>
                   </Pressable>
@@ -1475,32 +1526,12 @@ export default function HomeScreen({ navigation }) {
           </FadeRise>
         ) : null}
 
-        {/* ── Day-of-travel panel — Home becomes "today" when you're flying ── */}
-        {dayOf ? (
-          <FadeRise delay={70}>
-          <Pressable
-            style={s.dayOfCard}
-            onPress={() => { tap(); navigation.navigate("Situation", { legId: dayOf.leg.id, delay: 0 }); }}
-          >
-            <View style={s.dayOfHead}>
-              <View style={s.dayOfDot} />
-              <Text style={s.dayOfKicker}>TODAY · YOUR FLIGHT</Text>
-              <Text style={s.dayOfCountdown}>{dayOf.countdown}</Text>
-            </View>
-            <Text style={s.dayOfRoute}>{dayOf.leg.origin || "?"} → {dayOf.leg.destination || "?"}</Text>
-            {(() => {
-              const meta = [
-                (fid.displayName(dayOf.leg) || "").trim(),
-                dayOf.leg.gate ? `Gate ${dayOf.leg.gate}` : null,
-                dayOf.leg.terminal ? `Terminal ${dayOf.leg.terminal}` : null,
-                dayOf.leg.status || null,
-              ].filter(Boolean).join("  ·  ");
-              return meta ? <Text style={s.dayOfMeta}>{meta}</Text> : null;
-            })()}
-            <Text style={s.dayOfCta}>Live status &amp; gate  ›</Text>
-          </Pressable>
-          </FadeRise>
-        ) : null}
+        {/* ── Day-of-travel panel — REMOVED (folded into the TODAY timeline below) ──
+            This card duplicated the flight that already appears in NOW/NEXT, and it fired
+            up to 18h out — so a next-day flight got a big "TODAY · YOUR FLIGHT" card sitting
+            above the greeting. The briefing shows the flight once now, in the timeline. The
+            `dayOf` value is still computed above; it gates `prep`/`postTrip`, it just no
+            longer renders its own card. */}
 
         {/* ── Anticipatory prep — "I've already handled this" (UX #1) ── */}
         {prep ? (
@@ -1561,25 +1592,9 @@ export default function HomeScreen({ navigation }) {
               pending decision. Every travel app writes this sentence. /brief checks
               it first — and when there's no upcoming travel it says "Nothing on the
               horizon" instead, because 0 of 0 is 100% and means nothing. */}
-          {/* The computed status line earns its place only when something ACTS on it.
-              When nothing needs you, the warm greeting below already says the day is calm —
-              a second "all clear" line is just clutter, so it's suppressed. */}
-          {brief && brief.needs_you ? (
-            <Pressable
-              style={s.briefLine}
-              onPress={() => {
-                tap();
-                const n = brief.needs[0];
-                if (n?.kind === "cascade" && n.leg_id) navigation.navigate("Situation", { legId: n.leg_id, delay: 0 });
-                else if (n?.kind === "confirm") navigation.navigate("Plan", { tripId: n.trip_id });
-                else navigation.navigate("Decisions");
-              }}
-            >
-              <View style={[s.briefDot, { backgroundColor: C.amber }]} />
-              <Text style={[s.briefText, { color: C.ink }]}>{brief.headline}</Text>
-              <Text style={s.briefArrow}>›</Text>
-            </Pressable>
-          ) : null}
+          {/* The vague "N things need you ›" line is gone — it duplicated the Decisions
+              cards (which name the ACTUAL things) and read as a cryptic pager. The needs-you
+              spine lives in the Decisions cards above and the Recent Signals line below. */}
 
           {/* ── Disruption alert banner ── */}
           {(() => {
@@ -1693,14 +1708,10 @@ export default function HomeScreen({ navigation }) {
             <Text style={s.lastUpdated}>{lastUpdatedStr}</Text>
           ) : null}
 
-          {/* Briefing controls row: speak + refresh */}
+          {/* Just Refresh now — the "Hear briefing" button was chrome (the masthead W
+              still speaks it hands-free). One quiet control. */}
           {headline && !briefingLoading ? (
             <View style={s.briefingControls}>
-              <Pressable onPress={() => { tap(); speakBriefing(); }} style={s.speakHint}>
-                <Text style={[s.speakHintT, isSpeaking && { color: C.gold }]}>
-                  {isSpeaking ? "◼︎ Stop" : "▶︎ Hear briefing"}
-                </Text>
-              </Pressable>
               <Pressable
                 onPress={() => { tap(); handleRefresh(); }}
                 style={s.speakHint}
@@ -1737,11 +1748,7 @@ export default function HomeScreen({ navigation }) {
             {(today.chapters.in_motion || []).length ? (
               <>
                 <Text style={s.docLabel}>NOW</Text>
-                {today.chapters.in_motion.map((l) => (
-                  <Pressable key={l.id} onPress={() => { tap(); navigation.navigate("Dossier", { tripId: l.trip_id }); }}>
-                    <Leg leg={l} compact />
-                  </Pressable>
-                ))}
+                {today.chapters.in_motion.map(renderDayLeg)}
                 <RideCount n={today.rides?.in_motion || 0} />
               </>
             ) : null}
@@ -1749,11 +1756,7 @@ export default function HomeScreen({ navigation }) {
             {(today.chapters.prepare || []).length ? (
               <>
                 <Text style={[s.docLabel, { marginTop: 22 }]}>NEXT</Text>
-                {today.chapters.prepare.map((l) => (
-                  <Pressable key={l.id} onPress={() => { tap(); navigation.navigate("Dossier", { tripId: l.trip_id }); }}>
-                    <Leg leg={l} compact />
-                  </Pressable>
-                ))}
+                {today.chapters.prepare.map(renderDayLeg)}
                 <RideCount n={today.rides?.prepare || 0} />
               </>
             ) : null}
@@ -1810,36 +1813,10 @@ export default function HomeScreen({ navigation }) {
             here — the brief above already says whether anything needs you; this is the
             evidence behind it, not a changelog of your own inbox. Nothing to show →
             nothing rendered. */}
-        {homeSignals.length > 0 ? (
-          <View style={s.sigWrap}>
-            <View style={s.sigHead}>
-              <Text style={s.sigLabel}>RECENT SIGNALS</Text>
-              <Pressable onPress={() => { tap(); navigation.navigate("Intelligence"); }} hitSlop={8}>
-                <Text style={s.sigAll}>All ›</Text>
-              </Pressable>
-            </View>
-            {homeSignals.slice(0, 4).map((e) => (
-              <Pressable
-                key={e.id}
-                style={s.sigRow}
-                onPress={() => {
-                  tap();
-                  if (e.leg_id) navigation.navigate("Situation", { legId: e.leg_id, delay: 0 });
-                  else if (e.trip_id) navigation.navigate("Dossier", { tripId: e.trip_id });
-                }}
-              >
-                <View style={[s.sigDot, {
-                  backgroundColor: ["disruption", "delay", "weather"].includes(e.type) ? C.coral
-                    : e.type === "recovery" ? C.teal : C.mutD,
-                }]} />
-                <View style={{ flex: 1 }}>
-                  <Text style={s.sigTitle} numberOfLines={1}>{e.title}</Text>
-                  {e.body ? <Text style={s.sigBody} numberOfLines={1}>{e.body}</Text> : null}
-                </View>
-              </Pressable>
-            ))}
-          </View>
-        ) : null}
+        {/* RECENT SIGNALS — removed from Home. A briefing states what needs you and shows
+            the day; it is not a changelog. The signal feed still runs in the background and
+            lives in the Ledger / Intelligence surface (one tap from the masthead ◆), where
+            the audit trail belongs. Home stays the brief, not the log. */}
 
     </>
   );
@@ -1923,6 +1900,8 @@ export default function HomeScreen({ navigation }) {
 // Second line (if bold-marked): EB Garamond semi-bold italic, gold
 
 function HeadlineText({ text }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const lines = text.split("\n");
   return (
     <View>
@@ -2117,7 +2096,7 @@ const makeStyles = (C) => ({
   // Does NOT scroll — it is always visible above the fold.
   // The Brief line. Teal dot = nothing needs you, and that is a checked fact.
   // Amber + arrow = something does, and tapping takes you straight to it.
-  docWrap:  { marginTop: 26 },
+  docWrap:  { marginTop: 26, marginHorizontal: 20 },
   docErr:   { fontFamily: T.sans, fontSize: 15, color: C.amber, lineHeight: 21 },
   docLabel: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.6, color: C.gold, marginBottom: 12 },
 

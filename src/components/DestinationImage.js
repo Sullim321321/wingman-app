@@ -7,9 +7,12 @@ import React, { useEffect, useState } from "react";
 import { View, Image, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { C, T } from "../theme";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 import { getDestinationImage } from "../api";
 
 export function DestinationImage({ city, height = 170, style }) {
+  const { C } = useTheme();
+  const st = useThemedStyles(makeStyles);
   const [img, setImg] = useState(null);
 
   useEffect(() => {
@@ -37,7 +40,7 @@ export function DestinationImage({ city, height = 170, style }) {
   );
 }
 
-const st = StyleSheet.create({
+const makeStyles = (C) => ({
   credit: {
     position: "absolute",
     right: 10,

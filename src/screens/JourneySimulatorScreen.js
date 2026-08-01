@@ -12,6 +12,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { C, T } from "../theme";
 import { SerifText, tap } from "../components";
 import { simulateJourney } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 const VERDICT_CONFIG = {
   will_miss:   { color: "#D95F5F", bg: "#D95F5F12", border: "#D95F5F40", icon: "⚠", label: "You may miss this flight" },
@@ -21,6 +22,8 @@ const VERDICT_CONFIG = {
 };
 
 function TimelineStep({ step, isLast }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.stepRow}>
       <View style={s.stepLeft}>
@@ -44,6 +47,8 @@ function TimelineStep({ step, isLast }) {
 }
 
 function BufferGauge({ bufferMins, maxMins = 90 }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const pct = Math.max(0, Math.min(100, (bufferMins / maxMins) * 100));
   const color = bufferMins < 0 ? "#D95F5F" : bufferMins < 15 ? "#D4902A" : "#2DB896";
   return (
@@ -62,6 +67,8 @@ function BufferGauge({ bufferMins, maxMins = 90 }) {
 }
 
 export default function JourneySimulatorScreen({ route, navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const { tripId, legId, flightIdent } = route.params || {};
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -237,7 +244,7 @@ export default function JourneySimulatorScreen({ route, navigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   root:           { flex: 1, backgroundColor: C.bg },
   scroll:         { paddingHorizontal: 20, paddingTop: 16 },
   loadingT:       { color: C.mut, textAlign: "center", marginTop: 12, fontFamily: T.sans, fontSize: 13 },
@@ -274,10 +281,10 @@ const s = StyleSheet.create({
   stepDuration:   { color: C.gold, fontSize: 13, fontFamily: T.sansB },
   stepNote:       { color: C.mut, fontSize: 11, fontFamily: T.sans, marginTop: 3 },
   warningCard:    { backgroundColor: "#D4902A12", borderRadius: 14, padding: 14, borderWidth: 1, borderColor: "#D4902A40", marginBottom: 12 },
-  warningTitle:   { color: "#D4902A", fontSize: 15, fontFamily: T.sansB, marginBottom: 4 },
+  warningTitle:   { color: C.amber, fontSize: 15, fontFamily: T.sansB, marginBottom: 4 },
   warningBody:    { color: C.ink, fontSize: 13, fontFamily: T.sans, lineHeight: 18, marginBottom: 10 },
   mapsBtn:        { alignSelf: "flex-start", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: "#D4902A60" },
-  mapsBtnT:       { color: "#D4902A", fontSize: 13, fontFamily: T.sansM },
+  mapsBtnT:       { color: C.amber, fontSize: 13, fontFamily: T.sansM },
   askCard:        { backgroundColor: C.card, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: C.line, alignItems: "center" },
   askT:           { color: C.gold, fontSize: 13, fontFamily: T.sansM },
 });

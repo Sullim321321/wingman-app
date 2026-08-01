@@ -11,6 +11,7 @@ import {
 import { C, T } from "../theme";
 import { SerifText, BackBar, tap } from "../components";
 import { getMemory, updateMemory, deleteMemoryField, getMyConstraints, forgetConstraint } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 const FIELD_META = [
   { key: "identity",        label: "Who you are",             hint: "e.g. Founder, based in London, frequent traveller" },
@@ -34,6 +35,8 @@ const FIELD_META = [
 ];
 
 function MemoryField({ fieldKey, label, hint, value, onSave, onDelete }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft]     = useState(value || "");
   const [saving, setSaving]   = useState(false);
@@ -139,6 +142,8 @@ function MemoryField({ fieldKey, label, hint, value, onSave, onDelete }) {
 }
 
 export default function MemoryScreen({ navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const [loading, setLoading]   = useState(true);
   const [memory, setMemory]     = useState({});
   const [updatedAt, setUpdatedAt] = useState(null);
@@ -336,7 +341,7 @@ export default function MemoryScreen({ navigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   // Always true of you — the constraint graph, rendered where you can change it.
   stdSection: { marginTop: 26, marginBottom: 10 },
   stdH:    { fontFamily: T.sansB, fontSize: 11, letterSpacing: 1.6, color: C.gold, marginBottom: 6 },

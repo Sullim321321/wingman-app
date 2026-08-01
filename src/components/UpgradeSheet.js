@@ -8,6 +8,7 @@ import { View, Text, Modal, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C, T, SHADOW, litEdge } from "../theme";
 import { tap, WMark } from "../components";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 // The moments worth interrupting for, and what to say at each.
 export const UPGRADE_MOMENTS = {
@@ -32,6 +33,8 @@ export const UPGRADE_MOMENTS = {
 };
 
 export function UpgradeSheet({ visible, moment = "standing_orders", onClose, onUpgrade }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const m = UPGRADE_MOMENTS[moment] || UPGRADE_MOMENTS.standing_orders;
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -78,7 +81,7 @@ export function UpgradeSheet({ visible, moment = "standing_orders", onClose, onU
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   scrim: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "flex-end" },
   sheet: {
     backgroundColor: C.bg, borderTopLeftRadius: 22, borderTopRightRadius: 22,

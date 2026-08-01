@@ -4,7 +4,7 @@
 // Gmail receipt auto-capture is a later enrichment.
 import React, { useState, useMemo } from "react";
 import {
-  SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet, Alert, Share, Platform,
+  SafeAreaView, ScrollView, View, Text, Pressable, StyleSheet, Alert, Share, Platform, TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 // SDK 54 swapped expo-file-system's default export to the NEW API and moved the
@@ -16,7 +16,8 @@ import * as Sharing from "expo-sharing";
 import { C, T, SHADOW, litEdge } from "../theme";
 import { BackBar, FadeRise, tap } from "../components";
 import { UpgradeSheet } from "../components/UpgradeSheet";
-import { editLeg, getMe } from "../api";
+import { editLeg, getMe, getTripExpenseMeta, setTripExpenseMeta } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 const CATEGORY = {
   flight: "Flights", hotel: "Lodging", airbnb: "Lodging", car: "Ground",
@@ -40,10 +41,34 @@ function money(n, cur = "USD") {
 }
 
 export default function ExpensesScreen({ route, navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const trip = route.params?.trip || {};
   const [legs, setLegs] = useState(trip.legs || []);
   const [isPro, setIsPro] = useState(true);   // assume yes until known — never wrongly gate
   const [showUpgrade, setShowUpgrade] = useState(false);
+  // E4 · reimbursement metadata — purpose + project/cost code, persisted per trip.
+  const [purpose, setPurpose] = useState("");
+  const [projectCode, setProjectCode] = useState("");
+
+  React.useEffect(() => {
+    if (!trip.id) return;
+    let on = true;
+    getTripExpenseMeta(trip.id).then((r) => {
+      if (!on || !r?.expense) return;
+      setPurpose(r.expense.purpose || "");
+      setProjectCode(r.expense.project_code || "");
+    }).catch(() => {});
+    return () => { on = false; };
+  }, [trip.id]);
+
+  const saveMeta = () => {
+    if (!trip.id) return;
+    setTripExpenseMeta(trip.id, {
+      purpose: purpose.trim() || null,
+      project_code: projectCode.trim() || null,
+    }).catch(() => {});
+  };
 
   React.useEffect(() => {
     let on = true;
@@ -60,24 +85,52 @@ export default function ExpensesScreen({ route, navigation }) {
 
   const currency = legs.find(l => l.currency)?.currency || "USD";
 
+  // E3 · each item carries its OWN currency — a Eurostar leg in EUR and a JFK hotel in USD
+  // must never be summed into one meaningless number.
   const items = useMemo(() => legs.map(l => ({
     id: l.id,
     category: CATEGORY[l.type] || "Other",
     name: l.carrier || l.destination || l.type || "Booking",
     date: l.departs_at || l.arrives_at,
     amount: l.price_total != null ? Number(l.price_total) : null,
-  })).sort((a, b) => (a.date || "") < (b.date || "") ? -1 : 1), [legs]);
+    currency: l.currency || currency,
+  })).sort((a, b) => (a.date || "") < (b.date || "") ? -1 : 1), [legs, currency]);
 
-  const total = items.reduce((s, i) => s + (i.amount || 0), 0);
   const missing = items.filter(i => i.amount == null).length;
 
+  // Totals are per-currency, never cross-currency. `primaryCur` (the most-spent currency)
+  // is the headline; the rest are shown honestly alongside, not folded in.
+  const totalsByCur = useMemo(() => {
+    const m = {};
+    for (const i of items) if (i.amount != null) m[i.currency] = (m[i.currency] || 0) + i.amount;
+    return m;
+  }, [items]);
+  const currencies = Object.keys(totalsByCur).sort((a, b) => totalsByCur[b] - totalsByCur[a]);
+  const primaryCur = currencies[0] || currency;
+  const mixed = currencies.length > 1;
+  const total = totalsByCur[primaryCur] || 0;   // headline + bar denominator (primary currency)
+
+  // On-screen breakdown stays within the primary currency so the bars share one scale;
+  // the CSV/report below carries every currency in full.
   const byCategory = useMemo(() => {
     const m = {};
     for (const i of items) {
-      if (i.amount == null) continue;
+      if (i.amount == null || i.currency !== primaryCur) continue;
       m[i.category] = (m[i.category] || 0) + i.amount;
     }
     return Object.entries(m).sort((a, b) => b[1] - a[1]);
+  }, [items, primaryCur]);
+
+  // Per (category, currency) for the export — the accurate, full-fidelity breakdown.
+  const byCatCur = useMemo(() => {
+    const m = {};
+    for (const i of items) {
+      if (i.amount == null) continue;
+      const k = i.category + "|" + i.currency;
+      m[k] = (m[k] || 0) + i.amount;
+    }
+    return Object.entries(m).map(([k, amt]) => { const [cat, cur] = k.split("|"); return { cat, cur, amt }; })
+      .sort((a, b) => b.amt - a.amt);
   }, [items]);
 
   const setAmount = (item) => {
@@ -101,20 +154,19 @@ export default function ExpensesScreen({ route, navigation }) {
   };
 
   const exportReport = async () => {
-    const lines = [
-      `EXPENSE REPORT — ${trip.title || "Trip"}`,
-      `${"—".repeat(36)}`,
-      "",
-    ];
+    const lines = [`EXPENSE REPORT — ${trip.title || "Trip"}`];
+    if (purpose.trim()) lines.push(`Purpose: ${purpose.trim()}`);
+    if (projectCode.trim()) lines.push(`Project / cost code: ${projectCode.trim()}`);
+    lines.push(`${"—".repeat(36)}`, "");
     let lastDate = null;
     for (const i of items) {
       const d = fmt(i.date);
       if (d && d !== lastDate) { lines.push(d.toUpperCase()); lastDate = d; }
-      lines.push(`  ${i.category.padEnd(11)} ${i.name}  ${i.amount != null ? money(i.amount, currency) : "—"}`);
+      lines.push(`  ${i.category.padEnd(11)} ${i.name}  ${i.amount != null ? money(i.amount, i.currency) : "—"}`);
     }
     lines.push("", `${"—".repeat(36)}`);
-    for (const [cat, amt] of byCategory) lines.push(`  ${cat.padEnd(11)} ${money(amt, currency)}`);
-    lines.push("", `  TOTAL       ${money(total, currency)}`);
+    for (const [cat, amt] of byCategory) lines.push(`  ${cat.padEnd(11)} ${money(amt, primaryCur)}`);
+    for (const cur of currencies) lines.push(`  TOTAL ${currencies.length > 1 ? `(${cur})` : "      "}  ${money(totalsByCur[cur], cur)}`);
     if (missing > 0) lines.push("", `  (${missing} booking${missing !== 1 ? "s" : ""} without an amount)`);
     lines.push("", "Tracked by Wingman — wingmantravel.app");
     try { await Share.share({ message: lines.join("\n") }); } catch {}
@@ -125,19 +177,39 @@ export default function ExpensesScreen({ route, navigation }) {
     // value is obvious, not as a nag. The on-screen report stays free.
     if (!isPro) { setShowUpgrade(true); return; }
     const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-    const rows = [["Date", "Category", "Vendor", "Amount", "Currency"].join(",")];
+    const day = (d) => (d ? new Date(d).toISOString().slice(0, 10) : "");
+    const num = (n) => (n != null ? Number(n).toFixed(2) : "");
+    // Reimbursement-ready: a header block (trip · dates · currency), the itemised table,
+    // per-category subtotals, then the grand total — the shape a finance team expects.
+    const dates = items.map((i) => i.date).filter(Boolean).sort();
+    const range = dates.length ? `${day(dates[0])} to ${day(dates[dates.length - 1])}` : "";
+    const rows = [];
+    rows.push([esc("Expense report"), esc(trip.title || "Trip")].join(","));
+    if (range) rows.push([esc("Dates"), esc(range)].join(","));
+    rows.push([esc("Currency"), esc(currencies.join(", ") || currency)].join(","));
+    if (purpose.trim()) rows.push([esc("Purpose"), esc(purpose.trim())].join(","));
+    if (projectCode.trim()) rows.push([esc("Project / cost code"), esc(projectCode.trim())].join(","));
+    rows.push("");
+    rows.push(["Date", "Category", "Vendor", "Amount", "Currency"].join(","));
     for (const i of items) {
-      rows.push([
-        esc(i.date ? new Date(i.date).toISOString().slice(0, 10) : ""),
-        esc(i.category), esc(i.name),
-        esc(i.amount != null ? i.amount : ""), esc(currency),
-      ].join(","));
+      rows.push([esc(day(i.date)), esc(i.category), esc(i.name), esc(num(i.amount)), esc(i.currency)].join(","));
     }
-    rows.push(["", "", esc("TOTAL"), esc(total), esc(currency)].join(","));
+    rows.push("");
+    rows.push([esc("Subtotals by category")].join(","));
+    for (const { cat, cur, amt } of byCatCur) {
+      rows.push([esc(""), esc(cat), esc(""), esc(num(amt)), esc(cur)].join(","));
+    }
+    rows.push("");
+    // One TOTAL per currency — reimbursement never sums across currencies.
+    for (const cur of currencies) {
+      rows.push([esc(""), esc(""), esc(currencies.length > 1 ? `TOTAL (${cur})` : "TOTAL"), esc(num(totalsByCur[cur])), esc(cur)].join(","));
+    }
+    if (missing > 0) rows.push([esc(""), esc(""), esc(`${missing} booking(s) without an amount`), esc(""), esc("")].join(","));
     const csv = rows.join("\n");
     try {
       const safe = (trip.title || "trip").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
-      const uri = `${FileSystem.cacheDirectory}wingman-expenses-${safe}.csv`;
+      const stamp = dates.length ? "-" + day(dates[0]) : "";
+      const uri = `${FileSystem.cacheDirectory}wingman-expenses-${safe}${stamp}.csv`;
       await FileSystem.writeAsStringAsync(uri, csv, { encoding: FileSystem.EncodingType.UTF8 });
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri, { mimeType: "text/csv", dialogTitle: "Export expenses (CSV)", UTI: "public.comma-separated-values-text" });
@@ -156,7 +228,12 @@ export default function ExpensesScreen({ route, navigation }) {
         {/* Total hero */}
         <FadeRise style={s.hero}>
           <Text style={s.heroKicker}>TOTAL — {trip.title || "TRIP"}</Text>
-          <Text style={s.heroValue}>{money(total, currency)}</Text>
+          <Text style={s.heroValue}>{money(total, primaryCur)}</Text>
+          {mixed ? (
+            <Text style={s.heroSub}>
+              + {currencies.filter(c => c !== primaryCur).map(c => money(totalsByCur[c], c)).join(" · ")}
+            </Text>
+          ) : null}
           <Text style={s.heroSub}>
             {items.length} booking{items.length !== 1 ? "s" : ""}{missing > 0 ? ` · ${missing} need an amount` : " · complete"}
           </Text>
@@ -174,6 +251,35 @@ export default function ExpensesScreen({ route, navigation }) {
           ) : null}
         </FadeRise>
 
+        {/* E4 · Reimbursement details — carried into the export header */}
+        {items.length > 0 ? (
+          <View style={s.metaCard}>
+            <Text style={s.metaLabel}>PURPOSE</Text>
+            <TextInput
+              style={s.metaInput}
+              value={purpose}
+              onChangeText={setPurpose}
+              onEndEditing={saveMeta}
+              onBlur={saveMeta}
+              placeholder="e.g. Q3 client visit"
+              placeholderTextColor={C.mutD}
+              returnKeyType="done"
+            />
+            <Text style={[s.metaLabel, { marginTop: 14 }]}>PROJECT / COST CODE</Text>
+            <TextInput
+              style={s.metaInput}
+              value={projectCode}
+              onChangeText={setProjectCode}
+              onEndEditing={saveMeta}
+              onBlur={saveMeta}
+              placeholder="e.g. ACME-4471"
+              placeholderTextColor={C.mutD}
+              autoCapitalize="characters"
+              returnKeyType="done"
+            />
+          </View>
+        ) : null}
+
         {/* Category breakdown */}
         {byCategory.length > 0 ? (
           <View style={s.breakdown}>
@@ -184,7 +290,7 @@ export default function ExpensesScreen({ route, navigation }) {
                 <View style={s.breakBarTrack}>
                   <View style={[s.breakBarFill, { width: `${Math.max((amt / total) * 100, 3)}%` }]} />
                 </View>
-                <Text style={s.breakAmt}>{money(amt, currency)}</Text>
+                <Text style={s.breakAmt}>{money(amt, primaryCur)}</Text>
               </View>
             ))}
           </View>
@@ -215,7 +321,7 @@ export default function ExpensesScreen({ route, navigation }) {
             <Text style={s.empty}>No bookings on this trip yet.</Text>
           ) : null}
         </View>
-        <Text style={s.footNote}>Tap any line to add or edit its amount. Soon: Wingman will pull receipt totals from your inbox automatically.</Text>
+        <Text style={s.footNote}>Amounts fill in automatically from your booking and receipt emails — tap any line to add or adjust one.</Text>
       </ScrollView>
 
       <UpgradeSheet
@@ -228,7 +334,7 @@ export default function ExpensesScreen({ route, navigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   app: { flex: 1, backgroundColor: C.bg },
   hero: {
     marginHorizontal: 24, marginTop: 12, padding: 22, borderRadius: 18,
@@ -249,6 +355,9 @@ const s = StyleSheet.create({
   },
   exportBtnAltT: { fontFamily: T.sansB, fontSize: 15, color: C.gold },
 
+  metaCard: { marginHorizontal: 24, marginTop: 18, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 16 },
+  metaLabel: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 1.6, color: C.mutD, marginBottom: 6 },
+  metaInput: { fontFamily: T.sansM, fontSize: 15, color: C.ink, borderBottomWidth: 1, borderBottomColor: C.line, paddingVertical: 6 },
   breakdown: { marginHorizontal: 24, marginTop: 18, gap: 12 },
   breakRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   breakCat: { fontFamily: T.sansM, fontSize: 13, color: C.ink, width: 74 },

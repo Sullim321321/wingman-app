@@ -11,7 +11,7 @@
 //
 // The panel below the conversation is not a summary of the chat. It is the graph, live.
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
   SafeAreaView, View, Text, TextInput, ScrollView, Pressable,
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, Linking,
@@ -19,7 +19,7 @@ import {
 import { C, T } from "../theme";
 import { useTheme, useThemedStyles } from "../ThemeContext";
 import { WMark, tap, success, FadeRise, SerifText } from "../components";
-import { planMessage, confirmConstraint } from "../api";
+import { planMessage, confirmConstraint, getTravel, getHomeState } from "../api";
 
 const HARD = {
   must:   { label: "MUST",   color: C.gold },
@@ -64,15 +64,74 @@ export default function PlanScreen({ navigation, route }) {
   const [constraints, setCs] = useState([]);
   const [legs, setLegs]      = useState([]);
   const [gaps, setGaps]      = useState([]);
+  const [action, setAction]  = useState(null);       // Epic 3 · authorisable action proposal
   const [err, setErr]        = useState(null);
+  const [smartSeeds, setSmartSeeds] = useState([]);   // present-aware opening prompts
+  const [placeCity, setPlaceCity] = useState(null);   // where she is now → planner context
   const scroller = useRef(null);
   const inputRef = useRef(null);
+
+  // ── Read the room before she types ─────────────────────────────────────────
+  // Plan used to open with three canned examples ("Six shows across Asia…") — a pitch,
+  // not a starting point. The whole promise is that Wingman already knows where she is and
+  // what her calendar implies, so the opening should hand her the trip she's about to want,
+  // not a demo. We pull the calendar-implied trips + where she is now and turn them into
+  // one-tap starts. If there's genuinely no context, we fall back to evergreen starters.
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const [travel, home] = await Promise.all([
+          getTravel().catch(() => null),
+          getHomeState().catch(() => null),
+        ]);
+        if (!alive) return;
+        // Where she is now — used for seeds AND passed to the planner so it never asks.
+        const nowCity = home?.city || home?.weather?.city || home?.active_trip?.destination_city || null;
+        setPlaceCity(nowCity);
+        const seeds = [];
+        // 1) Trips the calendar implies — the strongest "read my mind" signal.
+        for (const t of (travel?.trips || []).slice(0, 3)) {
+          const dest = t.destination || t.city;
+          if (!dest) continue;
+          const nights = t.nights ? ` · ~${t.nights}n` : "";
+          seeds.push({
+            label: `Plan ${dest}`,
+            sub: `Your calendar points here${nights}`,
+            message: `Help me plan my trip to ${dest}${t.nights ? ` — roughly ${t.nights} nights` : ""}. It's on my calendar; build the shape with me.`,
+          });
+        }
+        // 2) Where she is right now — extend it, or fill tonight.
+        const city = home?.active_trip?.destination_city || home?.weather?.city;
+        if (home?.state === "at_destination" && city) {
+          seeds.push({
+            label: `Tonight in ${city}`,
+            sub: "You're here now",
+            message: `I'm in ${city} right now — what's worth doing with the time I have left here?`,
+          });
+          seeds.push({
+            label: `Add time in ${city}`,
+            sub: "Stretch this trip",
+            message: `I'm in ${city} — help me add a day or two before I move on.`,
+          });
+        }
+        // 3) Honest questions the calendar raised — answering one starts a plan.
+        for (const a of (travel?.asks || []).slice(0, 1)) {
+          const title = a.driver?.title || a.title;
+          if (title) seeds.push({ label: "Sort out a maybe-trip", sub: title, message: `About "${title}" — here's what I know: ` });
+        }
+        setSmartSeeds(seeds.slice(0, 4));
+      } catch { /* leave empty → Opening shows evergreen starters */ }
+    })();
+    return () => { alive = false; };
+  }, []);
 
   const send = useCallback(async (text) => {
     const message = String(text ?? draft).trim();
     if (!message || busy) return;
     tap();
     setErr(null);
+    setAction(null);        // a new turn supersedes any un-acted proposal
     setDraft("");
     const next = [...turns, { role: "user", content: message }];
     setTurns(next);
@@ -80,7 +139,7 @@ export default function PlanScreen({ navigation, route }) {
     setTimeout(() => scroller.current?.scrollToEnd({ animated: true }), 60);
 
     try {
-      const r = await planMessage(message, tripId, turns);
+      const r = await planMessage(message, tripId, turns, placeCity);
       if (r.trip_id && !tripId) setTripId(r.trip_id);
       // Belt and braces: the server guarantees a reply now, but an empty assistant
       // bubble is such a bad failure — you speak, and the app stares back — that it
@@ -90,6 +149,7 @@ export default function PlanScreen({ navigation, route }) {
       setCs(r.constraints || []);
       setLegs(r.legs || []);
       setGaps(r.gaps || []);
+      setAction(r.action || null);
     } catch (e) {
       // Say what actually happened. "That didn't go through" is how we burned weeks
       // hunting a backend bug that turned out to be a client-side TypeError.
@@ -99,7 +159,7 @@ export default function PlanScreen({ navigation, route }) {
       setBusy(false);
       setTimeout(() => scroller.current?.scrollToEnd({ animated: true }), 80);
     }
-  }, [draft, busy, turns, tripId]);
+  }, [draft, busy, turns, tripId, placeCity]);
 
   const confirm = async (c) => {
     tap();
@@ -127,6 +187,37 @@ export default function PlanScreen({ navigation, route }) {
     setCs((prev) => prev.filter((x) => x.id !== c.id));
     send(`That's wrong: "${c.rationale}". Correct it and drop the old one.`);
   };
+
+  // ── Epic 3 · authorise the proposed action ────────────────────────────────
+  // The card is the ONE tap. It does not spend — it opens the real, confirm-gated
+  // booking surface (the same one the "Make it real →" button uses), pre-pointed at
+  // the leg or stay in question. The money confirm still lives inside that flow.
+  const authorize = () => {
+    if (!action) return;
+    tap();
+    const a = action;
+    const ctx = a.context || {};
+    const isStay = a.kind === "change_stay" || a.kind === "hold_stay";
+    setAction(null);
+    if (isStay) {
+      navigation.navigate("StayBook", {
+        city: ctx.destination_city || ctx.destination || undefined,
+        legId: ctx.id || undefined,
+        tripId: a.trip_id || tripId || undefined,
+      });
+    } else if (a.kind === "rebook_flight" && ctx.id && ctx.state === "booked") {
+      // Replacing a real, booked flight is a disruption rebook — the Rescue surface.
+      navigation.navigate("Rescue", { legId: ctx.id, tripId: a.trip_id || tripId });
+    } else if (ctx.id && ctx.state === "proposed") {
+      // A sketched leg becomes real through the same gate as "Make it real →".
+      navigation.navigate("BookLeg", { legId: ctx.id });
+    } else {
+      // A fresh flight search, pointed at this trip.
+      navigation.navigate("FlightSearch", { tripId: a.trip_id || tripId });
+    }
+  };
+
+  const dismissAction = () => { tap(); setAction(null); };
 
   // The gaps ARE the suggestions. `coverage()` on the server already computes exactly
   // what it still needs to know; we were rendering that as a passive grey label
@@ -181,7 +272,7 @@ export default function PlanScreen({ navigation, route }) {
         keyboardVerticalOffset={Platform.OS === "ios" ? 88 : 0}
       >
         <ScrollView ref={scroller} contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
-          {empty ? <Opening onPick={send} onPasteMode={() => {
+          {empty ? <Opening onPick={send} seeds={smartSeeds} onPasteMode={() => {
             // Focus the composer with a lead-in, so the pasted thread arrives as one
             // planner turn framed as "these are my texts — build the schedule."
             setDraft("Here are messages about my trip — build the schedule from them:\n\n");
@@ -220,6 +311,42 @@ export default function PlanScreen({ navigation, route }) {
                 <Text style={s.errA}>Try again</Text>
               </Pressable>
             </View>
+          ) : null}
+
+          {/* ── THE ACTION (Epic 3) ──────────────────────────────────────────
+              "book it" / "re-route me" became a proposal. This card is the single
+              tap that authorises it — and it does NOT spend. It opens the real,
+              confirm-gated booking flow, pointed at the right leg. The money confirm
+              still lives one screen deeper. No fare here: the model never has one. */}
+          {action ? (
+            <FadeRise>
+              <View style={s.act}>
+                <Text style={s.actKicker}>
+                  {action.kind.startsWith("hold_") ? "HOLD TO AUTHORISE" : "READY TO ACT"}
+                  {action.urgency === "now" ? "  ·  TIME-SENSITIVE" : ""}
+                </Text>
+                <Text style={s.actSummary}>{action.summary}</Text>
+                {action.context?.origin || action.context?.destination ? (
+                  <Text style={s.actCtx}>
+                    {[action.context.origin, action.context.destination].filter(Boolean).join(" → ")}
+                    {action.context.property_name ? action.context.property_name : ""}
+                  </Text>
+                ) : null}
+                <Text style={s.actFine}>
+                  Opens the booking flow — you confirm any spend there. Nothing is charged by this tap.
+                </Text>
+                <View style={s.actRow}>
+                  <Pressable style={s.actNo} onPress={dismissAction}>
+                    <Text style={s.actNoT}>Not now</Text>
+                  </Pressable>
+                  <Pressable style={s.actBtn} onPress={authorize}>
+                    <Text style={s.actBtnT}>
+                      {action.kind.startsWith("hold_") ? "Hold it →" : "Authorise →"}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            </FadeRise>
           ) : null}
 
           {/* ── THE GRAPH, LIVE ──────────────────────────────────────────────
@@ -423,29 +550,46 @@ function CRow({ c, dim, onWrong }) {
 }
 
 /* ── the empty state, which is really the pitch ─────────────────────────────── */
-function Opening({ onPick, onPasteMode }) {
+function Opening({ onPick, onPasteMode, seeds = [] }) {
   const { C } = useTheme();
   const s = useThemedStyles(makeStyles);
-  const seeds = [
-    "Six shows across Asia in September — help me plan it",
-    "A week somewhere warm in March, just the two of us",
-    "I'm in Tokyo for work and want two days after",
+  // Present-aware first. If we could read her context (calendar-implied trips, where she
+  // is now), those lead — the trip she's about to want, one tap away. Evergreen starters
+  // only stand in when there's genuinely nothing to infer.
+  const hasContext = seeds.length > 0;
+  const evergreen = [
+    { label: "Somewhere warm, a few days", message: "I want a few days somewhere warm soon — help me figure out where." },
+    { label: "A weekend away", message: "Plan me a weekend away from here — surprise me with somewhere good." },
   ];
   return (
     <FadeRise>
       <View style={s.open}>
-        <SerifText style={s.openH}>Tell me about the trip.</SerifText>
+        <SerifText style={s.openH}>
+          {hasContext ? "Here's what I'd start with." : "Tell me about the trip."}
+        </SerifText>
         <Text style={s.openSub}>
-          I'll ask what I need, look up what I can't be sure of, and remember why —
-          so when something breaks, I know what's worth protecting.
+          {hasContext
+            ? "From where you are and what's on your calendar. Tap one to begin, or just tell me the idea — I'll take it from a sentence."
+            : "Tell me the idea in a sentence and I'll shape it — ask what I need, look up what I can't be sure of, and remember why."}
         </Text>
+
+        {/* Present-aware starts — from the calendar and where she is right now. */}
+        {hasContext ? (
+          <View style={s.seeds}>
+            {seeds.map((sd, i) => (
+              <Pressable key={sd.label + i} style={s.seed} onPress={() => onPick(sd.message)}>
+                <Text style={s.seedT}>{sd.label}</Text>
+                {sd.sub ? <Text style={s.seedSub}>{sd.sub}</Text> : null}
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
 
         {/* ── Dump the mess ──────────────────────────────────────────────────────
             The itinerary that lives in scattered texts — "dinner Thursday 8", "swing by
             the office at 2", a half-plan from a business partner — has nowhere to land in
             most travel apps. Here it does: paste the raw thread and the planner turns each
-            fragment into a timed constraint, with the reason attached, so transport and
-            scheduling can actually reason about it. No need to tidy it first. */}
+            fragment into a timed constraint, with the reason attached. No need to tidy it. */}
         <Pressable style={s.pasteCard} onPress={onPasteMode}>
           <Text style={s.pasteH}>Paste your messages</Text>
           <Text style={s.pasteT}>
@@ -454,14 +598,18 @@ function Opening({ onPick, onPasteMode }) {
           </Text>
         </Pressable>
 
-        <Text style={s.openOr}>or start from scratch</Text>
-        <View style={s.seeds}>
-          {seeds.map((sd) => (
-            <Pressable key={sd} style={s.seed} onPress={() => onPick(sd)}>
-              <Text style={s.seedT}>{sd}</Text>
-            </Pressable>
-          ))}
-        </View>
+        {!hasContext ? (
+          <>
+            <Text style={s.openOr}>or start from an idea</Text>
+            <View style={s.seeds}>
+              {evergreen.map((sd) => (
+                <Pressable key={sd.label} style={s.seed} onPress={() => onPick(sd.message)}>
+                  <Text style={s.seedT}>{sd.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </>
+        ) : null}
       </View>
     </FadeRise>
   );
@@ -501,6 +649,7 @@ const makeStyles = (C) => ({
   seeds: { marginTop: 14, gap: 10 },
   seed: { borderWidth: 1, borderColor: C.line, backgroundColor: C.card, borderRadius: 14, padding: 15 },
   seedT: { fontFamily: T.sansM, fontSize: 15, color: C.ink, lineHeight: 20 },
+  seedSub: { fontFamily: T.sansM, fontSize: 12, color: C.mutD, marginTop: 3, letterSpacing: 0.2 },
 
   me: { alignSelf: "flex-end", maxWidth: "86%", backgroundColor: C.card2,
         borderRadius: 16, borderBottomRightRadius: 5, padding: 13, marginBottom: 14 },
@@ -532,6 +681,19 @@ const makeStyles = (C) => ({
   proBtnT: { fontFamily: T.sansB, fontSize: 13, color: C.inkD },
   proNo: { borderWidth: 1, borderColor: C.line, borderRadius: 9, paddingHorizontal: 14, paddingVertical: 8 },
   proNoT: { fontFamily: T.sansM, fontSize: 13, color: C.mut },
+
+  // Epic 3 · the authorisable action. More present than a proposed constraint —
+  // a filled card with a bronze edge — because it's the one thing on screen that DOES.
+  act: { backgroundColor: C.card, borderWidth: 1.5, borderColor: C.brass, borderRadius: 14, padding: 16, marginTop: 14, marginBottom: 6 },
+  actKicker: { fontFamily: T.sansB, fontSize: 11, letterSpacing: 1.2, color: C.brass, marginBottom: 8 },
+  actSummary: { fontFamily: T.serif, fontSize: 18, lineHeight: 24, color: C.ink, marginBottom: 6 },
+  actCtx: { fontFamily: T.sansM, fontSize: 13, color: C.mut, marginBottom: 8 },
+  actFine: { fontFamily: T.sansM, fontSize: 11, lineHeight: 15, color: C.mut, marginBottom: 14 },
+  actRow: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 10 },
+  actNo: { borderWidth: 1, borderColor: C.line, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10 },
+  actNoT: { fontFamily: T.sansM, fontSize: 14, color: C.mut },
+  actBtn: { backgroundColor: C.gold, borderRadius: 10, paddingHorizontal: 20, paddingVertical: 10 },
+  actBtnT: { fontFamily: T.sansB, fontSize: 14, color: C.inkD },
 
   // Dashed border, muted fill, an explicit SKETCH tag. A proposed leg must be
   // recognisable as unbooked at a glance, from across a room, half-asleep.

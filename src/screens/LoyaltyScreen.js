@@ -7,6 +7,7 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { C, T } from "../theme";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 import { BackBar, Btn, g } from "../components";
 import * as SecureStore from "expo-secure-store";
 import { API_BASE } from "../config";
@@ -78,6 +79,8 @@ function statusColor(status) {
 // Sub-components
 // ---------------------------------------------------------------------------
 function ProgressBar({ value, max, color }) {
+  const { C } = useTheme();
+  const ps = useThemedStyles(makePs);
   if (!value || !max) return null;
   const pct = Math.min(100, Math.round((value / max) * 100));
   return (
@@ -88,6 +91,8 @@ function ProgressBar({ value, max, color }) {
 }
 
 function AccountCard({ acct, onSync, onEdit, onDisconnect }) {
+  const { C } = useTheme();
+  const ps = useThemedStyles(makePs);
   const prog = PROGRAMS[acct.program] || {};
   const syncing = acct._syncing;
   const pointsLabel = prog.kind === "airline" ? "miles" : "points";
@@ -187,6 +192,8 @@ function AccountCard({ acct, onSync, onEdit, onDisconnect }) {
 // Connect / Edit Modal — manual entry (no password required)
 // ---------------------------------------------------------------------------
 function ConnectModal({ visible, onClose, onConnect, editProgram, editData }) {
+  const { C } = useTheme();
+  const ps = useThemedStyles(makePs);
   const isEdit = !!editProgram;
   const [program, setProgram] = useState(null);
   const [memberNumber, setMemberNumber] = useState("");
@@ -435,6 +442,8 @@ function ConnectModal({ visible, onClose, onConnect, editProgram, editData }) {
 // don't hold earning rates or award inventory, and a chief of staff who guesses
 // confidently about a $4,000 booking is worse than one who says nothing.
 function InsightCard({ item }) {
+  const { C } = useTheme();
+  const ins = useThemedStyles(makeIns);
   const tone =
     item.urgency === "high"   ? C.coral
     : item.urgency === "medium" ? C.gold
@@ -455,7 +464,7 @@ function InsightCard({ item }) {
   );
 }
 
-const ins = StyleSheet.create({
+const makeIns = (C) => ({
   wrap:  { marginBottom: 22 },
   label: { fontFamily: T.sans, fontSize: 10, letterSpacing: T.trackWide, color: C.mut, marginBottom: 10 },
   card: {
@@ -469,6 +478,9 @@ const ins = StyleSheet.create({
 });
 
 export default function LoyaltyScreen({ navigation }) {
+  const { C } = useTheme();
+  const ps = useThemedStyles(makePs);
+  const ins = useThemedStyles(makeIns);
   const [accounts, setAccounts] = useState([]);
   const [insights, setInsights] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -659,7 +671,7 @@ export default function LoyaltyScreen({ navigation }) {
 // ---------------------------------------------------------------------------
 // Styles
 // ---------------------------------------------------------------------------
-const ps = StyleSheet.create({
+const makePs = (C) => ({
   app: { flex: 1, backgroundColor: C.bg },
   summaryStrip: { flexDirection: "row", backgroundColor: C.card, borderRadius: 12, marginHorizontal: 16, marginBottom: 20, padding: 16, justifyContent: "space-around", borderWidth: 1, borderColor: C.line },
   summaryItem: { alignItems: "center" },

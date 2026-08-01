@@ -31,6 +31,7 @@ import {
 import { C, T } from "../theme";
 import { WMark, tap, FadeRise, SerifText } from "../components";
 import { getLegBooking, bookLeg, getDuffelMode } from "../api";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 const money = (a, c) => {
   const n = parseFloat(a);
@@ -52,6 +53,8 @@ const dur = (a, b) => {
 };
 
 export default function BookLegScreen({ route, navigation }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const { legId } = route.params || {};
   const [data, setData] = useState(null);
   const [err, setErr] = useState(null);
@@ -306,7 +309,7 @@ export default function BookLegScreen({ route, navigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   testBanner: { backgroundColor: C.card2, borderRadius: 12, padding: 14, marginBottom: 16,
                 borderWidth: 1, borderColor: C.amber, borderLeftWidth: 2, borderLeftColor: C.amber },
   testH: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 1.6, color: C.amber, marginBottom: 6 },

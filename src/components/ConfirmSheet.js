@@ -9,6 +9,7 @@
 import React from "react";
 import { Modal, View, Text, Pressable, StyleSheet, ActivityIndicator } from "react-native";
 import { C, T, SP, R, CARD } from "../theme";
+import { useTheme, useThemedStyles } from "../ThemeContext";
 
 /**
  * @param visible      show/hide
@@ -27,6 +28,8 @@ export default function ConfirmSheet({
   confirmLabel = "Confirm", cancelLabel = "Not yet",
   destructive = false, busy = false, onConfirm, onCancel,
 }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   return (
     <Modal visible={!!visible} transparent animationType="fade" onRequestClose={onCancel}>
       <Pressable style={s.scrim} onPress={busy ? undefined : onCancel}>
@@ -67,7 +70,7 @@ export default function ConfirmSheet({
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   scrim: { flex: 1, backgroundColor: "rgba(33,30,26,0.35)", justifyContent: "flex-end" },
   sheet: { ...CARD.lifted, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: SP.xl, paddingBottom: SP.xxxl },
   kicker: { fontFamily: T.sansB, fontSize: 10, letterSpacing: 2.4, color: C.gold, marginBottom: SP.sm },

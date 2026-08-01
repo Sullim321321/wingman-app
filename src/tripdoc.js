@@ -15,6 +15,8 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { C, T } from "./theme";
+import { useTheme, useThemedStyles } from "./ThemeContext";
+import * as transport from "./transport";
 
 export const when = (iso) => {
   if (!iso) return null;
@@ -26,7 +28,7 @@ export const when = (iso) => {
 
 // Slack is a warning, and the colour is the warning. Under 45 minutes is the band
 // where a delay eats the connection; under two hours is worth watching.
-export const slackTone = (m) => (m == null ? C.mut : m < 45 ? C.coral : m < 120 ? C.amber : C.teal);
+export const slackTone = (m, CC = C) => (m == null ? CC.mut : m < 45 ? CC.coral : m < 120 ? CC.amber : CC.teal);
 
 /**
  * One booking, with what it hangs on.
@@ -36,11 +38,18 @@ export const slackTone = (m) => (m == null ? C.mut : m < 45 ? C.coral : m < 120 
  * appears in the archive, the product only exists in the archive.
  */
 export function Leg({ leg, compact = false, onDismiss = null }) {
+  const { C } = useTheme();
+  const s = useThemedStyles(makeStyles);
   const isSketch = leg.state === "proposed" || !leg.departs_at;
+  // Mode-aware: a train carries station_from/station_to, not origin/destination, and
+  // deserves a real name ("LNER 1E12" / "Edinburgh → London") rather than just "train".
+  // endpointsOf resolves either field pair, so flights are unchanged.
+  const ends = transport.endpointsOf(leg);
+  const railName = transport.modeOf(leg) === "rail" ? transport.displayName(leg) : null;
   return (
     <View style={[s.leg, isSketch && s.sketch]}>
       <View style={s.legTop}>
-        <Text style={s.legName}>{leg.display_name || leg.destination || leg.type}</Text>
+        <Text style={s.legName}>{leg.display_name || railName || leg.destination || leg.type}</Text>
         {/* Every leg can be removed from the document itself — a sketch you dismiss,
             a booking you remove. Routing real bookings through a separate Edit screen
             left this trip un-fixable when that screen failed to load its legs. The
@@ -56,7 +65,7 @@ export function Leg({ leg, compact = false, onDismiss = null }) {
       {leg.departs_at ? (
         <Text style={s.legWhen}>
           {when(leg.departs_at)}
-          {!compact && leg.origin && leg.destination ? `   ·   ${leg.origin} → ${leg.destination}` : ""}
+          {!compact && ends.from && ends.to ? `   ·   ${ends.from} → ${ends.to}` : ""}
         </Text>
       ) : leg.raw_data?.why ? (
         <Text style={s.legWhy}>{leg.raw_data.why}</Text>
@@ -67,11 +76,11 @@ export function Leg({ leg, compact = false, onDismiss = null }) {
           because it was measured. An inferred edge says so rather than posing as fact. */}
       {(leg.depends_on || []).map((dep, i) => (
         <View key={i} style={s.dep}>
-          <View style={[s.depDot, { backgroundColor: slackTone(dep.slack_minutes) }]} />
+          <View style={[s.depDot, { backgroundColor: slackTone(dep.slack_minutes, C) }]} />
           <Text style={s.depText}>
             Depends on {dep.on}
             {dep.slack_minutes != null ? (
-              <Text style={[s.depSlack, { color: slackTone(dep.slack_minutes) }]}>
+              <Text style={[s.depSlack, { color: slackTone(dep.slack_minutes, C) }]}>
                 {"  ·  "}{dep.slack_minutes} min slack
               </Text>
             ) : null}
@@ -129,11 +138,12 @@ export function statusForTrip(trip, nowMs = Date.now()) {
 
 /** "+ 3 rides" — counted, never listed. An eight-minute taxi isn't a briefing item. */
 export function RideCount({ n }) {
+  const s = useThemedStyles(makeStyles);
   if (!n) return null;
   return <Text style={s.rides}>+ {n} {n === 1 ? "ride" : "rides"}</Text>;
 }
 
-const s = StyleSheet.create({
+const makeStyles = (C) => ({
   leg:    { backgroundColor: C.card, borderRadius: 14, padding: 15, marginBottom: 10,
             borderWidth: 1, borderColor: C.line, borderTopColor: C.lineHi },
   sketch: { backgroundColor: "transparent", borderStyle: "dashed", borderColor: C.mutD, borderTopColor: C.mutD },
